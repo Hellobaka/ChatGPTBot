@@ -30,9 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         /// 发送对方的群号(或者是QQ号(请忽略，未实现))
         /// </summary>
         public long SendID { get; set; }
-        /// <summary>
-        /// 处理情况,作用自己发挥
-        /// </summary>
-        public bool HandlingFlag { get; set; } = true;
+
+        public bool Reply { get; set; } = false;
     }
 }
