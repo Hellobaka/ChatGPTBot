@@ -10,7 +10,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
     public class AddPrompt : IOrderModel
     {
-        public bool ImplementFlag { get; set; } = true;
+        public bool ImplementFlag { get; set; } = false;
         
         public string GetOrderStr() => "这里输入触发指令";
 

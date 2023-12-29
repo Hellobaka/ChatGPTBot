@@ -17,8 +17,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
             string message = e.Message;
-            if (!(message.Replace("＃", "#").StartsWith(GetOrderStr())
-                || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString()))))
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false
+                || (!message.Replace("＃", "#").StartsWith(GetOrderStr()) && !Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode))
+                || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString())))
             {
                 return new FunctionResult();
             }
@@ -31,6 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             SendText sendText = new SendText
             {
                 SendID = e.FromGroup,
+                Reply = true
             };
 
             sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ));
@@ -41,9 +43,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
         {
             string message = e.Message;
-            if (!(message.Replace("＃", "#").StartsWith(GetOrderStr())
-                || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString()))
-                || Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode)))
+            if (AppConfig.PersonList.Contains(e.FromQQ) is false
+                || !message.Replace("＃", "#").StartsWith(GetOrderStr())
+                || !Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode))
             {
                 return new FunctionResult();
             }

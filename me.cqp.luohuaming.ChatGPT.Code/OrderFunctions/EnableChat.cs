@@ -3,16 +3,20 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
-    public class AddChat : IOrderModel
+    public class EnableChat : IOrderModel
     {
         public bool ImplementFlag { get; set; } = true;
 
-        public string GetOrderStr() => AppConfig.AddChatOrder;
+        public string GetOrderStr() => AppConfig.EnableChatOrder;
 
         public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());
 
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
+            if (AppConfig.MasterQQ != e.FromQQ)
+            {
+                return new FunctionResult();
+            }
             FunctionResult result = new FunctionResult
             {
                 Result = true,
@@ -21,33 +25,23 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             SendText sendText = new SendText
             {
                 SendID = e.FromGroup,
+                Reply = true
             };
 
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false)
+            {
+                AppConfig.GroupList.Add(e.FromGroup);
+                ConfigHelper.SetConfig("GroupList", AppConfig.GroupList);
+            }
+
+            sendText.MsgToSend.Add("开启成功");
             result.SendObject.Add(sendText);
             return result;
         }
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
         {
-            FunctionResult result = new FunctionResult
-            {
-                Result = true,
-                SendFlag = true,
-            };
-            SendText sendText = new SendText
-            {
-                SendID = e.FromQQ,
-            };
-
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
-            result.SendObject.Add(sendText);
-            return result;
-        }
-
-        private string Handler(string prompt, string key)
-        {
-            return "";
+            return new FunctionResult();
         }
     }
 }
