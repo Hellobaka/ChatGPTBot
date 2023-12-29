@@ -4,6 +4,7 @@ using HarmonyLib;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,12 +16,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public static string GetChatResult(string question, long qq)
         {
-            var t = GetChatResultAsync(question, qq);
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            var t = CallChatGPTAsync(question, qq);
             t.Wait();
-            return t.Result;
+            stopwatch.Stop();
+            if (AppConfig.AppendExecuteTime)
+            {
+                return t.Result + $" ({stopwatch.ElapsedMilliseconds / 1000.0:f2}s)";
+            }
+            else
+            {
+                return t.Result;
+            }
         }
 
-        public static async Task<string> GetChatResultAsync(string question, long qq)
+        private static async Task<string> CallChatGPTAsync(string question, long qq)
         {
             string msg = "";
             var client = new OpenAIClient(AppConfig.APIKey, new OpenAIClientOptions());
@@ -34,11 +44,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     QQ = qq
                 };
-                flow.Conversations.Add(new ChatFlow.ConversationItem
-                {
-                    Role = "system",
-                    Content = $"You are ChatGPT, a large language model trained by OpenAI.\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}\r\nCurrent time: {DateTime.Now:G}\r\n"
-                });
                 ChatFlows.Add(flow);
             }
             flow.RemoveTimeout = 0;
@@ -53,30 +58,31 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 if (AppConfig.StreamMode)
                 {
-                    Response<StreamingChatCompletions> response = await client.GetChatCompletionsStreamingAsync(AppConfig.ModelName, chatCompletionsOptions);
-                    using StreamingChatCompletions streamingChatCompletions = response.Value;
-                    await foreach (StreamingChatChoice choice in streamingChatCompletions.GetChoicesStreaming())
+                    await foreach (StreamingChatCompletionsUpdate chatUpdate in client.GetChatCompletionsStreaming(chatCompletionsOptions))
                     {
-                        await foreach (ChatMessage message in choice.GetMessageStreaming())
+                        if (!string.IsNullOrEmpty(chatUpdate.ContentUpdate))
                         {
-                            msg += message.Content;
+                            msg += chatUpdate.ContentUpdate;
                         }
                     }
                 }
                 else
                 {
-                    Response<ChatCompletions> response = await client.GetChatCompletionsAsync(AppConfig.ModelName, chatCompletionsOptions);
-                    ChatCompletions chatCompletions = response.Value;
-                    foreach (var choice in chatCompletions.Choices)
-                    {
-                        msg += choice.Message.Content;
-                    }
+                    Response<ChatCompletions> response = await client.GetChatCompletionsAsync(chatCompletionsOptions);
+                    ChatResponseMessage responseMessage = response.Value.Choices[0].Message;
+                    msg = responseMessage.Content;
                 }
+                flow.Conversations.Add(new ChatFlow.ConversationItem
+                {
+                    Role = "assistant",
+                    Content = msg
+                });
             }
             catch (Exception ex)
             {
                 MainSave.CQLog.Info("OpenAI_ChatCompletions失败", ex.Message + ex.StackTrace);
                 flow.Conversations.RemoveAt(flow.Conversations.Count - 1);
+                msg = "连接发生问题，查看日志排查问题";
             }
             return msg;
         }
