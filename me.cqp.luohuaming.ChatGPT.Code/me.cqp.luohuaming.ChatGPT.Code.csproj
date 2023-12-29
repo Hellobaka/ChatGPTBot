@@ -63,11 +63,12 @@
     <Compile Include="Event_PrivateMessage.cs" />
     <Compile Include="Event_GroupMessage.cs" />
     <Compile Include="Event_StartUp.cs" />
+    <Compile Include="OrderFunctions\ResetChat.cs" />
     <Compile Include="OrderFunctions\ListPrompt.cs" />
     <Compile Include="OrderFunctions\RemovePrompt.cs" />
     <Compile Include="OrderFunctions\AddPrompt.cs" />
-    <Compile Include="OrderFunctions\RemoveChat.cs" />
-    <Compile Include="OrderFunctions\AddChat.cs" />
+    <Compile Include="OrderFunctions\DisableChat.cs" />
+    <Compile Include="OrderFunctions\EnableChat.cs" />
     <Compile Include="OrderFunctions\ContinueMode.cs" />
     <Compile Include="OrderFunctions\ChatGPT.cs" />
     <Compile Include="OrderFunctions\ExampleFunction.cs" />
