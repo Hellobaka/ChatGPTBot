@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
@@ -13,6 +14,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string BaseURL { get; set; } = "";
 
         public static string ModelName { get; set; } = "";
+
+        public static bool EnableVision { get; set; }
+
+        public static int ChatTimeout { get; set; } = 10 * 60;
+
+        public static int ChatMaxTokens { get; set; } = 500;
+
+        public static bool AppendExecuteTime { get; set; }
 
         public static bool StreamMode { get; set; }
 
@@ -30,9 +39,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string ListPromptOrder { get; set; } = "";
 
-        public static string AddChatOrder { get; set; } = "";
+        public static string EnableChatOrder { get; set; } = "";
 
-        public static string RemoveChatOrder { get; set; } = "";
+        public static string DisableChatOrder { get; set; } = "";
+
+        public static string ResetChatOrder { get; set; } = "";
 
         public static void Init()
         {
@@ -42,15 +53,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");
+            EnableVision = ConfigHelper.GetConfig("EnableVision", false);
             MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
+            ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
+            ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);
+            AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
             ContinueModeOrder = ConfigHelper.GetConfig("ContinueModeOrder", "连续模式");
             AddPromptOrder = ConfigHelper.GetConfig("AddPromptOrder", "添加预设");
             RemovePromptOrder = ConfigHelper.GetConfig("RemovePromptOrder", "移除预设");
             ListPromptOrder = ConfigHelper.GetConfig("ListPromptOrder", "预设列表");
-            AddChatOrder = ConfigHelper.GetConfig("AddChatOrder", "开启聊天");
-            RemoveChatOrder = ConfigHelper.GetConfig("RemoveChatOrder", "关闭聊天");
+            EnableChatOrder = ConfigHelper.GetConfig("EnableChatOrder", "开启聊天");
+            DisableChatOrder = ConfigHelper.GetConfig("DisableChatOrder", "关闭聊天");
+            ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
         }
     }
 }
