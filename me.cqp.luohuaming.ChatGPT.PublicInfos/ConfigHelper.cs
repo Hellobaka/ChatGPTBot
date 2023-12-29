@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
@@ -16,10 +13,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         /// <summary>
         /// 配置文件路径
         /// </summary>
-        public static string ConfigFileName = @"conf/Config.json";
+        public static string ConfigFileName { get; set; } = @"conf/Config.json";
 
         public static object ReadLock { get; set; } = new object();
+
         public static object WriteLock { get; set; } = new object();
+
+        public static JObject CurrentJObject { get; set; }
 
         /// <summary>
         /// 读取配置
@@ -31,30 +31,43 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         {
             lock (ReadLock)
             {
-                if (File.Exists(ConfigFileName) is false)
-                    File.WriteAllText(ConfigFileName, "{}");
-                var o = JObject.Parse(File.ReadAllText(ConfigFileName));
-                if (o.ContainsKey(sectionName))
-                    return o[sectionName].ToObject<T>();
-                if (defaultValue != null)
+                if (CurrentJObject != null && CurrentJObject.ContainsKey(sectionName))
+                {
+                    return CurrentJObject[sectionName].ToObject<T>();
+                }
+
+                if (CurrentJObject == null || defaultValue != null)
                 {
                     SetConfig<T>(sectionName, defaultValue);
                     return defaultValue;
                 }
 
                 if (typeof(T) == typeof(string))
+                {
                     return (T)(object)"";
+                }
+
                 if (typeof(T) == typeof(int))
+                {
                     return (T)(object)0;
+                }
+
                 if (typeof(T) == typeof(long))
+                {
                     return default;
+                }
+
                 if (typeof(T) == typeof(bool))
+                {
                     return (T)(object)false;
+                }
+
                 if (typeof(T) == typeof(object))
+                {
                     return (T)(object)new { };
-                if (typeof(T) == typeof(List<long>))
-                    return (T)(object)new List<long>();
-                throw new Exception("无法默认返回");
+                }
+
+                return typeof(T) == typeof(List<long>) ? (T)(object)new List<long>() : throw new Exception("无法默认返回");
             }
         }
 
@@ -62,28 +75,34 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         {
             lock (WriteLock)
             {
-                if (File.Exists(ConfigFileName) is false)
-                    File.WriteAllText(ConfigFileName, "{}");
-                var o = JObject.Parse(File.ReadAllText(ConfigFileName));
-                if (o.ContainsKey(sectionName))
+                if (CurrentJObject.ContainsKey(sectionName))
                 {
-                    o[sectionName] = JToken.FromObject(value);
+                    CurrentJObject[sectionName] = JToken.FromObject(value);
                 }
                 else
                 {
-                    o.Add(sectionName, JToken.FromObject(value));
+                    CurrentJObject.Add(sectionName, JToken.FromObject(value));
                 }
 
-                File.WriteAllText(ConfigFileName, o.ToString(Newtonsoft.Json.Formatting.Indented));
+                File.WriteAllText(ConfigFileName, CurrentJObject.ToString(Newtonsoft.Json.Formatting.Indented));
             }
         }
 
-        public static bool ConfigHasKey(string sectionName)
+        public static bool Load()
         {
-            if (File.Exists(ConfigFileName) is false)
-                File.WriteAllText(ConfigFileName, "{}");
-            var o = JObject.Parse(File.ReadAllText(ConfigFileName));
-            return o.ContainsKey(sectionName);
+            try
+            {
+                if (File.Exists(ConfigFileName) is false)
+                {
+                    File.WriteAllText(ConfigFileName, "{}");
+                }
+                CurrentJObject = JObject.Parse(File.ReadAllText(ConfigFileName));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
