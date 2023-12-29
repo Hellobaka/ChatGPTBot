@@ -75,6 +75,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         {
             lock (WriteLock)
             {
+                if (CurrentJObject == null)
+                {
+                    CurrentJObject = new JObject();
+                }
                 if (CurrentJObject.ContainsKey(sectionName))
                 {
                     CurrentJObject[sectionName] = JToken.FromObject(value);
