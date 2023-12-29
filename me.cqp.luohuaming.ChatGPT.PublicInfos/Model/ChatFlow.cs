@@ -1,7 +1,10 @@
 ﻿using Azure.AI.OpenAI;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using System;
 using System.Collections.Generic;
-using System.Threading;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
@@ -10,15 +13,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public ChatFlow()
         {
             RemoveTimeout = 0;
-            new Thread(() =>
-            {
-                while (RemoveTimeout < 10 * 60)
-                {
-                    RemoveTimeout++;
-                    Thread.Sleep(1000);
-                }
-                RemoveFromFlows();
-            }).Start();
         }
 
         public int RemoveTimeout { get; set; }
@@ -34,16 +28,74 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             public string Role { get; set; }
 
             public string Content { get; set; }
+
+            public ChatRequestMessage Build()
+            {
+                if (Role == "assistant")
+                {
+                    return new ChatRequestAssistantMessage(Content);
+                }
+                var cqCodes = CQCode.Parse(Content);
+                List<ChatMessageContentItem> items = new();
+                items.Add(new ChatMessageTextContentItem(Regex.Replace(Content, "\\[CQ:.*?\\]", "")));
+                foreach (var item in cqCodes)
+                {
+                    if (item.Function == Sdk.Cqp.Enum.CQFunction.Image)
+                    {
+                        ContainImage = true;
+
+                        #region 当SDK支持时 改为以下方式
+                        //Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
+                        //string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
+                        //try
+                        //{
+                        //    string path = MainSave.CQApi.ReceiveImage(item);
+                        //    File.Move(path, filePath);
+                        //    message.MultimodalContentItems.Add(new ChatMessageImageContentItem(new Uri($"data:image/jpeg;base64,{CommonHelper.ParsePic2Base64(filePath)}")));
+                        //}
+                        //catch(Exception e)
+                        //{
+                        //    MainSave.CQLog.Warning("保存图片", $"ReceiveImage: {e.Message}\r\n{e.StackTrace}");
+                        //}
+                        #endregion
+
+                        var url = CommonHelper.GetImageURL(item);
+                        if (string.IsNullOrEmpty(url) is false)
+                        {
+                            items.Add(new ChatMessageImageContentItem(new Uri(url)));
+                        }
+                    }
+                }
+                ChatRequestUserMessage message = new(items);
+                return message;
+            }
+
+            public bool ContainImage { get; set; }
         }
 
         public ChatCompletionsOptions BuildMessages()
         {
-            var result = new ChatCompletionsOptions();
+            List<ChatRequestMessage> messages = new();
             foreach (var item in Conversations)
             {
-                result.Messages.Add(new ChatMessage { Role = item.Role, Content = item.Content });
+                messages.Add(item.Build());
             }
-            return result;
+            string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
+            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI." +
+                    $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
+                    $"\r\nCurrent time: {DateTime.Now:G}\r\n";
+            if (model == "gpt-4-vision-preview")
+            {
+                systemHint = $"You are ChatGPT, a large language model trained by OpenAI and a helpful assistant that handles images" +
+                    $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
+                    $"\r\nCurrent time: {DateTime.Now:G}\r\n";
+            }
+            messages.Insert(0, new ChatRequestSystemMessage(systemHint));
+            var completionsOptions = new ChatCompletionsOptions(model, messages)
+            {
+                MaxTokens = AppConfig.ChatMaxTokens,
+            };
+            return completionsOptions;
         }
 
         public void RemoveFromFlows()
