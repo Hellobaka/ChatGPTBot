@@ -17,16 +17,30 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static string GetChatResult(string question, long qq)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
-            var t = CallChatGPTAsync(question, qq);
-            t.Wait();
+            string result = "";
+            try
+            {
+                var t = CallChatGPTAsync(question, qq);
+                t.Wait();
+                result = t.Result;
+            }
+            catch (Exception ex)
+            {
+                result = "连接发生问题，查看日志排查问题";
+                MainSave.CQLog.Info("调用ChatGPT", ex.Message + ex.StackTrace);
+                if (ex.InnerException != null)
+                {
+                    MainSave.CQLog.Info("调用ChatGPT", ex.InnerException.Message + ex.InnerException.StackTrace);
+                }
+            }
             stopwatch.Stop();
             if (AppConfig.AppendExecuteTime)
             {
-                return t.Result + $" ({stopwatch.ElapsedMilliseconds / 1000.0:f2}s)";
+                return result + $" ({stopwatch.ElapsedMilliseconds / 1000.0:f2}s)";
             }
             else
             {
-                return t.Result;
+                return result;
             }
         }
 
