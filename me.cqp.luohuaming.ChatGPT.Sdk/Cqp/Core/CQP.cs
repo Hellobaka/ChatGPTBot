@@ -52,6 +52,9 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Core
         [DllImport (DllName, EntryPoint = "CQ_sendGroupMsg")]
         public static extern int CQ_sendGroupMsg (int authCode, long groupId, IntPtr msg);
 
+        [DllImport (DllName, EntryPoint = "CQ_sendGroupQuoteMsg")]
+        public static extern int CQ_sendGroupQuoteMsg(int authCode, long groupId, int msgId, IntPtr msg);
+
         [DllImport (DllName, EntryPoint = "CQ_sendDiscussMsg")]
         public static extern int CQ_sendDiscussMsg (int authCode, long discussId, IntPtr msg);
 

@@ -21,6 +21,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int ChatMaxTokens { get; set; } = 500;
 
+        public static bool EnableGroupReply { get; set; }   
+
         public static bool AppendExecuteTime { get; set; }
 
         public static bool StreamMode { get; set; }
@@ -67,6 +69,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableChatOrder = ConfigHelper.GetConfig("EnableChatOrder", "开启聊天");
             DisableChatOrder = ConfigHelper.GetConfig("DisableChatOrder", "关闭聊天");
             ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
+            EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
         }
     }
 }

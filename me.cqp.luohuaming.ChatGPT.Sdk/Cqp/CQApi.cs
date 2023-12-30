@@ -408,6 +408,35 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 				msgHandle.Free ();
 			}
 		}
+		
+		/// <summary>
+		/// 发送群回复消息
+		/// </summary>
+		/// <param name="groupId">目标群号码</param>
+		/// <param name="message">用于发送消息对象数组. (获取字符串将优先调用 <see cref="IToSendString.ToSendString"/> 接口, 若不存在该接口则调用 <see cref="Object.ToString"/>)</param>
+		/// <exception cref="ArgumentOutOfRangeException">参数: groupId 超出范围</exception>
+		/// <exception cref="ArgumentNullException">参数: message 中有 null 元素</exception>
+		/// <returns>描述已发送消息的 <see cref="QQMessage"/> 对象</returns>
+		public QQMessage SendGroupQuoteMessage(int quoteId, long groupId, params object[] message)
+		{
+			if (groupId < Group.MinValue)
+			{
+				throw new ArgumentOutOfRangeException ("groupId");
+			}
+
+			string sendMsg = message.ToSendString ();
+			GCHandle msgHandle = sendMsg.GetStringGCHandle (CQApi.DefaultEncoding);
+			try
+			{
+				int msgId = CQP.CQ_sendGroupQuoteMsg(this.AppInfo.AuthCode, groupId, quoteId, msgHandle.AddrOfPinnedObject ());
+				return new QQMessage (this, msgId, sendMsg, false);
+			}
+			finally
+			{
+				msgHandle.Free ();
+			}
+		}
+
 		/// <summary>
 		/// 发送私聊消息
 		/// </summary>

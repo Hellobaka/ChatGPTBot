@@ -23,7 +23,14 @@ namespace me.cqp.luohuaming.ChatGPT.Core
                 {
                     foreach (var sendMsg in item.MsgToSend)
                     {
-                        e.CQApi.SendGroupMessage(item.SendID, sendMsg);
+                        if (item.Reply && AppConfig.EnableGroupReply)
+                        {
+                            e.CQApi.SendGroupQuoteMessage(e.Message.Id, item.SendID, sendMsg);
+                        }
+                        else
+                        {
+                            e.CQApi.SendGroupMessage(item.SendID, sendMsg);
+                        }
                     }
                 }
             }
