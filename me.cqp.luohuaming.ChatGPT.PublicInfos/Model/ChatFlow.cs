@@ -81,15 +81,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 messages.Add(item.Build());
             }
             string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
-            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI." +
+            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +                    
                     $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
                     $"\r\nCurrent time: {DateTime.Now:G}\r\n";
-            if (model == "gpt-4-vision-preview")
-            {
-                systemHint = $"You are ChatGPT, a large language model trained by OpenAI and a helpful assistant that handles images" +
-                    $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
-                    $"\r\nCurrent time: {DateTime.Now:G}\r\n";
-            }
             messages.Insert(0, new ChatRequestSystemMessage(systemHint));
             var completionsOptions = new ChatCompletionsOptions(model, messages)
             {
