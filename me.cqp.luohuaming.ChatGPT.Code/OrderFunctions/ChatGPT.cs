@@ -30,6 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
+            e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
             message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
             FunctionResult result = new FunctionResult
             {
@@ -59,6 +60,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
+            e.FromQQ.SendPrivateMessage(AppConfig.WelcomeText);
             message = message.Replace("＃", "#").Replace(GetOrderStr(), "");
             FunctionResult result = new FunctionResult
             {
