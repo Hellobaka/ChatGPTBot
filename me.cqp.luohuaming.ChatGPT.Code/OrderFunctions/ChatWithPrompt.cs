@@ -49,6 +49,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)//私聊处理
         {
+            if (AppConfig.PersonList.Contains(e.FromQQ) is false)
+            {
+                return new FunctionResult();
+            }
             FunctionResult result = new FunctionResult
             {
                 Result = true,

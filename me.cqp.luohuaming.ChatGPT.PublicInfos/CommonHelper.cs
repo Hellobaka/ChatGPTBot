@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
@@ -56,6 +58,33 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             else
             {
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 下载文件
+        /// </summary>
+        /// <param name="url">网址</param>
+        /// <param name="path">目标文件夹</param>
+        /// <param name="overwrite">重复时是否覆写</param>
+        /// <returns></returns>
+        public static async Task<bool> DownloadFile(string url, string fileName, string path, bool overwrite = false)
+        {
+            using var http = new HttpClient();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(url)) return false;
+                if (!overwrite && File.Exists(Path.Combine(path, fileName))) return true;
+                var r = await http.GetAsync(url);
+                byte[] buffer = await r.Content.ReadAsByteArrayAsync();
+                Directory.CreateDirectory(path);
+                File.WriteAllBytes(Path.Combine(path, fileName), buffer);
+                return true;
+            }
+            catch (Exception e)
+            {
+                MainSave.CQLog.Error("下载文件", e.Message + e.StackTrace);
+                return false;
             }
         }
     }

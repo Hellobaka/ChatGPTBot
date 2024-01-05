@@ -15,11 +15,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string ModelName { get; set; } = "";
 
+        public static string ImageGenerationModelName { get; set; } = "";
+
         public static bool EnableVision { get; set; }
 
         public static int ChatTimeout { get; set; } = 10 * 60;
 
         public static int ChatMaxTokens { get; set; } = 500;
+
+        public static int ImageGenerateSize { get; set; } = 1;
+
+        public static int ImageGenerateQuality { get; set; } = 0;
 
         public static bool EnableGroupReply { get; set; }   
 
@@ -51,21 +57,28 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string ChatPromptOrder { get; set; } = ".预设";
 
+        public static string ImageGenerationOrder { get; set; } = ".画图";
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
+            EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
-            ResponsePrefix = ConfigHelper.GetConfig("ResponsePrefix", "Undefined");
+            AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
+            EnableVision = ConfigHelper.GetConfig("EnableVision", false);
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");
-            EnableVision = ConfigHelper.GetConfig("EnableVision", false);
+            ImageGenerationModelName = ConfigHelper.GetConfig("ImageGenerationModelName", "dall-e-3");
             MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);
-            AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
+            ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 1);
+            ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 0);
+
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
+            ResponsePrefix = ConfigHelper.GetConfig("ResponsePrefix", ".chat");
             ContinueModeOrder = ConfigHelper.GetConfig("ContinueModeOrder", "连续模式");
             AddPromptOrder = ConfigHelper.GetConfig("AddPromptOrder", "添加预设");
             RemovePromptOrder = ConfigHelper.GetConfig("RemovePromptOrder", "移除预设");
@@ -74,7 +87,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             DisableChatOrder = ConfigHelper.GetConfig("DisableChatOrder", "关闭聊天");
             ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
             ChatPromptOrder = ConfigHelper.GetConfig("ChatPromptOrder", ".预设");
-            EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
+            ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
             WelcomeText = ConfigHelper.GetConfig("WelcomeText", "请耐心等待回复...");
         }
     }
