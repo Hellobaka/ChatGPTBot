@@ -38,6 +38,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
                 if (CurrentJObject == null && defaultValue != null)
                 {
+                    return defaultValue;
+                }
+
+                if (defaultValue != null)
+                {
                     SetConfig<T>(sectionName, defaultValue);
                     return defaultValue;
                 }

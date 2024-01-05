@@ -1,23 +1,32 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
+using System;
+using System.IO;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
     public class RemovePrompt : IOrderModel
     {
-        public bool ImplementFlag { get; set; } = false;
-        
-        public string GetOrderStr() => "这里输入触发指令";
+        public bool ImplementFlag { get; set; } = true;
 
-        public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());//这里判断是否能触发指令
+        public int Priority { get; set; } = 100;
 
-        public FunctionResult Progress(CQGroupMessageEventArgs e)//群聊处理
+        public string GetOrderStr()
         {
+            return AppConfig.RemovePromptOrder;
+        }
+
+        public bool Judge(string destStr)
+        {
+            return destStr.Replace("＃", "#").StartsWith(GetOrderStr());
+        }
+
+        public FunctionResult Progress(CQGroupMessageEventArgs e)
+        {
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false)
+            {
+                return new FunctionResult();
+            }
             FunctionResult result = new FunctionResult
             {
                 Result = true,
@@ -26,15 +35,37 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             SendText sendText = new SendText
             {
                 SendID = e.FromGroup,
+                Reply = true
             };
 
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
+            string key = e.Message.Text.Replace(GetOrderStr(), "");
+            if (MainSave.Prompts.ContainsKey(key))
+            {
+                string filePath = MainSave.Prompts[key];
+                if (File.Exists(filePath))
+                {
+                    string removedDir = Path.Combine(MainSave.AppDirectory, "Prompt", "Removed");
+                    Directory.CreateDirectory(removedDir);
+                    File.Move(filePath, Path.Combine(removedDir, $"{filePath}_{DateTime.Now:yyyyMMddHHmmss}.txt"));
+                }
+                MainSave.Prompts.Remove(key);
+                sendText.MsgToSend.Add("删除成功");
+            }
+            else
+            {
+                sendText.MsgToSend.Add("删除失败，不存在该触发词");
+            }
+
             result.SendObject.Add(sendText);
             return result;
         }
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)//私聊处理
         {
+            if (AppConfig.PersonList.Contains(e.FromQQ) is false)
+            {
+                return new FunctionResult();
+            }
             FunctionResult result = new FunctionResult
             {
                 Result = true,
@@ -44,8 +75,23 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 SendID = e.FromQQ,
             };
-
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
+            string key = e.Message.Text.Replace(GetOrderStr(), "");
+            if (MainSave.Prompts.ContainsKey(key))
+            {
+                string filePath = MainSave.Prompts[key];
+                if (File.Exists(filePath))
+                {
+                    string removedDir = Path.Combine(MainSave.AppDirectory, "Prompt", "Removed");
+                    Directory.CreateDirectory(removedDir);
+                    File.Move(filePath, Path.Combine(removedDir, $"{filePath}_{DateTime.Now:yyyyMMddHHmmss}.txt"));
+                }
+                MainSave.Prompts.Remove(key);
+                sendText.MsgToSend.Add("删除成功");
+            }
+            else
+            {
+                sendText.MsgToSend.Add("删除失败，不存在该触发词");
+            }
             result.SendObject.Add(sendText);
             return result;
         }

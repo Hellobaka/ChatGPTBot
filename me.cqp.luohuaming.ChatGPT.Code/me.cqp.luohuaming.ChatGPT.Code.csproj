@@ -63,6 +63,7 @@
     <Compile Include="Event_PrivateMessage.cs" />
     <Compile Include="Event_GroupMessage.cs" />
     <Compile Include="Event_StartUp.cs" />
+    <Compile Include="OrderFunctions\ChatWithPrompt.cs" />
     <Compile Include="OrderFunctions\ResetChat.cs" />
     <Compile Include="OrderFunctions\ListPrompt.cs" />
     <Compile Include="OrderFunctions\RemovePrompt.cs" />

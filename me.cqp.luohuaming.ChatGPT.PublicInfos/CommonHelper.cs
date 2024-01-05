@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;

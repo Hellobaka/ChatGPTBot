@@ -9,6 +9,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         bool ImplementFlag { get; set; }
         string GetOrderStr();
         bool Judge(string destStr);
+        int Priority { get; set; }
         FunctionResult Progress(CQGroupMessageEventArgs e);
         FunctionResult Progress(CQPrivateMessageEventArgs e);
     }

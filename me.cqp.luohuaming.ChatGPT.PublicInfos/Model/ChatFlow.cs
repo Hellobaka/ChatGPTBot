@@ -35,6 +35,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 {
                     return new ChatRequestAssistantMessage(Content);
                 }
+                if (Role == "Prompt")
+                {
+                    return new ChatRequestSystemMessage(Content);
+                }
                 var cqCodes = CQCode.Parse(Content);
                 List<ChatMessageContentItem> items = new();
                 items.Add(new ChatMessageTextContentItem(Regex.Replace(Content, "\\[CQ:.*?\\]", "")));
@@ -81,7 +85,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 messages.Add(item.Build());
             }
             string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
-            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +                    
+            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
                     $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
                     $"\r\nCurrent time: {DateTime.Now:G}\r\n";
             messages.Insert(0, new ChatRequestSystemMessage(systemHint));

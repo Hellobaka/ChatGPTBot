@@ -10,14 +10,21 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
     public class ListPrompt : IOrderModel
     {
-        public bool ImplementFlag { get; set; } = false;
-        
-        public string GetOrderStr() => "这里输入触发指令";
+        public bool ImplementFlag { get; set; } = true;
 
-        public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());//这里判断是否能触发指令
+        public int Priority { get; set; } = 100;
 
-        public FunctionResult Progress(CQGroupMessageEventArgs e)//群聊处理
+        public string GetOrderStr() => AppConfig.ListPromptOrder;
+
+        public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());
+
+        public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false)
+            {
+                return new FunctionResult();
+            }
+
             FunctionResult result = new FunctionResult
             {
                 Result = true,
@@ -25,16 +32,33 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             };
             SendText sendText = new SendText
             {
+                Reply = true,
                 SendID = e.FromGroup,
             };
 
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
+            StringBuilder stringBuilder = new StringBuilder();
+            int index = 1;
+            foreach(var item in MainSave.Prompts)
+            {
+                stringBuilder.AppendLine($"{index}. {item.Key}");
+                index++;
+            }
+            if(stringBuilder.Length == 0)
+            {
+                stringBuilder.AppendLine($"暂无预设，可使用 {AppConfig.AddPromptOrder} 指令添加预设");
+            }
+            stringBuilder.Remove(stringBuilder.Length - 2, 2);
+            sendText.MsgToSend.Add(stringBuilder.ToString());
             result.SendObject.Add(sendText);
             return result;
         }
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)//私聊处理
         {
+            if (AppConfig.PersonList.Contains(e.FromQQ) is false)
+            {
+                return new FunctionResult();
+            }
             FunctionResult result = new FunctionResult
             {
                 Result = true,
@@ -45,7 +69,15 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromQQ,
             };
 
-            sendText.MsgToSend.Add("这里输入需要发送的文本");
+            StringBuilder stringBuilder = new StringBuilder();
+            int index = 1;
+            foreach (var item in MainSave.Prompts)
+            {
+                stringBuilder.AppendLine($"{index}. {item.Key}");
+                index++;
+            }
+            stringBuilder.Remove(stringBuilder.Length - 2, 2);
+            sendText.MsgToSend.Add(stringBuilder.ToString());
             result.SendObject.Add(sendText);
             return result;
         }

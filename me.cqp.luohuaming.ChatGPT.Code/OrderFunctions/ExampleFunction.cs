@@ -11,7 +11,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
     public class ExampleFunction : IOrderModel
     {
         public bool ImplementFlag { get; set; } = false;
-        
+
+        public int Priority { get; set; } = 100;
+
         public string GetOrderStr() => "这里输入触发指令";
 
         public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());//这里判断是否能触发指令

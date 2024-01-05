@@ -10,23 +10,25 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
     {
         public bool ImplementFlag { get; set; } = true;
 
+        public int Priority { get; set; } = 1;
+
         public string GetOrderStr() => AppConfig.ResponsePrefix;
 
         public bool Judge(string destStr) => true;
 
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
-            string message = e.Message;
-            if(AppConfig.GroupList.Contains(e.FromGroup) is false)
+            string message = e.Message.Text;
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false)
             {
                 return new FunctionResult();
             }
-            if(!Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode)
+            if (!Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode)
                 && (!message.Replace("＃", "#").StartsWith(GetOrderStr())))
             {
                 return new FunctionResult();
             }
-            if(AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString()))
+            if (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString()))
             {
                 return new FunctionResult();
             }
@@ -50,7 +52,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
         {
-            string message = e.Message;
+            string message = e.Message.Text;
             if (AppConfig.PersonList.Contains(e.FromQQ) is false)
             {
                 return new FunctionResult();

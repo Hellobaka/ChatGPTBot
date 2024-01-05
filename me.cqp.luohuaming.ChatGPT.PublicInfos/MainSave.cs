@@ -19,5 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string ImageDirectory { get; set; }
 
         public static long CurrentQQ { get; set; }
+
+        public static Dictionary<string, string> Prompts { get; set; } = new();
     }
 }

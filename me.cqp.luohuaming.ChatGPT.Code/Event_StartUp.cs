@@ -20,6 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             MainSave.CQLog = e.CQLog;
             MainSave.ImageDirectory = CommonHelper.GetAppImageDirectory();
             MainSave.CurrentQQ = e.CQApi.GetLoginQQ();
+            Directory.CreateDirectory(Path.Combine(MainSave.AppDirectory, "Prompts"));
             ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
             if (ConfigHelper.Load() is false)
             {
@@ -59,7 +60,18 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             configChangeWatcher.Changed += ConfigChangeWatcher_Changed;
             configChangeWatcher.EnableRaisingEvents = true;
 
+            BuildPromptList();
+
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
+        }
+
+        private void BuildPromptList()
+        {
+            string promptPath = Path.Combine(MainSave.AppDirectory, "Prompts");
+            foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
+            {
+                MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
+            }
         }
 
         private void ConfigChangeWatcher_Changed(object sender, FileSystemEventArgs e)

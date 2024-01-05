@@ -182,6 +182,7 @@
     <Compile Include="MainSave.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Model\ChatFlow.cs" />
+    <Compile Include="Model\Prompt.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

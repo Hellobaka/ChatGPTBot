@@ -49,6 +49,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string WelcomeText { get; set; } = "请耐心等待回复...";
 
+        public static string ChatPromptOrder { get; set; } = ".预设";
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -71,6 +73,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableChatOrder = ConfigHelper.GetConfig("EnableChatOrder", "开启聊天");
             DisableChatOrder = ConfigHelper.GetConfig("DisableChatOrder", "关闭聊天");
             ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
+            ChatPromptOrder = ConfigHelper.GetConfig("ChatPromptOrder", ".预设");
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             WelcomeText = ConfigHelper.GetConfig("WelcomeText", "请耐心等待回复...");
         }

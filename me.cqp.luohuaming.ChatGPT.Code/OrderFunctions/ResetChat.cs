@@ -9,6 +9,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
     {
         public bool ImplementFlag { get; set; } = true;
 
+        public int Priority { get; set; } = 100;
+
         public string GetOrderStr() => AppConfig.ResetChatOrder;
 
         public bool Judge(string destStr) => destStr.Replace("＃", "#").StartsWith(GetOrderStr());
