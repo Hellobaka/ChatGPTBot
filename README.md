@@ -1,18 +1,39 @@
-# BotDevelopmentFramework
+# ChatGPT插件
 
-## 介绍
-CQ机器人开发白框架
+## 功能
+- 功能支持群组与私聊。
+- 若`EnableVision`开启时，发送图片时会自动将模型切换为`gpt-4-vision-preview`
+- 非`Another-Mirai-Native`框架时打开`EnableGroupReply`将可能导致崩溃
 
-## 使用流程
-1. Clone项目
-2. 使用`VSCode`打开项目目录
-3. 全局替换文本 `me.cqp.luohuaming.ChatGPT.` 到 `me.cqp.luohuaming.需要的插件英文.`
-4. 全局替换文本 `ChatGPT.` 到 `需要的插件英文.`
-4. 全局替换文本 `me.cqp.luohuaming.ChatGPT.PublicInfo` 到 `me.cqp.luohuaming.需要的插件英文.me.cqp.luohuaming.ChatGPT.PublicInfo`
-5. 重命名文件夹 `me.cqp.luohuaming.ChatGPT.Core` `me.cqp.luohuaming.ChatGPT.Sdk` `me.cqp.luohuaming.ChatGPT.Tool` 的 `me.cqp.luohuaming.ChatGPT.` 到 `me.cqp.luohuaming.需要的插件英文`
-6. 进入这些文件夹, 对其中的 `me.cqp.luohuaming.ChatGPT.Core.csporj`等文件 的 `me.cqp.luohuaming.ChatGPT.` 进行同理替换
-6. 重命名`me.cqp.luohuaming.ChatGPT.sln`
-7. 使用`VS2019`以上打开项目
-8. 对Core项目的属性-程序集名称进行替换
-8. 更新Fody版本
-8. 所有项目的引用重新引用一遍
+## 配置文件
+配置文件支持热重载，保存后若格式无误则会即时生效
+
+| Key                        | Value | Description                              |
+|----------------------------|-------|------------------------------------------|
+| AddPromptOrder             | 添加预设 | 添加预设的指令                      |
+| APIKey                     |       | 调用接口需要的Key                         |
+| AppendExecuteTime          | true | 消息末尾添加执行时间                       |
+| AtResponse                 | false | 收到@消息时触发回复                        |
+| BaseURL                    | https://api.openai.com | 接口基础Url，例如：https://api.openai.com/v1/chat/completions 需要填入此处的为https://api.openai.com                             |
+| ChatMaxTokens              | 500 | 每次对话消费的最大Token数                  |
+| ChatPromptOrder            | .预设 | 使用预设的指令，触发后，使用指令的用户在接下来一次对话将会使用预设|
+| ChatTimeout                | 600 | 每次调用最大的超时时长 单位ms                                   |
+| ContinueModeOrder          | 连续模式 | 连续模式的指令，使用指令的用户无需触发指令与At就可以触发聊天功能           |
+| DisableChatOrder           | 关闭聊天 | 禁用本群功能的指令，仅限`MasterQQ`用户调用                                         |
+| EnableChatOrder            | 开启聊天 | 启用本群功能的指令，仅限`MasterQQ`用户调用                                         |
+| EnableGroupReply           | false | 仅限`Another-Mirai-Native`兼容框架，启用之后群消息将会使用回复                                         |
+| EnableVision               | false | 是否允许调用`gpt-4-vision-preview`模型                                         |
+| GroupList                  | [] | 启用的群列表                                         |
+| ImageGenerateQuality       | 0 | 图片生成质量：`1 => HD` `0 => Standard `                                       |
+| ImageGenerateSize          | 2 | 图片生成尺寸：`0 => 256x256` `1 => 512x512` `2 => 1024x1024` `3 => 1024x1792` `4 => 1792x1024` 注意：`dall-e-2`模型只可使用0、1、2的尺寸；`dall-e-3`模型只可使用2、3、4的尺寸；                                         |
+| ImageGenerationModelName   | dall-e-3 | 图片生成的模型                                         |
+| ImageGenerationOrder       | .画图 | 调用图片生成的指令                                         |
+| ListPromptOrder            | 预设列表 | 列举所有预设的指令                                         |
+| MasterQQ                   | 114514 | 允许使用指令开启、关闭群组功能的QQ                                         |
+| ModelName                  | gpt-3.5-turbo-16k | 文本聊天使用的模型                                         |
+| PersonList                 | [] | 允许使用私聊触发聊天的QQ列表，需要手动添加                                         |
+| RemovePromptOrder          | 移除预设 | 移除预设的指令                                         |
+| ResetChatOrder             | 重置聊天 | 重置个人聊天上下文指令                                         |
+| ResponsePrefix             | .chat | 调用聊天的前缀之类                                         |
+| StreamMode                 | true | 流式调用结果，启用后可提降低调用失败的概率                                         |
+| WelcomeText                | 请耐心等待回复... | 触发聊天时发送的文本                                         |
