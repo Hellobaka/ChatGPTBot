@@ -17,7 +17,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public int RemoveTimeout { get; set; }
 
-        public long QQ { get; set; }
+        public long ParentId { get; set; }
+
+        public long Id { get; set; }
+
+        public bool IsGroup { get; set; }
 
         public bool ContinuedMode { get; set; }
 
@@ -85,9 +89,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 messages.Add(item.Build());
             }
             string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
-            string systemHint = $"You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
-                    $"\r\nKnowledge cutoff: 2021-09\r\nCurrent model: {AppConfig.ModelName}" +
-                    $"\r\nCurrent time: {DateTime.Now:G}\r\n";
+            string systemHint = IsGroup ? AppConfig.GroupPrompt : AppConfig.PrivatePrompt;
+            systemHint = CommonHelper.TextTemplateParse(systemHint, 0);
             messages.Insert(0, new ChatRequestSystemMessage(systemHint));
             var completionsOptions = new ChatCompletionsOptions(model, messages)
             {

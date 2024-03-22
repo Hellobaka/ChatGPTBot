@@ -87,5 +87,27 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 return false;
             }
         }
+
+        public static string TextTemplateParse(string input, long id)
+        {
+            string modelName = AppConfig.ModelName;
+            string currentTime = DateTime.Now.ToString("G");
+            string botName = AppConfig.BotName;
+
+            input = input.Replace("$ModelName$", modelName)
+                .Replace("$Time$", currentTime)
+                .Replace("$BotName$", botName)
+                .Replace("$Id$", id.ToString());
+
+            string groupNamePattern = "$GroupName$";
+            if (input.Contains(groupNamePattern))
+            {
+                input = input.Replace(groupNamePattern, MainSave.CQApi.GetGroupInfo(id).Name);
+            }
+
+            Regex regex = new("<@(\\d+?)>");
+            input = regex.Replace(input, "[CQ:at,qq=$1]");
+            return input;
+        }
     }
 }

@@ -59,6 +59,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string ImageGenerationOrder { get; set; } = ".画图";
 
+        public static string GroupPrompt { get; set; } = "";
+
+        public static string PrivatePrompt { get; set; } = "You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
+                    "Current model: $ModelName$." +
+                    "Current time: $Time$.";
+
+        public static bool AppendGroupNick { get; set; }
+
+        public static string BotName { get; set; } = "";
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -66,6 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
             AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
             EnableVision = ConfigHelper.GetConfig("EnableVision", false);
+            AppendGroupNick = ConfigHelper.GetConfig("AppendGroupNick", false);
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");
@@ -89,6 +100,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ChatPromptOrder = ConfigHelper.GetConfig("ChatPromptOrder", ".预设");
             ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
             WelcomeText = ConfigHelper.GetConfig("WelcomeText", "请耐心等待回复...");
+            BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
+
+            GroupPrompt = ConfigHelper.GetConfig("GroupPrompt", "You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
+                    "Current model: $ModelName$." +
+                    "Current time: $Time$." +
+                    "你当前在一个QQ群中，你需要区分不同人发送的消息并给出符合群组气氛的回答。" +
+                    "我提供了以下模板供你丰富你的回答：$ModelName$: 当前使用的模型名称\r\n$Time$: 当前时间\r\n$BotName$: 你的自称\r\n$Id$: 此对话关联的ID号\r\n$GroupName$: 此对话关联的群组名称。\r\n另外，如果你需要At对话者，请使用<@ID>的格式，例如<@123456>");
+            PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
+                    "Current model: $ModelName$." +
+                    "Current time: $Time$." +
+                    "我提供了以下模板供你丰富你的回答：$ModelName$: 当前使用的模型名称\r\n$Time$: 当前时间\r\n$BotName$: 你的自称\r\n$Id$: 此对话关联的ID号\r\n$GroupName$: 此对话关联的群组名称。\r\n另外，如果你需要At对话者，请使用<@ID>的格式，例如<@123456>");
         }
     }
 }

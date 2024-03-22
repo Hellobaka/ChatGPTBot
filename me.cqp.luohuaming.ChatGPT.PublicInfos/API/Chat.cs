@@ -14,13 +14,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         public static List<ChatFlow> ChatFlows { get; set; } = new List<ChatFlow>();
 
-        public static string GetChatResult(string question, long qq)
+        public static string GetChatResult(string question, long qq, long groupId, bool isGroup)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             string result = "";
             try
             {
-                var t = CallChatGPTAsync(question, qq);
+                var t = CallChatGPTAsync(question, qq, groupId, isGroup);
                 t.Wait();
                 result = t.Result;
             }
@@ -44,19 +44,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
         }
 
-        private static async Task<string> CallChatGPTAsync(string question, long qq)
+        private static async Task<string> CallChatGPTAsync(string question, long qq, long groupId, bool isGroup)
         {
             string msg = "";
             var client = new OpenAIClient(AppConfig.APIKey, new OpenAIClientOptions());
             var a = Traverse.Create(client).Field("_endpoint");
             a.SetValue(new Uri(a.GetValue().ToString().Replace("https://api.openai.com", AppConfig.BaseURL)));
             client.Pipeline.CreateRequest();
-            ChatFlow flow = ChatFlows.FirstOrDefault(x => x.QQ == qq);
+            if (isGroup && AppConfig.AppendGroupNick)
+            {
+                question = MainSave.CQApi.GetGroupMemberInfo(groupId, qq).Card + " :" + question;
+            }
+            ChatFlow flow = ChatFlows.FirstOrDefault(x => isGroup ? x.ParentId == groupId : x.Id == qq);
             if (flow == null)
             {
                 flow = new()
                 {
-                    QQ = qq
+                    Id = qq,
+                    ParentId = groupId,
+                    IsGroup = isGroup,
                 };
                 ChatFlows.Add(flow);
             }
@@ -64,7 +70,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             flow.Conversations.Add(new ChatFlow.ConversationItem
             {
                 Role = "user",
-                Content = question
+                Content = CommonHelper.TextTemplateParse(question, qq)
             });
 
             var chatCompletionsOptions = flow.BuildMessages();
@@ -86,6 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     ChatResponseMessage responseMessage = response.Value.Choices[0].Message;
                     msg = responseMessage.Content;
                 }
+                msg = CommonHelper.TextTemplateParse(msg, isGroup ? groupId : qq);
                 flow.Conversations.Add(new ChatFlow.ConversationItem
                 {
                     Role = "assistant",

@@ -23,7 +23,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-            if (!Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode)
+            if (!Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
                 && (!message.Replace("＃", "#").StartsWith(GetOrderStr())))
             {
                 return new FunctionResult();
@@ -45,7 +45,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 Reply = true
             };
 
-            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ));
+            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true));
             result.SendObject.Add(sendText);
             return result;
         }
@@ -57,7 +57,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-            if (!Chat.ChatFlows.Any(x => x.QQ == e.FromQQ && x.ContinuedMode)
+            if (!Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
                 && !message.Replace("＃", "#").StartsWith(GetOrderStr()))
             {
                 return new FunctionResult();
@@ -74,7 +74,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromQQ,
             };
 
-            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ));
+            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, 0, false));
             result.SendObject.Add(sendText);
             return result;
         }
