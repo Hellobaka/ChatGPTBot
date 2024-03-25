@@ -102,10 +102,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             string groupNamePattern = "$GroupName$";
             if (input.Contains(groupNamePattern))
             {
-                input = input.Replace(groupNamePattern, MainSave.CQApi.GetGroupInfo(id).Name);
+                input = input.Replace(groupNamePattern, MainSave.CQApi.GetGroupInfo(id)?.Name ?? "未获取到昵称");
             }
 
-            Regex regex = new("<@(\\d+?)>");
+            Regex regex = new("\\[CQ:at,qq=(\\d+)\\]");
+            input = regex.Replace(input, "<@$1>");
+
+            regex = new("<@(\\d+?)>");
             input = regex.Replace(input, "[CQ:at,qq=$1]");
             return input;
         }
