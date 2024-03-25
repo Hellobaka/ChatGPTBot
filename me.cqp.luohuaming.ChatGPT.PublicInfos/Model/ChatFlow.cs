@@ -81,6 +81,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             public bool ContainImage { get; set; }
         }
 
+        public void Init()
+        {
+            string systemHint = IsGroup ? AppConfig.GroupPrompt : AppConfig.PrivatePrompt;
+            systemHint = CommonHelper.TextTemplateParse(systemHint, IsGroup ? ParentId : Id);
+            Conversations.Insert(0, new()
+            {
+                ContainImage = false,
+                Content = systemHint,
+                Role = "Prompt"
+            });
+        }
+
         public ChatCompletionsOptions BuildMessages()
         {
             List<ChatRequestMessage> messages = new();
@@ -89,9 +101,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 messages.Add(item.Build());
             }
             string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
-            string systemHint = IsGroup ? AppConfig.GroupPrompt : AppConfig.PrivatePrompt;
-            systemHint = CommonHelper.TextTemplateParse(systemHint, 0);
-            messages.Insert(0, new ChatRequestSystemMessage(systemHint));
             var completionsOptions = new ChatCompletionsOptions(model, messages)
             {
                 MaxTokens = AppConfig.ChatMaxTokens,

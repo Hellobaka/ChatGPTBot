@@ -44,6 +44,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     ContinuedMode = true,
                     Id = e.FromQQ,
                 };
+                flow.Init();
                 Chat.ChatFlows.Add(flow);
             }
             sendText.MsgToSend.Add($"已{(flow.ContinuedMode ? "开启" : "关闭")}连续聊天");
@@ -78,6 +79,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     ContinuedMode = true,
                     Id = e.FromQQ,
                 };
+                flow.Init();
                 Chat.ChatFlows.Add(flow);
             }
             sendText.MsgToSend.Add($"已{(flow.ContinuedMode ? "开启" : "关闭")}连续聊天");

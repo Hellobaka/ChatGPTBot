@@ -84,6 +84,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         Id = qq
                     };
+                    chatFlow.Init();
                     chatFlow.Conversations.Add(new ChatFlow.ConversationItem()
                     {
                         ContainImage = false,

@@ -53,7 +53,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             client.Pipeline.CreateRequest();
             if (isGroup && AppConfig.AppendGroupNick)
             {
-                question = MainSave.CQApi.GetGroupMemberInfo(groupId, qq).Card + " :" + question;
+                question = (MainSave.CQApi.GetGroupMemberInfo(groupId, qq)?.Card ?? "未获取到昵称") + $"[{qq}]" + ": " + question;
             }
             ChatFlow flow = ChatFlows.FirstOrDefault(x => isGroup ? x.ParentId == groupId : x.Id == qq);
             if (flow == null)
@@ -64,6 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     ParentId = groupId,
                     IsGroup = isGroup,
                 };
+                flow.Init();
                 ChatFlows.Add(flow);
             }
             flow.RemoveTimeout = 0;
