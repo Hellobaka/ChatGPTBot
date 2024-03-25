@@ -2,7 +2,7 @@
 
 ## 功能
 - 功能支持群组与私聊
-- 上下文根据QQ绑定，与群ID无关
+- 上下文根据调用来源不同绑定不同ID：群组绑定群ID；私聊绑定QQ
 - 若`EnableVision`开启时，发送图片时会自动将模型切换为`gpt-4-vision-preview`
 - 非`Another-Mirai-Native`框架时打开`EnableGroupReply`将可能导致崩溃
 
