@@ -23,31 +23,32 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-            if (!Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
-                && (!message.Replace("＃", "#").StartsWith(GetOrderStr())))
-            {
-                return new FunctionResult();
-            }
-            if (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString()))
-            {
-                return new FunctionResult();
-            }
-            e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
-            message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
-            FunctionResult result = new FunctionResult
-            {
-                Result = true,
-                SendFlag = true,
-            };
-            SendText sendText = new SendText
-            {
-                SendID = e.FromGroup,
-                Reply = true
-            };
 
-            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true));
-            result.SendObject.Add(sendText);
-            return result;
+            if (Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
+                || (message.Replace("＃", "#").StartsWith(GetOrderStr()))
+                || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString())))
+            {
+                e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
+                message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
+                FunctionResult result = new FunctionResult
+                {
+                    Result = true,
+                    SendFlag = true,
+                };
+                SendText sendText = new SendText
+                {
+                    SendID = e.FromGroup,
+                    Reply = true
+                };
+
+                sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true));
+                result.SendObject.Add(sendText);
+                return result;
+            }
+            else
+            {
+                return new FunctionResult();
+            }
         }
 
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
