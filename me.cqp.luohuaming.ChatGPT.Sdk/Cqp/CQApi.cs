@@ -822,12 +822,8 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			string data = CQP.CQ_getGroupMemberInfoV2 (this.AppInfo.AuthCode, groupId, qqId, notCache).ToString (CQApi.DefaultEncoding);
 			if (string.IsNullOrEmpty (data))
 			{
-#if DEBUG
-				throw new InvalidDataException ("获取的数据流格式无效");
-#else
-				return null;
-#endif
-			}
+                return null;
+            }
 
 			try
 			{
@@ -835,13 +831,9 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			}
 			catch
 			{
-#if DEBUG
-				throw;
-#else
-				return null;
-#endif
-			}
-		}
+                return null;
+            }
+        }
 		/// <summary>
 		/// 获取群成员列表
 		/// </summary>
@@ -899,26 +891,18 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			string data = CQP.CQ_getGroupInfo (this.AppInfo.AuthCode, groupId, notCache).ToString (CQApi.DefaultEncoding);
 			if (string.IsNullOrEmpty (data))
 			{
-#if DEBUG
-				throw new InvalidDataException ("获取的数据流格式无效");
-#else
-				return null;
-#endif
-			}
+                return null;
+            }
 
-			try
+            try
 			{
 				return new GroupInfo (this, data, false);
 			}
 			catch
 			{
-#if DEBUG
-				throw;
-#else
-				return null;
-#endif
-			}
-		}
+                return null;
+            }
+        }
 		/// <summary>
 		/// 获取群列表
 		/// </summary>
