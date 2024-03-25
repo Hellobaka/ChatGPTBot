@@ -106,10 +106,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                     File.WriteAllText(ConfigFileName, "{}");
                 }
                 CurrentJObject = JObject.Parse(File.ReadAllText(ConfigFileName));
+                MainSave.CQLog.Debug("配置热重载", "OK");
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                MainSave.CQLog.Debug("配置热重载", $"LoadFail: {e.Message}");
                 return false;
             }
         }
