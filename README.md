@@ -40,8 +40,8 @@
 | WelcomeText                | 请耐心等待回复... | 触发聊天时发送的文本 |
 | AppendGroupNick            | false | 是否在群组对话时附加对话者的昵称与QQ |
 | BotName                    | ChatGPT | 主动提供的机器人昵称 |
-| GroupPrompt                | Current model: `$ModelName$`. Current time: `$Time$`.你的昵称是: `$BotName$` | 私聊时使用的Prompt |
-| PrivatePrompt              | Current model: `$ModelName$`. Current time: `$Time$`.你的昵称是: `$BotName$`你当前在一个QQ群中，你需要区分不同人发送的消息并给出符合群组气氛的回答。QQ号即是ID根据配置不同，客户端传递的信息格式也不同。若每条信息满足 昵称[QQ]: 消息 的格式时，客户端会向你提供发言者昵称以及ID，可以依次区分不同的发言者。当用户昵称为“未获取到昵称”时代表客户端真的无法获取此用户的昵称，请使用ID区分。你在发言时无需附加这个格式，只需要回复信息即可。另外，如果你需要At对话者，请使用<@QQ>的格式，例如<@123456>，同理，如果用户提供这个格式表示他需要指向这个人，请从上下文了解这个人的发言历史以及个人信息 | 群组使用的Prompt |
+| PrivatePrompt              | Current model: `$ModelName$`. Current time: `$Time$`.你的昵称是: `$BotName$` | 私聊时使用的Prompt |
+| GroupPrompt                | Current model: `$ModelName$`. Current time: `$Time$`.你的昵称是: `$BotName$`你当前在一个QQ群中，你需要区分不同人发送的消息并给出符合群组气氛的回答。QQ号即是ID根据配置不同，客户端传递的信息格式也不同。若每条信息满足 昵称[QQ]: 消息 的格式时，客户端会向你提供发言者昵称以及ID，可以依次区分不同的发言者。当用户昵称为“未获取到昵称”时代表客户端真的无法获取此用户的昵称，请使用ID区分。你在发言时无需附加这个格式，只需要回复信息即可。另外，如果你需要At对话者，请使用<@QQ>的格式，例如<@123456>，同理，如果用户提供这个格式表示他需要指向这个人，请从上下文了解这个人的发言历史以及个人信息 | 群组使用的Prompt |
 
 ## 文本模板
 | Key                        | Description                              |
