@@ -38,7 +38,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             };
             result.SendObject.Add(sendText);
 
-            var flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ);
+            var flow = Chat.ChatFlows.FirstOrDefault(x => x.ParentId == e.FromGroup && x.IsGroup);
             flow?.RemoveFromFlows();
 
             string key = e.Message.Text.Replace(GetOrderStr(), "").Trim();
@@ -64,7 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             };
             result.SendObject.Add(sendText);
 
-            var flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ);
+            var flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ && !x.IsGroup);
             flow?.RemoveFromFlows();
 
             string key = e.Message.Text.Replace(GetOrderStr(), "").Trim();

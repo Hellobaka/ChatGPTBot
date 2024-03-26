@@ -27,7 +27,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromGroup,
                 Reply = true
             };
-            var chat = Chat.ChatFlows.First(x => x.Id == e.FromQQ);
+            var chat = Chat.ChatFlows.First(x => x.ParentId == e.FromGroup && x.IsGroup);
             if(chat != null)
             {
                 chat.RemoveTimeout = 0;
@@ -55,7 +55,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromQQ,
             };
 
-            var chat = Chat.ChatFlows.First(x => x.Id == e.FromQQ);
+            var chat = Chat.ChatFlows.First(x => x.Id == e.FromQQ && !x.IsGroup);
             if (chat != null)
             {
                 chat.RemoveTimeout = 0;

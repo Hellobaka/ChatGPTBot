@@ -32,7 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromGroup,
                 Reply = true
             };
-            ChatFlow flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ);
+            ChatFlow flow = Chat.ChatFlows.FirstOrDefault(x => x.ParentId == e.FromGroup && x.IsGroup);
             if (flow != null)
             {
                 flow.ContinuedMode = !flow.ContinuedMode;
@@ -67,7 +67,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 SendID = e.FromQQ,
             };
-            ChatFlow flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ);
+            ChatFlow flow = Chat.ChatFlows.FirstOrDefault(x => x.Id == e.FromQQ && !x.IsGroup);
             if (flow != null)
             {
                 flow.ContinuedMode = !flow.ContinuedMode;
