@@ -12,6 +12,10 @@ namespace me.cqp.luohuaming.ChatGPT.Core
     {
         public void GroupMessage(object sender, CQGroupMessageEventArgs e)
         {
+            if (AppConfig.BlackList.Any(x => e.FromQQ == x))
+            {
+                return;
+            }
             FunctionResult result = Event_GroupMessage.GroupMessage(e);
             if (result.SendFlag)
             {
@@ -39,6 +43,11 @@ namespace me.cqp.luohuaming.ChatGPT.Core
 
         public void PrivateMessage(object sender, CQPrivateMessageEventArgs e)
         {
+            if (AppConfig.BlackList.Any(x => e.FromQQ == x))
+            {
+                return;
+            }
+
             FunctionResult result = Event_PrivateMessage.PrivateMessage(e);
             if (result.SendFlag)
             {

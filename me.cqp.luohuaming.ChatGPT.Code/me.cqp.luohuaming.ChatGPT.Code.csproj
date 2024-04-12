@@ -64,6 +64,8 @@
     <Compile Include="Event_GroupMessage.cs" />
     <Compile Include="Event_StartUp.cs" />
     <Compile Include="OrderFunctions\ChatWithPrompt.cs" />
+    <Compile Include="OrderFunctions\AddBlackList.cs" />
+    <Compile Include="OrderFunctions\RemoveBlackList.cs" />
     <Compile Include="OrderFunctions\ImageGeneration.cs" />
     <Compile Include="OrderFunctions\ResetChat.cs" />
     <Compile Include="OrderFunctions\ListPrompt.cs" />

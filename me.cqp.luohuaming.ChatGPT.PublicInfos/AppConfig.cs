@@ -37,6 +37,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static List<long> GroupList { get; set; } = new List<long>();
 
+        public static List<long> BlackList { get; set; } = new List<long>();
+
         public static List<long> PersonList { get; set; } = new List<long>();
 
         public static string ContinueModeOrder { get; set; } = "";
@@ -58,6 +60,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string ChatPromptOrder { get; set; } = ".预设";
 
         public static string ImageGenerationOrder { get; set; } = ".画图";
+
+        public static string AddBlackListOrder { get; set; } = ".添加黑名单";
+
+        public static string RemoveBlackListOrder { get; set; } = ".移除黑名单";
 
         public static string GroupPrompt { get; set; } = "";
 
@@ -89,6 +95,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
+            BlackList = ConfigHelper.GetConfig("BlackList", new List<long>());
             ResponsePrefix = ConfigHelper.GetConfig("ResponsePrefix", ".chat");
             ContinueModeOrder = ConfigHelper.GetConfig("ContinueModeOrder", "连续模式");
             AddPromptOrder = ConfigHelper.GetConfig("AddPromptOrder", "添加预设");
@@ -99,6 +106,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
             ChatPromptOrder = ConfigHelper.GetConfig("ChatPromptOrder", ".预设");
             ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
+            AddBlackListOrder = ConfigHelper.GetConfig("AddBlackListOrder", ".添加黑名单");
+            RemoveBlackListOrder = ConfigHelper.GetConfig("RemoveBlackListOrder", ".移除黑名单");
             WelcomeText = ConfigHelper.GetConfig("WelcomeText", "请耐心等待回复...");
             BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
 
