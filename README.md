@@ -22,9 +22,12 @@
 | ContinueModeOrder          | 连续模式 | 连续模式的指令，使用指令的用户无需触发指令与At就可以触发聊天功能 |
 | DisableChatOrder           | 关闭聊天 | 禁用本群功能的指令，仅限`MasterQQ`用户调用 |
 | EnableChatOrder            | 开启聊天 | 启用本群功能的指令，仅限`MasterQQ`用户调用 |
+| AddBlackListOrder          | .添加黑名单 | 私聊添加黑名单的指令，仅限`MasterQQ`用户调用 |
+| RemoveBlackListOrder       | .移除黑名单 | 私聊移除黑名单的指令，仅限`MasterQQ`用户调用 |
 | EnableGroupReply           | false | 仅限`Another-Mirai-Native`兼容框架，启用之后群消息将会使用回复 |
 | EnableVision               | false | 是否允许调用`gpt-4-vision-preview`模型 |
 | GroupList                  | [] | 启用的群列表 |
+| BlackList                  | [] | 全局黑名单 |
 | ImageGenerateQuality       | 0 | 图片生成质量：`1 => HD` `0 => Standard` |
 | ImageGenerateSize          | 2 | 图片生成尺寸：`0 => 256x256` `1 => 512x512` `2 => 1024x1024` `3 => 1024x1792` `4 => 1792x1024` 注意：`dall-e-2`模型只可使用0、1、2的尺寸；`dall-e-3`模型只可使用2、3、4的尺寸； |
 | ImageGenerationModelName   | dall-e-3 | 图片生成的模型 |
