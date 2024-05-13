@@ -6,6 +6,10 @@
 - 若`EnableVision`开启时，发送图片时会自动将模型切换为`gpt-4-vision-preview`
 - 非`Another-Mirai-Native`框架时打开`EnableGroupReply`将可能导致崩溃
 
+## TTS功能
+- 使用[edge-tts](https://github.com/rany2/edge-tts)库
+- 请按照第三方库中提及的方式进行安装，保证能够使用`cmd`访问`python`以及`edge-tts`
+
 ## 配置文件
 配置文件支持热重载，保存后若格式无误则会即时生效
 
