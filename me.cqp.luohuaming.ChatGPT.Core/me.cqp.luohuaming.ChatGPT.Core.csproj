@@ -251,10 +251,6 @@
       <Project>{7a675aac-50c1-49a8-a663-9caa6674c614}</Project>
       <Name>me.cqp.luohuaming.ChatGPT.Code</Name>
     </ProjectReference>
-    <ProjectReference Include="..\me.cqp.luohuaming.ChatGPT.UI\me.cqp.luohuaming.ChatGPT.UI.csproj">
-      <Project>{6e9094e7-eb54-4bdd-9caf-eac840e35362}</Project>
-      <Name>me.cqp.luohuaming.ChatGPT.UI</Name>
-    </ProjectReference>
     <ProjectReference Include="..\me.cqp.luohuaming.ChatGPT.Sdk\me.cqp.luohuaming.ChatGPT.Sdk.csproj">
       <Project>{d7a958b3-79d9-49f8-8bb4-9619bab6ecba}</Project>
       <Name>me.cqp.luohuaming.ChatGPT.Sdk</Name>

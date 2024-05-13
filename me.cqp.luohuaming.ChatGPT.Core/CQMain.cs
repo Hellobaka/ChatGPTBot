@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity;
 using me.cqp.luohuaming.ChatGPT.Code;
-using me.cqp.luohuaming.ChatGPT.UI;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 
 namespace me.cqp.luohuaming.ChatGPT.Core
@@ -23,7 +22,6 @@ namespace me.cqp.luohuaming.ChatGPT.Core
 		{
 			unityContainer.RegisterType<IGroupMessage, MainExport>("群消息处理");
 			unityContainer.RegisterType<IPrivateMessage, MainExport>("私聊消息处理");
-			unityContainer.RegisterType<IMenuCall, Event_MenuCall>("控制台");
 			unityContainer.RegisterType<ICQStartup, Event_StartUp>("酷Q启动事件");
 
 		}
