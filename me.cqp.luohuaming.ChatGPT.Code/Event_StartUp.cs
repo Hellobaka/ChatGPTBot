@@ -3,6 +3,7 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Timers;
@@ -19,6 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             MainSave.CQApi = e.CQApi;
             MainSave.CQLog = e.CQLog;
             MainSave.ImageDirectory = CommonHelper.GetAppImageDirectory();
+            MainSave.RecordDirectory = CommonHelper.GetAppRecordDirectory();
             MainSave.CurrentQQ = e.CQApi.GetLoginQQ();
             Directory.CreateDirectory(Path.Combine(MainSave.AppDirectory, "Prompts"));
             ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
@@ -62,7 +64,45 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             BuildPromptList();
 
+            CheckTTS();
+
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
+        }
+
+        private void CheckTTS()
+        {
+            if (AppConfig.EnableTTS is false)
+            {
+                return;
+            }
+
+            ProcessStartInfo startInfo = new()
+            {
+                FileName = "cmd.exe",
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = Process.Start(startInfo);
+            process.StandardInput.WriteLine("python --version");
+            process.StandardInput.Flush();
+            process.StandardInput.Close();
+            process.WaitForExit();
+
+            string output = process.StandardOutput.ReadToEnd();
+            string error = process.StandardError.ReadToEnd();
+
+            bool success = output.Contains("Python 3.") || error.Contains("Python 3.");
+
+            if (!success)
+            {
+                MainSave.CQLog.Error("TTS", "未检测到python环境");
+            }
+
+            TTSHelper.Enabled = success;
         }
 
         private void BuildPromptList()

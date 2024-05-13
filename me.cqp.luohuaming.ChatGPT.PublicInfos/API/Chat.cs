@@ -14,7 +14,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         public static List<ChatFlow> ChatFlows { get; set; } = new List<ChatFlow>();
 
-        public static string GetChatResult(string question, long qq, long groupId, bool isGroup)
+        public static string GetChatResult(string question, long qq, long groupId, bool isGroup, out long ms)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
             string result = "";
@@ -34,14 +34,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
             }
             stopwatch.Stop();
-            if (AppConfig.AppendExecuteTime)
-            {
-                return result + $" ({stopwatch.ElapsedMilliseconds / 1000.0:f2}s)";
-            }
-            else
-            {
-                return result;
-            }
+            ms = stopwatch.ElapsedMilliseconds;
+            return result;
         }
 
         private static async Task<string> CallChatGPTAsync(string question, long qq, long groupId, bool isGroup)

@@ -75,6 +75,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string BotName { get; set; } = "";
 
+        public static bool EnableTTS { get; set; }
+
+        public static bool SendTextBeforeTTS { get; set; } = true;
+
+        public static bool SendErrorTextWhenTTSFail { get; set; } = false;
+
+        public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -83,6 +91,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
             EnableVision = ConfigHelper.GetConfig("EnableVision", false);
             AppendGroupNick = ConfigHelper.GetConfig("AppendGroupNick", false);
+            EnableTTS = ConfigHelper.GetConfig("EnableTTS", false);
+            SendTextBeforeTTS = ConfigHelper.GetConfig("SendTextBeforeTTS", true);
+            SendErrorTextWhenTTSFail = ConfigHelper.GetConfig("SendErrorTextWhenTTSFail", false);
+            TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");

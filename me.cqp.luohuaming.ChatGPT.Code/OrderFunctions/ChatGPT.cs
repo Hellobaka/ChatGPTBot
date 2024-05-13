@@ -2,6 +2,8 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
+using System;
+using System.IO;
 using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
@@ -41,7 +43,29 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     Reply = true
                 };
 
-                sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true));
+                string gptResult = Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true, out long ms);
+                if (TTSHelper.Enabled)
+                {
+                    string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
+                    Directory.CreateDirectory(dir);
+                    string fileName = $"{DateTime.Now:yyyyMMddHHmmss}.mp3";
+                    if (AppConfig.SendTextBeforeTTS)
+                    {
+                        e.FromGroup.SendGroupMessage(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                    }
+                    if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
+                    {
+                        sendText.MsgToSend.Add(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
+                    }
+                    else if (AppConfig.SendErrorTextWhenTTSFail)
+                    {
+                        sendText.MsgToSend.Add("语音合成失败");
+                    }
+                }
+                else
+                {
+                    sendText.MsgToSend.Add(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                }
                 result.SendObject.Add(sendText);
                 return result;
             }
@@ -74,8 +98,29 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 SendID = e.FromQQ,
             };
-
-            sendText.MsgToSend.Add(Chat.GetChatResult(message, e.FromQQ, 0, false));
+            string gptResult = Chat.GetChatResult(message, e.FromQQ, 0, false, out long ms);
+            if (TTSHelper.Enabled)
+            {
+                string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
+                Directory.CreateDirectory(dir);
+                string fileName = $"{DateTime.Now:yyyyMMddHHmmss}.mp3";
+                if (AppConfig.SendTextBeforeTTS)
+                {
+                    e.FromQQ.SendPrivateMessage(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                }
+                if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
+                {
+                    sendText.MsgToSend.Add(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
+                }
+                else if (AppConfig.SendErrorTextWhenTTSFail)
+                {
+                    sendText.MsgToSend.Add("语音合成失败");
+                }
+            }
+            else
+            {
+                sendText.MsgToSend.Add(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+            }
             result.SendObject.Add(sendText);
             return result;
         }

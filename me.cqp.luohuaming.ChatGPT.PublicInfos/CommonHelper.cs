@@ -27,6 +27,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             return ImageDirectory;
         }
 
+        public static string GetAppRecordDirectory()
+        {
+            return Path.Combine(Environment.CurrentDirectory, "data", "record\\");
+        }
+
         public static string ParsePic2Base64(string path)
         {
             return File.Exists(path) ? Convert.ToBase64String(File.ReadAllBytes(path)) : null;
