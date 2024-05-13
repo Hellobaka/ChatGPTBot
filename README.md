@@ -18,6 +18,10 @@
 | AddPromptOrder             | 添加预设 | 添加预设的指令 |
 | APIKey                     |       | 调用接口需要的Key |
 | AppendExecuteTime          | true | 消息末尾添加执行时间 |
+| EnableTTS                  | false | 启用TTS功能 |
+| SendTextBeforeTTS          | true | 是否在发送语音前发送文本，关闭后只有语音发送 |
+| SendErrorTextWhenTTSFail   | false | 在语音合成失败之后，额外发送一个失败消息 |
+| TTSVoice                   | zh-CN-YunxiNeural | 调用TTS的语言模型，可用`edge-tts --list-voices`查看可用列表 |
 | AtResponse                 | false | 收到@消息时触发回复 |
 | BaseURL                    | https://api.openai.com | 接口基础Url，例如：https://api.openai.com/v1/chat/completions 需要填入此处的为https://api.openai.com |
 | ChatMaxTokens              | 500 | 每次对话消费的最大Token数 |
