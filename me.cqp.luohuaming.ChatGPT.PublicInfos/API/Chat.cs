@@ -1,12 +1,11 @@
-﻿using Azure;
-using Azure.AI.OpenAI;
-using HarmonyLib;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using OpenAI;
+using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -20,9 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             string result = "";
             try
             {
-                var t = CallChatGPTAsync(question, qq, groupId, isGroup);
-                t.Wait();
-                result = t.Result;
+                result = CallChatGPTAsync(question, qq, groupId, isGroup);
             }
             catch (Exception ex)
             {
@@ -38,13 +35,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return result;
         }
 
-        private static async Task<string> CallChatGPTAsync(string question, long qq, long groupId, bool isGroup)
+        private static string CallChatGPTAsync(string question, long qq, long groupId, bool isGroup)
         {
             string msg = "";
-            var client = new OpenAIClient(AppConfig.APIKey, new OpenAIClientOptions());
-            var a = Traverse.Create(client).Field("_endpoint");
-            a.SetValue(new Uri(a.GetValue().ToString().Replace("https://api.openai.com", AppConfig.BaseURL)));
-            client.Pipeline.CreateRequest();
+            var c = new OpenAIClient(AppConfig.APIKey, new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
+            var client = c.GetChatClient(AppConfig.ModelName);
             if (isGroup && AppConfig.AppendGroupNick)
             {
                 question = (MainSave.CQApi.GetGroupMemberInfo(groupId, qq)?.Card ?? "未获取到昵称") + $"[{qq}]" + ": " + question;
@@ -68,24 +63,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 Content = CommonHelper.TextTemplateParse(question, qq)
             });
 
-            var chatCompletionsOptions = flow.BuildMessages();
+            var chatMessages = flow.BuildMessages();
             try
             {
                 if (AppConfig.StreamMode)
                 {
-                    await foreach (StreamingChatCompletionsUpdate chatUpdate in client.GetChatCompletionsStreaming(chatCompletionsOptions))
+                    foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, options: new ChatCompletionOptions { MaxTokens = AppConfig.ChatMaxTokens, }))
                     {
-                        if (!string.IsNullOrEmpty(chatUpdate.ContentUpdate))
+                        foreach (ChatMessageContentPart contentPart in chatUpdate.ContentUpdate)
                         {
-                            msg += chatUpdate.ContentUpdate;
+                            if (string.IsNullOrEmpty(contentPart.Text) && contentPart.ImageBytes != null && !contentPart.ImageBytes.IsEmpty)
+                            {
+                                Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
+                                string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
+                                File.WriteAllBytes(filePath, contentPart.ImageBytes.ToArray());
+                                msg += $"[CQ:image,file=ChatGPT\\{Path.GetFileName(filePath)}]";
+                            }
+                            else if(!string.IsNullOrEmpty(contentPart.Text))
+                            {
+                                msg += contentPart.Text;
+                            }
                         }
                     }
                 }
                 else
                 {
-                    Response<ChatCompletions> response = await client.GetChatCompletionsAsync(chatCompletionsOptions);
-                    ChatResponseMessage responseMessage = response.Value.Choices[0].Message;
-                    msg = responseMessage.Content;
+                    msg += client.CompleteChat(chatMessages);
                 }
                 msg = CommonHelper.TextTemplateParse(msg, isGroup ? groupId : qq);
                 flow.Conversations.Add(new ChatFlow.ConversationItem
