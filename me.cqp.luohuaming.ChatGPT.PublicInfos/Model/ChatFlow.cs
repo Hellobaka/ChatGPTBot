@@ -1,8 +1,10 @@
 ﻿using Azure.AI.OpenAI;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -33,52 +35,53 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             public string Content { get; set; }
 
-            public ChatRequestMessage Build()
+            public ChatMessage Build()
             {
                 if (Role == "assistant")
                 {
-                    return new ChatRequestAssistantMessage(Content);
+                    return new AssistantChatMessage(Content);
                 }
                 if (Role == "Prompt")
                 {
-                    return new ChatRequestSystemMessage(Content);
+                    return new SystemChatMessage(Content);
                 }
                 var cqCodes = CQCode.Parse(Content);
-                List<ChatMessageContentItem> items = new();
-                items.Add(new ChatMessageTextContentItem(Regex.Replace(Content, "\\[CQ:.*?\\]", "")));
+                List<ChatMessageContentPart> items = new()
+                {
+                    ChatMessageContentPart.CreateTextMessageContentPart(Regex.Replace(Content, "\\[CQ:.*?\\]", ""))
+                };
                 foreach (var item in cqCodes)
                 {
                     if (item.Function == Sdk.Cqp.Enum.CQFunction.Image)
                     {
-                        ContainImage = true;
-
-                        #region 当SDK支持时 改为以下方式
-                        //Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
-                        //string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
-                        //try
-                        //{
-                        //    string path = MainSave.CQApi.ReceiveImage(item);
-                        //    File.Move(path, filePath);
-                        //    message.MultimodalContentItems.Add(new ChatMessageImageContentItem(new Uri($"data:image/jpeg;base64,{CommonHelper.ParsePic2Base64(filePath)}")));
-                        //}
-                        //catch(Exception e)
-                        //{
-                        //    MainSave.CQLog.Warning("保存图片", $"ReceiveImage: {e.Message}\r\n{e.StackTrace}");
-                        //}
-                        #endregion
-
-                        var url = CommonHelper.GetImageURL(item);
-                        if (string.IsNullOrEmpty(url) is false)
+                        Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
+                        string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
+                        try
                         {
-                            items.Add(new ChatMessageImageContentItem(new Uri(url)));
+                            if (item.Items.TryGetValue("file", out string fileName))
+                            {
+                                string path = Path.Combine(MainSave.ImageDirectory, fileName);
+                                if (File.Exists(path))
+                                {
+                                    items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"));
+                                }
+                            }
+                            else
+                            {
+                                string path = MainSave.CQApi.ReceiveImage(item);
+                                File.Move(path, filePath);
+                                items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"));
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            MainSave.CQLog.Warning("保存图片", $"ReceiveImage: {e.Message}\r\n{e.StackTrace}");
                         }
                     }
                 }
-                ChatRequestUserMessage message = new(items);
+                UserChatMessage message = new(items);
                 return message;
             }
-
-            public bool ContainImage { get; set; }
         }
 
         public void Init()
@@ -87,25 +90,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             systemHint = CommonHelper.TextTemplateParse(systemHint, IsGroup ? ParentId : Id);
             Conversations.Insert(0, new()
             {
-                ContainImage = false,
                 Content = systemHint,
                 Role = "Prompt"
             });
         }
 
-        public ChatCompletionsOptions BuildMessages()
+        public List<ChatMessage> BuildMessages()
         {
-            List<ChatRequestMessage> messages = new();
+            List<ChatMessage> messages = new();
             foreach (var item in Conversations)
             {
                 messages.Add(item.Build());
             }
-            string model = Conversations.Any(x => x.ContainImage) && AppConfig.EnableVision ? "gpt-4-vision-preview" : AppConfig.ModelName;
-            var completionsOptions = new ChatCompletionsOptions(model, messages)
-            {
-                MaxTokens = AppConfig.ChatMaxTokens,
-            };
-            return completionsOptions;
+            return messages;
         }
 
         public void RemoveFromFlows()

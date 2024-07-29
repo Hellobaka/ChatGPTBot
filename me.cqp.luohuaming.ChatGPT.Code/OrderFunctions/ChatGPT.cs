@@ -51,11 +51,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     string fileName = $"{DateTime.Now:yyyyMMddHHmmss}.mp3";
                     if (AppConfig.SendTextBeforeTTS)
                     {
-                        e.FromGroup.SendGroupMessage(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                        sendText.MsgToSend.Add(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
                     }
                     if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
                     {
-                        sendText.MsgToSend.Add(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
+                        e.FromGroup.SendGroupMessage(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
                     }
                     else if (AppConfig.SendErrorTextWhenTTSFail)
                     {

@@ -15,10 +15,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string ModelName { get; set; } = "";
 
-        public static string ImageGenerationModelName { get; set; } = "";
-
-        public static bool EnableVision { get; set; }
-
         public static int ChatTimeout { get; set; } = 10 * 60;
 
         public static int ChatMaxTokens { get; set; } = 500;
@@ -89,7 +85,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
             AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
-            EnableVision = ConfigHelper.GetConfig("EnableVision", false);
             AppendGroupNick = ConfigHelper.GetConfig("AppendGroupNick", false);
             EnableTTS = ConfigHelper.GetConfig("EnableTTS", false);
             SendTextBeforeTTS = ConfigHelper.GetConfig("SendTextBeforeTTS", true);
@@ -98,7 +93,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");
-            ImageGenerationModelName = ConfigHelper.GetConfig("ImageGenerationModelName", "dall-e-3");
             MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);

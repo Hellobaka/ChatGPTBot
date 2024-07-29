@@ -66,22 +66,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         {
             try
             {
-                var imgTask = PublicInfos.API.ImageGeneration.GetImageGenerationAsync(prompt);
-                imgTask.Wait();
-                string imgPath = Path.Combine(MainSave.ImageDirectory, "OpenAI_Image");
-                Directory.CreateDirectory(imgPath);
-
-                string fileName = $"{DateTime.Now:yyyyMMddHHmmssfff}.png";
-                var downloadTask = CommonHelper.DownloadFile(imgTask.Result, fileName, imgPath);
-                downloadTask.Wait();
-                if (downloadTask.Result is false)
-                {
-                    return "下载图片失败";
-                }
-                else
-                {
-                    return CQApi.CQCode_Image(Path.Combine("OpenAI_Image", fileName)).ToString();
-                }
+                return PublicInfos.API.ImageGeneration.GetImageGenerationAsync(prompt);
             }
             catch (Exception e)
             {
