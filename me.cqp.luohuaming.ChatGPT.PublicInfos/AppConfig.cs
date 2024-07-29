@@ -91,8 +91,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SendErrorTextWhenTTSFail = ConfigHelper.GetConfig("SendErrorTextWhenTTSFail", false);
             TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
             APIKey = ConfigHelper.GetConfig("APIKey", "");
-            BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com");
-            ModelName = ConfigHelper.GetConfig("ModelName", "gpt-3.5-turbo-16k");
+            BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com/v1");
+            ModelName = ConfigHelper.GetConfig("ModelName", "gpt-4o");
             MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);
