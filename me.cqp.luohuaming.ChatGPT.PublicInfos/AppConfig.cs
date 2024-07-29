@@ -96,8 +96,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);
-            ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 1);
-            ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 0);
+            ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 2);
+            ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 1);
 
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
