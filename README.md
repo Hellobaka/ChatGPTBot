@@ -3,7 +3,6 @@
 ## 功能
 - 功能支持群组与私聊
 - 上下文根据调用来源不同绑定不同ID：群组绑定群ID；私聊绑定QQ
-- 若`EnableVision`开启时，发送图片时会自动将模型切换为`gpt-4-vision-preview`
 - 非`Another-Mirai-Native`框架时打开`EnableGroupReply`将可能导致崩溃
 
 ## TTS功能
@@ -23,7 +22,7 @@
 | SendErrorTextWhenTTSFail   | false | 在语音合成失败之后，额外发送一个失败消息 |
 | TTSVoice                   | zh-CN-YunxiNeural | 调用TTS的语言模型，可用`edge-tts --list-voices`查看可用列表 |
 | AtResponse                 | false | 收到@消息时触发回复 |
-| BaseURL                    | https://api.openai.com | 接口基础Url，例如：https://api.openai.com/v1/chat/completions 需要填入此处的为https://api.openai.com |
+| BaseURL                    | https://api.openai.com/v1 | 接口基础Url，例如：https://api.openai.com/v1/chat/completions 需要填入此处的为https://api.openai.com/v1 |
 | ChatMaxTokens              | 500 | 每次对话消费的最大Token数 |
 | ChatPromptOrder            | .预设 | 使用预设的指令，触发后，使用指令的用户在接下来一次对话将会使用预设 |
 | ChatTimeout                | 600 | 每次调用最大的超时时长 单位s |
@@ -33,16 +32,15 @@
 | AddBlackListOrder          | .添加黑名单 | 私聊添加黑名单的指令，仅限`MasterQQ`用户调用 |
 | RemoveBlackListOrder       | .移除黑名单 | 私聊移除黑名单的指令，仅限`MasterQQ`用户调用 |
 | EnableGroupReply           | false | 仅限`Another-Mirai-Native`兼容框架，启用之后群消息将会使用回复 |
-| EnableVision               | false | 是否允许调用`gpt-4-vision-preview`模型 |
 | GroupList                  | [] | 启用的群列表 |
 | BlackList                  | [] | 全局黑名单 |
-| ImageGenerateQuality       | 0 | 图片生成质量：`1 => HD` `0 => Standard` |
+| ImageGenerateQuality       | 1 | 图片生成质量：`1 => HD` `0 => Standard` |
 | ImageGenerateSize          | 2 | 图片生成尺寸：`0 => 256x256` `1 => 512x512` `2 => 1024x1024` `3 => 1024x1792` `4 => 1792x1024` 注意：`dall-e-2`模型只可使用0、1、2的尺寸；`dall-e-3`模型只可使用2、3、4的尺寸； |
 | ImageGenerationModelName   | dall-e-3 | 图片生成的模型 |
 | ImageGenerationOrder       | .画图 | 调用图片生成的指令 |
 | ListPromptOrder            | 预设列表 | 列举所有预设的指令 |
 | MasterQQ                   | 114514 | 允许使用指令开启、关闭群组功能的QQ |
-| ModelName                  | gpt-3.5-turbo-16k | 文本聊天使用的模型 |
+| ModelName                  | gpt-4o | 文本聊天使用的模型 |
 | PersonList                 | [] | 允许使用私聊触发聊天的QQ列表，需要手动添加 |
 | RemovePromptOrder          | 移除预设 | 移除预设的指令 |
 | ResetChatOrder             | 重置聊天 | 重置个人聊天上下文指令 |
