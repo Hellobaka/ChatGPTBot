@@ -30,7 +30,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 || (message.Replace("＃", "#").StartsWith(GetOrderStr()))
                 || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString())))
             {
-                e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
+                if (!string.IsNullOrWhiteSpace(AppConfig.WelcomeText))
+                {
+                    e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
+                }
                 message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
                 FunctionResult result = new FunctionResult
                 {
