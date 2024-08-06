@@ -42,7 +42,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             flow?.RemoveFromFlows();
 
             string key = e.Message.Text.Replace(GetOrderStr(), "").Trim();
-            AddChatFlowWithPrompt(e.FromQQ, sendText, key);
+            AddChatFlowWithPrompt(e.FromQQ, e.FromGroup, sendText, key);
 
             return result;
         }
@@ -68,11 +68,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             flow?.RemoveFromFlows();
 
             string key = e.Message.Text.Replace(GetOrderStr(), "").Trim();
-            AddChatFlowWithPrompt(e.FromQQ, sendText, key);
+            AddChatFlowWithPrompt(e.FromQQ, 0, sendText, key);
             return result;
         }
 
-        private static void AddChatFlowWithPrompt(long qq, SendText sendText, string key)
+        private static void AddChatFlowWithPrompt(long qq, long group, SendText sendText, string key)
         {
             if (MainSave.Prompts.ContainsKey(key))
             {
@@ -82,7 +82,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     string prompt = System.IO.File.ReadAllText(filePath);
                     ChatFlow chatFlow = new ChatFlow()
                     {
-                        Id = qq
+                        Id = qq,
+                        IsGroup = group != 0,
+                        ParentId = group,
                     };
                     chatFlow.Init();
                     chatFlow.Conversations.Add(new ChatFlow.ConversationItem()
