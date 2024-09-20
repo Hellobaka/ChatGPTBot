@@ -64,6 +64,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                                 if (File.Exists(path))
                                 {
                                     items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"));
+                                    MainSave.CQLog.Debug("视觉", "向消息序列中添加了图片元素");
+                                }
+                                else
+                                {
+                                    MainSave.CQLog.Info("视觉", "指定的图片不存在，无法发送");
                                 }
                             }
                             else
