@@ -79,6 +79,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
 
+        public static bool RandomReply {  get; set; } = false;
+
+        public static int RandomReplyMinuteInterval { get; set; } = 1;
+
+        public static int RandomReplyConversationCount { get; set; } = 20;
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -128,6 +134,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "Current model: $ModelName$." +
                     "Current time: $Time$." + 
                     "你的昵称是: $BotName$");
+
+            RandomReply = ConfigHelper.GetConfig("RandomReply", false);
+            RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
+            RandomReplyConversationCount = ConfigHelper.GetConfig("RandomReplyConversationCount", 10);
         }
     }
 }
