@@ -47,7 +47,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             for (int i = 0; i < search.Count; i++)
             {
                 var item = search[i];
-                if ((item.ReceiveTime - DateTime.Now).TotalMinutes > AppConfig.RandomReplyMinuteInterval)
+                if ((DateTime.Now - item.ReceiveTime).TotalMinutes > AppConfig.RandomReplyMinuteInterval)
                 {
                     Records.Remove(item);
                 }
