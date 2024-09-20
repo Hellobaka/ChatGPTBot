@@ -32,7 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 chat.RemoveTimeout = 0;
                 chat.Conversations.Clear();
-
+                Record.RemoveRecords(e.FromGroup);
                 sendText.MsgToSend.Add("已重置聊天");
                 result.SendObject.Add(sendText);
                 return result;
