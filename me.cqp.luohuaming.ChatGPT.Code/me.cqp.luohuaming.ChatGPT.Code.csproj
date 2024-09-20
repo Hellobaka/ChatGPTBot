@@ -37,7 +37,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
-    <LangVersion>11</LangVersion>
+    <LangVersion>12</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
@@ -65,6 +65,7 @@
     <Compile Include="Event_StartUp.cs" />
     <Compile Include="OrderFunctions\ChatWithPrompt.cs" />
     <Compile Include="OrderFunctions\AddBlackList.cs" />
+    <Compile Include="OrderFunctions\Record.cs" />
     <Compile Include="OrderFunctions\RemoveBlackList.cs" />
     <Compile Include="OrderFunctions\ImageGeneration.cs" />
     <Compile Include="OrderFunctions\ResetChat.cs" />
