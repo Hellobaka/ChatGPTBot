@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             Conversations.Insert(0, new()
             {
                 Content = systemHint,
-                Role = "Prompt"
+                Role = "system"
             });
         }
 

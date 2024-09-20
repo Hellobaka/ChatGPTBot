@@ -64,7 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     Reply = true
                 };
                 Stopwatch sw = Stopwatch.StartNew();
-                string gptResult = Chat.GetChatResult(Records.Where(x => x.GroupID == e.FromGroup).ToList());
+                string gptResult = Chat.GetChatResult(Records.Where(x => x.GroupID == e.FromGroup).ToList(), AppConfig.GroupPrompt);
                 sw.Stop();
                 double ms = sw.ElapsedMilliseconds;
 

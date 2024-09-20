@@ -76,10 +76,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return msg;
         }
 
-        public static string GetChatResult(List<ChatRecords> chatMessages)
+        public static string GetChatResult(List<ChatRecords> chatMessages, string prompt = "")
         {
             ChatFlow messages = new();
-            messages.Init();
+            prompt = CommonHelper.TextTemplateParse(prompt, chatMessages.First().GroupID);
+            messages.Conversations.Insert(0, new()
+            {
+                Content = prompt,
+                Role = "system"
+            });
             foreach(var item in chatMessages)
             {
                 messages.Conversations.Add(new ChatFlow.ConversationItem
