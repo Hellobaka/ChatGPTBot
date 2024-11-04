@@ -60,10 +60,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                         {
                             if (item.Items.TryGetValue("file", out string fileName))
                             {
-                                string path = Path.Combine(MainSave.ImageDirectory, fileName);
-                                if (File.Exists(path))
+                                string path = MainSave.CQApi.ReceiveImage(item);
+                                File.Move(path, filePath);
+                                if (File.Exists(filePath))
                                 {
-                                    items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"));
+                                    items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
                                     MainSave.CQLog.Debug("视觉", "向消息序列中添加了图片元素");
                                 }
                                 else
@@ -73,9 +74,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                             }
                             else
                             {
-                                string path = MainSave.CQApi.ReceiveImage(item);
-                                File.Move(path, filePath);
-                                items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"));
+                                MainSave.CQLog.Info("视觉", "指定的图片不存在，无法发送");
                             }
                         }
                         catch (Exception e)
