@@ -48,7 +48,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 var cqCodes = CQCode.Parse(Content);
                 List<ChatMessageContentPart> items = new()
                 {
-                    ChatMessageContentPart.CreateTextMessageContentPart(Regex.Replace(Content, "\\[CQ:.*?\\]", ""))
+                    ChatMessageContentPart.CreateTextPart(Regex.Replace(Content, "\\[CQ:.*?\\]", ""))
                 };
                 foreach (var item in cqCodes)
                 {
@@ -64,7 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                                 File.Move(path, filePath);
                                 if (File.Exists(filePath))
                                 {
-                                    items.Add(ChatMessageContentPart.CreateImageMessageContentPart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
+                                    items.Add(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
                                     MainSave.CQLog.Debug("视觉", "向消息序列中添加了图片元素");
                                 }
                                 else

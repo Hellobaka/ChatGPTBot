@@ -3,6 +3,7 @@ using OpenAI.Images;
 using System.IO;
 using System;
 using System.Threading.Tasks;
+using System.ClientModel;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -10,7 +11,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         public static string GetImageGenerationAsync(string prompt)
         {
-            ImageClient client = new("dall-e-3", AppConfig.APIKey, new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL) });
+            ImageClient client = new("dall-e-3", new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL) });
             GeneratedImage image = client.GenerateImage(prompt, new ImageGenerationOptions()
             {
                 Size = GetImageSize(),

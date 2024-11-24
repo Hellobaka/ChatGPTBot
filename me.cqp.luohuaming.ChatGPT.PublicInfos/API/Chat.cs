@@ -3,6 +3,7 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using OpenAI;
 using OpenAI.Chat;
 using System;
+using System.ClientModel;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -99,13 +100,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         private static string GetChatResult(List<ChatMessage> chatMessages)
         {
             string msg = "";
-            var c = new OpenAIClient(AppConfig.APIKey, new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
+            var c = new OpenAIClient(new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
             var client = c.GetChatClient(AppConfig.ModelName);
             try
             {
                 if (AppConfig.StreamMode)
                 {
-                    foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, options: new ChatCompletionOptions { MaxTokens = AppConfig.ChatMaxTokens, }))
+                    foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, options: new ChatCompletionOptions { MaxOutputTokenCount = AppConfig.ChatMaxTokens, }))
                     {
                         foreach (ChatMessageContentPart contentPart in chatUpdate.ContentUpdate)
                         {
