@@ -85,6 +85,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int RandomReplyConversationCount { get; set; } = 20;
 
+        public static int RandomReplyPersonalConversationCount { get; set; } = 20;
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -138,6 +140,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RandomReply = ConfigHelper.GetConfig("RandomReply", false);
             RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
             RandomReplyConversationCount = ConfigHelper.GetConfig("RandomReplyConversationCount", 10);
+            RandomReplyPersonalConversationCount = ConfigHelper.GetConfig("RandomReplyPersonalConversationCount", 10);
         }
     }
 }
