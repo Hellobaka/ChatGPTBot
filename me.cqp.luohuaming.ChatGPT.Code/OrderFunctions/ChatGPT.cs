@@ -25,10 +25,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-
+            string atCQCode = CQApi.CQCode_At(MainSave.CurrentQQ).ToString();
             if (Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
                 || (message.Replace("＃", "#").StartsWith(GetOrderStr()))
-                || (AppConfig.AtResponse && message.StartsWith(CQApi.CQCode_At(MainSave.CurrentQQ).ToString())))
+                || (AppConfig.AtResponse && ((AppConfig.AtAnyPosition && message.Contains(atCQCode)) || message.StartsWith(atCQCode))))
             {
                 if (!string.IsNullOrWhiteSpace(AppConfig.WelcomeText))
                 {

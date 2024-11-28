@@ -7,6 +7,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
     {
         public static bool AtResponse { get; set; }
 
+        public static bool AtAnyPosition { get; set; }
+
         public static string ResponsePrefix { get; set; } = "";
 
         public static string APIKey { get; set; } = "";
@@ -90,6 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
+            AtAnyPosition = ConfigHelper.GetConfig("AtAnyPosition", false);
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
             AppendExecuteTime = ConfigHelper.GetConfig("AppendExecuteTime", true);
