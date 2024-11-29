@@ -54,6 +54,8 @@
 | RandomReply                 | false | 是否启用随机参与聊天功能 |
 | RandomReplyMinuteInterval   | 1     | 随机参与功能 群组对话采样频率（分钟） |
 | RandomReplyConversationCount| 10    | 随机参与功能 群组对话采样周期内数量大于多少个时触发功能 |
+|RandomReplyPersonalConversationCount |10|随机参与功能 个人发言采样周期内数量大于多少个时触发功能|
+|AtAnyPosition |false|是否允许At回复中的<@>出现于对话的任意位置|
 
 ## 文本模板
 | Key                        | Description                              |
