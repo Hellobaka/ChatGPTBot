@@ -31,11 +31,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
             StartCleanRecord();
-            if (AppConfig.GroupList.Contains(e.FromGroup) is false || !AppConfig.RandomReply)
-            {
-                return new FunctionResult();
-            }
-
             FunctionResult result = new()
             {
                 Result = false,
@@ -44,12 +39,18 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             Records.Add(new ChatRecords
             {
-                MessageId = e.Id,
+                MessageId = e.Message.Id,
                 GroupID = e.FromGroup,
                 QQ = e.FromQQ,
-                Message = e.Message,
+                Message = e.Message.Text,
                 ReceiveTime = DateTime.Now,
             });
+
+            if (AppConfig.GroupList.Contains(e.FromGroup) is false || !AppConfig.RandomReply)
+            {
+                return new FunctionResult();
+            }
+
             if (InProgress)
             {
                 return new FunctionResult { Result = false, SendFlag = false };

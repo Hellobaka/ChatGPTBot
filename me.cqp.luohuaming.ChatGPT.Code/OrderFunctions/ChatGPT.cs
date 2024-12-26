@@ -32,13 +32,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
                 || (message.Replace("＃", "#").StartsWith(GetOrderStr()))
                 || (AppConfig.AtResponse && ((AppConfig.AtAnyPosition && message.Contains(atCQCode)) || message.StartsWith(atCQCode)))
-                || (AppConfig.ReplyResponse && message.Contains("[CQ:reply,id=")))
+                || (AppConfig.ReplyResponse && message.Contains("[CQ:reply,id=") && message.Contains(atCQCode)))
             {
                 if (!string.IsNullOrWhiteSpace(AppConfig.WelcomeText))
                 {
                     e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
                 }
-                message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
+                message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(atCQCode, "");
                 if (AppConfig.ReplyResponse)
                 {
                     foreach (Match item in ReplyPattern.Matches(message))

@@ -99,6 +99,26 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static string GetChatResult(List<ChatMessage> chatMessages)
         {
+            string AppendContentToMessage(ChatMessageContent contentes)
+            {
+                string msg = "";
+                foreach (ChatMessageContentPart contentPart in contentes)
+                {
+                    if (string.IsNullOrEmpty(contentPart.Text) && contentPart.ImageBytes != null && !contentPart.ImageBytes.IsEmpty)
+                    {
+                        Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
+                        string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
+                        File.WriteAllBytes(filePath, contentPart.ImageBytes.ToArray());
+                        msg += $"[CQ:image,file=ChatGPT\\{Path.GetFileName(filePath)}]";
+                    }
+                    else if (!string.IsNullOrEmpty(contentPart.Text))
+                    {
+                        msg += contentPart.Text;
+                    }
+                }
+                return msg;
+            }
+
             string msg = "";
             var c = new OpenAIClient(new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
             var client = c.GetChatClient(AppConfig.ModelName);
@@ -108,26 +128,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, options: new ChatCompletionOptions { MaxOutputTokenCount = AppConfig.ChatMaxTokens, }))
                     {
-                        foreach (ChatMessageContentPart contentPart in chatUpdate.ContentUpdate)
-                        {
-                            if (string.IsNullOrEmpty(contentPart.Text) && contentPart.ImageBytes != null && !contentPart.ImageBytes.IsEmpty)
-                            {
-                                Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
-                                string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");
-                                File.WriteAllBytes(filePath, contentPart.ImageBytes.ToArray());
-                                msg += $"[CQ:image,file=ChatGPT\\{Path.GetFileName(filePath)}]";
-                            }
-                            else if (!string.IsNullOrEmpty(contentPart.Text))
-                            {
-                                msg += contentPart.Text;
-                            }
-                        }
+                        msg += AppendContentToMessage(chatUpdate.ContentUpdate);
                     }
                 }
                 else
                 {
-                    msg += client.CompleteChat(chatMessages);
-                }                
+                    msg += AppendContentToMessage(client.CompleteChat(chatMessages).Value.Content);
+                }
             }
             catch (Exception ex)
             {
