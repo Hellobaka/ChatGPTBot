@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
@@ -21,12 +22,15 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public bool Judge(string destStr) => true;
 
-        private static List<ChatRecords> Records { get; set; } = [];
+        public static List<ChatRecords> Records { get; set; } = [];
+
+        private static Timer CleanRecordTimer { get; set; }
 
         private bool InProgress { get; set; }
 
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
+            StartCleanRecord();
             if (AppConfig.GroupList.Contains(e.FromGroup) is false || !AppConfig.RandomReply)
             {
                 return new FunctionResult();
@@ -40,6 +44,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             Records.Add(new ChatRecords
             {
+                MessageId = e.Id,
                 GroupID = e.FromGroup,
                 QQ = e.FromQQ,
                 Message = e.Message,
@@ -49,17 +54,17 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult { Result = false, SendFlag = false };
             }
-            var search = Records.Where(x => x.GroupID == e.FromGroup).ToList();
+            var search = Records.Where(x => x.GroupID == e.FromGroup && !x.Used).ToList();
             for (int i = 0; i < search.Count; i++)
             {
                 var item = search[i];
                 if ((DateTime.Now - item.ReceiveTime).TotalMinutes > AppConfig.RandomReplyMinuteInterval)
                 {
-                    Records.Remove(item);
+                    item.Used = true;
                 }
             }
-            bool group = Records.Count(x => x.GroupID == e.FromGroup) >= AppConfig.RandomReplyConversationCount;
-            bool person = Records.Count(x => x.GroupID == e.FromGroup && x.QQ == e.FromQQ) >= AppConfig.RandomReplyPersonalConversationCount;
+            bool group = Records.Count(x => x.GroupID == e.FromGroup && !x.Used) >= AppConfig.RandomReplyConversationCount;
+            bool person = Records.Count(x => x.GroupID == e.FromGroup && x.QQ == e.FromQQ && !x.Used) >= AppConfig.RandomReplyPersonalConversationCount;
             try
             {
 
@@ -119,6 +124,24 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
+        private void StartCleanRecord()
+        {
+            if (CleanRecordTimer == null)
+            {
+                CleanRecordTimer = new Timer();
+                CleanRecordTimer.Interval = TimeSpan.FromDays(0.5).TotalMilliseconds;
+                CleanRecordTimer.Elapsed += (_, _) =>
+                {
+                    var search = Records.Where(x => x.ReceiveTime.Date != DateTime.Now.Date).ToList();
+                    for (int i = 0; i < search.Count; i++)
+                    {
+                        Records.Remove(search[i]);
+                    }
+                };
+                CleanRecordTimer.Start();
+            }
+        }
+
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
         {
             return new FunctionResult();
@@ -126,15 +149,25 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public static void RemoveRecords(long groupId)
         {
-            var search = Records.Where(x => x.GroupID == groupId).ToList();
+            var search = Records.Where(x => x.GroupID == groupId && !x.Used).ToList();
             for (int i = 0; i < search.Count; i++)
             {
                 var item = search[i];
                 if (item.GroupID == groupId)
                 {
-                    Records.Remove(item);
+                    item.Used = true;
                 }
             }
+        }
+
+        public static string? GetMessageContentById(int messageId)
+        {
+            var search = Records.FirstOrDefault(x => x.MessageId == messageId);
+            if (search == null)
+            {
+                return null;
+            }
+            return search.Message;
         }
     }
 }

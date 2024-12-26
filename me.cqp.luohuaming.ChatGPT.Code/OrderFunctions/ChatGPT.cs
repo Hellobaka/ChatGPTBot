@@ -5,6 +5,7 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
@@ -18,6 +19,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public bool Judge(string destStr) => true;
 
+        private Regex ReplyPattern { get; set; } = new Regex(Regex.Escape("[CQ:reply,id=") + @"(\d+)\]");
+
         public FunctionResult Progress(CQGroupMessageEventArgs e)
         {
             string message = e.Message.Text;
@@ -28,13 +31,28 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             string atCQCode = CQApi.CQCode_At(MainSave.CurrentQQ).ToString();
             if (Chat.ChatFlows.Any(x => x.Id == e.FromQQ && x.ContinuedMode)
                 || (message.Replace("＃", "#").StartsWith(GetOrderStr()))
-                || (AppConfig.AtResponse && ((AppConfig.AtAnyPosition && message.Contains(atCQCode)) || message.StartsWith(atCQCode))))
+                || (AppConfig.AtResponse && ((AppConfig.AtAnyPosition && message.Contains(atCQCode)) || message.StartsWith(atCQCode)))
+                || (AppConfig.ReplyResponse && message.Contains("[CQ:reply,id=")))
             {
                 if (!string.IsNullOrWhiteSpace(AppConfig.WelcomeText))
                 {
                     e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
                 }
                 message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(CQApi.CQCode_At(MainSave.CurrentQQ).ToString(), "");
+                if (AppConfig.ReplyResponse)
+                {
+                    foreach (Match item in ReplyPattern.Matches(message))
+                    {
+                        if (int.TryParse(item.Groups[1].Value, out int msgId))
+                        {
+                            var msg = Record.GetMessageContentById(msgId);
+                            if (msg != null)
+                            {
+                                message = message.Replace(item.Value, msg);
+                            }
+                        }
+                    }
+                }
                 FunctionResult result = new FunctionResult
                 {
                     Result = true,
