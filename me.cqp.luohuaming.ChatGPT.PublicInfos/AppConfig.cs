@@ -91,6 +91,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int RandomReplyPersonalConversationCount { get; set; } = 20;
 
+        public static bool RemoveThinkBlock { get; set; } = true;
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -144,6 +146,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                     "你的昵称是: $BotName$");
 
             RandomReply = ConfigHelper.GetConfig("RandomReply", false);
+            RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
             RandomReplyConversationCount = ConfigHelper.GetConfig("RandomReplyConversationCount", 10);
             RandomReplyPersonalConversationCount = ConfigHelper.GetConfig("RandomReplyPersonalConversationCount", 10);

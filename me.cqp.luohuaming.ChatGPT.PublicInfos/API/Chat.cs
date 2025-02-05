@@ -8,12 +8,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
     public class Chat
     {
         public static List<ChatFlow> ChatFlows { get; set; } = new List<ChatFlow>();
+
+        private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
 
         public static string GetChatResult(string question, long qq, long groupId, bool isGroup, out long ms)
         {
@@ -65,6 +68,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             var chatMessages = flow.BuildMessages();
             var msg = GetChatResult(chatMessages);
             msg = CommonHelper.TextTemplateParse(msg, isGroup ? groupId : qq);
+            if (AppConfig.RemoveThinkBlock)
+            {
+                msg = ThinkBlockRegex.Replace(msg, "");
+                while (msg.StartsWith("\n") || msg.StartsWith("\r"))
+                {
+                    msg = msg.Remove(0, 1);
+                }
+            }
             flow.Conversations.Add(new ChatFlow.ConversationItem
             {
                 Role = "assistant",
