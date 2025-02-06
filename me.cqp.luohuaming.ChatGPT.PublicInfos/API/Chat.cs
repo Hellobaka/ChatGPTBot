@@ -59,11 +59,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 ChatFlows.Add(flow);
             }
             flow.RemoveTimeout = 0;
-            flow.Conversations.Add(new ChatFlow.ConversationItem
+            // 兼容deepseek不能连续发送user会话的问题
+            if (flow.Conversations.Count > 0 && flow.Conversations.Last().Role == "user")
             {
-                Role = "user",
-                Content = CommonHelper.TextTemplateParse(question, qq)
-            });
+                flow.Conversations.Last().Content = CommonHelper.TextTemplateParse(question, qq);
+            }
+            else
+            {
+                flow.Conversations.Add(new ChatFlow.ConversationItem
+                {
+                    Role = "user",
+                    Content = CommonHelper.TextTemplateParse(question, qq)
+                });
+            }
 
             var chatMessages = flow.BuildMessages();
             var msg = GetChatResult(chatMessages);
@@ -71,7 +79,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             if (AppConfig.RemoveThinkBlock)
             {
                 msg = ThinkBlockRegex.Replace(msg, "");
-                while (msg.StartsWith("\n") || msg.StartsWith("\r"))
+                while (msg.StartsWith("\n") || msg.StartsWith("\r") || msg.StartsWith(" "))
                 {
                     msg = msg.Remove(0, 1);
                 }

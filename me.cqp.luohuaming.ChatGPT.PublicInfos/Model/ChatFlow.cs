@@ -41,7 +41,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 {
                     return new AssistantChatMessage(Content);
                 }
-                if (Role == "Prompt")
+                if (Role == "system")
                 {
                     return new SystemChatMessage(Content);
                 }
