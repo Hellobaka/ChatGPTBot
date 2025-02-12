@@ -599,11 +599,11 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 		/// <returns>返回图片文件位于本地服务器的绝对路径</returns>
 		public string ReceiveImage (string fileName)
 		{
+			fileName = fileName.Split('.').FirstOrDefault();
 			if (string.IsNullOrEmpty (fileName))
 			{
 				throw new ArgumentException ("文件名不可为空", "fileName");
 			}
-
 			GCHandle handle = fileName.GetStringGCHandle (CQApi.DefaultEncoding);
 			try
 			{
@@ -822,8 +822,8 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			string data = CQP.CQ_getGroupMemberInfoV2 (this.AppInfo.AuthCode, groupId, qqId, notCache).ToString (CQApi.DefaultEncoding);
 			if (string.IsNullOrEmpty (data))
 			{
-                return null;
-            }
+				return null;
+			}
 
 			try
 			{
@@ -831,9 +831,9 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			}
 			catch
 			{
-                return null;
-            }
-        }
+				return null;
+			}
+		}
 		/// <summary>
 		/// 获取群成员列表
 		/// </summary>
@@ -891,18 +891,18 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 			string data = CQP.CQ_getGroupInfo (this.AppInfo.AuthCode, groupId, notCache).ToString (CQApi.DefaultEncoding);
 			if (string.IsNullOrEmpty (data))
 			{
-                return null;
-            }
+				return null;
+			}
 
-            try
+			try
 			{
 				return new GroupInfo (this, data, false);
 			}
 			catch
 			{
-                return null;
-            }
-        }
+				return null;
+			}
+		}
 		/// <summary>
 		/// 获取群列表
 		/// </summary>
