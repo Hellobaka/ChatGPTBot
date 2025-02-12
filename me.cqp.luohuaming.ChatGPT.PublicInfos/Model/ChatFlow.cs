@@ -1,11 +1,9 @@
-﻿using Azure.AI.OpenAI;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -52,7 +50,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 };
                 foreach (var item in cqCodes)
                 {
-                    if (item.Function == Sdk.Cqp.Enum.CQFunction.Image)
+                    if (item.Function == Sdk.Cqp.Enum.CQFunction.Image && AppConfig.EnableVision)
                     {
                         Directory.CreateDirectory(Path.Combine(MainSave.ImageDirectory, "ChatGPT"));
                         string filePath = Path.Combine(MainSave.ImageDirectory, "ChatGPT", $"{Guid.NewGuid()}.jpg");

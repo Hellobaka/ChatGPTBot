@@ -75,6 +75,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string BotName { get; set; } = "";
 
+        public static bool EnableVision { get; set; }
+
         public static bool EnableTTS { get; set; }
 
         public static bool SendTextBeforeTTS { get; set; } = true;
@@ -145,6 +147,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                     "Current time: $Time$." + 
                     "你的昵称是: $BotName$");
 
+            EnableVision = ConfigHelper.GetConfig("EnableVision", true);
             RandomReply = ConfigHelper.GetConfig("RandomReply", false);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
