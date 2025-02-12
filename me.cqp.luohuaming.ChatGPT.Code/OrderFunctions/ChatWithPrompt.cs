@@ -86,10 +86,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         IsGroup = group != 0,
                         ParentId = group,
                     };
-                    chatFlow.Init();
                     chatFlow.Conversations.Add(new ChatFlow.ConversationItem()
                     {
-                        Role = "Prompt",
+                        Role = "system",
                         Content = prompt
                     });
                     Chat.ChatFlows.Add(chatFlow);
