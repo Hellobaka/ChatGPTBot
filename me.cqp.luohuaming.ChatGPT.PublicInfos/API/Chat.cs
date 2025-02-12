@@ -14,6 +14,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
     public class Chat
     {
+        public const string ErrorMessage = "连接发生问题，查看日志排查问题";
+
         public static List<ChatFlow> ChatFlows { get; set; } = new List<ChatFlow>();
 
         private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
@@ -28,7 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception ex)
             {
-                result = "连接发生问题，查看日志排查问题";
+                result = ErrorMessage;
                 MainSave.CQLog.Info("调用ChatGPT", ex.Message + ex.StackTrace);
                 if (ex.InnerException != null)
                 {
@@ -89,7 +91,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 Role = "assistant",
                 Content = msg
             });
-            if (msg.StartsWith("Error"))
+            if (msg == ErrorMessage)
             {
                 flow.Conversations.RemoveAt(flow.Conversations.Count - 1);
             }
@@ -158,7 +160,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             catch (Exception ex)
             {
                 MainSave.CQLog.Info("OpenAI_ChatCompletions失败", ex.Message + ex.StackTrace);
-                msg = "Error, 连接发生问题，查看日志排查问题";
+                msg = ErrorMessage;
             }
             return msg;
         }

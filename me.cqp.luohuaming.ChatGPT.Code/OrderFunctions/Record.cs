@@ -68,7 +68,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             bool person = Records.Count(x => x.GroupID == e.FromGroup && x.QQ == e.FromQQ && !x.Used) >= AppConfig.RandomReplyPersonalConversationCount;
             try
             {
-
                 if (group || person)
                 {
                     InProgress = true;
@@ -86,6 +85,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     Stopwatch sw = Stopwatch.StartNew();
                     string gptResult = Chat.GetChatResult(filterRecords, AppConfig.GroupPrompt);
                     sw.Stop();
+                    if (gptResult == Chat.ErrorMessage)
+                    {
+                        return new();
+                    }
                     double ms = sw.ElapsedMilliseconds;
 
                     if (TTSHelper.Enabled)
