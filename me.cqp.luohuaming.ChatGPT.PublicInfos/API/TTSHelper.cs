@@ -21,7 +21,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             ProcessStartInfo startInfo = new()
             {
                 FileName = "cmd.exe",
-                Arguments = "/c chcp 65001",
+                Arguments = $"/c chcp 65001 && {command}",
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -32,9 +32,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             };
 
             using Process process = Process.Start(startInfo);
-            process.StandardInput.WriteLine(command);
-            process.StandardInput.Flush();
-            process.StandardInput.Close();
             process.WaitForExit();
 
             string output = process.StandardOutput.ReadToEnd();
