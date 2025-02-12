@@ -38,7 +38,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 Reply = true
             };
 
-            string key = e.Message.Text.Replace(GetOrderStr(), "");
+            string key = e.Message.Text.Replace(GetOrderStr(), "").Trim();
             if (MainSave.Prompts.ContainsKey(key))
             {
                 string filePath = MainSave.Prompts[key];
