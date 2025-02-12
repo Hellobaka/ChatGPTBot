@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -20,11 +21,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             ProcessStartInfo startInfo = new()
             {
                 FileName = "cmd.exe",
+                Arguments = "/c chcp 65001",
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
             };
 
             using Process process = Process.Start(startInfo);
