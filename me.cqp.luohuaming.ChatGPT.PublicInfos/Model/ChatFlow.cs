@@ -59,7 +59,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                             if (item.Items.TryGetValue("file", out string fileName))
                             {
                                 string path = MainSave.CQApi.ReceiveImage(item);
-                                File.Move(path, filePath);
+                                if (File.Exists(path))
+                                {
+                                    File.Move(path, filePath);
+                                }
                                 if (File.Exists(filePath))
                                 {
                                     items.Add(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
