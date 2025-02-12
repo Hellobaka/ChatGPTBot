@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.Code
@@ -26,7 +27,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
             if (ConfigHelper.Load() is false)
             {
-                MainSave.CQLog.Warning("¼ÓÔØÅäÖÃÎÄ¼ş", "ÄÚÈİ¸ñÊ½²»ÕıÈ·£¬ÎŞ·¨¼ÓÔØ");
+                MainSave.CQLog.Warning("åŠ è½½é…ç½®æ–‡ä»¶", "å†…å®¹æ ¼å¼ä¸æ­£ç¡®ï¼Œæ— æ³•åŠ è½½");
             }
             foreach (var item in Assembly.GetAssembly(typeof(Event_GroupMessage)).GetTypes())
             {
@@ -66,7 +67,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             CheckTTS();
 
-            MainSave.CQLog.Info("³õÊ¼»¯", "ChatGPT²å¼ş³õÊ¼»¯Íê³É");
+            MainSave.CQLog.Info("åˆå§‹åŒ–", "ChatGPTæ’ä»¶åˆå§‹åŒ–å®Œæˆ");
         }
 
         private void CheckTTS()
@@ -79,17 +80,17 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             ProcessStartInfo startInfo = new()
             {
                 FileName = "cmd.exe",
+                Arguments = "/c chcp 65001 && python --version",
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
             };
 
             using Process process = Process.Start(startInfo);
-            process.StandardInput.WriteLine("python --version");
-            process.StandardInput.Flush();
-            process.StandardInput.Close();
             process.WaitForExit();
 
             string output = process.StandardOutput.ReadToEnd();
@@ -99,7 +100,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             if (!success)
             {
-                MainSave.CQLog.Error("TTS", "Î´¼ì²âµ½python»·¾³");
+                MainSave.CQLog.Debug("TTS_Output", output);
+                MainSave.CQLog.Debug("TTS_Error", error);
+                MainSave.CQLog.Error("TTS", "æœªæ£€æµ‹åˆ°pythonç¯å¢ƒ");
             }
 
             TTSHelper.Enabled = success;
