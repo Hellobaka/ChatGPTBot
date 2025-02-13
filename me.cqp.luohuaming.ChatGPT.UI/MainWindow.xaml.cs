@@ -36,10 +36,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            MainSave.RecordDirectory = "";
-            ConfigHelper.ConfigFileName = "Config.json";
-            ConfigHelper.Load();
-            AppConfig.Init();
+            //MainSave.RecordDirectory = "";
+            //ConfigHelper.ConfigFileName = "Config.json";
+            //ConfigHelper.Load();
+            //AppConfig.Init();
 
             RefreshTTSStatus();
         }
