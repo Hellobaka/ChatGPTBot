@@ -20,7 +20,52 @@
         </Menu>
         <TabControl>
             <TabItem Header="Chat">
-                <Grid />
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+                    <ProgressBar
+                        x:Name="ChatStatus"
+                        Grid.Row="2"
+                        Height="3"
+                        Margin="10,0,10,10"
+                        IsIndeterminate="True"
+                        Visibility="Hidden" />
+                    <ScrollViewer x:Name="ChatScroller" VerticalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="ChatContainer" Margin="10" />
+                    </ScrollViewer>
+                    <Grid Grid.Row="1" Margin="10,10,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            x:Name="ChatResetButton"
+                            Grid.Column="0"
+                            Width="60"
+                            Margin="0,0,10,0"
+                            Click="ChatResetButton_Click"
+                            Content="清空" />
+                        <TextBox
+                            x:Name="ChatTestInput"
+                            Grid.Column="1"
+                            MaxHeight="100"
+                            AcceptsReturn="True"
+                            MaxLines="65535"
+                            PreviewKeyDown="ChatTestInput_PreviewKeyDown"
+                            TextWrapping="Wrap" />
+                        <Button
+                            x:Name="ChatSendButton"
+                            Grid.Column="2"
+                            Width="60"
+                            Margin="10,0,0,0"
+                            Click="ChatSendButton_Click"
+                            Content="发送" />
+                    </Grid>
+                </Grid>
             </TabItem>
             <TabItem Header="TTS">
                 <StackPanel Margin="10">

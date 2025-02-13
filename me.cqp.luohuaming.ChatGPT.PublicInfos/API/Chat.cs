@@ -98,6 +98,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return msg;
         }
 
+        public static string GetChatResult(ChatFlow chatFlow)
+        {
+            return GetChatResult(chatFlow.BuildMessages());
+        }
+
         public static string GetChatResult(List<ChatRecords> chatMessages, string prompt = "")
         {
             ChatFlow messages = new();

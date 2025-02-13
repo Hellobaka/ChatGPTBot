@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,6 +19,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         {
             InitializeComponent();
         }
+
+        private ChatFlow ChatFlow { get; set; }
 
         public static void ShowError(string message)
         {
@@ -42,6 +45,59 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             //AppConfig.Init();
 
             RefreshTTSStatus();
+            ChatFlow = new ChatFlow()
+            { 
+                IsGroup = true,
+            };
+            ChatFlow.Init();
+            AddChatBlock(CommonHelper.TextTemplateParse(AppConfig.GroupPrompt, 0), false);
+
+            ChatBubble.OnCopy += ChatBubble_OnCopy;
+            ChatBubble.OnRetry += ChatBubble_OnRetry;
+        }
+
+        private async void ChatBubble_OnRetry(ChatBubble bubble)
+        {
+            int index = ChatContainer.Children.IndexOf(bubble);
+            if (index == -1)
+            {
+                return;
+            }
+            if (!bubble.LeftAlign)
+            {
+                index++;
+            }
+            int count = ChatContainer.Children.Count;
+            for (int i = index; i < count; i++)
+            {
+                ChatContainer.Children.RemoveAt(index);
+                ChatFlow.Conversations.RemoveAt(index);
+            }
+            ChatStatus.Visibility = Visibility.Visible;
+            ChatSendButton.IsEnabled = false;
+            ChatResetButton.IsEnabled = false;
+            var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
+
+            AddChatBlock(response, true);
+            ChatScroller.ScrollToBottom();
+            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
+            {
+                Role = "assistant",
+                Content = response
+            });
+            ChatStatus.Visibility = Visibility.Hidden;
+            ChatSendButton.IsEnabled = true;
+            ChatResetButton.IsEnabled = true;
+        }
+
+        private void ChatBubble_OnCopy(string message)
+        {
+            Clipboard.SetText(message);
+        }
+
+        private void AddChatBlock(string msg, bool leftAlign)
+        {
+            ChatContainer.Children.Add(new ChatBubble(msg, leftAlign));
         }
 
         private void RefreshTTSStatus()
@@ -109,6 +165,48 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             {
                 ShowError("音频合成失败，查看日志排查问题");
             }
+        }
+
+        private async void ChatSendButton_Click(object sender, RoutedEventArgs e)
+        {
+            ChatStatus.Visibility = Visibility.Visible;
+            ChatSendButton.IsEnabled = false;
+            ChatResetButton.IsEnabled = false;
+            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
+            {
+                Role = "user",
+                Content = ChatTestInput.Text,
+            });
+            AddChatBlock(ChatTestInput.Text, false);
+            ChatTestInput.Text = "";
+            var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
+            AddChatBlock(response, true);
+            ChatScroller.ScrollToBottom();
+            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
+            {
+                Role = "assistant",
+                Content = response
+            });
+            ChatStatus.Visibility = Visibility.Hidden;
+            ChatSendButton.IsEnabled = true;
+            ChatResetButton.IsEnabled = true;
+        }
+
+        private void ChatTestInput_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                e.Handled = true;
+                ChatSendButton_Click(sender, e);
+            }
+        }
+
+        private void ChatResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            ChatFlow.Conversations.Clear();
+            ChatFlow.Init();
+            ChatContainer.Children.Clear();
+            AddChatBlock(CommonHelper.TextTemplateParse(AppConfig.GroupPrompt, 0), false);
         }
     }
 }
