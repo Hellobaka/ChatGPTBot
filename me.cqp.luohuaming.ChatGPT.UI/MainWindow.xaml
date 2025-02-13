@@ -18,12 +18,56 @@
                 Click="SettingButton_Click"
                 Header="设置" />
         </Menu>
-        <Grid>
-            <TextBlock
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontSize="16"
-                Text="这是主内容区域。" />
-        </Grid>
+        <TabControl>
+            <TabItem Header="Chat">
+                <Grid />
+            </TabItem>
+            <TabItem Header="TTS">
+                <StackPanel Margin="10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="TTS 状态：" />
+                        <TextBlock
+                            x:Name="TTSStatus"
+                            VerticalAlignment="Center"
+                            Text="Enabled" />
+                        <Button
+                            x:Name="TTSSwitchStatusButton"
+                            Width="60"
+                            Margin="10,0,0,0"
+                            Click="TTSSwitchStatusButton_Click"
+                            Content="切换" />
+                        <Button
+                            x:Name="TTSReinitButton"
+                            Width="60"
+                            Margin="10,0,0,0"
+                            Click="TTSReinitButton_Click"
+                            Content="重新检查" />
+                    </StackPanel>
+                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                        <TextBlock>测试</TextBlock>
+                        <ProgressBar
+                            x:Name="TestTTSStatus"
+                            Width="100"
+                            Margin="10,0,0,0"
+                            IsIndeterminate="True"
+                            Visibility="Collapsed" />
+                    </StackPanel>
+                    <Grid Margin="0,5,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="TTSInput" />
+                        <Button
+                            x:Name="TTSTestButton"
+                            Grid.Column="1"
+                            Width="60"
+                            Margin="10,0,0,0"
+                            Click="TTSTestButton_Click"
+                            Content="生成" />
+                    </Grid>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

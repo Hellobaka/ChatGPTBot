@@ -65,47 +65,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             BuildPromptList();
 
-            CheckTTS();
+            TTSHelper.CheckTTS();
 
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
-        }
-
-        private void CheckTTS()
-        {
-            if (AppConfig.EnableTTS is false)
-            {
-                return;
-            }
-
-            ProcessStartInfo startInfo = new()
-            {
-                FileName = "cmd.exe",
-                Arguments = "/c chcp 65001 && python --version",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            };
-
-            using Process process = Process.Start(startInfo);
-            process.WaitForExit();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-
-            bool success = output.Contains("Python 3.") || error.Contains("Python 3.");
-
-            if (!success)
-            {
-                MainSave.CQLog.Debug("TTS_Output", output);
-                MainSave.CQLog.Debug("TTS_Error", error);
-                MainSave.CQLog.Error("TTS", "未检测到python环境");
-            }
-
-            TTSHelper.Enabled = success;
         }
 
         private void BuildPromptList()
