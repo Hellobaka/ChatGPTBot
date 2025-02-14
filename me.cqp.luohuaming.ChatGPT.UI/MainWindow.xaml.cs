@@ -4,8 +4,10 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace me.cqp.luohuaming.ChatGPT.UI
@@ -21,6 +23,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         }
 
         private ChatFlow ChatFlow { get; set; }
+
+        private string Prompt { get; set; } = AppConfig.GroupPrompt;
 
         public static void ShowError(string message)
         {
@@ -39,21 +43,51 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            //MainSave.RecordDirectory = "";
-            //ConfigHelper.ConfigFileName = "Config.json";
-            //ConfigHelper.Load();
-            //AppConfig.Init();
+            if (App.Debug)
+            {
+                MainSave.AppDirectory = "";
+                MainSave.RecordDirectory = "";
+                ConfigHelper.ConfigFileName = "Config.json";
+                ConfigHelper.Load();
+                AppConfig.Init();
+                BuildPromptList();
+            }
 
             RefreshTTSStatus();
             ChatFlow = new ChatFlow()
             { 
                 IsGroup = true,
             };
-            ChatFlow.Init();
-            AddChatBlock(CommonHelper.TextTemplateParse(AppConfig.GroupPrompt, 0), false);
 
             ChatBubble.OnCopy += ChatBubble_OnCopy;
             ChatBubble.OnRetry += ChatBubble_OnRetry;
+
+            InitPromptList();
+        }
+
+        private void InitPromptList()
+        {
+            PromptList.Items.Clear();
+            PromptList.Items.Add(new ComboBoxItem
+            {
+                Tag = AppConfig.GroupPrompt,
+                Content = "群组 Prompt"
+            });
+            PromptList.Items.Add(new ComboBoxItem
+            {
+                Tag = AppConfig.PrivatePrompt,
+                Content = "私聊 Prompt"
+            });
+            foreach (var item in MainSave.Prompts)
+            {
+                PromptList.Items.Add(new ComboBoxItem
+                {
+                    Tag = item.Value,
+                    Content = item.Key
+                });
+            }
+
+            PromptList.SelectedIndex = 0;
         }
 
         private async void ChatBubble_OnRetry(ChatBubble bubble)
@@ -95,9 +129,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             Clipboard.SetText(message);
         }
 
-        private void AddChatBlock(string msg, bool leftAlign)
+        private void AddChatBlock(string msg, bool leftAlign, int pos = -1)
         {
-            ChatContainer.Children.Add(new ChatBubble(msg, leftAlign));
+            if (pos >= 0)
+            {
+                ChatContainer.Children.Insert(pos, new ChatBubble(msg, leftAlign));
+            }
+            else
+            {
+                ChatContainer.Children.Add(new ChatBubble(msg, leftAlign));
+            }
         }
 
         private void RefreshTTSStatus()
@@ -204,9 +245,57 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         private void ChatResetButton_Click(object sender, RoutedEventArgs e)
         {
             ChatFlow.Conversations.Clear();
-            ChatFlow.Init();
             ChatContainer.Children.Clear();
-            AddChatBlock(CommonHelper.TextTemplateParse(AppConfig.GroupPrompt, 0), false);
+            PromptList_SelectionChanged(sender, null);
+        }
+
+        private void PromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PromptList.SelectedIndex < 0)
+            {
+                return;
+            }
+            if (ChatContainer.Children.Count > 0)
+            {
+                ChatContainer.Children.RemoveAt(0);
+            }
+            string prompt = "";
+            string tag = (PromptList.SelectedItem as ComboBoxItem).Tag.ToString();
+            if (PromptList.SelectedIndex > 1)
+            {
+                prompt = CommonHelper.TextTemplateParse(File.ReadAllText(Path.Combine(MainSave.AppDirectory, tag)), 0);
+            }
+            else
+            {
+                prompt = CommonHelper.TextTemplateParse(tag, 0);
+            }
+            AddChatBlock(prompt, false, 0);
+            if (ChatFlow.Conversations.Count > 0)
+            {
+                ChatFlow.Conversations[0] = new ChatFlow.ConversationItem
+                {
+                    Role = "system",
+                    Content = prompt
+                };
+            }
+            else
+            {
+                ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
+                {
+                    Role = "system",
+                    Content = prompt
+                });
+            }
+        }
+
+        private void BuildPromptList()
+        {
+            string promptPath = Path.Combine(MainSave.AppDirectory, "Prompts");
+            Directory.CreateDirectory(promptPath);
+            foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
+            {
+                MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
+            }
         }
     }
 }

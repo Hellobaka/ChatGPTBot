@@ -13,5 +13,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI
     /// </summary>
     public partial class App : Application
     {
+        public static bool Debug {  get; private set; }
+
+        public App()
+        {
+            Debug = true;
+        }
     }
 }

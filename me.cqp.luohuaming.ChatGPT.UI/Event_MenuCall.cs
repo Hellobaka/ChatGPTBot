@@ -13,6 +13,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
     public class Event_MenuCall : IMenuCall
     {
         private MainWindow window = null;
+
         public void MenuCall(object sender, CQMenuCallEventArgs e)
         {
             try
@@ -44,7 +45,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         ///</summary>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            window = null;
+            window.Hide();
         }
     }
 }
