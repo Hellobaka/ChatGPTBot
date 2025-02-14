@@ -46,9 +46,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         {
             if (App.Debug)
             {
-                MainSave.AppDirectory = "";
-                MainSave.RecordDirectory = "";
-                ConfigHelper.ConfigFileName = "Config.json";
+                MainSave.AppDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                MainSave.RecordDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
                 ConfigHelper.EnableHotReload();
                 BuildPromptList();
             }
@@ -147,7 +147,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void ChatBubble_OnCopy(string message)
         {
-            Clipboard.SetText(message);
+            try
+            {
+                Clipboard.SetText(message);
+            }
+            catch
+            {
+                ShowError("复制文本失败");
+            }
         }
 
         private void AddChatBlock(string msg, bool leftAlign, int pos = -1)

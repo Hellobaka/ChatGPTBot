@@ -313,7 +313,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void TextTemplate_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            Clipboard.SetText((sender as TextBlock).Tag.ToString());
+            try
+            {
+                Clipboard.SetText((sender as TextBlock).Tag.ToString());
+            }
+            catch 
+            {
+                MainWindow.ShowError("复制文本失败");
+            }
         }
 
         private bool VerifyInput(PropertyInfo[] properties, StackPanel container, out string err)
