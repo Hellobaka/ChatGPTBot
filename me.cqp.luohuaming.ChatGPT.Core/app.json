@@ -30,6 +30,10 @@
 		}
 	],
 	"menu": [
+		{
+			"name": "控制台",
+			"function": "_menuA"
+		}
 	],
 	"status": [
 	],

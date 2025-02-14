@@ -259,6 +259,10 @@
       <Project>{9ca41650-71f2-4f0c-9a80-9cdb5a7d593c}</Project>
       <Name>me.cqp.luohuaming.ChatGPT.PublicInfos</Name>
     </ProjectReference>
+    <ProjectReference Include="..\me.cqp.luohuaming.ChatGPT.UI\me.cqp.luohuaming.ChatGPT.UI.csproj">
+      <Project>{f15972b4-3a04-4af4-9fad-64edbedd11bb}</Project>
+      <Name>me.cqp.luohuaming.ChatGPT.UI</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ImportGroup Label=".NET DllExport">
