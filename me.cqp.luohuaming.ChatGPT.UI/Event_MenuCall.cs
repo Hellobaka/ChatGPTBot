@@ -31,7 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 }
                 else
                 {
-                    window.Activate();
+                    window.Dispatcher.BeginInvoke(new Action(window.Show));
                 }
             }
             catch (Exception exc)
@@ -45,7 +45,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         ///</summary>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            window.Hide();
+            window = null;
         }
     }
 }
