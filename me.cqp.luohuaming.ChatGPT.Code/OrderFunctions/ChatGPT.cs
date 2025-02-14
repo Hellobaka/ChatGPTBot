@@ -65,7 +65,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 };
 
                 string gptResult = Chat.GetChatResult(message, e.FromQQ, e.FromGroup, true, out long ms);
-                if (TTSHelper.Enabled)
+                if (TTSHelper.Enabled && !string.IsNullOrWhiteSpace(gptResult))
                 {
                     string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
                     Directory.CreateDirectory(dir);
@@ -120,7 +120,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendID = e.FromQQ,
             };
             string gptResult = Chat.GetChatResult(message, e.FromQQ, 0, false, out long ms);
-            if (TTSHelper.Enabled)
+            if (TTSHelper.Enabled && !string.IsNullOrWhiteSpace(gptResult))
             {
                 string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
                 Directory.CreateDirectory(dir);

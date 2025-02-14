@@ -92,7 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     double ms = sw.ElapsedMilliseconds;
 
-                    if (TTSHelper.Enabled)
+                    if (TTSHelper.Enabled && !string.IsNullOrWhiteSpace(gptResult))
                     {
                         string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
                         Directory.CreateDirectory(dir);
