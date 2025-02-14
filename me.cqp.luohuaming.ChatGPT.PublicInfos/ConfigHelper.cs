@@ -21,6 +21,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static JObject CurrentJObject { get; set; }
 
+        private static FileSystemWatcher ConfigChangeWatcher { get; set; }
+
         /// <summary>
         /// 读取配置
         /// </summary>
@@ -113,6 +115,40 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             {
                 MainSave.CQLog?.Debug("配置热重载", $"LoadFail: {e.Message}");
                 return false;
+            }
+        }
+
+        public static void EnableHotReload()
+        {
+            if (ConfigChangeWatcher == null)
+            {
+                ConfigChangeWatcher = new FileSystemWatcher();
+                ConfigChangeWatcher.Path = Path.GetDirectoryName(ConfigFileName);
+                ConfigChangeWatcher.Filter = Path.GetFileName(ConfigFileName);
+                ConfigChangeWatcher.NotifyFilter = NotifyFilters.LastWrite;
+                ConfigChangeWatcher.Changed += ConfigChangeWatcher_Changed;
+            }
+            if (ConfigChangeWatcher.EnableRaisingEvents)
+            {
+                return;
+            }
+            ConfigChangeWatcher.EnableRaisingEvents = true;
+            if (Load())
+            {
+                AppConfig.Init();
+            }
+        }
+
+        public static void DisableHotReload()
+        {
+            ConfigChangeWatcher.EnableRaisingEvents = false;
+        }
+
+        private static void ConfigChangeWatcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            if (e.ChangeType == WatcherChangeTypes.Changed && Load())
+            {
+                AppConfig.Init();
             }
         }
     }

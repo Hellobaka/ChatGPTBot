@@ -49,8 +49,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 MainSave.AppDirectory = "";
                 MainSave.RecordDirectory = "";
                 ConfigHelper.ConfigFileName = "Config.json";
-                ConfigHelper.Load();
-                AppConfig.Init();
+                ConfigHelper.EnableHotReload();
                 BuildPromptList();
             }
 

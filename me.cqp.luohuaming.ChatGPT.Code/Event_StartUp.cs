@@ -50,18 +50,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     }
                 }
             }
-            AppConfig.Init();
+            ConfigHelper.EnableHotReload();
             ClearFlowTimer = new Timer();
             ClearFlowTimer.Elapsed += ClearFlowTimer_Elapsed;
             ClearFlowTimer.Interval = 1000;
             ClearFlowTimer.Start();
-
-            FileSystemWatcher configChangeWatcher = new FileSystemWatcher();
-            configChangeWatcher.Path = Path.GetDirectoryName(ConfigHelper.ConfigFileName);
-            configChangeWatcher.Filter = Path.GetFileName(ConfigHelper.ConfigFileName);
-            configChangeWatcher.NotifyFilter = NotifyFilters.LastWrite;
-            configChangeWatcher.Changed += ConfigChangeWatcher_Changed;
-            configChangeWatcher.EnableRaisingEvents = true;
 
             BuildPromptList();
 
@@ -76,14 +69,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
             {
                 MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
-            }
-        }
-
-        private void ConfigChangeWatcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            if (e.ChangeType == WatcherChangeTypes.Changed && ConfigHelper.Load())
-            {
-                AppConfig.Init();
             }
         }
 

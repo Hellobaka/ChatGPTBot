@@ -229,11 +229,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                     && VerifyInput(properties, TTSContainer, out err)
                     && VerifyInput(properties, GroupContainer, out err))
                 {
+                    ConfigHelper.DisableHotReload();
                     GetAndSetConfigFromStackPanel(properties, APIContainer);
                     GetAndSetConfigFromStackPanel(properties, CommandContainer);
                     GetAndSetConfigFromStackPanel(properties, ResponseContainer);
                     GetAndSetConfigFromStackPanel(properties, TTSContainer);
                     GetAndSetConfigFromStackPanel(properties, GroupContainer);
+                    ConfigHelper.EnableHotReload();
                     MainWindow.ShowInfo("配置保存成功");
                 }
                 else
@@ -244,6 +246,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             catch
             {
                 MainWindow.ShowError("配置保存失败，查看日志排查问题");
+            }
+            finally
+            {
+                ConfigHelper.EnableHotReload();
             }
         }
 
