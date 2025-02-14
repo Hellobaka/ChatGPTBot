@@ -243,8 +243,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                     MainWindow.ShowError(err);
                 }
             }
-            catch
+            catch (Exception ex) 
             {
+                MainSave.CQLog?.Info("配置保存", $"{ex.Message}\n{ex.StackTrace}");
                 MainWindow.ShowError("配置保存失败，查看日志排查问题");
             }
             finally
