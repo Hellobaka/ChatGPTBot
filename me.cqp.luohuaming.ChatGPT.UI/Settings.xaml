@@ -196,7 +196,7 @@
                         <TextBox x:Name="RandomReplyPersonalConversationCount" Margin="0,5,0,0" />
 
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="0,5,0,0">随机回复使启用分段功能:</TextBlock>
+                            <TextBlock Margin="0,5,0,0">随机回复时启用分段功能:</TextBlock>
                             <CheckBox x:Name="EnableSpliter" Margin="10,5,0,0" />
                         </StackPanel>
                         <TextBlock Margin="0,5,0,0">分段使用的大模型名称:</TextBlock>
