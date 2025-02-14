@@ -194,6 +194,39 @@
                         <TextBox x:Name="RandomReplyConversationCount" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0">采样周期中个人最大对话数量:</TextBlock>
                         <TextBox x:Name="RandomReplyPersonalConversationCount" Margin="0,5,0,0" />
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,5,0,0">随机回复使启用分段功能:</TextBlock>
+                            <CheckBox x:Name="EnableSpliter" Margin="10,5,0,0" />
+                        </StackPanel>
+                        <TextBlock Margin="0,5,0,0">分段使用的大模型名称:</TextBlock>
+                        <TextBox x:Name="SpliterModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0">分段使用的 Prompt:</TextBlock>
+                        <TextBox
+                            x:Name="SpliterPrompt"
+                            Height="60"
+                            Margin="0,5,0,0"
+                            TextWrapping="Wrap" />
+                        <TextBlock Margin="0,5,0,0">最大分段数量:</TextBlock>
+                        <TextBox x:Name="SpliterMaxLines" Margin="0,5,0,0" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,5,0,0">分段仅使用正则表达式（按标点符号分句）:</TextBlock>
+                            <CheckBox x:Name="SpliterRegexFirst" Margin="10,5,0,0" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,5,0,0">发送每个分段启用随机延时:</TextBlock>
+                            <CheckBox x:Name="EnableSpliterRandomDelay" Margin="10,5,0,0" />
+                        </StackPanel>
+                        <TextBlock Margin="0,5,0,0">分段模拟打字速度（字符/分钟）:</TextBlock>
+                        <TextBox x:Name="SpliterSimulateTypeSpeed" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0">分段随机等待延时随机数下限（毫秒）:</TextBlock>
+                        <TextBox
+                            x:Name="SpliterRandomDelayMin"
+                            Height="60"
+                            Margin="0,5,0,0"
+                            TextWrapping="Wrap" />
+                        <TextBlock Margin="0,5,0,0">分段随机等待延时随机数上限（毫秒）:</TextBlock>
+                        <TextBox x:Name="SpliterRandomDelayMax" Margin="0,5,0,0" />
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

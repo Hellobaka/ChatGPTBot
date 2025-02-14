@@ -133,8 +133,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             ChatSendButton.IsEnabled = false;
             ChatResetButton.IsEnabled = false;
             var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
-
-            AddChatBlock(response, true);
+            await ShowAssistantMessage(response);
+            
             ChatScroller.ScrollToBottom();
             ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
             {
@@ -243,7 +243,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             AddChatBlock(ChatTestInput.Text, false);
             ChatTestInput.Text = "";
             var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
-            AddChatBlock(response, true);
+            await ShowAssistantMessage(response);
             ChatScroller.ScrollToBottom();
             ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
             {
@@ -253,6 +253,29 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             ChatStatus.Visibility = Visibility.Hidden;
             ChatSendButton.IsEnabled = true;
             ChatResetButton.IsEnabled = true;
+        }
+
+        private async Task ShowAssistantMessage(string response)
+        {
+            if (EnableSpliter.IsChecked ?? false)
+            {
+                var lines = await Task.Run(() => new Spliter(response).Split());
+                foreach (var line in lines.Where(x => !string.IsNullOrWhiteSpace(x)))
+                {
+                    if (AppConfig.EnableSpliterRandomDelay)
+                    {
+                        double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
+                        double typeTime = line.Length * typeSpeed;
+                        int randomSleep = MainSave.Random.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
+                        await Task.Delay(TimeSpan.FromMilliseconds(typeTime + randomSleep));
+                    }
+                    AddChatBlock(line, true);
+                }
+            }
+            else
+            {
+                AddChatBlock(response, true);
+            }
         }
 
         private void ChatTestInput_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)

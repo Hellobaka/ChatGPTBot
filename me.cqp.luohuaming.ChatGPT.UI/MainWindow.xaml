@@ -30,12 +30,19 @@
                     <Grid Margin="10,5,10,5">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock VerticalAlignment="Center">Prompt 预设：</TextBlock>
+                        <CheckBox x:Name="EnableSpliter" VerticalAlignment="Center">分行</CheckBox>
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="15,0,0,0"
+                            VerticalAlignment="Center">
+                            Prompt 预设：
+                        </TextBlock>
                         <ComboBox
                             x:Name="ChatPromptList"
-                            Grid.Column="1"
+                            Grid.Column="2"
                             SelectionChanged="ChatPromptList_SelectionChanged" />
                     </Grid>
                     <ProgressBar
