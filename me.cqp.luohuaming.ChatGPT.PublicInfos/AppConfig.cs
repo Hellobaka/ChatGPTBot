@@ -127,7 +127,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             APIKey = ConfigHelper.GetConfig("APIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com/v1");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-4o");
-            MasterQQ = ConfigHelper.GetConfig("MasterQQ", 114514);
+            MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 10 * 60);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 500);
             ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 2);

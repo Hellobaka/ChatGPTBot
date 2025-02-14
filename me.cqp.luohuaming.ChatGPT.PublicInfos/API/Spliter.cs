@@ -77,7 +77,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 return sentences;
             }
 
-            // 创建一个新的数组，长度为 maxLines
             string[] limitedArray = new string[AppConfig.SpliterMaxLines];
             for (int i = 0; i < AppConfig.SpliterMaxLines; i++)
             {
