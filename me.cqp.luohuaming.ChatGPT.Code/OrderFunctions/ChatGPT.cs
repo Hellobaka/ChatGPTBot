@@ -36,7 +36,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 if (!string.IsNullOrWhiteSpace(AppConfig.WelcomeText))
                 {
-                    e.FromGroup.SendGroupMessage(AppConfig.WelcomeText);
+                    Record.RecordSelfMessage(e.FromGroup, e.FromGroup.SendGroupMessage(AppConfig.WelcomeText));
                 }
                 message = message.Replace("＃", "#").Replace(GetOrderStr(), "").Replace(atCQCode, "");
                 if (AppConfig.ReplyResponse)
@@ -76,7 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
                     {
-                        e.FromGroup.SendGroupMessage(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
+                        Record.RecordSelfMessage(e.FromGroup, e.FromGroup.SendGroupMessage(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString()));
                     }
                     else if (AppConfig.SendErrorTextWhenTTSFail)
                     {
@@ -108,7 +108,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-            e.FromQQ.SendPrivateMessage(AppConfig.WelcomeText);
+            Record.RecordSelfMessage(0, e.FromQQ.SendPrivateMessage(AppConfig.WelcomeText));
             message = message.Replace("＃", "#").Replace(GetOrderStr(), "");
             FunctionResult result = new FunctionResult
             {
@@ -127,7 +127,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 string fileName = $"{DateTime.Now:yyyyMMddHHmmss}.mp3";
                 if (AppConfig.SendTextBeforeTTS)
                 {
-                    e.FromQQ.SendPrivateMessage(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                    Record.RecordSelfMessage(0, e.FromQQ.SendPrivateMessage(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : "")));
                 }
                 if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
                 {

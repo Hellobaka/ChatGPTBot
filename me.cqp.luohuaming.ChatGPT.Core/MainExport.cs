@@ -5,6 +5,8 @@ using me.cqp.luohuaming.ChatGPT.Code;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.Code.OrderFunctions;
+using System;
 
 namespace me.cqp.luohuaming.ChatGPT.Core
 {
@@ -29,11 +31,13 @@ namespace me.cqp.luohuaming.ChatGPT.Core
                     {
                         if (item.Reply && AppConfig.EnableGroupReply)
                         {
-                            e.CQApi.SendGroupQuoteMessage(e.Message.Id, item.SendID, sendMsg);
+                            var msg = e.CQApi.SendGroupQuoteMessage(e.Message.Id, item.SendID, sendMsg);
+                            Record.RecordSelfMessage(item.SendID, msg);
                         }
                         else
                         {
-                            e.CQApi.SendGroupMessage(item.SendID, sendMsg);
+                            var msg = e.CQApi.SendGroupMessage(item.SendID, sendMsg);
+                            Record.RecordSelfMessage(item.SendID, msg);
                         }
                     }
                 }
@@ -59,7 +63,8 @@ namespace me.cqp.luohuaming.ChatGPT.Core
                 {
                     foreach (var sendMsg in item.MsgToSend)
                     {
-                        e.CQApi.SendPrivateMessage(item.SendID, sendMsg);
+                        var msg = e.CQApi.SendPrivateMessage(item.SendID, sendMsg);
+                        Record.RecordSelfMessage(item.SendID, msg);
                     }
                 }
             }
