@@ -34,9 +34,9 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock VerticalAlignment="Center">Prompt 预设：</TextBlock>
                         <ComboBox
-                            x:Name="PromptList"
+                            x:Name="ChatPromptList"
                             Grid.Column="1"
-                            SelectionChanged="PromptList_SelectionChanged" />
+                            SelectionChanged="ChatPromptList_SelectionChanged" />
                     </Grid>
                     <ProgressBar
                         x:Name="ChatStatus"
@@ -127,6 +127,101 @@
                             Content="生成" />
                     </Grid>
                 </StackPanel>
+            </TabItem>
+            <TabItem Header="Prompt 管理">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="7*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Margin="5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
+                        <ListBox
+                            x:Name="PromptList"
+                            Grid.Row="0"
+                            SelectionChanged="PromptList_SelectionChanged" />
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="PromptAddButton" Click="PromptAddButton_Click">+</Button>
+                            <Button
+                                x:Name="PromptRemoveButton"
+                                Grid.Column="1"
+                                Margin="10,0,0,0"
+                                Click="PromptRemoveButton_Click">
+                                -
+                            </Button>
+                        </Grid>
+                        <Button
+                            x:Name="PromptSaveButton"
+                            Grid.Row="2"
+                            Margin="0,5"
+                            Click="PromptSaveButton_Click">
+                            保存
+                        </Button>
+                    </Grid>
+                    <Grid Grid.Column="1" Margin="5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="auto" />
+                        </Grid.RowDefinitions>
+                        <GroupBox Header="预设名称">
+                            <TextBox
+                                Name="PromptName"
+                                Margin="5"
+                                TextChanged="PromptName_TextChanged" />
+                        </GroupBox>
+                        <GroupBox Grid.Row="1" Header="预设内容">
+                            <TextBox
+                                x:Name="PromptPriview"
+                                Margin="5"
+                                MaxLength="65535"
+                                TextChanged="PromptPriview_TextChanged"
+                                TextWrapping="Wrap" />
+                        </GroupBox>
+                        <GroupBox Grid.Row="2" Header="变量">
+                            <StackPanel Margin="5">
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="$ModelName$    当前使用的模型名称"
+                                    Tag="$ModelName$" />
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="$Time$    当前时间"
+                                    Tag="$Time$" />
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="$BotName$    机器人昵称"
+                                    Tag="$BotName$" />
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="$Id$    调用者ID"
+                                    Tag="$Id$" />
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="$GroupName$    群组名称"
+                                    Tag="$GroupName$" />
+                                <Button
+                                    Margin="0,2"
+                                    Click="PromptAddVarible_Click"
+                                    Content="&lt;@QQ&gt;    转换为At消息的模板"
+                                    Tag="&lt;@QQ&gt;" />
+                            </StackPanel>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
             </TabItem>
         </TabControl>
     </DockPanel>

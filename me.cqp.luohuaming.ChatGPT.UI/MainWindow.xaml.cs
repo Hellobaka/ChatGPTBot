@@ -2,6 +2,7 @@
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -55,7 +56,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
             RefreshTTSStatus();
             ChatFlow = new ChatFlow()
-            { 
+            {
                 IsGroup = true,
             };
 
@@ -67,26 +68,47 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void InitPromptList()
         {
+            ChatPromptList.Items.Clear();
             PromptList.Items.Clear();
-            PromptList.Items.Add(new ComboBoxItem
+
+            ChatPromptList.Items.Add(new ComboBoxItem
             {
                 Tag = AppConfig.GroupPrompt,
                 Content = "群组 Prompt"
             });
-            PromptList.Items.Add(new ComboBoxItem
+            ChatPromptList.Items.Add(new ComboBoxItem
             {
                 Tag = AppConfig.PrivatePrompt,
                 Content = "私聊 Prompt"
             });
+
+            PromptList.Items.Add(new ListBoxItem
+            {
+                Tag = AppConfig.GroupPrompt,
+                Content = "群组 Prompt"
+            });
+            PromptList.Items.Add(new ListBoxItem
+            {
+                Tag = AppConfig.PrivatePrompt,
+                Content = "私聊 Prompt"
+            });
+
             foreach (var item in MainSave.Prompts)
             {
-                PromptList.Items.Add(new ComboBoxItem
+                ChatPromptList.Items.Add(new ComboBoxItem
                 {
                     Tag = item.Value,
                     Content = item.Key
                 });
+                string prompt = File.ReadAllText(Path.Combine(MainSave.AppDirectory, item.Value));
+                PromptList.Items.Add(new ListBoxItem
+                {
+                    Tag = prompt,
+                    Content = item.Key
+                });
             }
 
+            ChatPromptList.SelectedIndex = 0;
             PromptList.SelectedIndex = 0;
         }
 
@@ -246,12 +268,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         {
             ChatFlow.Conversations.Clear();
             ChatContainer.Children.Clear();
-            PromptList_SelectionChanged(sender, null);
+            ChatPromptList_SelectionChanged(sender, null);
         }
 
-        private void PromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ChatPromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (PromptList.SelectedIndex < 0)
+            if (ChatPromptList.SelectedIndex < 0)
             {
                 return;
             }
@@ -260,8 +282,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 ChatContainer.Children.RemoveAt(0);
             }
             string prompt = "";
-            string tag = (PromptList.SelectedItem as ComboBoxItem).Tag.ToString();
-            if (PromptList.SelectedIndex > 1)
+            string tag = (ChatPromptList.SelectedItem as ComboBoxItem).Tag.ToString();
+            if (ChatPromptList.SelectedIndex > 1)
             {
                 prompt = CommonHelper.TextTemplateParse(File.ReadAllText(Path.Combine(MainSave.AppDirectory, tag)), 0);
             }
@@ -290,12 +312,119 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void BuildPromptList()
         {
+            MainSave.Prompts.Clear();
             string promptPath = Path.Combine(MainSave.AppDirectory, "Prompts");
             Directory.CreateDirectory(promptPath);
             foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
             {
                 MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
             }
+        }
+
+        private void PromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PromptList.SelectedIndex < 0)
+            {
+                return;
+            }
+            PromptRemoveButton.IsEnabled = PromptList.SelectedIndex > 1;
+
+            string name = (PromptList.SelectedItem as ListBoxItem).Content.ToString();
+            string prompt = (PromptList.SelectedItem as ListBoxItem).Tag.ToString();
+
+            PromptPriview.Text = prompt;
+            PromptName.Text = name;
+            PromptName.IsEnabled = PromptList.SelectedIndex > 1;
+        }
+
+        private void PromptAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            string name = "新建 Prompt";
+            string content = AppConfig.PrivatePrompt;
+            PromptList.Items.Add(new ListBoxItem
+            {
+                Tag = content,
+                Content = name
+            });
+            PromptList.SelectedIndex = PromptList.Items.Count - 1;
+        }
+
+        private void PromptRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PromptList.SelectedIndex <= 1)
+            {
+                return;
+            }
+            var item = PromptList.SelectedItem as ListBoxItem;
+
+            if (ShowConfirm($"确认要删除 {item.Content} 预设吗？"))
+            {
+                int index = PromptList.SelectedIndex;
+                PromptList.Items.RemoveAt(PromptList.SelectedIndex);
+                index = Math.Max(0, index - 1);
+                if (PromptList.Items.Count > index)
+                {
+                    PromptList.SelectedIndex = index;
+                }
+            }
+        }
+
+        private void PromptSaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PromptList.Items.Count < 2)
+            {
+                ShowError("默认 Prompt 丢失，请重载插件以重启 UI");
+                return;
+            }
+            string promptDir = Path.Combine(MainSave.AppDirectory, "Prompts");
+            var invalid = Path.GetInvalidFileNameChars();
+            List<string> files = new List<string>();
+            for (int i = 2; i < PromptList.Items.Count; i++)
+            {
+                var item = PromptList.Items[i] as ListBoxItem;
+                if (invalid.Any(item.Content.ToString().Contains))
+                {
+                    ShowError($"{item.Content} 含有无效文件名，无法保存");
+                    return;
+                }
+                File.WriteAllText(Path.Combine(promptDir, item.Content.ToString() + ".txt"), item.Tag.ToString());
+                files.Add(item.Content.ToString() + ".txt");
+            }
+            foreach (var file in Directory.GetFiles(promptDir, "*.txt"))
+            {
+                string name = Path.GetFileName(file);
+                if (!files.Contains(name))
+                {
+                    File.Delete(file);
+                }
+            }
+            AppConfig.GroupPrompt = (PromptList.Items[0] as ListBoxItem).Tag.ToString();
+            AppConfig.PrivatePrompt = (PromptList.Items[1] as ListBoxItem).Tag.ToString();
+
+            ConfigHelper.SetConfig("GroupPrompt", AppConfig.GroupPrompt);
+            ConfigHelper.SetConfig("PrivatePrompt", AppConfig.PrivatePrompt);
+
+            BuildPromptList();
+            InitPromptList();
+
+            ShowInfo("保存成功");
+        }
+
+        private void PromptAddVarible_Click(object sender, RoutedEventArgs e)
+        {
+            PromptPriview.AppendText((sender as Button).Tag.ToString());
+        }
+
+        private void PromptPriview_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var item = PromptList.SelectedItem as ListBoxItem;
+            item.Tag = PromptPriview.Text;
+        }
+
+        private void PromptName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var item = PromptList.SelectedItem as ListBoxItem;
+            item.Content = PromptName.Text;
         }
     }
 }
