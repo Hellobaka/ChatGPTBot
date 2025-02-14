@@ -65,8 +65,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                                 }
                                 if (File.Exists(filePath))
                                 {
-                                    items.Add(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
-                                    MainSave.CQLog.Debug("视觉", "向消息序列中添加了图片元素");
+                                    if (new FileInfo(filePath).Length < 4096)
+                                    {
+                                        MainSave.CQLog.Debug("视觉", "图片文件尺寸过小，跳过");
+                                    }
+                                    else
+                                    {
+                                        items.Add(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(filePath)), "image/jpg"));
+                                        MainSave.CQLog.Debug("视觉", "向消息序列中添加了图片元素");
+                                    }
                                 }
                                 else
                                 {
