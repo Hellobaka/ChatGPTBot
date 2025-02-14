@@ -27,7 +27,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int ImageGenerateQuality { get; set; } = 0;
 
-        public static bool EnableGroupReply { get; set; }   
+        public static bool EnableGroupReply { get; set; }
 
         public static bool AppendExecuteTime { get; set; }
 
@@ -67,9 +67,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string GroupPrompt { get; set; } = "";
 
-        public static string PrivatePrompt { get; set; } = "You are ChatGPT, a large language model trained by OpenAI. You have powerful ability to process images." +
-                    "Current model: $ModelName$." +
-                    "Current time: $Time$.";
+        public static string PrivatePrompt { get; set; }
 
         public static bool AppendGroupNick { get; set; }
 
@@ -85,7 +83,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
 
-        public static bool RandomReply {  get; set; } = false;
+        public static bool RandomReply { get; set; } = false;
 
         public static int RandomReplyMinuteInterval { get; set; } = 1;
 
@@ -94,6 +92,24 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static int RandomReplyPersonalConversationCount { get; set; } = 20;
 
         public static bool RemoveThinkBlock { get; set; } = true;
+
+        public static bool EnableSpliter { get; set; }
+
+        public static string SpliterModelName { get; set; }
+
+        public static string SpliterPrompt { get; set; }
+
+        public static int SpliterMaxLines { get; set; } = 3;
+
+        public static bool SpliterRegexFirst { get; set; }
+
+        public static int SpliterSimulateTypeSpeed { get; set; }
+
+        public static bool EnableSpliterRandomDelay { get; set; }
+
+        public static int SpliterRandomDelayMin { get; set; }
+
+        public static int SpliterRandomDelayMax { get; set; }
 
         public static void Init()
         {
@@ -144,7 +160,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                     "你在发言时无需附加这个格式，只需要回复信息即可。" +
                     "另外，如果你需要At对话者，请使用<@QQ>的格式，例如<@123456>，同理，如果用户提供这个格式表示他需要指向这个人，请从上下文了解这个人的发言历史以及个人信息");
             PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "Current model: $ModelName$." +
-                    "Current time: $Time$." + 
+                    "Current time: $Time$." +
                     "你的昵称是: $BotName$");
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
@@ -153,6 +169,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
             RandomReplyConversationCount = ConfigHelper.GetConfig("RandomReplyConversationCount", 10);
             RandomReplyPersonalConversationCount = ConfigHelper.GetConfig("RandomReplyPersonalConversationCount", 10);
+
+            EnableSpliter = ConfigHelper.GetConfig("EnableSpliter", false);
+            SpliterModelName = ConfigHelper.GetConfig("SpliterModelName", "gpt-4o-mini");
+            SpliterPrompt = ConfigHelper.GetConfig("SpliterPrompt", "为了使Bot的模仿真人的对话节奏与习惯，请将DeepSeek模型输出的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容");
+            SpliterMaxLines = ConfigHelper.GetConfig("SpliterMaxLines", 3);
+            SpliterRegexFirst = ConfigHelper.GetConfig("SpliterRegexFirst", false);
+            SpliterSimulateTypeSpeed = ConfigHelper.GetConfig("SpliterSimulateTypeSpeed", 100);
+            EnableSpliterRandomDelay = ConfigHelper.GetConfig("EnableSpliterRandomDelay", true);
+            SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
+            SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
         }
     }
 }

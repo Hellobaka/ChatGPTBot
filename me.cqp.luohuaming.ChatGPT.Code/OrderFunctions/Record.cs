@@ -3,6 +3,7 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -83,7 +84,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         Reply = true
                     };
                     Stopwatch sw = Stopwatch.StartNew();
-                    string gptResult = Chat.GetChatResult(filterRecords, AppConfig.GroupPrompt);
+                    string gptResult = Chat.GetChatResult(filterRecords, AppConfig.ModelName, AppConfig.GroupPrompt);
                     sw.Stop();
                     if (gptResult == Chat.ErrorMessage)
                     {
@@ -102,7 +103,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         }
                         if (TTSHelper.TTS(gptResult, Path.Combine(dir, fileName), AppConfig.TTSVoice))
                         {
-                            e.FromGroup.SendGroupMessage(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString());
+                            RecordSelfMessage(e.FromGroup, e.FromGroup.SendGroupMessage(CQApi.CQCode_Record(@$"ChatGPT-TTS\{fileName}").ToSendString()));
                         }
                         else if (AppConfig.SendErrorTextWhenTTSFail)
                         {
@@ -111,7 +112,25 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     else
                     {
-                        sendText.MsgToSend.Add(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                        if (AppConfig.EnableSpliter)
+                        {
+                            var lines = new Spliter(gptResult).Split();
+                            foreach (var line in lines.Where(x => !string.IsNullOrWhiteSpace(x)))
+                            {
+                                if (AppConfig.EnableSpliterRandomDelay)
+                                {
+                                    double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
+                                    double typeTime = line.Length * typeSpeed;
+                                    int randomSleep = MainSave.Random.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
+                                    System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
+                                }
+                                RecordSelfMessage(e.FromGroup, e.FromGroup.SendGroupMessage(line));
+                            }
+                        }
+                        else
+                        {
+                            sendText.MsgToSend.Add(gptResult + (AppConfig.AppendExecuteTime ? $"({ms / 1000.0:f2}s)" : ""));
+                        }
                     }
                     result.SendObject.Add(sendText);
                 }
@@ -172,6 +191,19 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 return null;
             }
             return search.Message;
+        }
+
+        public static void RecordSelfMessage(long group, QQMessage msg)
+        {
+            Records.Add(new ChatRecords
+            {
+                GroupID = group,
+                Message = msg.Text,
+                MessageId = msg.Id,
+                QQ = MainSave.CurrentQQ,
+                ReceiveTime = DateTime.Now,
+                Used = false
+            });
         }
     }
 }

@@ -1,4 +1,5 @@
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp;
+using System;
 using System.Collections.Generic;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos
@@ -21,6 +22,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static long CurrentQQ { get; set; }
 
         public static Dictionary<string, string> Prompts { get; set; } = new();
+
         public static string RecordDirectory { get; set; }
+
+        public static Random Random { get; set; } = new Random();
     }
 }

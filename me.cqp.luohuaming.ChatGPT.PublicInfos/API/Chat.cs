@@ -76,7 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
 
             var chatMessages = flow.BuildMessages();
-            var msg = GetChatResult(chatMessages);
+            var msg = GetChatResult(chatMessages, AppConfig.ModelName);
             msg = CommonHelper.TextTemplateParse(msg, isGroup ? groupId : qq);
             if (AppConfig.RemoveThinkBlock)
             {
@@ -100,10 +100,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public static string GetChatResult(ChatFlow chatFlow)
         {
-            return GetChatResult(chatFlow.BuildMessages());
+            return GetChatResult(chatFlow.BuildMessages(), AppConfig.ModelName);
         }
 
-        public static string GetChatResult(List<ChatRecords> chatMessages, string prompt = "")
+        public static string GetChatResult(List<ChatRecords> chatMessages, string modelName, string prompt)
         {
             ChatFlow messages = new();
             prompt = CommonHelper.TextTemplateParse(prompt, chatMessages.First().GroupID);
@@ -120,10 +120,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     Content = AppConfig.AppendGroupNick ? ((MainSave.CQApi.GetGroupMemberInfo(item.GroupID, item.QQ)?.Card ?? "未获取到昵称") + $"[{item.QQ}]" + ": " + item.Message) : item.Message,
                 });
             }
-            return GetChatResult(messages.BuildMessages());
+            return GetChatResult(messages.BuildMessages(), AppConfig.ModelName);
         }
 
-        private static string GetChatResult(List<ChatMessage> chatMessages)
+        public static string GetChatResult(List<ChatMessage> chatMessages, string modelName)
         {
             string AppendContentToMessage(ChatMessageContent contentes)
             {
@@ -147,7 +147,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
             string msg = "";
             var c = new OpenAIClient(new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
-            var client = c.GetChatClient(AppConfig.ModelName);
+            var client = c.GetChatClient(modelName);
             try
             {
                 if (AppConfig.StreamMode)
@@ -164,7 +164,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Info("OpenAI_ChatCompletions失败", ex.Message + ex.StackTrace);
+                MainSave.CQLog?.Info("OpenAI_ChatCompletions失败", ex.Message + ex.StackTrace);
                 msg = ErrorMessage;
             }
             return msg;

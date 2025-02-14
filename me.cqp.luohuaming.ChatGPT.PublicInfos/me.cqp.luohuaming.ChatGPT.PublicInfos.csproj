@@ -151,6 +151,7 @@
   <ItemGroup>
     <Compile Include="API\Chat.cs" />
     <Compile Include="API\ImageGenerations.cs" />
+    <Compile Include="API\Spliter.cs" />
     <Compile Include="API\TTSHelper.cs" />
     <Compile Include="AppConfig.cs" />
     <Compile Include="CommonHelper.cs" />
