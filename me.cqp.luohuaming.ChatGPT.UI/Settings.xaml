@@ -220,11 +220,7 @@
                         <TextBlock Margin="0,5,0,0">分段模拟打字速度（字符/分钟）:</TextBlock>
                         <TextBox x:Name="SpliterSimulateTypeSpeed" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0">分段随机等待延时随机数下限（毫秒）:</TextBlock>
-                        <TextBox
-                            x:Name="SpliterRandomDelayMin"
-                            Height="60"
-                            Margin="0,5,0,0"
-                            TextWrapping="Wrap" />
+                        <TextBox x:Name="SpliterRandomDelayMin" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0">分段随机等待延时随机数上限（毫秒）:</TextBlock>
                         <TextBox x:Name="SpliterRandomDelayMax" Margin="0,5,0,0" />
                     </StackPanel>
