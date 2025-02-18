@@ -430,8 +430,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             AppConfig.GroupPrompt = (PromptList.Items[0] as ListBoxItem).Tag.ToString();
             AppConfig.PrivatePrompt = (PromptList.Items[1] as ListBoxItem).Tag.ToString();
 
+            ConfigHelper.DisableHotReload();
             ConfigHelper.SetConfig("GroupPrompt", AppConfig.GroupPrompt);
             ConfigHelper.SetConfig("PrivatePrompt", AppConfig.PrivatePrompt);
+            ConfigHelper.EnableHotReload();
 
             BuildPromptList();
             InitPromptList();
