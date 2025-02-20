@@ -15,8 +15,9 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem
                 x:Name="SettingButton"
+                Margin="0,5"
                 Click="SettingButton_Click"
-                Header="设置" />
+                Header="详细设置" />
         </Menu>
         <TabControl>
             <TabItem Header="Chat">
