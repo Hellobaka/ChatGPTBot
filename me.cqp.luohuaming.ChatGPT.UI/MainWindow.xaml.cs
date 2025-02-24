@@ -113,48 +113,54 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private async void ChatBubble_OnRetry(ChatBubble bubble)
         {
-            int index = ChatContainer.Children.IndexOf(bubble);
-            if (index == -1)
+            await ChatContainer.Dispatcher.InvokeAsync(async () =>
             {
-                return;
-            }
-            if (!bubble.LeftAlign)
-            {
-                index++;
-            }
-            int count = ChatContainer.Children.Count;
-            for (int i = index; i < count; i++)
-            {
-                ChatContainer.Children.RemoveAt(index);
-                ChatFlow.Conversations.RemoveAt(index);
-            }
-            ChatStatus.Visibility = Visibility.Visible;
-            ChatSendButton.IsEnabled = false;
-            ChatResetButton.IsEnabled = false;
-            var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
-            await ShowAssistantMessage(response);
-            
-            ChatScroller.ScrollToBottom();
-            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
-            {
-                Role = "assistant",
-                Content = response
+                int index = ChatContainer.Children.IndexOf(bubble);
+                if (index == -1)
+                {
+                    return;
+                }
+                if (!bubble.LeftAlign)
+                {
+                    index++;
+                }
+                int count = ChatContainer.Children.Count;
+                for (int i = index; i < count; i++)
+                {
+                    ChatContainer.Children.RemoveAt(index);
+                    ChatFlow.Conversations.RemoveAt(index);
+                }
+                ChatStatus.Visibility = Visibility.Visible;
+                ChatSendButton.IsEnabled = false;
+                ChatResetButton.IsEnabled = false;
+                var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
+                await ShowAssistantMessage(response);
+
+                ChatScroller.ScrollToBottom();
+                ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
+                {
+                    Role = "assistant",
+                    Content = response
+                });
+                ChatStatus.Visibility = Visibility.Hidden;
+                ChatSendButton.IsEnabled = true;
+                ChatResetButton.IsEnabled = true;
             });
-            ChatStatus.Visibility = Visibility.Hidden;
-            ChatSendButton.IsEnabled = true;
-            ChatResetButton.IsEnabled = true;
         }
 
         private void ChatBubble_OnCopy(string message)
         {
-            try
+            ChatContainer.Dispatcher.Invoke(() =>
             {
-                Clipboard.SetText(message);
-            }
-            catch
-            {
-                ShowError("复制文本失败");
-            }
+                try
+                {
+                    Clipboard.SetText(message);
+                }
+                catch
+                {
+                    ShowError("复制文本失败");
+                }
+            });
         }
 
         private void AddChatBlock(string msg, bool leftAlign, int pos = -1)
@@ -312,14 +318,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             }
             string prompt = "";
             string tag = (ChatPromptList.SelectedItem as ComboBoxItem).Tag.ToString();
-            if (ChatPromptList.SelectedIndex > 1)
-            {
-                prompt = CommonHelper.TextTemplateParse(File.ReadAllText(Path.Combine(MainSave.AppDirectory, tag)), 0);
-            }
-            else
-            {
-                prompt = CommonHelper.TextTemplateParse(tag, 0);
-            }
+            prompt = ChatPromptList.SelectedIndex > 1
+                ? CommonHelper.TextTemplateParse(File.ReadAllText(Path.Combine(MainSave.AppDirectory, tag)), 0)
+                : CommonHelper.TextTemplateParse(tag, 0);
             AddChatBlock(prompt, false, 0);
             if (ChatFlow.Conversations.Count > 0)
             {
