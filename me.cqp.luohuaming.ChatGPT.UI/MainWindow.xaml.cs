@@ -128,7 +128,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 for (int i = index; i < count; i++)
                 {
                     ChatContainer.Children.RemoveAt(index);
-                    ChatFlow.Conversations.RemoveAt(index);
+                    if (ChatFlow.Conversations.Count > index)
+                    {
+                        ChatFlow.Conversations.RemoveAt(index);
+                    }
                 }
                 ChatStatus.Visibility = Visibility.Visible;
                 ChatSendButton.IsEnabled = false;

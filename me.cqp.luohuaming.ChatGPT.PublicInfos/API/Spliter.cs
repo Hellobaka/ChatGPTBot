@@ -42,13 +42,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     List<string> lines = new();
                     foreach (var line in arr)
                     {
+                        var str = line.ToString();
+                        if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".")))
+                        {
+                            str = str.Substring(0, str.Length - 1);
+                        }
                         if (lines.Count < AppConfig.SpliterMaxLines)
                         {
-                            lines.Add(line.ToString());
+                            lines.Add(str);
                         }
                         else
                         {
-                            lines[lines.Count - 1] += line.ToString();
+                            lines[lines.Count - 1] += str;
                         }
                     }
                     return lines.ToArray();
@@ -81,6 +86,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             for (int i = 0; i < AppConfig.SpliterMaxLines; i++)
             {
                 limitedArray[i] = sentences[i];
+            }
+            for (int i = 0; i < limitedArray.Length; i++)
+            {
+                string str = limitedArray[i];
+                if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".")))
+                {
+                    str = str.Substring(0, str.Length - 1);
+                }
+                limitedArray[i] = str;
             }
 
             string overflow = string.Join("", sentences, AppConfig.SpliterMaxLines - 1, sentences.Length - (AppConfig.SpliterMaxLines - 1));
