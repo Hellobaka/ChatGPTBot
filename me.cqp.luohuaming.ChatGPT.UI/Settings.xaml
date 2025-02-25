@@ -190,9 +190,9 @@
                         </StackPanel>
                         <TextBlock Margin="0,5,0,0">随机回复采样时长 (分钟):</TextBlock>
                         <TextBox x:Name="RandomReplyMinuteInterval" Margin="0,5,0,0" />
-                        <TextBlock Margin="0,5,0,0">采样周期中最大对话数量:</TextBlock>
+                        <TextBlock Margin="0,5,0,0">采样周期中群组最大对话数量:</TextBlock>
                         <TextBox x:Name="RandomReplyConversationCount" Margin="0,5,0,0" />
-                        <TextBlock Margin="0,5,0,0">采样周期中个人最大对话数量:</TextBlock>
+                        <TextBlock Margin="0,5,0,0">采样周期中私聊最大对话数量:</TextBlock>
                         <TextBox x:Name="RandomReplyPersonalConversationCount" Margin="0,5,0,0" />
 
                         <StackPanel Orientation="Horizontal">
