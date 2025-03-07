@@ -21,6 +21,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         public MainWindow()
         {
             InitializeComponent();
+            Topmost = true;
         }
 
         private ChatFlow ChatFlow { get; set; }
@@ -63,6 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             ChatBubble.OnRetry += ChatBubble_OnRetry;
 
             InitPromptList();
+            Topmost = false;
         }
 
         private void InitPromptList()
