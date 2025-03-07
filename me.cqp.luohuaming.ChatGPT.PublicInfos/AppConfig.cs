@@ -113,6 +113,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int SpliterRandomDelayMax { get; set; }
 
+        public static string BochaAPIKey { get; set; }
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -127,6 +129,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SendErrorTextWhenTTSFail = ConfigHelper.GetConfig("SendErrorTextWhenTTSFail", false);
             TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
             APIKey = ConfigHelper.GetConfig("APIKey", "");
+            BochaAPIKey = ConfigHelper.GetConfig("BochaAPIKey", "");
             BaseURL = ConfigHelper.GetConfig("BaseURL", "https://api.openai.com/v1");
             ModelName = ConfigHelper.GetConfig("ModelName", "gpt-4o");
             MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);

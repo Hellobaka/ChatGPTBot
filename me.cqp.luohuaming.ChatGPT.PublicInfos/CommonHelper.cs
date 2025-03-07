@@ -1,9 +1,11 @@
 ﻿using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -116,6 +118,35 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             regex = new("<@(\\d+?)>");
             input = regex.Replace(input, "[CQ:at,qq=$1]");
             return input;
+        }
+
+        public static string? Post(string method, string url, string payload, string token)
+        {
+            string result = "";
+            try
+            {
+                using HttpClient client = new();
+                var request = new HttpRequestMessage(new HttpMethod(method), url)
+                {
+                    Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                };
+                request.Headers.Add("Authorization", $"Bearer {token}");
+
+                HttpResponseMessage response = client.SendAsync(request).Result;
+                result = response.Content.ReadAsStringAsync().Result;
+                response.EnsureSuccessStatusCode();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("发送请求", url + "\n" + $"Payload: {payload}\n{result}\n" + ex.Message + ex.StackTrace);
+                return null;
+            }
+        }
+
+        public static string ToJson(this object obj)
+        {
+            return JsonConvert.SerializeObject(obj, Formatting.None);
         }
     }
 }

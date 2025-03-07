@@ -42,6 +42,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return result;
         }
 
+        /// <summary>
+        /// ChatFlow管理，根据群/QQ进行上下文管理
+        /// </summary>
+        /// <param name="question"></param>
+        /// <param name="qq"></param>
+        /// <param name="groupId"></param>
+        /// <param name="isGroup"></param>
+        /// <returns></returns>
         private static string CallChatGPT(string question, long qq, long groupId, bool isGroup)
         {
             if (isGroup && AppConfig.AppendGroupNick)
@@ -98,11 +106,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return msg;
         }
 
+        /// <summary>
+        /// 使用当前的一组ChatFlow进行对话
+        /// </summary>
+        /// <param name="chatFlow"></param>
+        /// <returns></returns>
         public static string GetChatResult(ChatFlow chatFlow)
         {
             return GetChatResult(chatFlow.BuildMessages(), AppConfig.ModelName);
         }
 
+        /// <summary>
+        /// 使用一组消息记录开始对话
+        /// <returns></returns>
         public static string GetChatResult(List<ChatRecords> chatMessages, string modelName, string prompt)
         {
             ChatFlow messages = new();
@@ -112,7 +128,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 Content = prompt,
                 Role = "system"
             });
-            foreach(var item in chatMessages)
+            foreach (var item in chatMessages)
             {
                 messages.Conversations.Add(new ChatFlow.ConversationItem
                 {
@@ -120,10 +136,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     Content = AppConfig.AppendGroupNick ? ((MainSave.CQApi.GetGroupMemberInfo(item.GroupID, item.QQ)?.Card ?? "未获取到昵称") + $"[{item.QQ}]" + ": " + item.Message) : item.Message,
                 });
             }
-            return GetChatResult(messages.BuildMessages(), AppConfig.ModelName);
+            return GetChatResult(messages.BuildMessages(), modelName);
         }
 
-        public static string GetChatResult(List<ChatMessage> chatMessages, string modelName)
+        /// <summary>
+        /// 最底层对话调用方法
+        /// </summary>
+        /// <param name="chatMessages"></param>
+        /// <param name="modelName"></param>
+        /// <returns></returns>
+        public static string GetChatResult(List<ChatMessage> chatMessages, string modelName, bool useSearch = false)
         {
             string AppendContentToMessage(ChatMessageContent contentes)
             {
@@ -148,19 +170,60 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             string msg = "";
             var c = new OpenAIClient(new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.BaseURL), NetworkTimeout = TimeSpan.FromSeconds(300), });
             var client = c.GetChatClient(modelName);
+            var option = new ChatCompletionOptions
+            {
+                MaxOutputTokenCount = AppConfig.ChatMaxTokens,
+            };
+            if (useSearch)
+            {
+                option.Tools.Add(ChatTool.CreateFunctionTool(nameof(BochaSearch.Search), "从近百亿网页和生态内容源中搜索高质量世界知识，例如新闻、图片、百科、文库等。", BinaryData.FromString(BochaSearch.ToolParameters), true));
+            }
             try
             {
-                if (AppConfig.StreamMode)
+                bool requiresAction;
+                do
                 {
-                    foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, options: new ChatCompletionOptions { MaxOutputTokenCount = AppConfig.ChatMaxTokens, }))
+                    requiresAction = false;
+                    List<ChatToolCall> toolcall = [];
+                    ChatFinishReason finishReason = ChatFinishReason.Stop;
+                    if (AppConfig.StreamMode)
                     {
-                        msg += AppendContentToMessage(chatUpdate.ContentUpdate);
+                        foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, option))
+                        {
+                            msg += AppendContentToMessage(chatUpdate.ContentUpdate);
+                            // TODO: tool stream update
+                            finishReason = chatUpdate.FinishReason ?? ChatFinishReason.Stop;
+                        }
                     }
-                }
-                else
-                {
-                    msg += AppendContentToMessage(client.CompleteChat(chatMessages).Value.Content);
-                }
+                    else
+                    {
+                        var completion = client.CompleteChat(chatMessages, option);
+                        msg += AppendContentToMessage(completion.Value.Content);
+                        toolcall = [.. toolcall, .. completion.Value.ToolCalls];
+                        finishReason = completion.Value.FinishReason;
+                    }
+
+                    switch (finishReason)
+                    {
+                        case ChatFinishReason.Stop:
+                            chatMessages.Add(new AssistantChatMessage(msg));
+                            break;
+
+                        case ChatFinishReason.ToolCalls:
+                            chatMessages.Add(new AssistantChatMessage(toolcall));
+                            foreach (var tool in toolcall)
+                            {
+                                switch (tool.FunctionName)
+                                {
+                                    case nameof(BochaSearch.Search):
+                                        chatMessages.Add(new ToolChatMessage(tool.Id, BochaSearch.HandleToolCall(tool.FunctionArguments)));
+                                        break;
+                                }
+                            }
+                            requiresAction = true;
+                            break;
+                    }
+                } while (requiresAction);
             }
             catch (Exception ex)
             {
