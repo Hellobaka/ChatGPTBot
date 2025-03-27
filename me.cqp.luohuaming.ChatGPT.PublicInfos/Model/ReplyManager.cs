@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -146,6 +143,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyQQ = qq;
 
+            MainSave.CQLog.Debug("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
+
             return ReplyWilling;
         }
 
@@ -154,6 +153,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             ReplyWilling -= 0.3;
 
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
+            MainSave.CQLog.Debug("发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
         }
 
         public void ChangeReplyWillingAfterNotSendingMessage()
@@ -172,6 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
 
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
+            MainSave.CQLog.Debug("不发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
         }
     }
 }

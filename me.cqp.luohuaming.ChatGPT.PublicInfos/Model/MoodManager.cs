@@ -1,4 +1,5 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
@@ -98,6 +99,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             var (valence, arousal) = MoodValues[mood];
             Valence = Math.Max(-1, Math.Min(1, Valence + valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
+
+            MainSave.CQLog.Debug("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
         }
 
         public void StartMoodDecreaseTimer()
@@ -129,6 +132,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
                     return (Mood.None, Stand.None);
                 }
+
+                MainSave.CQLog.Debug("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
 
                 return (mood, stand);
             }

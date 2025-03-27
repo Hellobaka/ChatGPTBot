@@ -4,6 +4,7 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -129,8 +130,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                             {
                                 continue;
                             }
+                            MainSave.CQLog.Debug("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
                             string description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
                             Picture.InsertImageDescription(cqcode, emoji, description);
+                            MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
+
 
                             if (!string.IsNullOrEmpty(description))
                             {
