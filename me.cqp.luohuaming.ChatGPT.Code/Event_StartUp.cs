@@ -29,6 +29,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             {
                 MainSave.CQLog.Warning("加载配置文件", "内容格式不正确，无法加载");
             }
+            AppConfig.Init();
             foreach (var item in Assembly.GetAssembly(typeof(Event_GroupMessage)).GetTypes())
             {
                 if (item.IsInterface)
@@ -50,7 +51,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     }
                 }
             }
-            ConfigHelper.EnableHotReload();
 
             BuildPromptList();
             SQLHelper.CreateDB();

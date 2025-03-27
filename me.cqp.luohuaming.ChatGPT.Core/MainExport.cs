@@ -31,7 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.Core
                     {
                         if (item.Reply && AppConfig.EnableGroupReply)
                         {
-                            var msg = e.CQApi.SendGroupQuoteMessage(e.Message.Id, item.SendID, sendMsg);
+                            var msg = e.CQApi.SendGroupMessage(item.SendID, $"[CQ:reply,id={e.Message.Id}]" + sendMsg);
                             Record.RecordSelfMessage(item.SendID, msg);
                         }
                         else

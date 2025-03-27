@@ -133,15 +133,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 return;
             }
             ConfigChangeWatcher.EnableRaisingEvents = true;
-            if (Load())
-            {
-                AppConfig.Init();
-            }
         }
 
         public static void DisableHotReload()
         {
-            ConfigChangeWatcher.EnableRaisingEvents = false;
+            if (ConfigChangeWatcher != null)
+            {
+                ConfigChangeWatcher.EnableRaisingEvents = false;
+            }
         }
 
         private static void ConfigChangeWatcher_Changed(object sender, FileSystemEventArgs e)
