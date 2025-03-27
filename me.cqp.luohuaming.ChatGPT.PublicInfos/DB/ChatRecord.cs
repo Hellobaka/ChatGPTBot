@@ -52,7 +52,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 QQ = qq,
                 RawMessage = message,
                 Time = DateTime.Now,
-                MessageID = messageID
+                MessageID = messageID,
             };
             record.ParsedMessage = record.ParseMessage(message);
             return record;

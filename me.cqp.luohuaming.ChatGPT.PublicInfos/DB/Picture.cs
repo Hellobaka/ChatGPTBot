@@ -19,7 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string FilePath { get; set; }
 
-        public double[] Embedding { get; set; }
+        public double[] Embedding { get; set; } = [];
 
         public string Description { get; set; }
 
