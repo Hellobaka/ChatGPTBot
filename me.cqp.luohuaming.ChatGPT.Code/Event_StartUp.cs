@@ -1,5 +1,7 @@
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 using System;
@@ -13,8 +15,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 {
     public class Event_StartUp : ICQStartup
     {
-        public Timer ClearFlowTimer { get; private set; }
-
         public void CQStartup(object sender, CQStartupEventArgs e)
         {
             MainSave.AppDirectory = e.CQApi.AppDirectory;
@@ -51,14 +51,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 }
             }
             ConfigHelper.EnableHotReload();
-            ClearFlowTimer = new Timer();
-            ClearFlowTimer.Elapsed += ClearFlowTimer_Elapsed;
-            ClearFlowTimer.Interval = 1000;
-            ClearFlowTimer.Start();
 
             BuildPromptList();
-
+            SQLHelper.CreateDB();
             TTSHelper.CheckTTS();
+            _ = new MoodManager();
 
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
         }
@@ -69,20 +66,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
             {
                 MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
-            }
-        }
-
-        private void ClearFlowTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            for (int i = 0; i < Chat.ChatFlows.Count; i++)
-            {
-                var item = Chat.ChatFlows[i];
-                item.RemoveTimeout++;
-                if (item.RemoveTimeout >= AppConfig.ChatTimeout)
-                {
-                    item.RemoveFromFlows();
-                    i--;
-                }
             }
         }
     }

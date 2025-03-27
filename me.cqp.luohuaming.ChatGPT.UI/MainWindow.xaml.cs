@@ -24,8 +24,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             Topmost = true;
         }
 
-        private ChatFlow ChatFlow { get; set; }
-
         private string Prompt { get; set; } = AppConfig.GroupPrompt;
 
         public static void ShowError(string message)
@@ -55,10 +53,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             }
 
             RefreshTTSStatus();
-            ChatFlow = new ChatFlow()
-            {
-                IsGroup = true,
-            };
 
             ChatBubble.OnCopy += ChatBubble_OnCopy;
             ChatBubble.OnRetry += ChatBubble_OnRetry;
@@ -113,44 +107,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             PromptList.SelectedIndex = 0;
         }
 
-        private async void ChatBubble_OnRetry(ChatBubble bubble)
+        private void ChatBubble_OnRetry(ChatBubble bubble)
         {
-            await ChatContainer.Dispatcher.InvokeAsync(async () =>
-            {
-                int index = ChatContainer.Children.IndexOf(bubble);
-                if (index == -1)
-                {
-                    return;
-                }
-                if (!bubble.LeftAlign)
-                {
-                    index++;
-                }
-                int count = ChatContainer.Children.Count;
-                for (int i = index; i < count; i++)
-                {
-                    ChatContainer.Children.RemoveAt(index);
-                    if (ChatFlow.Conversations.Count > index)
-                    {
-                        ChatFlow.Conversations.RemoveAt(index);
-                    }
-                }
-                ChatStatus.Visibility = Visibility.Visible;
-                ChatSendButton.IsEnabled = false;
-                ChatResetButton.IsEnabled = false;
-                var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
-                await ShowAssistantMessage(response);
-
-                ChatScroller.ScrollToBottom();
-                ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
-                {
-                    Role = "assistant",
-                    Content = response
-                });
-                ChatStatus.Visibility = Visibility.Hidden;
-                ChatSendButton.IsEnabled = true;
-                ChatResetButton.IsEnabled = true;
-            });
         }
 
         private void ChatBubble_OnCopy(string message)
@@ -247,29 +205,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             }
         }
 
-        private async void ChatSendButton_Click(object sender, RoutedEventArgs e)
+        private void ChatSendButton_Click(object sender, RoutedEventArgs e)
         {
-            ChatStatus.Visibility = Visibility.Visible;
-            ChatSendButton.IsEnabled = false;
-            ChatResetButton.IsEnabled = false;
-            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
-            {
-                Role = "user",
-                Content = ChatTestInput.Text,
-            });
-            AddChatBlock(ChatTestInput.Text, false);
-            ChatTestInput.Text = "";
-            var response = await Task.Run(() => Chat.GetChatResult(ChatFlow));
-            await ShowAssistantMessage(response);
-            ChatScroller.ScrollToBottom();
-            ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
-            {
-                Role = "assistant",
-                Content = response
-            });
-            ChatStatus.Visibility = Visibility.Hidden;
-            ChatSendButton.IsEnabled = true;
-            ChatResetButton.IsEnabled = true;
         }
 
         private async Task ShowAssistantMessage(string response)
@@ -306,43 +243,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void ChatResetButton_Click(object sender, RoutedEventArgs e)
         {
-            ChatFlow.Conversations.Clear();
-            ChatContainer.Children.Clear();
-            ChatPromptList_SelectionChanged(sender, null);
         }
 
         private void ChatPromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ChatPromptList.SelectedIndex < 0)
-            {
-                return;
-            }
-            if (ChatContainer.Children.Count > 0)
-            {
-                ChatContainer.Children.RemoveAt(0);
-            }
-            string prompt = "";
-            string tag = (ChatPromptList.SelectedItem as ComboBoxItem).Tag.ToString();
-            prompt = ChatPromptList.SelectedIndex > 1
-                ? CommonHelper.TextTemplateParse(File.ReadAllText(Path.Combine(MainSave.AppDirectory, tag)), 0)
-                : CommonHelper.TextTemplateParse(tag, 0);
-            AddChatBlock(prompt, false, 0);
-            if (ChatFlow.Conversations.Count > 0)
-            {
-                ChatFlow.Conversations[0] = new ChatFlow.ConversationItem
-                {
-                    Role = "system",
-                    Content = prompt
-                };
-            }
-            else
-            {
-                ChatFlow.Conversations.Add(new ChatFlow.ConversationItem
-                {
-                    Role = "system",
-                    Content = prompt
-                });
-            }
+            
         }
 
         private void BuildPromptList()

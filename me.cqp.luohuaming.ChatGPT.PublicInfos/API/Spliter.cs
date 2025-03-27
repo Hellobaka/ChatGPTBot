@@ -28,7 +28,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 return RegexSplit();
             }
             string prompt = AppConfig.SpliterPrompt.Replace("$MaxLines$", AppConfig.SpliterMaxLines.ToString());
-            string result = Chat.GetChatResult(new List<ChatMessage>
+            string result = Chat.GetChatResult(AppConfig.SpilterUrl, new List<ChatMessage>
             {
                 new SystemChatMessage(prompt),
                 new UserChatMessage(Message)

@@ -1,0 +1,165 @@
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using OpenAI.Chat;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Timers;
+
+namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
+{
+    public class MoodManager
+    {
+        public double Valence { get; set; }
+
+        public double Arousal { get; set; }
+
+        private Timer MoodDecreaseTimer { get; set; }
+
+        public static MoodManager Instance { get; private set; }
+
+        public const string Prompt = @"请根据以下对话内容，完成以下任务：
+1. 判断回复者的立场是'supportive'（支持）、'opposed'（反对）还是'neutrality'（中立）。
+2. 从'happy,angry,sad,surprised,disgusted,fearful,neutral'中选出最匹配的1个情感标签。
+3. 按照'立场-情绪'的格式输出结果，例如：'supportive-happy'。
+被回复的内容：
+{0}
+回复内容：
+{1}
+请分析回复者的立场和情感倾向，只输出结果，无需任何解释性文本。";
+
+        public enum Mood
+        {
+            None,
+            happy,
+            angry,
+            sad,
+            surprised,
+            disgusted,
+            fearful,
+            neutral,
+        }
+
+        public enum Stand
+        {
+            None,
+            supportive,
+            neutrality,
+            opposed,
+        }
+
+        public static Dictionary<Mood, double> MoodFavorValue { get; set; }
+            = new()
+            {
+                { Mood.happy, 1.5 },
+                { Mood.angry, -3 },
+                { Mood.sad, -1.5 },
+                { Mood.surprised, 0.6 },
+                { Mood.disgusted, -4.5 },
+                { Mood.fearful, -2 },
+                { Mood.neutral, 0.3 }
+            };
+
+        private static Dictionary<Mood, (double valence, double arousal)> MoodValues { get; set; } =
+            new()
+            {
+                { Mood.happy, (0.8, 0.6) },
+                { Mood.angry, (-0.7, 0.7) },
+                { Mood.sad, (-0.6, 0.3) },
+                { Mood.surprised, (0.4, 0.8) },
+                { Mood.disgusted, (-0.8, 0.5) },
+                { Mood.fearful, (-0.7, 0.6) },
+                { Mood.neutral, (0.0, 0.5) }
+            };
+
+        private static Dictionary<string, (double valence, double arousal)> MoodMap { get; set; } =
+            new()
+            {
+                {"兴奋", (0.5, 0.7) },
+                {"快乐", (0.3, 0.8) },
+                {"满足", (0.2, 0.65) },
+                {"愤怒", (-0.5, 0.7) },
+                {"焦虑", (-0.3, 0.8) },
+                {"烦躁", (-0.2, 0.65) },
+                {"悲伤", (-0.5, 0.3) },
+                {"疲倦", (-0.3, 0.35) },
+                {"疲倦", (-0.4, 0.15) },
+                {"平静", (0.2, 0.45) },
+                {"安宁", (0.3, 0.4) },
+                {"放松", (0.5, 0.3) },
+            };
+
+        public MoodManager()
+        {
+            Instance = this;
+        }
+
+        public void UpdateMood(Mood mood)
+        {
+            var (valence, arousal) = MoodValues[mood];
+            Valence = Math.Max(-1, Math.Min(1, Valence + valence));
+            Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
+        }
+
+        public void StartMoodDecreaseTimer()
+        {
+            MoodDecreaseTimer = new()
+            {
+                AutoReset = true,
+                Interval = 1000,
+            };
+            MoodDecreaseTimer.Elapsed += MoodDecreaseTimer_Elapsed;
+            MoodDecreaseTimer.Start();
+        }
+
+        public (Mood mood, Stand stand) GetTextMood(string input, string detailMessage)
+        {
+            string prompt = string.Format(Prompt, detailMessage, input);
+            string reply = Chat.GetChatResult(AppConfig.SpilterUrl,
+                [
+                    new SystemChatMessage(prompt),
+                ], AppConfig.SpliterModelName);
+            var split = reply.Split('-');
+
+            if (split.Length == 2)
+            {
+                Mood mood = Enum.TryParse(split[0].ToLower(), out Mood v) ? v : Mood.None;
+                Stand stand = Enum.TryParse(split[0].ToLower(), out Stand v2) ? v2 : Stand.None;
+                if (mood == Mood.None || stand == Stand.None)
+                {
+                    MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
+                    return (Mood.None, Stand.None);
+                }
+
+                return (mood, stand);
+            }
+            else
+            {
+                MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
+                return (Mood.None, Stand.None);
+            }
+        }
+
+        private void MoodDecreaseTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            double change = 0;
+            Valence = change + ((Valence - change) * Math.Exp(-1 * 1));
+
+            change = 0.5;
+            Arousal = change + ((Arousal - change) * Math.Exp(-1 * 1));
+
+            Valence = Math.Max(-1, Math.Min(1, Valence));
+            Arousal = Math.Max(0, Math.Min(1, Arousal));
+        }
+
+        public override string ToString()
+        {
+            var mood = MoodMap.AsParallel()
+                .Select(x => new { Mood = x.Key, Distance = Math.Sqrt(Math.Pow(x.Value.valence - Valence, 2) + Math.Pow(x.Value.arousal - Arousal, 2)) })
+                .OrderByDescending(x => x.Distance)
+                .FirstOrDefault().Mood;
+
+            return $"当前心情：{mood}。你现在心情{(Valence > 0.5 ? "很好" : (Valence < -0.5 ? "不太好" : "一般"))}，" +
+                $"情绪比较{(Arousal > 0.7 ? "激动" : (Valence < -0.5 ? "平静" : "普通"))}。";
+        }
+    }
+}

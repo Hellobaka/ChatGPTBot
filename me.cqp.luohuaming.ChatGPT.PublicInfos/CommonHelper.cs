@@ -97,7 +97,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string TextTemplateParse(string input, long id)
         {
-            string modelName = AppConfig.ModelName;
+            string modelName = AppConfig.ChatModelName;
             string currentTime = DateTime.Now.ToString("G");
             string botName = AppConfig.BotName;
 
@@ -147,6 +147,52 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string ToJson(this object obj)
         {
             return JsonConvert.SerializeObject(obj, Formatting.None);
+        }
+
+        public static string[] SplitV2(this string message, string pattern)
+        {
+            string regexPattern = $"({pattern})";
+            var parts = Regex.Split(message, regexPattern);
+
+            var ls = parts.ToList();
+            ls.RemoveAll(string.IsNullOrEmpty);
+            return ls.ToArray();
+        }
+
+        public static Random Random { get; set; } = new Random();
+
+        /// <summary>
+        /// 随机范围小数
+        /// </summary>
+        /// <param name="random"></param>
+        /// <param name="lower">0.x</param>
+        /// <param name="upper">0.x</param>
+        /// <returns></returns>
+        public static double NextDouble(this Random random, double lower, double upper)
+        {
+            return random.NextDouble() * (upper - lower) + lower;
+        }
+
+        public static string GetRelativePath(string value, string currentDirectory)
+        {
+            if (File.Exists(value))
+            {
+                string fullPath = Path.GetFullPath(value).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string currentDir = currentDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+
+                if (fullPath.StartsWith(currentDir, StringComparison.OrdinalIgnoreCase))
+                {
+                    return fullPath.Substring(currentDir.Length);
+                }
+                else
+                {
+                    return fullPath;
+                }
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }
