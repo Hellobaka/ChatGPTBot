@@ -42,9 +42,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
             else
             {
-                replyManager = new ReplyManager(id);
-                ReplyManagers.Add(id, replyManager);
-                return replyManager;
+                return new ReplyManager(id);
             }
         }
 

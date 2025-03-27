@@ -82,7 +82,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 {"焦虑", (-0.3, 0.8) },
                 {"烦躁", (-0.2, 0.65) },
                 {"悲伤", (-0.5, 0.3) },
-                {"疲倦", (-0.3, 0.35) },
                 {"疲倦", (-0.4, 0.15) },
                 {"平静", (0.2, 0.45) },
                 {"安宁", (0.3, 0.4) },
@@ -117,7 +116,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public (Mood mood, Stand stand) GetTextMood(string input, string detailMessage)
         {
             string prompt = string.Format(Prompt, detailMessage, input);
-            string reply = Chat.GetChatResult(AppConfig.SpilterUrl,
+            string reply = Chat.GetChatResult(AppConfig.SpliterUrl, AppConfig.SpliterApiKey,
                 [
                     new SystemChatMessage(prompt),
                 ], AppConfig.SpliterModelName);
@@ -125,7 +124,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             if (split.Length == 2)
             {
-                Mood mood = Enum.TryParse(split[0].ToLower(), out Mood v) ? v : Mood.None;
+                Mood mood = Enum.TryParse(split[1].ToLower(), out Mood v) ? v : Mood.None;
                 Stand stand = Enum.TryParse(split[0].ToLower(), out Stand v2) ? v2 : Stand.None;
                 if (mood == Mood.None || stand == Stand.None)
                 {
