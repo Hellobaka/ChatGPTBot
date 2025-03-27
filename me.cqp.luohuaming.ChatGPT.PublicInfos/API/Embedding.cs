@@ -12,12 +12,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         public static double[] GetEmbedding(string text)
         {
-            string url = $"";
-            var json = CommonHelper.Post("POST", url, new
+            var json = CommonHelper.Post("POST", AppConfig.EmbeddingUrl, new
             {
-                model = "",
+                model = AppConfig.EmbeddingModelName,
                 input = text
-            }.ToJson(), "");
+            }.ToJson(), AppConfig.EmbeddingApiKey);
             try
             {
                 return JObject.Parse(json)["data"][0]["embedding"].ToObject<double[]>();

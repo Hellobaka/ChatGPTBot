@@ -18,7 +18,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 return null;
             }
 
-            return Chat.GetChatResult(AppConfig.ImageDescriberUrl,
+            return Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
                 [
                     new SystemChatMessage(prompt), 
                     new UserChatMessage(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"))

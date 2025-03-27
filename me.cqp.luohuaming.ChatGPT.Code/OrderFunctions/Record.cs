@@ -131,7 +131,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             string prompt = stringBuilder.ToString();
 
-            return Chat.GetChatResult(AppConfig.ChatBaseURL,
+            return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
             ], AppConfig.ChatModelName);

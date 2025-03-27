@@ -20,7 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         /// <param name="chatMessages"></param>
         /// <param name="modelName"></param>
         /// <returns></returns>
-        public static string GetChatResult(string baseUrl, List<ChatMessage> chatMessages, string modelName, bool useSearch = false)
+        public static string GetChatResult(string baseUrl, string apiKey, List<ChatMessage> chatMessages, string modelName, bool useSearch = false)
         {
             string AppendContentToMessage(ChatMessageContent contentes)
             {
@@ -43,7 +43,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
 
             string msg = "";
-            var c = new OpenAIClient(new ApiKeyCredential(AppConfig.APIKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromSeconds(300), });
+            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromSeconds(300), });
             var client = c.GetChatClient(modelName);
             var option = new ChatCompletionOptions
             {

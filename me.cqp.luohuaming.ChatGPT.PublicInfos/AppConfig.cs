@@ -4,7 +4,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
     public static class AppConfig
     {
-        public static string APIKey { get; set; } = "";
+        public static string ChatAPIKey { get; set; } = "";
 
         public static string ChatBaseURL { get; set; } = "";
 
@@ -84,22 +84,33 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int EmojiSendProbablity {  get; set; }
 
-        public static string SpilterUrl {  get; set; }
+        public static string SpliterUrl {  get; set; }
+
+        public static string SpliterApiKey {  get; set; }
 
         public static string ImageDescriberUrl {  get; set; }
+
+        public static string ImageDescriberApiKey {  get; set; }
 
         public static string ImageDescriberModelName {  get; set; }
 
         public static int ContextMaxLength {  get; set; }
 
+        public static string EmbeddingUrl { get; set; }
+
+        public static string EmbeddingApiKey { get; set; }
+
+        public static string EmbeddingModelName { get; set; }
+
         public static void Init()
         {
+            ConfigHelper.DisableHotReload();
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
             EnableTTS = ConfigHelper.GetConfig("EnableTTS", false);
             SendErrorTextWhenTTSFail = ConfigHelper.GetConfig("SendErrorTextWhenTTSFail", false);
             TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
-            APIKey = ConfigHelper.GetConfig("APIKey", "");
+            ChatAPIKey = ConfigHelper.GetConfig("ChatAPIKey", "");
             BochaAPIKey = ConfigHelper.GetConfig("BochaAPIKey", "");
             ChatBaseURL = ConfigHelper.GetConfig("ChatBaseURL", "https://api.openai.com/v1");
             ChatModelName = ConfigHelper.GetConfig("ChatModelName", "gpt-4o");
@@ -139,9 +150,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
             EmojiSendProbablity = ConfigHelper.GetConfig("EmojiSendProbablity", 50);
             ContextMaxLength = ConfigHelper.GetConfig("ContextMaxLength", 20);
-            SpilterUrl = ConfigHelper.GetConfig("SpilterUrl", "https://api.openai.com/v1");
+            SpliterUrl = ConfigHelper.GetConfig("SpliterUrl", "https://api.openai.com/v1");
+            SpliterApiKey = ConfigHelper.GetConfig("SpliterApiKey", "");
             ImageDescriberUrl = ConfigHelper.GetConfig("ImageDescriberUrl", "https://api.openai.com/v1");
+            ImageDescriberApiKey = ConfigHelper.GetConfig("ImageDescriberApiKey", "");
             ImageDescriberModelName = ConfigHelper.GetConfig("ImageDescriberModelName", "gpt-4o-mini");
+
+            EmbeddingUrl = ConfigHelper.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
+            EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
+            EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
+
+            ConfigHelper.EnableHotReload();
         }
     }
 }
