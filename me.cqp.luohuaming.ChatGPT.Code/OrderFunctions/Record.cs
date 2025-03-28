@@ -130,7 +130,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
 
             string prompt = stringBuilder.ToString();
-            Console.WriteLine(prompt);
+
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),

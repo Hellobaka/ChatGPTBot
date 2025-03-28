@@ -170,6 +170,7 @@
     <Compile Include="DB\Picture.cs" />
     <Compile Include="DB\Relationship.cs" />
     <Compile Include="DB\SQLHelper.cs" />
+    <Compile Include="DB\Usage.cs" />
     <Compile Include="FunctionResult.cs" />
     <Compile Include="MainSave.cs" />
     <Compile Include="Models.cs" />
