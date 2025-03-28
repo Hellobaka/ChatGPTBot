@@ -26,7 +26,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {0}
 回复内容：
 {1}
-请分析回复者的立场和情感倾向，只输出结果，无需任何解释性文本。";
+请分析回复者的立场和情感倾向，只输出结果，无需任何解释性文本，只能从我给出的几个选项中选择，不可自己使用新的选项。";
 
         public enum Mood
         {
