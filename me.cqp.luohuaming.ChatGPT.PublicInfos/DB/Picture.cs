@@ -19,6 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string FilePath { get; set; }
 
+        [SugarColumn(IsJson = true, Length = 65535)]
         public double[] Embedding { get; set; } = [];
 
         public string Description { get; set; }
