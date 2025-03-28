@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 ContextMode = false;
             }
-            MainSave.CQLog.Debug("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
+            //MainSave.CQLog.Debug("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
         }
 
         public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq)
