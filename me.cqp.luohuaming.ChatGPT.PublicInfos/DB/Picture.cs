@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using OpenAI.Chat;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
@@ -90,7 +91,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static List<Picture> GetRecommandEmoji(string text)
         {
-            var embedding = API.Embedding.GetEmbedding(text);
+            var emotion = Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
+                [
+                    new SystemChatMessage(string.Format($"这是你将要发送的消息内容:{text}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。"))
+                ], AppConfig.ImageDescriberModelName);
+
+            if (emotion == Chat.ErrorMessage)
+            {
+                MainSave.CQLog.Debug("表情包推荐", $"请求失败");
+                return [];
+            }
+            MainSave.CQLog.Debug("表情包推荐", $"转换后的情感：{emotion}");
+            var embedding = API.Embedding.GetEmbedding(emotion);
 
             return GetRecommandEmoji(embedding);
         }
@@ -102,7 +114,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 return [];
             }
 
-            var list = new List<Picture>();
             if (Cache.Count == 0)
             {
                 var db = SQLHelper.GetInstance();
@@ -124,12 +135,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 }
             }
 
-            return Cache.AsParallel()
+            var l = Cache.AsParallel()
                 .Select(x => new { Image = x.Value, Similarity = CosineSimilarity(embedding, x.Value.Embedding) })
                 .OrderByDescending(x => x.Similarity)
                 .Where(x => x.Similarity > 0)
-                .Select(x => x.Image)
-                .Take(count).ToList();
+                .Take(count);
+            foreach (var item in l)
+            {
+                MainSave.CQLog.Debug("表情包结果", $"{item.Image.Hash}[{item.Similarity}%]: {item.Image.Description}");
+            }
+            return l.Select(x => x.Image).ToList();
         }
 
         public void Update()
