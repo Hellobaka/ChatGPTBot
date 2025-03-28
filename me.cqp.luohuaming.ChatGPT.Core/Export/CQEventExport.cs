@@ -50,7 +50,7 @@ namespace me.cqp.luohuaming.ChatGPT.App.Export
 		[DllExport (ExportName = "AppInfo", CallingConvention = CallingConvention.StdCall)]	
 		private static string AppInfo ()	
 		{	
-			return "9,me.cqp.luohuaming.ChatGPT";	
+			return "9,me.cqp.luohuaming.ChatGPTv2";	
 		}	
 		
 		/// <summary>	
@@ -64,12 +64,12 @@ namespace me.cqp.luohuaming.ChatGPT.App.Export
 			// 反射获取 AppData 实例	
 			Type appDataType = typeof (AppData);	
 			// 注册一个 CQApi 实例	
-			AppInfo appInfo = new AppInfo ("me.cqp.luohuaming.ChatGPT", 1, 9, "ChatGPT 插件", "2.0.0", 1, "落花茗", "ChatGPT", authCode);	
+			AppInfo appInfo = new AppInfo ("me.cqp.luohuaming.ChatGPTv2", 1, 9, "ChatGPT 插件", "2.0.0", 1, "落花茗", "ChatGPT", authCode);	
 			appDataType.GetRuntimeProperty ("CQApi").GetSetMethod (true).Invoke (null, new object[] { new CQApi (appInfo) });	
-			AppData.UnityContainer.RegisterInstance<CQApi> ("me.cqp.luohuaming.ChatGPT", AppData.CQApi);	
+			AppData.UnityContainer.RegisterInstance<CQApi> ("me.cqp.luohuaming.ChatGPTv2", AppData.CQApi);	
 			// 向容器注册一个 CQLog 实例	
 			appDataType.GetRuntimeProperty ("CQLog").GetSetMethod (true).Invoke (null, new object[] { new CQLog (authCode) });	
-			AppData.UnityContainer.RegisterInstance<CQLog> ("me.cqp.luohuaming.ChatGPT", AppData.CQLog);	
+			AppData.UnityContainer.RegisterInstance<CQLog> ("me.cqp.luohuaming.ChatGPTv2", AppData.CQLog);	
 			// 注册插件全局异常捕获回调, 用于捕获未处理的异常, 回弹给 酷Q 做处理	
 			AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;	
 			// 本函数【禁止】处理其他任何代码，以免发生异常情况。如需执行初始化代码请在Startup事件中执行（Type=1001）。	
