@@ -23,6 +23,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public string[] Split()
         {
+            MainSave.CQLog?.Debug("消息分行", $"开始进行消息分行：{Message}");
+
             if (AppConfig.SpliterRegexFirst)
             {
                 return RegexSplit();
@@ -43,7 +45,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     foreach (var line in arr)
                     {
                         var str = line.ToString();
-                        if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".")))
+                        if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
                         {
                             str = str.Substring(0, str.Length - 1);
                         }
