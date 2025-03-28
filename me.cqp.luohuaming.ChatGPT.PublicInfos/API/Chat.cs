@@ -1,4 +1,5 @@
-﻿using OpenAI;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using OpenAI;
 using OpenAI.Chat;
 using System;
 using System.ClientModel;
@@ -62,6 +63,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     requiresAction = false;
                     List<ChatToolCall> toolcall = [];
                     ChatFinishReason finishReason = ChatFinishReason.Stop;
+                    int inputToken = 0, outputToken = 0;
                     if (AppConfig.StreamMode)
                     {
                         foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, option))
@@ -69,6 +71,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             msg += AppendContentToMessage(chatUpdate.ContentUpdate);
                             // TODO: tool stream update
                             finishReason = chatUpdate.FinishReason ?? ChatFinishReason.Stop;
+                            inputToken += chatUpdate.Usage.InputTokenCount;
+                            outputToken += chatUpdate.Usage.OutputTokenCount;
                         }
                     }
                     else
@@ -77,7 +81,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         msg += AppendContentToMessage(completion.Value.Content);
                         toolcall = [.. toolcall, .. completion.Value.ToolCalls];
                         finishReason = completion.Value.FinishReason;
+
+                        inputToken = completion.Value.Usage.InputTokenCount;
+                        outputToken = completion.Value.Usage.OutputTokenCount;
                     }
+                    Usage.Insert(baseUrl, inputToken, outputToken);
 
                     switch (finishReason)
                     {
