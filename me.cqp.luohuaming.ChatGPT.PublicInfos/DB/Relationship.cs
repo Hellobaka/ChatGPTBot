@@ -94,40 +94,38 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 if (moodFavorValue > 0 && stand != MoodManager.Stand.opposed)
                 {
-                    if (Favorability < 500)
+                    moodFavorValue *= Math.Cos(Math.PI * Favorability / 2000);
+
+                    if (Favorability > 500)
                     {
-                        Favorability *= Math.Cos(Math.PI * Favorability / 2000);
-                    }
-                    else
-                    {
-                        Favorability *= 3 / (GetFavorOver850Count() + 3);
+                        moodFavorValue *= 3 / (GetFavorOver850Count() + 3);
                     }
                 }
                 else if (moodFavorValue < 0 && stand != MoodManager.Stand.supportive)
                 {
-                    Favorability *= Math.Exp(Favorability / 1000);
+                    moodFavorValue *= Math.Exp(Favorability / 1000);
                 }
                 else
                 {
-                    Favorability = 0;
+                    moodFavorValue = 0;
                 }
             }
             else
             {
                 if (moodFavorValue > 0 && stand != MoodManager.Stand.opposed)
                 {
-                    Favorability *= Math.Exp(Favorability / 1000);
+                    moodFavorValue *= Math.Exp(Favorability / 1000);
                 }
                 else if (moodFavorValue < 0 && stand != MoodManager.Stand.supportive)
                 {
-                    Favorability *= Math.Cos(Math.PI * Favorability / 2000);
+                    moodFavorValue *= Math.Cos(Math.PI * Favorability / 2000);
                 }
                 else
                 {
-                    Favorability = 0;
+                    moodFavorValue = 0;
                 }
             }
-
+            Favorability = moodFavorValue;
             Favorability = Math.Max(-1000, Math.Min(1000, Favorability));
 
             MainSave.CQLog.Debug("更新用户关系", $"[{QQ}] 心情：{mood}，计算后新的关系值为：{Favorability}");
