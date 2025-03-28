@@ -90,7 +90,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             var relationship = Relationship.GetRelationShip(GroupID, QQ);
             StringBuilder stringBuilder = new();
-            if (relationship != null)
+            if (QQ == MainSave.CurrentQQ)
+            {
+                stringBuilder.Append($"[{Time:G}][你自己] {AppConfig.BotName}: ");
+            }
+            else if (relationship != null)
             {
                 stringBuilder.Append($"[{Time:G}] {relationship.Card ?? relationship.NickName}: ");
             }
