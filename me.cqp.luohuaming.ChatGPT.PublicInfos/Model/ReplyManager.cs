@@ -12,9 +12,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public int MessageHoldCount { get; set; }
 
-        public DateTime WillingLastChangeTime { get; set; }
+        public DateTime WillingLastChangeTime { get; set; } = DateTime.Now;
 
-        public DateTime LastReplyTime { get; set; }
+        public DateTime LastReplyTime { get; set; } = new DateTime();
 
         public long LastReplyQQ { get; set; }
 
@@ -88,12 +88,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     ReplyWilling = 1;
                     CurrentModeKeepInterval = TimeSpan.FromMinutes(MainSave.Random.Next(3, 5));
                 }
+                WillingLastChangeTime = DateTime.Now;
+                MessageHoldCount = 0;
             }
 
-            if ((DateTime.Now - LastReplyTime).TotalMinutes == 5)
+            if ((DateTime.Now - LastReplyTime).TotalMinutes >= 5)
             {
                 ContextMode = false;
             }
+            MainSave.CQLog.Debug("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
         }
 
         public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq)
@@ -136,21 +139,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 baseProbablity = MessageHoldCount > 15 ? 0.3 : (0.03 * Math.Min(MessageHoldCount, 10));
             }
 
-            ReplyWilling *= baseProbablity;
-
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyQQ = qq;
 
             MainSave.CQLog.Debug("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
 
-            return ReplyWilling;
+            return ReplyWilling * baseProbablity;
         }
 
         public void ChangeReplyWillingAfterSendingMessage()
         {
             ReplyWilling -= 0.3;
-
+            ContextMode = true;
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
+            LastReplyTime = DateTime.Now;
+            MessageHoldCount = 0;
             MainSave.CQLog.Debug("发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
         }
 
