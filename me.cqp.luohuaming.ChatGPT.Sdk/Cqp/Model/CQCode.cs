@@ -202,7 +202,7 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model
 			return new Regex[]
 			{
 				new Regex(@"\[CQ:([A-Za-z]*)(?:(,[^\[\]]+))?\]", RegexOptions.Compiled),    // 匹配CQ码
-                new Regex(@",([A-Za-z]+)=([^,\[\]]+)", RegexOptions.Compiled)               // 匹配键值对
+                new Regex(@",([A-Za-z_]+)=([^,\[\]]+)", RegexOptions.Compiled)               // 匹配键值对
             };
 		}
 		#endregion
