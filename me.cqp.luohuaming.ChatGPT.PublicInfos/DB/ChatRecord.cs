@@ -70,11 +70,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             List<ChatRecord> results;
             if (qq > 0)
             {
-                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId && x.QQ == qq).Take(count).ToList();
+                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
             }
             else
             {
-                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId).Take(count).ToList();
+                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId).OrderByDescending(x => x.Time).Take(count).ToList();
             }
 
             return results;
@@ -83,7 +83,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static List<ChatRecord> GetPrivateChatRecord(long qq, int count = 15)
         {
             var db = SQLHelper.GetInstance();
-            return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).Take(count).ToList();
+            return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
         }
 
         private string ParseMessage(string message)
@@ -126,15 +126,24 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         case CQFunction.Image:
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
-                            if (AppConfig.EnableVision is false)
+                            if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji))
                             {
                                 continue;
                             }
                             MainSave.CQLog.Debug("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
-                            string description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
-                            Picture.InsertImageDescription(cqcode, emoji, description);
-                            MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
-
+                            string description;
+                            var cache = Picture.GetPictureByHash(cqcode);
+                            if (cache == null)
+                            {
+                                description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
+                                Picture.InsertImageDescription(cqcode, emoji, description);
+                                MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
+                            }
+                            else
+                            {
+                                description = cache.Description;
+                                MainSave.CQLog.Debug("图片描述", $"缓存图片 {cqcode.Items["file"]} 的描述为：{description}");
+                            }
 
                             if (!string.IsNullOrEmpty(description))
                             {

@@ -46,6 +46,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVision { get; set; }
 
+        public static bool IgnoreNotEmoji { get; set; }
+
         public static bool EnableTTS { get; set; }
 
         public static bool SendErrorTextWhenTTSFail { get; set; } = false;
@@ -139,7 +141,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
             EnableSpliter = ConfigHelper.GetConfig("EnableSpliter", false);
             SpliterModelName = ConfigHelper.GetConfig("SpliterModelName", "gpt-4o-mini");
-            SpliterPrompt = ConfigHelper.GetConfig("SpliterPrompt", "为了使Bot的模仿真人的对话节奏与习惯，请将大语言模型输出的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容");
+            SpliterPrompt = ConfigHelper.GetConfig("SpliterPrompt", "为了使Bot的模仿真人的对话节奏与习惯，请将大语言模型输出的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号或者叹号，逗号句号都不要");
             SpliterMaxLines = ConfigHelper.GetConfig("SpliterMaxLines", 3);
             SpliterRegexFirst = ConfigHelper.GetConfig("SpliterRegexFirst", false);
             SpliterRegexRemovePunctuation = ConfigHelper.GetConfig("SpliterRegexRemovePunctuation", false);
@@ -159,6 +161,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingUrl = ConfigHelper.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
             EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
             EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
+            IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
 
             ConfigHelper.EnableHotReload();
         }
