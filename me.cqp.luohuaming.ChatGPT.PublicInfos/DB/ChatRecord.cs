@@ -28,7 +28,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public DateTime Time { get; set; }
 
+        [SugarColumn(IsIgnore = true)]
         public bool IsImage { get; set; }
+
+        [SugarColumn(IsIgnore = true)]
+        public bool IsEmpty { get; set; }
 
         public static ChatRecord Create(long qq, string message, int messageID)
         {
@@ -122,6 +126,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     }
                     switch (cqcode.Function)
                     {
+                        case CQFunction.At:
+                            long target = long.Parse(cqcode.Items["qq"]);
+                            var r = Relationship.GetRelationShip(GroupID, target);
+                            stringBuilder.Append($"[@{r.Card ?? r.NickName}]");
+                            break;
+
                         case CQFunction.Face:
                             image++;
                             var face = (CQFace)int.Parse(cqcode.Items["id"]);
@@ -158,6 +168,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 }
             }
             IsImage = image >= 1 && text == 0;
+            IsEmpty = image == 0 && text == 0;
             return stringBuilder.ToString();
         }
     }
