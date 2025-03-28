@@ -60,9 +60,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     foreach(var item in splits)
                     {
                         var message = e.FromGroup.SendGroupMessage(item);
-                        replyManager.ChangeReplyWillingAfterSendingMessage();
                         RecordSelfMessage(e.FromGroup, message);
                     }
+                    replyManager.ChangeReplyWillingAfterSendingMessage();
 
                     (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
                     MoodManager.Instance.UpdateMood(mood);
@@ -130,7 +130,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
 
             string prompt = stringBuilder.ToString();
-
+            Console.WriteLine(prompt);
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
