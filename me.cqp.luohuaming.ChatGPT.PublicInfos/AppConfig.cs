@@ -104,6 +104,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string EmbeddingModelName { get; set; }
 
+        public static string SchedulePrompt { get; set; }
+
+        public static string DefaultSchedule { get; set; }
+
+        public static bool DebugMode { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -162,6 +168,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
             EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
             IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
+            DebugMode = ConfigHelper.GetConfig("DebugMode", false);
+            SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
+            DefaultSchedule = ConfigHelper.GetConfig("DefaultSchedule", "摸鱼");
 
             ConfigHelper.EnableHotReload();
         }

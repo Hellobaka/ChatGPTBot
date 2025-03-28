@@ -176,6 +176,7 @@
     <Compile Include="Models.cs" />
     <Compile Include="Model\MoodManager.cs" />
     <Compile Include="Model\ReplyManager.cs" />
+    <Compile Include="Model\SchedulerManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

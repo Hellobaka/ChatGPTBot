@@ -56,6 +56,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             SQLHelper.CreateDB();
             TTSHelper.CheckTTS();
             _ = new MoodManager();
+            _ = new SchedulerManager();
 
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
         }
