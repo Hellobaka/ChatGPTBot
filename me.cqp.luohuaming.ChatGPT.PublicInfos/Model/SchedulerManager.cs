@@ -4,6 +4,7 @@ using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -23,7 +24,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         {
             Instance = this;
             EnableTimer();
-            UpdateScheduler();
+            Task.Run(UpdateScheduler);
         }
 
         private void EnableTimer()
@@ -38,7 +39,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void UpdateSchedulerTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (DateTime.Now.Date != LastUpdateTime)
+            if (DateTime.Now.Date != LastUpdateTime.Date)
             {
                 UpdateScheduler();
             }

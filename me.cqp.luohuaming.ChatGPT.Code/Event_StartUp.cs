@@ -52,22 +52,12 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 }
             }
 
-            BuildPromptList();
             SQLHelper.CreateDB();
             TTSHelper.CheckTTS();
             _ = new MoodManager();
             _ = new SchedulerManager();
 
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
-        }
-
-        private void BuildPromptList()
-        {
-            string promptPath = Path.Combine(MainSave.AppDirectory, "Prompts");
-            foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
-            {
-                MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
-            }
         }
     }
 }
