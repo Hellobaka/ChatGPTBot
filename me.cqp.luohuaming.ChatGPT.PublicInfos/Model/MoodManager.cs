@@ -91,6 +91,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public MoodManager()
         {
             Instance = this;
+            StartMoodDecreaseTimer();
         }
 
         public void UpdateMood(Mood mood)
@@ -129,7 +130,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 if (mood == Mood.None || stand == Stand.None)
                 {
                     MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
-                    return (Mood.None, Stand.None);
+                    return (Mood.neutral, Stand.neutrality);
                 }
 
                 MainSave.CQLog.Debug("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
@@ -145,11 +146,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void MoodDecreaseTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            double change = 0;
-            Valence = change + ((Valence - change) * Math.Exp(-1 * 1));
-
-            change = 0.5;
-            Arousal = change + ((Arousal - change) * Math.Exp(-1 * 1));
+            Valence *= 0.8;
+            Arousal *= 0.9;
 
             Valence = Math.Max(-1, Math.Min(1, Valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal));
