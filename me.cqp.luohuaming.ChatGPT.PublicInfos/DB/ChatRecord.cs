@@ -34,6 +34,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsIgnore = true)]
         public bool IsEmpty { get; set; }
 
+        [SugarColumn(IsJson = true, Length = 65535)]
+        public string[] Topics { get; set; } = [];
+
         public static ChatRecord Create(long qq, string message, int messageID)
         {
             var record = new ChatRecord
@@ -45,6 +48,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID
             };
             record.ParsedMessage = record.ParseMessage(message);
+            record.Topics = TopicGenerator.GetTopics(record.ParsedMessage);
             return record;
         }
 
@@ -59,13 +63,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID,
             };
             record.ParsedMessage = record.ParseMessage(message);
+            record.Topics = TopicGenerator.GetTopics(record.ParsedMessage);
             return record;
         }
 
         public static void InsertRecord(ChatRecord chatRecord)
         {
             var db = SQLHelper.GetInstance();
-            db.Insertable(chatRecord).ExecuteCommand();
+            chatRecord.Id = db.Insertable(chatRecord).ExecuteReturnIdentity();
         }
 
         public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15)
@@ -177,6 +182,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             IsImage = image >= 1 && text == 0;
             IsEmpty = image == 0 && text == 0;
             return stringBuilder.ToString();
+        }
+
+        public static ChatRecord GetRecordByMessageId(int id)
+        {
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<ChatRecord>().First(x => x.MessageID == id);
         }
     }
 }

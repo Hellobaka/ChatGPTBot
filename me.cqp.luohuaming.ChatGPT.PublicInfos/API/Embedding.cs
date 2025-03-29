@@ -10,6 +10,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
     public static class Embedding
     {
+        // TODO: 实现腾讯云接口
         public static double[] GetEmbedding(string text)
         {
             var json = CommonHelper.Post("POST", AppConfig.EmbeddingUrl, new

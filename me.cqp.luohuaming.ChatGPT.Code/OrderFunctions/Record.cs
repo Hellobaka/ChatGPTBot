@@ -40,7 +40,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             var record = ChatRecord.Create(e.FromGroup, e.FromQQ, e.Message.Text, e.Message.Id);
             ChatRecord.InsertRecord(record);
-
+            if (AppConfig.EnableMemory)
+            {
+                Memory.AddMemory(record);
+            }
             if (InProgress)
             {
                 return new FunctionResult { Result = false, SendFlag = false };
@@ -55,7 +58,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
-                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), e.Message.Text.Contains(AppConfig.BotName), e.FromQQ);
+                double memoryRelatedRate = AppConfig.EnableMemory ? Memory.CalcMemoryActivateRate(record) : 0;
+                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), e.Message.Text.Contains(AppConfig.BotName), e.FromQQ, memoryRelatedRate);
 
                 if (MainSave.Random.NextDouble() < replyProbablity)
                 {
@@ -133,9 +137,45 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 stringBuilder.AppendLine($"{time.ToShortTimeString()} :{action}");
             }
             stringBuilder.AppendLine($"</schedule>`");
+            if (AppConfig.EnableMemory)
+            {
+                var memories = Memory.GetMemories(record);
+                if (memories.memories.Length > 0)
+                {
+                    stringBuilder.AppendLine("<Memory>");
+
+                    int count = 0;
+                    foreach (var (similarity, nodes) in memories.memories)
+                    {
+                        if (count >= AppConfig.MaxMemoryCount)
+                        {
+                            break;
+                        }
+
+                        foreach (var r in nodes.GetRecords())
+                        {
+                            if (count >= AppConfig.MaxMemoryCount)
+                            {
+                                break;
+                            }
+                            stringBuilder.AppendLine(r.ParsedMessage);
+                            count++;
+                        }
+                    }
+                    stringBuilder.AppendLine("</Memory>");
+                }
+            }
+            if (record.RawMessage.Contains("[CQ:reply"))
+            {
+                var reply = CQCode.Parse(record.RawMessage).FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
+                if (reply != null && int.TryParse(reply.Items["id"], out int id))
+                {
+                    stringBuilder.AppendLine(ChatRecord.GetRecordByMessageId(id).ParsedMessage);
+                }
+            }
             foreach (var item in relationship.GroupID == -1
-                ? ChatRecord.GetPrivateChatRecord(relationship.QQ, AppConfig.ContextMaxLength)
-                : ChatRecord.GetGroupChatRecord(relationship.GroupID, 0, AppConfig.ContextMaxLength))
+                 ? ChatRecord.GetPrivateChatRecord(relationship.QQ, AppConfig.ContextMaxLength)
+                 : ChatRecord.GetGroupChatRecord(relationship.GroupID, 0, AppConfig.ContextMaxLength))
             {
                 stringBuilder.AppendLine(item.ParsedMessage);
             }

@@ -99,7 +99,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             //MainSave.CQLog.Debug("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
         }
 
-        public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq)
+        public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq, double memoryRelatedRate)
         {
             MessageHoldCount++;
             if (qq == LastReplyQQ && (DateTime.Now - LastReplyTime).TotalMinutes < 2 && MessageHoldCount <= 5)
@@ -123,6 +123,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             if (emoji)
             {
                 ReplyWilling *= 0.1;
+            }
+
+            if (memoryRelatedRate > 0.5)
+            {
+                ReplyWilling += (memoryRelatedRate - 0.5) / 2;
             }
 
             double baseProbablity = 0;
