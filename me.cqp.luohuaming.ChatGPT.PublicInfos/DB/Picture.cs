@@ -104,7 +104,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             MainSave.CQLog.Debug("表情包推荐", $"转换后的情感：{emotion}");
             var embedding = API.Embedding.GetEmbedding(emotion);
 
-            return GetRecommandEmoji(embedding);
+            return GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
         }
 
         public static List<Picture> GetRecommandEmoji(double[] embedding, int count = 3)

@@ -112,6 +112,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool DebugMode { get; set; }
 
+        public static bool RandomSendEmoji { get; set; }
+
+        public static int RecommendEmojiCount { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -174,6 +178,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
             DefaultSchedule = ConfigHelper.GetConfig("DefaultSchedule", "摸鱼");
             ChatEmptyResponse = ConfigHelper.GetConfig("ChatEmptyResponse", "<EMPTY>");
+            RandomSendEmoji = ConfigHelper.GetConfig("RandomSendEmoji", true);
+            RecommendEmojiCount = ConfigHelper.GetConfig("RecommendEmojiCount", 5);
 
             ConfigHelper.EnableHotReload();
         }
