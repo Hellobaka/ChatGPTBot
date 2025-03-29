@@ -54,7 +54,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     if (info != null)
                     {
                         nickname = info.Nick;
-                        card = info.Card;
+                        card = string.IsNullOrWhiteSpace(info.Card) ? info.Card : null;
                     }
                 }
                 else
@@ -63,6 +63,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     if (info != null)
                     {
                         nickname = info.Nick;
+                        card = string.IsNullOrWhiteSpace(info.Postscript) ? info.Postscript : null;
                     }
                 }
 
