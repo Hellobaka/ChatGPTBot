@@ -96,18 +96,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             StringBuilder stringBuilder = new();
             if (QQ == MainSave.CurrentQQ)
             {
-                stringBuilder.Append($"[{Time:G}][你自己] {AppConfig.BotName}: ");
+                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}][你自己] {AppConfig.BotName}: ");
             }
             else if (relationship != null)
             {
-                stringBuilder.Append($"[{Time:G}] {relationship.Card ?? relationship.NickName}: ");
+                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}] {relationship.Card ?? relationship.NickName}: ");
             }
             else
             {
-                stringBuilder.Append($"[{Time:G}] {QQ}: ");
+                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}] {QQ}: ");
             }
 
-            var split = message.SplitV2("\\[CQ:.*?\\]");
+            var split = message.Replace("\n", "").SplitV2("\\[CQ:.*?\\]");
             int image = 0, text = 0;
             foreach (var item in split)
             {
@@ -126,10 +126,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     }
                     switch (cqcode.Function)
                     {
+                        case CQFunction.Reply:
+                            stringBuilder.Append($"[QuoteMessage:{cqcode.Items["id"]}]");
+                            break;
+
                         case CQFunction.At:
                             long target = long.Parse(cqcode.Items["qq"]);
-                            var r = Relationship.GetRelationShip(GroupID, target);
-                            stringBuilder.Append($"[@{r.Card ?? r.NickName}]");
+                            if (target == MainSave.CurrentQQ)
+                            {
+                                stringBuilder.Append($"[@{AppConfig.BotName}]");
+                            }
+                            else
+                            {
+                                var r = Relationship.GetRelationShip(GroupID, target);
+                                stringBuilder.Append($"[@{r.Card ?? r.NickName}]");
+                            }
                             break;
 
                         case CQFunction.Face:
@@ -137,32 +148,28 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                             var face = (CQFace)int.Parse(cqcode.Items["id"]);
                             stringBuilder.Append($"[表情:{face}]");
                             break;
+
                         case CQFunction.Image:
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
+                           
+                            var cache = Picture.GetPictureByHash(cqcode);
+                            if (cache != null && !string.IsNullOrEmpty(cache.Description))
+                            {
+                                stringBuilder.Append($"[这是一张图片，这是它的描述：{cache.Description}]");
+                                break;
+                            }
+                            // 需要缓存并获取图片描述
                             if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji))
                             {
                                 continue;
                             }
                             MainSave.CQLog.Debug("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
-                            string description;
-                            var cache = Picture.GetPictureByHash(cqcode);
-                            if (cache == null)
-                            {
-                                description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
-                                Picture.InsertImageDescription(cqcode, emoji, description);
-                                MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
-                            }
-                            else
-                            {
-                                description = cache.Description;
-                                MainSave.CQLog.Debug("图片描述", $"缓存图片 {cqcode.Items["file"]} 的描述为：{description}");
-                            }
+                            string description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
+                            Picture.InsertImageDescription(cqcode, emoji, description);
+                            MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
+                            stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
 
-                            if (!string.IsNullOrEmpty(description))
-                            {
-                                stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
-                            }
                             break;
                     }
                 }
