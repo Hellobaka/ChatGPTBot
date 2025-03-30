@@ -7,9 +7,11 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using OpenAI.Chat;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
@@ -40,10 +42,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             var record = ChatRecord.Create(e.FromGroup, e.FromQQ, e.Message.Text, e.Message.Id);
             ChatRecord.InsertRecord(record);
-            if (AppConfig.EnableMemory)
-            {
-                Memory.AddMemory(record);
-            }
             if (InProgress)
             {
                 return new FunctionResult { Result = false, SendFlag = false };
@@ -59,61 +57,88 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
                 double memoryRelatedRate = AppConfig.EnableMemory ? Memory.CalcMemoryActivateRate(record) : 0;
+                e.CQLog.Debug("记忆激活度", $"{memoryRelatedRate}");
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), e.Message.Text.Contains(AppConfig.BotName), e.FromQQ, memoryRelatedRate);
 
                 if (MainSave.Random.NextDouble() < replyProbablity)
                 {
-                    string reply = CreateReply(relationship, record);
-                    if (reply == Chat.ErrorMessage)
+                    Task.Run(() =>
                     {
-                        throw new ArgumentNullException("请求结果失败");
-                    }
-                    if (reply == AppConfig.ChatEmptyResponse)
-                    {
-                        return new FunctionResult { Result = false, SendFlag = false };
-                    }
-
-                    var splits = new Spliter(reply).Split();
-                    foreach (var item in splits)
-                    {
-                        var message = e.FromGroup.SendGroupMessage(item);
-                        RecordSelfMessage(e.FromGroup, message);
-                    }
-                    replyManager.ChangeReplyWillingAfterSendingMessage();
-
-                    (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
-                    MoodManager.Instance.UpdateMood(mood);
-                    relationship.UpdateFavourability(mood, stand);
-                    if (AppConfig.EnableEmojiSend && MainSave.Random.Next(0, 100) < AppConfig.EmojiSendProbablity)
-                    {
-                        e.CQLog.Debug("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
-                        var emojis = Picture.GetRecommandEmoji(reply);
-                        if (emojis.Count > 0)
+                        try
                         {
-                            if (AppConfig.RandomSendEmoji)
+                            if (AppConfig.EnableMemory)
                             {
-                                emojis = emojis.OrderBy(x => Guid.NewGuid()).ToList();
+                                Memory.AddMemory(record);
                             }
-                            foreach (var emoji in emojis)
+                            string reply = CreateReply(relationship, record);
+                            if (reply == Chat.ErrorMessage)
                             {
-                                if (File.Exists(emoji.FilePath))
+                                throw new ArgumentNullException("请求结果失败");
+                            }
+                            if (reply == AppConfig.ChatEmptyResponse)
+                            {
+                                return;
+                            }
+
+                            var splits = new Spliter(reply).Split();
+                            foreach (var item in splits.Where(x => !string.IsNullOrWhiteSpace(x)))
+                            {
+                                if (AppConfig.EnableSpliterRandomDelay)
                                 {
-                                    e.CQLog.Debug("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
-                                    var message = e.FromGroup.SendGroupMessage(CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory)));
-                                    RecordSelfMessage(e.FromGroup, message);
-                                    break;
+                                    double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
+                                    double typeTime = item.Length * typeSpeed;
+                                    int randomSleep = MainSave.Random.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
+                                    System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
+                                }
+                                RecordSelfMessage(e.FromGroup, e.FromGroup.SendGroupMessage(item));
+                            }
+                            replyManager.ChangeReplyWillingAfterSendingMessage();
+
+                            (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
+                            MoodManager.Instance.UpdateMood(mood);
+                            relationship.UpdateFavourability(mood, stand);
+                            if (AppConfig.EnableEmojiSend && MainSave.Random.Next(0, 100) < AppConfig.EmojiSendProbablity)
+                            {
+                                e.CQLog.Debug("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
+                                var emojis = Picture.GetRecommandEmoji(reply);
+                                if (emojis.Count > 0)
+                                {
+                                    if (AppConfig.RandomSendEmoji)
+                                    {
+                                        emojis = emojis.OrderBy(x => Guid.NewGuid()).ToList();
+                                    }
+                                    foreach (var emoji in emojis)
+                                    {
+                                        if (File.Exists(emoji.FilePath))
+                                        {
+                                            e.CQLog.Debug("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
+                                            var message = e.FromGroup.SendGroupMessage(CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory)));
+                                            RecordSelfMessage(e.FromGroup, message);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    e.CQLog.Debug("获取表情包", $"没有查询到可推荐表情包");
                                 }
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            e.CQLog.Debug("获取表情包", $"没有查询到可推荐表情包");
+                            e.CQLog.Warning("随机回复", $"方法发生异常：{ex.Message}\n{ex.StackTrace}");
+                            return;
                         }
-                    }
+                        finally
+                        {
+                            InProgress = false;
+                        }
+                    });
                 }
                 else
                 {
                     replyManager.ChangeReplyWillingAfterNotSendingMessage();
+                    InProgress = false;
                 }
                 return result;
             }
@@ -121,10 +146,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 e.CQLog.Warning("随机回复", $"方法发生异常：{ex.Message}\n{ex.StackTrace}");
                 return new FunctionResult { Result = false, SendFlag = false };
-            }
-            finally
-            {
-                InProgress = false;
             }
         }
 
@@ -140,11 +161,14 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (AppConfig.EnableMemory)
             {
                 var memories = Memory.GetMemories(record);
+                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.memories.Length} 条记忆, 最大相似度为 {memories.memories.FirstOrDefault().similarity}");
                 if (memories.memories.Length > 0)
                 {
+                    stringBuilder.AppendLine("以下是你回忆起的记忆：");
                     stringBuilder.AppendLine("<Memory>");
 
                     int count = 0;
+                    List<ChatRecord> memoriesList = [];
                     foreach (var (similarity, nodes) in memories.memories)
                     {
                         if (count >= AppConfig.MaxMemoryCount)
@@ -158,9 +182,16 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                             {
                                 break;
                             }
-                            stringBuilder.AppendLine(r.ParsedMessage);
-                            count++;
+                            if (!memoriesList.Any(x=>x.Id == r.Id))
+                            {
+                                memoriesList.Add(r);
+                                count++;
+                            }
                         }
+                    }
+                    foreach (var item in memoriesList)
+                    {
+                        stringBuilder.AppendLine(record.ParsedMessage);
                     }
                     stringBuilder.AppendLine("</Memory>");
                 }
@@ -193,7 +224,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
 
             string prompt = stringBuilder.ToString();
-
+            MainSave.CQLog.Debug("Prompt", prompt);
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
