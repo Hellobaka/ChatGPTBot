@@ -22,19 +22,23 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsJson = true, Length = 65535)]
         public int[] RelationRecords { get; set; } = [];
 
+        public long GroupId { get; set; }
+
+        public long QQ { get; set; }
+
         public DateTime LastModify { get; set; }
 
         public DateTime CreateTime { get; set; }
 
         public void Update()
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             db.Updateable(this).ExecuteCommand();
         }
 
-        public static MemoryNodes GetOrCreateNode(string topic, int recordId, double[] embedding)
+        public static MemoryNodes GetOrCreateNode(long groupId, long qq, string topic, int recordId, double[] embedding)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             var node = db.Queryable<MemoryNodes>().First(x => x.Topic == topic);
             if (node == null)
             {
@@ -44,9 +48,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     CreateTime = DateTime.Now,
                     LastModify = DateTime.Now,
                     TopicEmbedding = embedding,
-                    RelationRecords = [recordId]
+                    RelationRecords = [recordId],
+                    GroupId = groupId,
+                    QQ = qq
                 };
-                db.Insertable(node).ExecuteCommand();
+                node.Id = db.Insertable(node).ExecuteReturnIdentity();
             }
 
             return node;
@@ -54,8 +60,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public ChatRecord[] GetRecords()
         {
-            var db = SQLHelper.GetInstance();
-            return db.Queryable<ChatRecord>().Where(x=>RelationRecords.Contains(x.Id)).ToArray();
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<ChatRecord>().Where(x => RelationRecords.Contains(x.Id)).ToArray();
         }
     }
 
@@ -74,7 +80,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void Connect(MemoryNodes nodeA, MemoryNodes nodeB, double similarity = -1)
         {
-            var db = SQLHelper.GetInstance();
+            if (nodeA.Id == nodeB.Id)
+            {
+                return;
+            }
+            using var db = SQLHelper.GetInstance();
             var existEdge = db.Queryable<MemoryEdges>().First(x => x.NodeA == nodeA.Id && x.NodeB == nodeB.Id
                     || x.NodeB == nodeA.Id && x.NodeA == nodeB.Id);
             if (existEdge != null)
@@ -105,7 +115,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return;
             }
-            var topic = TopicGenerator.GetTopics(record.ParsedMessage);
+            var topic = record.Topics;
             if (topic.Length == 0)
             {
                 return;
@@ -113,9 +123,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             MemoryNodes lastTopicNode = null;
             foreach (var item in topic)
             {
-                var embedding = Embedding.GetEmbedding(item);
-                var topicNode = MemoryNodes.GetOrCreateNode(item, record.Id, embedding);
-                var relationNodes = GetRecommandNodes(embedding, 0.6);
+                var inCacheNode = CacheNodes.FirstOrDefault(x => x.Topic == item);
+                var embedding = inCacheNode == null ? Embedding.GetEmbedding(item) : inCacheNode.TopicEmbedding;
+
+                var topicNode = MemoryNodes.GetOrCreateNode(record.GroupID, record.QQ, item, record.Id, embedding);
+                var relationNodes = GetRecommandNodes(record.GroupID, record.QQ, embedding, 0.8);
                 if (!CacheNodes.Contains(topicNode))
                 {
                     CacheNodes.Add(topicNode);
@@ -131,6 +143,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     }
 
                     MemoryEdges.Connect(topicNode, node, similarity);
+                    MainSave.CQLog.Debug("记忆节点", $"{topicNode.Topic} 与 {node.Topic} 节点连接，相似度为 {similarity}");
                 }
                 if (lastTopicNode != null)
                 {
@@ -140,13 +153,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public static (double similarity, MemoryNodes nodes)[] GetMemories(string[] topics)
+        public static (double similarity, MemoryNodes nodes)[] GetMemories(long groupId, long qq, string[] topics)
         {
             (double similarity, MemoryNodes nodes)[] result = [];
             foreach (var item in topics)
             {
                 var embedding = Embedding.GetEmbedding(item);
-                result = [.. GetRecommandNodes(embedding, AppConfig.MinMemorySimilarty), .. result];
+                result = [.. GetRecommandNodes(groupId, qq, embedding, AppConfig.MinMemorySimilarty), .. result];
             }
 
             return result;
@@ -159,7 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return ([], []);
             }
-            return (GetMemories(topic), topic);
+            return (GetMemories(record.GroupID, record.QQ, topic), topic);
         }
 
         public static double CalcMemoryActivateRate(ChatRecord record)
@@ -179,9 +192,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return (topicSimilarity + averageSimilarity) / 2;
         }
 
-        private static (double Similarity, MemoryNodes Node)[] GetRecommandNodes(double[] embedding, double minSimilarity)
+        private static (double Similarity, MemoryNodes Node)[] GetRecommandNodes(long groupId, long qq, double[] embedding, double minSimilarity)
         {
             return GetAllNodes().AsParallel()
+                .Where(x => x.GroupId == groupId && x.QQ == qq)
                 .Select(x => new { Similarity = Picture.CosineSimilarity(embedding, x.TopicEmbedding), Node = x })
                 .Where(x => x.Similarity > minSimilarity)
                 .OrderByDescending(x => x.Similarity)
@@ -193,7 +207,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             if (CacheNodes == null)
             {
-                var db = SQLHelper.GetInstance();
+                using var db = SQLHelper.GetInstance();
                 CacheNodes = db.Queryable<MemoryNodes>().ToList();
             }
             return CacheNodes;
