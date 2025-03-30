@@ -15,8 +15,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public long QQ { get; set; }
 
+        [SugarColumn(IsNullable = true)]
         public string NickName { get; set; }
 
+        [SugarColumn(IsNullable = true)]
         public string Card { get; set; }
 
         public double Favorability { get; set; }

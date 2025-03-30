@@ -178,6 +178,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                             // 需要缓存并获取图片描述
                             if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji))
                             {
+                                stringBuilder.Append($"[图片]");
                                 continue;
                             }
                             MainSave.CQLog.Debug("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
