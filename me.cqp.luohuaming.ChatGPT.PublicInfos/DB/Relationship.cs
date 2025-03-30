@@ -43,7 +43,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static Relationship? GetRelationShip(long groupID, long qq)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             var relationship = db.Queryable<Relationship>().Where(x => x.GroupID == groupID && x.QQ == qq).First();
             if (relationship == null)
             {
@@ -84,7 +84,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private static int GetFavorOver850Count()
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             return db.Queryable<Relationship>().Count(x => x.Favorability > 850);
         }
 

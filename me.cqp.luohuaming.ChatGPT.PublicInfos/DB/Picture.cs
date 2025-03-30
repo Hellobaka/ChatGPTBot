@@ -69,7 +69,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Cache.Add(picture.Hash, picture);
             }
 
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             db.Insertable(picture).ExecuteCommand();
         }
 
@@ -84,7 +84,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return picture;
             }
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
 
             return db.Queryable<Picture>().First(x => x.Hash == hash);
         }
@@ -116,7 +116,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (Cache.Count == 0)
             {
-                var db = SQLHelper.GetInstance();
+                using var db = SQLHelper.GetInstance();
                 var emojis = db.Queryable<Picture>().Where(x => x.IsEmoji).ToList();
                 foreach (var emoji in emojis)
                 {

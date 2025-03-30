@@ -21,7 +21,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void Insert(string endpoint, int inputToken, int outputToken)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             var u = new Usage()
             {
                 Endpoint = endpoint,
@@ -40,7 +40,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static (int inputToken, int outputToken) GetDayUsage(DateTime time)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             int i = 0, o = 0;
             foreach (var item in db.Queryable<Usage>().Where(x => x.Time.Date == time.Date).ToList())
             {
@@ -55,7 +55,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             start = start.Date;
             end = end.Date;
 
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             int i = 0, o = 0;
             foreach (var item in db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList())
             {
@@ -67,7 +67,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static List<Usage> GetDayUsageDetail(DateTime time)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
 
             return db.Queryable<Usage>().Where(x => x.Time.Date == time.Date).ToList();
         }
@@ -76,7 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             start = start.Date;
             end = end.Date;
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
 
             return db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList();
         }
