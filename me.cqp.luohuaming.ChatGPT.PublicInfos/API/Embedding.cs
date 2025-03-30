@@ -17,7 +17,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 model = AppConfig.EmbeddingModelName,
                 input = text
-            }.ToJson(), AppConfig.EmbeddingApiKey);
+            }.ToJson(), AppConfig.EmbeddingApiKey, 3000);
             try
             {
                 return JObject.Parse(json)["data"][0]["embedding"].ToObject<double[]>();

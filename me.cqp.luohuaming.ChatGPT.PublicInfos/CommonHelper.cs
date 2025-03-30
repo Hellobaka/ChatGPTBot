@@ -120,12 +120,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             return input;
         }
 
-        public static string? Post(string method, string url, string payload, string token)
+        public static string? Post(string method, string url, string payload, string token, int timeout = 60000)
         {
             string result = "";
             try
             {
                 using HttpClient client = new();
+                client.Timeout = TimeSpan.FromMilliseconds(timeout);
                 var request = new HttpRequestMessage(new HttpMethod(method), url)
                 {
                     Content = new StringContent(payload, Encoding.UTF8, "application/json")
