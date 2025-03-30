@@ -130,6 +130,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int MaxMemoryCount { get; set; }
 
+        public static int SpliterMinLength { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -176,6 +178,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableEmojiSend = ConfigHelper.GetConfig("EnableEmojiSend", false);
             SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
             SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
+            SpliterMinLength = ConfigHelper.GetConfig("SpliterMinLength", 10);
             EmojiSendProbablity = ConfigHelper.GetConfig("EmojiSendProbablity", 10);
             ContextMaxLength = ConfigHelper.GetConfig("ContextMaxLength", 20);
             SpliterUrl = ConfigHelper.GetConfig("SpliterUrl", "https://api.openai.com/v1");

@@ -25,7 +25,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         {
             MainSave.CQLog?.Debug("消息分行", $"开始进行消息分行：{Message}");
 
-            if (AppConfig.SpliterRegexFirst)
+            if (AppConfig.SpliterRegexFirst || Message.Length <= AppConfig.SpliterMinLength)
             {
                 return RegexSplit();
             }
@@ -92,7 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             for (int i = 0; i < limitedArray.Length; i++)
             {
                 string str = limitedArray[i];
-                if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".")))
+                if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
                 {
                     str = str.Substring(0, str.Length - 1);
                 }
