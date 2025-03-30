@@ -54,6 +54,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 if (record.IsEmpty)
                 {
+                    InProgress = false;
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
                 double memoryRelatedRate = AppConfig.EnableMemory ? Memory.CalcMemoryActivateRate(record) : 0;
@@ -182,7 +183,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                             {
                                 break;
                             }
-                            if (!memoriesList.Any(x=>x.Id == r.Id))
+                            if (!memoriesList.Any(x => x.MessageID == r.MessageID) && r.MessageID != record.MessageID)
                             {
                                 memoriesList.Add(r);
                                 count++;
@@ -191,7 +192,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     foreach (var item in memoriesList)
                     {
-                        stringBuilder.AppendLine(record.ParsedMessage);
+                        stringBuilder.AppendLine(item.ParsedMessage);
                     }
                     stringBuilder.AppendLine("</Memory>");
                 }
