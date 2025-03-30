@@ -24,14 +24,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string RawMessage { get; set; }
 
+        [SugarColumn(IsIgnore = true)]
+        public string DetailMessage { get; set; }
+
         public string ParsedMessage { get; set; }
 
         public DateTime Time { get; set; }
 
-        [SugarColumn(IsIgnore = true)]
         public bool IsImage { get; set; }
 
-        [SugarColumn(IsIgnore = true)]
         public bool IsEmpty { get; set; }
 
         [SugarColumn(IsJson = true, Length = 65535)]
@@ -48,7 +49,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID
             };
             record.ParsedMessage = record.ParseMessage(message);
-            record.Topics = TopicGenerator.GetTopics(record.ParsedMessage);
+            if (AppConfig.EnableMemory && !record.IsEmpty && !record.IsImage)
+            {
+                record.Topics = TopicGenerator.GetTopics(record.DetailMessage) ?? [];
+                MainSave.CQLog.Debug("话题提取", $"提取到的话题为: {string.Join(",", record.Topics)}");
+            }
             return record;
         }
 
@@ -63,19 +68,23 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID,
             };
             record.ParsedMessage = record.ParseMessage(message);
-            record.Topics = TopicGenerator.GetTopics(record.ParsedMessage);
+            if (AppConfig.EnableMemory && !record.IsEmpty && !record.IsImage)
+            {
+                record.Topics = TopicGenerator.GetTopics(record.DetailMessage) ?? [];
+                MainSave.CQLog.Debug("话题提取", $"提取到的话题为: {string.Join(",", record.Topics)}");
+            }
             return record;
         }
 
         public static void InsertRecord(ChatRecord chatRecord)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             chatRecord.Id = db.Insertable(chatRecord).ExecuteReturnIdentity();
         }
 
         public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             List<ChatRecord> results;
             if (qq > 0)
             {
@@ -91,7 +100,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static List<ChatRecord> GetPrivateChatRecord(long qq, int count = 15)
         {
-            var db = SQLHelper.GetInstance();
+            using var db = SQLHelper.GetInstance();
             return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
         }
 
@@ -99,17 +108,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             var relationship = Relationship.GetRelationShip(GroupID, QQ);
             StringBuilder stringBuilder = new();
+
+            string info = $"[{Time:G}][MessageID={MessageID}]";
             if (QQ == MainSave.CurrentQQ)
             {
-                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}][你自己] {AppConfig.BotName}: ");
+                stringBuilder.Append($"[你自己] [昵称：{AppConfig.BotName}]: ");
             }
             else if (relationship != null)
             {
-                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}] {relationship.Card ?? relationship.NickName}: ");
+                stringBuilder.Append($" [昵称：{relationship.Card ?? relationship.NickName}]: ");
             }
             else
             {
-                stringBuilder.Append($"[{Time:G}][MessageID={MessageID}] {QQ}: ");
+                stringBuilder.Append($" [昵称：{QQ}]: ");
             }
 
             var split = message.Replace("\n", "").SplitV2("\\[CQ:.*?\\]");
@@ -181,7 +192,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             IsImage = image >= 1 && text == 0;
             IsEmpty = image == 0 && text == 0;
-            return stringBuilder.ToString();
+            DetailMessage = stringBuilder.ToString();
+
+            return info + stringBuilder.ToString();
         }
 
         public static ChatRecord GetRecordByMessageId(int id)
