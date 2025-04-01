@@ -10,7 +10,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static double[] GetEmbedding(string text)
         {
             string json;
-            if(AppConfig.EmbeddingUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
+            if (AppConfig.EmbeddingUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
             {
                 json = CommonHelper.Post_TecentSignV3(new
                 {
