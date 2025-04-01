@@ -158,38 +158,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (AppConfig.EnableMemory)
             {
                 var memories = Memory.GetMemories(record);
-                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.memories.Length} 条记忆, 最大相似度为 {memories.memories.FirstOrDefault().similarity}");
-                if (memories.memories.Length > 0)
+                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {0}%");
+                if (memories.Length > 0)
                 {
                     stringBuilder.AppendLine("以下是你回忆起的记忆：");
                     stringBuilder.AppendLine("<Memory>");
-
-                    int count = 0;
-                    List<ChatRecord> memoriesList = [];
-                    foreach (var (similarity, nodes) in memories.memories)
-                    {
-                        if (count >= AppConfig.MaxMemoryCount)
-                        {
-                            break;
-                        }
-
-                        foreach (var r in nodes.GetRecords())
-                        {
-                            if (count >= AppConfig.MaxMemoryCount)
-                            {
-                                break;
-                            }
-                            if (!memoriesList.Any(x => x.MessageID == r.MessageID) && r.MessageID != record.MessageID)
-                            {
-                                memoriesList.Add(r);
-                                count++;
-                            }
-                        }
-                    }
-                    foreach (var item in memoriesList)
-                    {
-                        stringBuilder.AppendLine(item.ParsedMessage);
-                    }
                     stringBuilder.AppendLine("</Memory>");
                 }
             }

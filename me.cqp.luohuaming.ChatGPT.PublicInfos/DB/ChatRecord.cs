@@ -25,7 +25,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public string RawMessage { get; set; }
 
         [SugarColumn(IsIgnore = true)]
-        public string DetailMessage { get; set; }
+        public Relationship Relationship { get; set; }
+
+        [SugarColumn(IsIgnore = true)]
+        public string Message_NoAppendInfo { get; set; }
 
         public string ParsedMessage { get; set; }
 
@@ -34,9 +37,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public bool IsImage { get; set; }
 
         public bool IsEmpty { get; set; }
-
-        [SugarColumn(IsJson = true, Length = 65535)]
-        public string[] Topics { get; set; } = [];
 
         public static ChatRecord Create(long qq, string message, int messageID)
         {
@@ -49,11 +49,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID
             };
             record.ParsedMessage = record.ParseMessage(message);
-            if (AppConfig.EnableMemory && !record.IsEmpty && !record.IsImage)
-            {
-                record.Topics = TopicGenerator.GetTopics(record.DetailMessage) ?? [];
-                MainSave.CQLog.Debug("话题提取", $"提取到的话题为: {string.Join(",", record.Topics)}");
-            }
             return record;
         }
 
@@ -68,11 +63,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MessageID = messageID,
             };
             record.ParsedMessage = record.ParseMessage(message);
-            if (AppConfig.EnableMemory && !record.IsEmpty && !record.IsImage)
-            {
-                record.Topics = TopicGenerator.GetTopics(record.DetailMessage) ?? [];
-                MainSave.CQLog.Debug("话题提取", $"提取到的话题为: {string.Join(",", record.Topics)}");
-            }
             return record;
         }
 
@@ -106,21 +96,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private string ParseMessage(string message)
         {
-            var relationship = Relationship.GetRelationShip(GroupID, QQ);
+            Relationship = Relationship.GetRelationShip(GroupID, QQ);
             StringBuilder stringBuilder = new();
 
             string info = $"[{Time:G}][MessageID={MessageID}]";
             if (QQ == MainSave.CurrentQQ)
             {
-                stringBuilder.Append($"[你自己] [昵称：{AppConfig.BotName}]: ");
+                info += $"[你自己] [昵称：{AppConfig.BotName}]: ";
             }
-            else if (relationship != null)
+            else if (Relationship != null)
             {
-                stringBuilder.Append($" [昵称：{relationship.Card ?? relationship.NickName}]: ");
+                info += $" [昵称：{Relationship.Card ?? Relationship.NickName}]: ";
             }
             else
             {
-                stringBuilder.Append($" [昵称：{QQ}]: ");
+                info += $" [昵称：{QQ}]: ";
             }
 
             var split = message.Replace("\n", "").SplitV2("\\[CQ:.*?\\]");
@@ -193,7 +183,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             IsImage = image >= 1 && text == 0;
             IsEmpty = image == 0 && text == 0;
-            DetailMessage = stringBuilder.ToString();
+            Message_NoAppendInfo = stringBuilder.ToString();
 
             return info + stringBuilder.ToString();
         }
