@@ -116,11 +116,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int RecommendEmojiCount { get; set; }
 
-        public static string TopicUrl { get; set; }
+        public static string RerankUrl { get; set; }
 
-        public static string TopicApiKey { get; set; }
+        public static string RerankApiKey { get; set; }
 
-        public static string TopicModelName { get; set; }
+        public static string RerankModelName { get; set; }
 
         public static int TopicCount { get; set; }
 
@@ -131,6 +131,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static int MaxMemoryCount { get; set; }
 
         public static int SpliterMinLength { get; set; }
+
+        public static bool EnableTencentSign { get; set; }
+
+        public static string TencentSecretKey { get; set; }
+
+        public static string TencentSecretId { get; set; }
 
         public static void Init()
         {
@@ -190,9 +196,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingUrl = ConfigHelper.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
             EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
             EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
-            TopicUrl = ConfigHelper.GetConfig("TopicUrl", "https://api.openai.com/v1");
-            TopicApiKey = ConfigHelper.GetConfig("TopicApiKey", "");
-            TopicModelName = ConfigHelper.GetConfig("TopicModelName", "gpt-4o-mini");
+            RerankUrl = ConfigHelper.GetConfig("RerankUrl", "https://lkeap.tencentcloudapi.com");
+            RerankApiKey = ConfigHelper.GetConfig("RerankApiKey", "");
+            RerankModelName = ConfigHelper.GetConfig("RerankModelName", "lke-reranker-base");
             IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
             DebugMode = ConfigHelper.GetConfig("DebugMode", false);
             SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
@@ -204,6 +210,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableMemory = ConfigHelper.GetConfig("EnableMemory", true);
             MinMemorySimilarty = ConfigHelper.GetConfig("MinMemorySimilarty", 0.8);
             MaxMemoryCount = ConfigHelper.GetConfig("MaxMemoryCount", 5);
+            EnableTencentSign = ConfigHelper.GetConfig("EnableTencentSign", false);
+            TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");
+            TencentSecretId = ConfigHelper.GetConfig("TencentSecretId", "");
 
             ConfigHelper.EnableHotReload();
         }

@@ -1,5 +1,7 @@
-﻿using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -135,6 +137,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
                 HttpResponseMessage response = client.SendAsync(request).Result;
                 result = response.Content.ReadAsStringAsync().Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                    MainSave.CQLog?.Info("发送请求返回失败", result);
+                }
                 response.EnsureSuccessStatusCode();
                 return result;
             }
@@ -193,6 +199,43 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             else
             {
                 return string.Empty;
+            }
+        }
+
+        public static string Post_TecentSignV3(string payload, string action, int timeout = 10000)
+        {
+            string result = "";
+            try
+            {
+                string host = "lkeap.tencentcloudapi.com";
+                using HttpClient client = new();
+                client.Timeout = TimeSpan.FromMilliseconds(timeout);
+                var request = new HttpRequestMessage(new HttpMethod("POST"), $"https://{host}")
+                {
+                    Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                };
+                foreach (var item in TencentSign.BuildHeaders("lkeap", host, "", action, "2024-05-22", payload))
+                {
+                    if (request.Headers.Contains(item.Key))
+                    {
+                        request.Headers.Remove(item.Key);
+                    }
+                    request.Headers.Add(item.Key, item.Value);
+                }
+
+                HttpResponseMessage response = client.SendAsync(request).Result;
+                result = response.Content.ReadAsStringAsync().Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                    MainSave.CQLog?.Info("发送请求返回失败", result);
+                }
+                response.EnsureSuccessStatusCode();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("发送请求", $"腾讯云接口：Action={action}，Payload={payload}" + ex.Message + ex.StackTrace);
+                return null;
             }
         }
     }
