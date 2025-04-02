@@ -31,7 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 return [];
             }
 
-            return Qdrant.Instance.GetReleventCollection(record).Where(x => x.record.Id != record.Id).ToArray();
+            return Qdrant.Instance.GetReleventCollection(record).Where(x => x.record.Id != record.Id && x.score > AppConfig.MinMemorySimilarty).ToArray();
         }
     }
 }
