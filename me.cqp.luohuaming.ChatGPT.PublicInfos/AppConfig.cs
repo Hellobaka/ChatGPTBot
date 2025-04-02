@@ -142,6 +142,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string TencentSecretId { get; set; }
 
+        public static string QdrantAPIKey { get; set; }
+
+        public static string QdrantCertPassword { get; set; }
+
         public static string QdrantHost { get; set; }
 
         public static ushort QdrantPort { get; set; }
@@ -223,8 +227,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableTencentSign = ConfigHelper.GetConfig("EnableTencentSign", false);
             TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");
             TencentSecretId = ConfigHelper.GetConfig("TencentSecretId", "");
-            QdrantHost = ConfigHelper.GetConfig("QdrantHost", "127.0.0.1");
+            QdrantHost = ConfigHelper.GetConfig("QdrantHost", "localhost");
             QdrantPort = ConfigHelper.GetConfig("QdrantPort", (ushort)6334);
+            QdrantAPIKey = ConfigHelper.GetConfig("QdrantAPIKey", "aFZsX4Xe2pzWybnX61Vi");
+            QdrantCertPassword = ConfigHelper.GetConfig("QdrantCertPassword", "T93dGAuVHqBGTkq3uUBQ");
 
             ConfigHelper.EnableHotReload();
         }

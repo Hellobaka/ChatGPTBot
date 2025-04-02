@@ -1,10 +1,16 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+﻿using Grpc.Net.Client;
+using Grpc.Core.Interceptors;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using static Qdrant.Client.Grpc.Conditions;
+using System.IO;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
@@ -26,7 +32,27 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             Host = host;
             Port = port;
-            QdrantClient = new(host, port, false);
+            WinHttpHandler handler = new()
+            {
+                SslProtocols = SslProtocols.Tls13,
+                WindowsProxyUsePolicy = WindowsProxyUsePolicy.DoNotUseProxy
+            };
+
+            X509Certificate2 cert = new(Path.Combine(MainSave.AppDirectory, "ca.pfx"), AppConfig.QdrantCertPassword);
+            handler.ClientCertificates.Add(cert);
+
+            var channel = GrpcChannel.ForAddress($"https://{host}:{port}", new GrpcChannelOptions
+            {
+                HttpHandler = handler
+            });
+            var callInvoker = channel.Intercept(metadata =>
+            {
+                metadata.Add("api-key", AppConfig.QdrantAPIKey);
+                return metadata;
+            });
+
+            var grpcClient = new QdrantGrpcClient(callInvoker);
+            QdrantClient = new QdrantClient(grpcClient);
             Instance = this;
         }
 
@@ -37,8 +63,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Collections = QdrantClient.ListCollectionsAsync().Result.ToList();
                 return true;
             }
-            catch
+            catch (Exception e)
             {
+                MainSave.CQLog.Error("检查连接", $"连接失败：{e.Message}");
                 return false;
             }
         }
