@@ -132,10 +132,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 else
                 {
                     replyManager.ChangeReplyWillingAfterNotSendingMessage();
-                    if (AppConfig.EnableMemory)
-                    {
-                        Memory.AddMemory(record);
-                    }
                 }
                 return result;
             }
