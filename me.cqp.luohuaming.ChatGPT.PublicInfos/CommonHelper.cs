@@ -226,7 +226,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                     {
                         request.Headers.Remove(item.Key);
                     }
-                    request.Headers.Add(item.Key, item.Value);
+                    request.Headers.TryAddWithoutValidation(item.Key, item.Value);
                 }
 
                 HttpResponseMessage response = client.SendAsync(request).Result;

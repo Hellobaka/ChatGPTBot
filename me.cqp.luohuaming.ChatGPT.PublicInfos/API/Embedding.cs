@@ -10,12 +10,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static float[] GetEmbedding(string text)
         {
             string json;
+            bool isTencentAPI = false;
             if (AppConfig.EmbeddingUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
             {
+                isTencentAPI = true;
                 json = CommonHelper.Post_TecentSignV3(new
                 {
-                    model = AppConfig.EmbeddingModelName,
-                    input = text
+                    Model = AppConfig.EmbeddingModelName,
+                    Inputs = new string[] { text }
                 }.ToJson(), TencentAPIAction, 3000);
             }
             else
@@ -28,7 +30,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             try
             {
-                return JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
+                if (isTencentAPI)
+                {
+                    return JObject.Parse(json)["Response"]["Data"][0]["Embedding"].ToObject<float[]>();
+                }
+                else
+                {
+                    return JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
+                }
             }
             catch (Exception ex)
             {

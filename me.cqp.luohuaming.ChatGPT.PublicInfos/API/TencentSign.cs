@@ -28,7 +28,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static Dictionary<string, string> BuildHeaders(string service, string endpoint, string region,
             string action, string version, string requestPayload)
         {
-            DateTime date = DateTime.Now;
+            DateTime date = DateTime.UtcNow;
             string secretKey = AppConfig.TencentSecretKey, secretId = AppConfig.TencentSecretId;
             if (string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(secretId))
             {
@@ -81,7 +81,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 { "Authorization", authorization },
                 { "Host", endpoint },
-                { "Content-Type", contentType + "; charset=utf-8" },
                 { "X-TC-Timestamp", requestTimestamp.ToString() },
                 { "X-TC-Version", version },
                 { "X-TC-Action", action },
