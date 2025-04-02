@@ -56,10 +56,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     InProgress = false;
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
-                if (AppConfig.EnableMemory)
-                {
-                    Memory.AddMemory(record);
-                }
                 double memoryRelatedRate = AppConfig.EnableMemory ? Memory.CalcMemoryActivateRate(record) : 0;
                 e.CQLog.Debug("记忆激活度", $"{memoryRelatedRate}");
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), e.Message.Text.Contains(AppConfig.BotName), e.FromQQ, memoryRelatedRate);
@@ -69,6 +65,12 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     InProgress = true;
 
                     string reply = CreateReply(relationship, record);
+
+                    if (AppConfig.EnableMemory)
+                    {
+                        Memory.AddMemory(record);
+                    }
+
                     if (reply == Chat.ErrorMessage)
                     {
                         throw new ArgumentNullException("请求结果失败");
@@ -132,6 +134,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 else
                 {
                     replyManager.ChangeReplyWillingAfterNotSendingMessage();
+                    if (AppConfig.EnableMemory)
+                    {
+                        Memory.AddMemory(record);
+                    }
                 }
                 return result;
             }

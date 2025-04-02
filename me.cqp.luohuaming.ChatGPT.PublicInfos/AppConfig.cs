@@ -116,6 +116,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int RecommendEmojiCount { get; set; }
 
+        public static bool EnableRerank { get; set; }
+
         public static string RerankUrl { get; set; }
 
         public static string RerankApiKey { get; set; }
@@ -137,6 +139,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string TencentSecretKey { get; set; }
 
         public static string TencentSecretId { get; set; }
+
+        public static string QdrantHost { get; set; }
+
+        public static ushort QdrantPort { get; set; }
 
         public static void Init()
         {
@@ -196,6 +202,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingUrl = ConfigHelper.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
             EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
             EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
+            EnableRerank = ConfigHelper.GetConfig("EnableRerank", true);
             RerankUrl = ConfigHelper.GetConfig("RerankUrl", "https://lkeap.tencentcloudapi.com");
             RerankApiKey = ConfigHelper.GetConfig("RerankApiKey", "");
             RerankModelName = ConfigHelper.GetConfig("RerankModelName", "lke-reranker-base");
@@ -213,6 +220,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableTencentSign = ConfigHelper.GetConfig("EnableTencentSign", false);
             TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");
             TencentSecretId = ConfigHelper.GetConfig("TencentSecretId", "");
+            QdrantHost = ConfigHelper.GetConfig("QdrantHost", "127.0.0.1");
+            QdrantPort = ConfigHelper.GetConfig("QdrantPort", (ushort)6334);
 
             ConfigHelper.EnableHotReload();
         }

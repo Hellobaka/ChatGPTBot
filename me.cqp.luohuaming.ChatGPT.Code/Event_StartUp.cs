@@ -54,6 +54,19 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             SQLHelper.CreateDB();
             TTSHelper.CheckTTS();
+            if (AppConfig.EnableMemory)
+            {
+                var qdrant = new Qdrant(AppConfig.QdrantHost, AppConfig.QdrantPort);
+                if (qdrant.CheckConnection() is false)
+                {
+                    MainSave.CQLog.Error("初始化", "向量数据库连接失败，请检查配置，记忆模块已禁用");
+                    AppConfig.EnableMemory = false;
+                }
+                else
+                {
+                    qdrant.CreateCollection();
+                }
+            }
             _ = new MoodManager();
             _ = new SchedulerManager();
 

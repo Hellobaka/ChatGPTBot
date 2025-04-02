@@ -193,6 +193,7 @@
     <Compile Include="DB\ChatRecord.cs" />
     <Compile Include="DB\Memory.cs" />
     <Compile Include="DB\Picture.cs" />
+    <Compile Include="DB\Qdrant.cs" />
     <Compile Include="DB\Relationship.cs" />
     <Compile Include="DB\SQLHelper.cs" />
     <Compile Include="DB\Usage.cs" />

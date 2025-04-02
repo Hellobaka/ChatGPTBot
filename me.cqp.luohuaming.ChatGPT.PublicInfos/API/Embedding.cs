@@ -7,7 +7,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         private static string TencentAPIAction { get; set; } = "GetEmbedding";
 
-        public static double[] GetEmbedding(string text)
+        public static float[] GetEmbedding(string text)
         {
             string json;
             if (AppConfig.EmbeddingUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
@@ -28,7 +28,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             try
             {
-                return JObject.Parse(json)["data"][0]["embedding"].ToObject<double[]>();
+                return JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
             }
             catch (Exception ex)
             {

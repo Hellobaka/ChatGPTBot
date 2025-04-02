@@ -8,7 +8,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         private static string TencentAPIAction { get; set; } = "RunRerank";
 
-        public static (string document, double score)[] GetRerank(string text, string[] documents, int topn = 5)
+        public static (string document, float score)[] GetRerank(string text, string[] documents, int topn = 5)
         {
             string json;
             bool tencent;
@@ -36,13 +36,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             try
             {
                 var j = JObject.Parse(json);
-                (string document, double score)[] results = [];
+                (string document, float score)[] results = [];
                 if (tencent)
                 {
                     for (int i = 0; i < documents.Length; i++)
                     {
                         var document = documents[i];
-                        results = [(document, (double)j["Response"]["ScoreList"][i]), .. results];
+                        results = [(document, (float)j["Response"]["ScoreList"][i]), .. results];
                     }
                 }
                 else
@@ -50,7 +50,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     foreach (var item in j["results"] as JArray)
                     {
                         int index = ((int)item["index"]);
-                        double score = ((double)item["relevance_score"]);
+                        float score = ((float)item["relevance_score"]);
 
                         var document = documents[index];
 

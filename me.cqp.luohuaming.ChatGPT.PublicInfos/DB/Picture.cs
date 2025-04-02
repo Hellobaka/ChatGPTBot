@@ -21,7 +21,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public string FilePath { get; set; }
 
         [SugarColumn(IsJson = true, Length = 65535)]
-        public double[] Embedding { get; set; } = [];
+        public float[] Embedding { get; set; } = [];
 
         public string Description { get; set; }
 
@@ -107,7 +107,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
         }
 
-        public static List<Picture> GetRecommandEmoji(double[] embedding, int count = 3)
+        public static List<Picture> GetRecommandEmoji(float[] embedding, int count = 3)
         {
             if (embedding.Length == 0)
             {
@@ -158,7 +158,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         /// </summary>
         /// <param name="vectorA">EmbeddingA</param>
         /// <param name="vectorB">EmbeddingB</param>
-        public static double CosineSimilarity(double[] vectorA, double[] vectorB)
+        public static double CosineSimilarity(float[] vectorA, float[] vectorB)
         {
             if (vectorA.Length != vectorB.Length)
             {
