@@ -42,6 +42,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
             var record = ChatRecord.Create(e.FromGroup, e.FromQQ, e.Message.Text, e.Message.Id);
             ChatRecord.InsertRecord(record);
+
+            if (AppConfig.EnableMemory)
+            {
+                Memory.AddMemory(record);
+            }
             if (InProgress)
             {
                 return new FunctionResult { Result = false, SendFlag = false };
@@ -55,11 +60,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     InProgress = false;
                     return new FunctionResult { Result = false, SendFlag = false };
-                }
-
-                if (AppConfig.EnableMemory)
-                {
-                    Memory.AddMemory(record);
                 }
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
 
