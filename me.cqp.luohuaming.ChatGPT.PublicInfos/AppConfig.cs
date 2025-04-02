@@ -44,6 +44,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string BotName { get; set; } = "";
 
+        public static List<string> BotNicknames { get; set; } = [BotName];
+
         public static bool EnableVision { get; set; }
 
         public static bool IgnoreNotEmoji { get; set; }
@@ -170,6 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             AddBlackListOrder = ConfigHelper.GetConfig("AddBlackListOrder", ".添加黑名单");
             RemoveBlackListOrder = ConfigHelper.GetConfig("RemoveBlackListOrder", ".移除黑名单");
             BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
+            BotNicknames = ConfigHelper.GetConfig("BotNicknames", new List<string>() { BotName });
 
             GroupPrompt = ConfigHelper.GetConfig("GroupPrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。");
             PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。");
