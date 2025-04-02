@@ -110,14 +110,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             if (at)
             {
-                ReplyWilling += 1;
                 ContextMode = true;
+                LastReplyQQ = qq;
+                return 1;
             }
 
             if (contain)
             {
-                ReplyWilling += 0.5;
                 ContextMode = true;
+                ReplyWilling += 0.8;
             }
 
             if (emoji)

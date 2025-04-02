@@ -162,7 +162,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             if (vectorA.Length != vectorB.Length)
             {
-                Debugger.Break();// 向量的长度必须相同
+                // 向量的长度必须相同
                 return 0;
             }
 
