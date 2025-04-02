@@ -106,6 +106,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             }
                             requiresAction = true;
                             break;
+
+                        case ChatFinishReason.ContentFilter:
+                            MainSave.CQLog.Info("发起对话", "触发内容过滤，返回空回复");
+                            return AppConfig.ChatEmptyResponse;
                     }
                 } while (requiresAction);
             }
