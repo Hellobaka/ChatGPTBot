@@ -53,7 +53,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 QdrantClient.CreateCollectionAsync(CollectionName, new VectorParams
                 {
-                    Size = 1536,
+                    Size = 1024,
                     Distance = Distance.Cosine,
                     OnDisk = true
                 }, timeout: TimeSpan.FromSeconds(30)).Wait();
@@ -87,7 +87,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     Payload = {
                         ["user_id"]=$"{record.GroupID}_{record.QQ}",
                         ["timestamp"] = record.Time.GetTimeStamp(),
-                        ["text"] = record.Message_NoAppendInfo
+                        ["text"] = record.Message_NoAppendInfo,
                     }
                 }]).Result;
 
@@ -100,7 +100,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public (string text, float score)[] GetReleventCollection(ChatRecord record)
+        public (ChatRecord record, float score)[] GetReleventCollection(ChatRecord record)
         {
             if (record.IsEmpty || record.IsEmpty || string.IsNullOrEmpty(record.Message_NoAppendInfo))
             {
@@ -116,14 +116,33 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     limit: AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
                     payloadSelector: true
                 ).Result;
+                using var db = SQLHelper.GetInstance();
                 if (AppConfig.EnableRerank)
                 {
-                    var s = searchResult.Select(x => x.Payload["text"].ToString()).ToArray();
-                    return Rerank.GetRerank(record.Message_NoAppendInfo, s, AppConfig.MaxMemoryCount);
+                    var search = searchResult.Select(x => x.Payload["text"].ToString()).ToArray();
+                    var rerank = Rerank.GetRerank(record.Message_NoAppendInfo, search, AppConfig.MaxMemoryCount);
+                    (ChatRecord records, float score)[] result = [];
+                    foreach (var (document, score) in rerank)
+                    {
+                        var point = searchResult.FirstOrDefault(x => x.Payload["text"].ToString() == document);
+                        if (point == null)
+                        {
+                            continue;
+                        }
+                        var id = (int)point.Id.Num;
+                        result = [(ChatRecord.GetChatRecordById(db, id), score), .. result];
+                    }
+                    return result;
                 }
                 else
                 {
-                    return searchResult.Select(x => (x.Payload["text"].ToString(), x.Score)).OrderByDescending(x => x.Score).ToArray();
+                    (ChatRecord records, float score)[] result = [];
+                    foreach (var item in searchResult.OrderByDescending(x => x.Score).Take(AppConfig.MaxMemoryCount))
+                    {
+                        var id = (int)item.Id.Num;
+                        result = [(ChatRecord.GetChatRecordById(db, id), item.Score), .. result];
+                    }
+                    return result;
                 }
             }
             catch (Exception ex)

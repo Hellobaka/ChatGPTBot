@@ -56,20 +56,18 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     InProgress = false;
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
-                double memoryRelatedRate = AppConfig.EnableMemory ? Memory.CalcMemoryActivateRate(record) : 0;
-                e.CQLog.Debug("记忆激活度", $"{memoryRelatedRate}");
-                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), e.Message.Text.Contains(AppConfig.BotName), e.FromQQ, memoryRelatedRate);
+
+                if (AppConfig.EnableMemory)
+                {
+                    Memory.AddMemory(record);
+                }
+                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
 
                 if (MainSave.Random.NextDouble() < replyProbablity)
                 {
                     InProgress = true;
 
                     string reply = CreateReply(relationship, record);
-
-                    if (AppConfig.EnableMemory)
-                    {
-                        Memory.AddMemory(record);
-                    }
 
                     if (reply == Chat.ErrorMessage)
                     {
@@ -164,11 +162,15 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (AppConfig.EnableMemory)
             {
                 var memories = Memory.GetMemories(record);
-                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {0}%");
+                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
                 if (memories.Length > 0)
                 {
                     stringBuilder.AppendLine("以下是你回忆起的记忆：");
                     stringBuilder.AppendLine("<Memory>");
+                    foreach(var memory in memories)
+                    {
+                        stringBuilder.AppendLine(memory.record.ParsedMessage);
+                    }
                     stringBuilder.AppendLine("</Memory>");
                 }
             }

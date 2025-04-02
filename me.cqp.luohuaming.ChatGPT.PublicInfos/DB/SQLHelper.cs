@@ -11,7 +11,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 ConnectionString = $"data source={Path.Combine(MainSave.AppDirectory, "core.db")}",
                 DbType = DbType.Sqlite,
-                IsAutoCloseConnection = false,
+                IsAutoCloseConnection = true,
                 InitKeyType = InitKeyType.Attribute,
             });
             return db;

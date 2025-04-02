@@ -94,6 +94,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
         }
 
+        public static List<ChatRecord> GetChatRecordByIds(int[] ids)
+        {
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<ChatRecord>().Where(x => ids.Contains(x.Id)).OrderByDescending(x => x.Time).ToList();
+        }
+
+        public static ChatRecord? GetChatRecordById(SqlSugarClient db, int id)
+        {
+            return db.Queryable<ChatRecord>().First(x => id == x.Id);
+        }
+
         private string ParseMessage(string message)
         {
             Relationship = Relationship.GetRelationShip(GroupID, QQ);
@@ -158,7 +169,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         case CQFunction.Image:
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
-                           
+
                             var cache = Picture.GetPictureByHash(cqcode);
                             if (cache != null && !string.IsNullOrEmpty(cache.Description))
                             {

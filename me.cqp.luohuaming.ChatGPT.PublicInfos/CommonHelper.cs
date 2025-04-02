@@ -220,7 +220,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 {
                     Content = new StringContent(payload, Encoding.UTF8, "application/json")
                 };
-                foreach (var item in TencentSign.BuildHeaders("lkeap", host, "", action, "2024-05-22", payload))
+                foreach (var item in TencentSign.BuildHeaders("lkeap", host, "ap-guangzhou", action, "2024-05-22", payload))
                 {
                     if (request.Headers.Contains(item.Key))
                     {
