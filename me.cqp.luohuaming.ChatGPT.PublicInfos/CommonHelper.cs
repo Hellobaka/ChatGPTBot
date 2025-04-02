@@ -157,9 +157,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
         }
 
-        public static string ToJson(this object obj)
+        public static string ToJson(this object obj, bool indented = false)
         {
-            return JsonConvert.SerializeObject(obj, Formatting.None);
+            return JsonConvert.SerializeObject(obj, indented ? Formatting.Indented : Formatting.None);
         }
 
         public static string[] SplitV2(this string message, string pattern)

@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -47,6 +48,29 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void UpdateScheduler()
         {
+            string path = Path.Combine(MainSave.AppDirectory, "schedules.json");
+            if (Schedules.Count == 0 && File.Exists(path))
+            {
+                try
+                {
+                    JObject j = JObject.Parse(File.ReadAllText(path));
+                    DateTime lastUpdate = j["LastUpdateTime"].ToObject<DateTime>();
+                    if (lastUpdate.Date == DateTime.Now.Date)
+                    {
+                        foreach (var item in j["Schedules"] as JArray)
+                        {
+                            Schedules.Add((item["Time"].ToObject<DateTime>(), item["Action"].ToString()));
+                        }
+                        if (Schedules.Count > 0)
+                        {
+                            LastUpdateTime = lastUpdate;
+                            MainSave.CQLog.Info("日程生成", $"已加载日程缓存：{LastUpdateTime:G}. 获取到 {Schedules.Count} 条日程");
+                            return;
+                        }
+                    }
+                }
+                catch { }
+            }
             string prompt = string.Format(Prompt, AppConfig.BotName, AppConfig.SchedulePrompt, DateTime.Now.ToLongDateString(), DateTime.Now.ToString("dddd"));
             var json = Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
@@ -77,9 +101,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
                 MainSave.CQLog.Info("日程生成", $"获取到 {Schedules.Count} 条日程");
                 LastUpdateTime = DateTime.Now;
+                CacheSchedules(path);
             }
             catch
             { }
+        }
+
+        private void CacheSchedules(string path)
+        {
+            File.WriteAllText(path, new
+            {
+                LastUpdateTime,
+                Schedules = Schedules.Select(x => new { Time = x.time, Action = x.action }).ToArray()
+            }.ToJson(true));
         }
 
         private Timer UpdateSchedulerTimer {  get; set; }
