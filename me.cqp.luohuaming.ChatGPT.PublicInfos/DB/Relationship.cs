@@ -76,7 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 }
                 else
                 {
-                    MainSave.CQLog.Error("缓存用户昵称", "获取的昵称与卡片均为null");
+                    MainSave.CQLog.Warning("缓存用户昵称", "获取的昵称与卡片均为null");
                     return null;
                 }
             }

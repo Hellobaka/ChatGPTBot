@@ -218,9 +218,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void ChatSendButton_Click(object sender, RoutedEventArgs e)
         {
-            ChatRecord r = ChatRecord.GetChatRecordByIds([5470]).First();
-            r.ParseMessage();
-            var relevent = Qdrant.Instance.GetReleventCollection(r);
         }
 
         private async Task ShowAssistantMessage(string response)
