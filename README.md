@@ -6,7 +6,7 @@
 - 记忆模块，由[Qdrant](https://github.com/qdrant/qdrant)提供向量数据库。喜欢可以用 docker，不喜欢 docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6_tls.zip)
 - 心情模块
 - 关系模块
-- 回复意愿管理器
+- 自适应回复意愿
 - 表情包感知与刮削，需要上游框架支持传递`sub_type`参数
 - 消息分段
 - TTS
