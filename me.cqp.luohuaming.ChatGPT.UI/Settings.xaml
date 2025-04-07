@@ -64,6 +64,10 @@
                             <TextBlock Margin="0,5,0,0">启用视觉输入:</TextBlock>
                             <CheckBox x:Name="EnableVision" Margin="10,5,0,0" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="0,5,0,0">随机回复启用视觉输入:</TextBlock>
+                            <CheckBox x:Name="RandomReplyEnableVision" Margin="10,5,0,0" />
+                        </StackPanel>
                         <TextBlock Margin="0,5,0,0">Bot 名称:</TextBlock>
                         <TextBox x:Name="BotName" Margin="0,5,0,0" />
                         <TextBlock Margin="0,10,0,0">私聊使用的默认 Prompt:</TextBlock>
@@ -194,11 +198,14 @@
                         <TextBox x:Name="RandomReplyConversationCount" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0">采样周期中私聊最大对话数量:</TextBlock>
                         <TextBox x:Name="RandomReplyPersonalConversationCount" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0">每个群聊触发随机回复后冷却时间 (秒):</TextBlock>
+                        <TextBox x:Name="RandomReplyCoolDown" Margin="0,5,0,0" />
 
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="0,5,0,0">随机回复时启用分段功能:</TextBlock>
                             <CheckBox x:Name="EnableSpliter" Margin="10,5,0,0" />
                         </StackPanel>
+
                         <TextBlock Margin="0,5,0,0">分段使用的大模型名称:</TextBlock>
                         <TextBox x:Name="SpliterModelName" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0">分段使用的 Prompt:</TextBlock>

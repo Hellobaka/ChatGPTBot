@@ -190,7 +190,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
             SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
             RandomReplyEnableVision = ConfigHelper.GetConfig("RandomReplyEnableVision", false);
-            RandomReplyCoolDown = ConfigHelper.GetConfig("RandomReplyCoolDown", 6000);
+            RandomReplyCoolDown = ConfigHelper.GetConfig("RandomReplyCoolDown", 60);
         }
     }
 }

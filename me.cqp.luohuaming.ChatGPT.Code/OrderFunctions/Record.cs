@@ -86,9 +86,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     if (index >= 0)
                     {
                         var cd = Cooldowns[index];
-                        if ((DateTime.Now - cd.lastReplyTime) < TimeSpan.FromMilliseconds(AppConfig.RandomReplyCoolDown))
+                        if ((DateTime.Now - cd.lastReplyTime) < TimeSpan.FromSeconds(AppConfig.RandomReplyCoolDown))
                         {
-                            MainSave.CQLog.Info("随机聊天", $"{e.FromGroup} 冷却中，下次可用时间：{(cd.lastReplyTime + TimeSpan.FromMilliseconds(AppConfig.RandomReplyCoolDown)):G}");
+                            MainSave.CQLog.Info("随机聊天", $"{e.FromGroup} 冷却中，下次可用时间：{(cd.lastReplyTime + TimeSpan.FromSeconds(AppConfig.RandomReplyCoolDown)):G}");
                             return result;
                         }
                         else
