@@ -10,6 +10,7 @@
 - 表情包感知与刮削，需要上游框架支持传递`sub_type`参数
 - 消息分段
 - TTS
+- Token 开销统计
 
 ## TTS功能
 - 使用[edge-tts](https://github.com/rany2/edge-tts)库
@@ -32,7 +33,7 @@
 | ChatBaseURL                      | https://api.openai.com/v1                  | ChatGPT API的URL                        |
 | ChatModelName                    | gpt-4o                                     | 聊天使用的模型名称                      |
 | MasterQQ                         | 114514                                     | 管理员QQ号码                                 |
-| ChatMaxTokens                    | 1000                                       | 聊天最大Token数量                       |
+| ChatMaxTokens                    | 3000                                       | 聊天最大Token数量                       |
 | ChatTemperature                   | 1.3                                        | 聊天的温度参数                          |
 | ImageGenerateSize                | 2                                          | 图片生成尺寸                            |
 | ImageGenerateQuality             | 1                                          | 图片生成质量                            |

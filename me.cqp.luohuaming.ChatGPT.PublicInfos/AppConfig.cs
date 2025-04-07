@@ -152,7 +152,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ChatBaseURL = ConfigHelper.GetConfig("ChatBaseURL", "https://api.openai.com/v1");
             ChatModelName = ConfigHelper.GetConfig("ChatModelName", "gpt-4o");
             MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);
-            ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 1000);
+            ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 3000);
             ChatTemperature = ConfigHelper.GetConfig("ChatTemperature", 1.3f);
             ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 2);
             ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 1);
