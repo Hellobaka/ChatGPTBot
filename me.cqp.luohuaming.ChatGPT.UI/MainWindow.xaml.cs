@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using System;
 using System.Collections.Generic;
@@ -48,8 +49,18 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 MainSave.AppDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 MainSave.RecordDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
-                ConfigHelper.EnableHotReload();
+                if (ConfigHelper.Load() is false)
+                {
+                    ShowError("加载配置文件, 内容格式不正确，无法加载");
+                }
+                AppConfig.Init();
                 BuildPromptList();
+                SQLHelper.CreateDB();
+                Qdrant qdrant = new Qdrant(AppConfig.QdrantHost, AppConfig.QdrantPort);
+                if (!qdrant.CheckConnection())
+                {
+                    ShowError("Qdrant Connection Failed.");
+                }
             }
 
             RefreshTTSStatus();
@@ -207,6 +218,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void ChatSendButton_Click(object sender, RoutedEventArgs e)
         {
+            ChatRecord r = ChatRecord.GetChatRecordByIds([5470]).First();
+            r.ParseMessage();
+            var relevent = Qdrant.Instance.GetReleventCollection(r);
         }
 
         private async Task ShowAssistantMessage(string response)
