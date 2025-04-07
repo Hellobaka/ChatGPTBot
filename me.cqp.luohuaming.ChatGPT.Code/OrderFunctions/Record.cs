@@ -38,6 +38,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendFlag = false,
             };
 
+            if (!AppConfig.EnableVision && CQCode.Parse(e.Message).Any(x => x.IsImageCQCode))
+            {
+                return result;
+            }
             Records.Add(new ChatRecords
             {
                 MessageId = e.Message.Id,

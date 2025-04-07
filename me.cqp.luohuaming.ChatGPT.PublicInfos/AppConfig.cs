@@ -115,6 +115,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string BochaAPIKey { get; set; }
 
+        public static bool RandomReplyEnableVision { get; set; }
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -185,6 +187,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableSpliterRandomDelay = ConfigHelper.GetConfig("EnableSpliterRandomDelay", true);
             SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
             SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
+            RandomReplyEnableVision = ConfigHelper.GetConfig("RandomReplyEnableVision", false);
         }
     }
 }
