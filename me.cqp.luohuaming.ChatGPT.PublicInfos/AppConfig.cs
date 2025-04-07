@@ -30,8 +30,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static List<long> PersonList { get; set; } = new List<long>();
 
-        public static string ResetChatOrder { get; set; } = "";
-
         public static string ImageGenerationOrder { get; set; } = ".画图";
 
         public static string AddBlackListOrder { get; set; } = ".添加黑名单";
@@ -52,15 +50,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableTTS { get; set; }
 
-        public static bool SendErrorTextWhenTTSFail { get; set; } = false;
-
         public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
-
-        public static int RandomReplyMinuteInterval { get; set; } = 1;
-
-        public static int RandomReplyConversationCount { get; set; } = 20;
-
-        public static int RandomReplyPersonalConversationCount { get; set; } = 20;
 
         public static bool EnableSpliter { get; set; }
 
@@ -126,8 +116,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string RerankModelName { get; set; }
 
-        public static int TopicCount { get; set; }
-
         public static bool EnableMemory { get; set; }
 
         public static double MinMemorySimilarty { get; set; }
@@ -158,7 +146,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
             EnableTTS = ConfigHelper.GetConfig("EnableTTS", false);
-            SendErrorTextWhenTTSFail = ConfigHelper.GetConfig("SendErrorTextWhenTTSFail", false);
             TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
             ChatAPIKey = ConfigHelper.GetConfig("ChatAPIKey", "");
             BochaAPIKey = ConfigHelper.GetConfig("BochaAPIKey", "");
@@ -173,7 +160,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
             BlackList = ConfigHelper.GetConfig("BlackList", new List<long>());
-            ResetChatOrder = ConfigHelper.GetConfig("ResetChatOrder", "重置聊天");
             ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
             AddBlackListOrder = ConfigHelper.GetConfig("AddBlackListOrder", ".添加黑名单");
             RemoveBlackListOrder = ConfigHelper.GetConfig("RemoveBlackListOrder", ".移除黑名单");
@@ -184,10 +170,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。");
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
-            RandomReplyMinuteInterval = ConfigHelper.GetConfig("RandomReplyMinuteInterval", 1);
-            RandomReplyConversationCount = ConfigHelper.GetConfig("RandomReplyConversationCount", 10);
-            RandomReplyPersonalConversationCount = ConfigHelper.GetConfig("RandomReplyPersonalConversationCount", 10);
-
             EnableSpliter = ConfigHelper.GetConfig("EnableSpliter", false);
             SpliterModelName = ConfigHelper.GetConfig("SpliterModelName", "gpt-4o-mini");
             SpliterPrompt = ConfigHelper.GetConfig("SpliterPrompt", "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要");
@@ -222,7 +204,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ChatEmptyResponse = ConfigHelper.GetConfig("ChatEmptyResponse", "<EMPTY>");
             RandomSendEmoji = ConfigHelper.GetConfig("RandomSendEmoji", true);
             RecommendEmojiCount = ConfigHelper.GetConfig("RecommendEmojiCount", 5);
-            TopicCount = ConfigHelper.GetConfig("TopicCount", 5);
             EnableMemory = ConfigHelper.GetConfig("EnableMemory", true);
             MinMemorySimilarty = ConfigHelper.GetConfig("MinMemorySimilarty", 0.8);
             MaxMemoryCount = ConfigHelper.GetConfig("MaxMemoryCount", 5);
