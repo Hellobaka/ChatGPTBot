@@ -136,11 +136,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             try
             {
+                Filter filter;
+                if(record.GroupID > 0)
+                {
+                    filter = (AppConfig.QdrantSearchOnlyPerson ? MatchKeyword("user_id", $"{record.GroupID}_{record.QQ}") : MatchText("user_id", $"{record.GroupID}_"))
+                        & Range("timestamp", new Range() { Gte = record.Time.AddMonths(-3).GetTimeStamp() });
+                }
+                else
+                {
+                    filter = MatchKeyword("user_id", $"{record.GroupID}_{record.QQ}") & Range("timestamp", new Range() { Gte = record.Time.AddMonths(-3).GetTimeStamp() });
+                }
                 var searchResult = QdrantClient.QueryAsync(
                     collectionName: CollectionName,
                     query: Embedding.GetEmbedding(record.Message_NoAppendInfo),
-                    filter: (AppConfig.QdrantSearchOnlyPerson ? MatchKeyword("user_id", $"{record.GroupID}_{record.QQ}") : MatchText("user_id", $"{record.GroupID}_"))
-                        & Range("timestamp", new Range() { Gte = record.Time.AddMonths(-3).GetTimeStamp() }),
+                    filter: filter,
                     limit: AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
                     payloadSelector: true
                 ).Result;
