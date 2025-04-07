@@ -111,6 +111,9 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Enum
         /// 匿名消息
         /// </summary>
         [Description ("anonymous")]
-        Anonymous
+        Anonymous,
+
+        [Description ("reply")]
+        Reply
     }
 }

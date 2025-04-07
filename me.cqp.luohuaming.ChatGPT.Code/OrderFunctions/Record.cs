@@ -40,7 +40,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SendFlag = false,
             };
 
-            if (!AppConfig.EnableVision && CQCode.Parse(e.Message).Any(x => x.IsImageCQCode))
+            if (!AppConfig.RandomReplyEnableVision && CQCode.Parse(e.Message).Any(x => x.IsImageCQCode))
             {
                 return result;
             }

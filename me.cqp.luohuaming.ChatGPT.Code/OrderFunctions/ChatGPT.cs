@@ -1,11 +1,13 @@
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
@@ -19,8 +21,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         public string GetOrderStr() => AppConfig.ResponsePrefix;
 
         public bool Judge(string destStr) => true;
-
-        private Regex ReplyPattern { get; set; } = new Regex(Regex.Escape("[CQ:reply,id=") + @"(\d+)\]");
 
         private Regex AtPattern { get; set; } = new Regex("\\[CQ:at,qq=(\\d*).*?\\]");
 
@@ -45,15 +45,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 message = AtPattern.Replace(message, "");
                 if (AppConfig.ReplyResponse)
                 {
-                    foreach (Match item in ReplyPattern.Matches(message))
+                    var reply = e.Message.CQCodes.FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
+                    if (reply != null && int.TryParse(reply.Items["id"], out int id))
                     {
-                        if (int.TryParse(item.Groups[1].Value, out int msgId))
+                        var msg = Record.GetMessageContentById(id);
+                        if (msg != null)
                         {
-                            var msg = Record.GetMessageContentById(msgId);
-                            if (msg != null)
-                            {
-                                message = message.Replace(item.Value, msg);
-                            }
+                            message = message.Replace(reply.ToSendString(), msg);
                         }
                     }
                 }
