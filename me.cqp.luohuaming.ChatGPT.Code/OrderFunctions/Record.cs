@@ -23,6 +23,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public bool Judge(string destStr) => true;
 
+        public static List<(long groupId, DateTime lastReplyTime)> Cooldowns { get; set; } = [];
+
         public static List<ChatRecords> Records { get; set; } = [];
 
         private static Timer CleanRecordTimer { get; set; }
@@ -77,8 +79,27 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     InProgress = true;
                     var filterRecords = Records.Where(x => group ? x.GroupID == e.FromGroup : x.GroupID == e.FromGroup && x.QQ == e.FromQQ).ToList();
-                    MainSave.CQLog.Info("随机聊天", $"{(group ? "群组" : "个人")}单位时间内聊天次数达到设置，触发功能");
+                    MainSave.CQLog.Info("闅忔満鑱婂ぉ", $"{(group ? "缇ょ粍" : "涓汉")}鍗曚綅鏃堕棿鍐呰亰澶╂鏁拌揪鍒拌缃紝瑙﹀彂鍔熻兘");
                     RemoveRecords(e.FromGroup);
+
+                    var index = Cooldowns.FindIndex(x => x.groupId == e.FromGroup);
+                    if (index >= 0)
+                    {
+                        var cd = Cooldowns[index];
+                        if ((DateTime.Now - cd.lastReplyTime) < TimeSpan.FromMilliseconds(AppConfig.RandomReplyCoolDown))
+                        {
+                            MainSave.CQLog.Info("闅忔満鑱婂ぉ", $"{e.FromGroup} 鍐峰嵈涓紝涓嬫鍙敤鏃堕棿锛歿(cd.lastReplyTime + TimeSpan.FromMilliseconds(AppConfig.RandomReplyCoolDown)):G}");
+                            return result;
+                        }
+                        else
+                        {
+                            Cooldowns[index] = (e.FromGroup, DateTime.Now);
+                        }
+                    }
+                    else 
+                    {
+                        Cooldowns.Add((e.FromGroup, DateTime.Now));
+                    }
 
                     result.Result = true;
                     result.SendFlag = true;
@@ -111,7 +132,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         }
                         else if (AppConfig.SendErrorTextWhenTTSFail)
                         {
-                            sendText.MsgToSend.Add("语音合成失败");
+                            sendText.MsgToSend.Add("璇煶鍚堟垚澶辫触");
                         }
                     }
                     else
@@ -142,7 +163,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             catch (Exception ex)
             {
-                e.CQLog.Warning("随机回复", $"方法发生异常：{ex.Message}\n{ex.StackTrace}");
+                e.CQLog.Warning("闅忔満鍥炲", $"鏂规硶鍙戠敓寮傚父锛歿ex.Message}\n{ex.StackTrace}");
                 return new FunctionResult { Result = false, SendFlag = false };
             }
             finally

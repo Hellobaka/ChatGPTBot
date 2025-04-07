@@ -117,6 +117,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool RandomReplyEnableVision { get; set; }
 
+        public static int RandomReplyCoolDown { get; set; }
+
         public static void Init()
         {
             AtResponse = ConfigHelper.GetConfig("AtResponse", false);
@@ -188,6 +190,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
             SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
             RandomReplyEnableVision = ConfigHelper.GetConfig("RandomReplyEnableVision", false);
+            RandomReplyCoolDown = ConfigHelper.GetConfig("RandomReplyCoolDown", 6000);
         }
     }
 }
