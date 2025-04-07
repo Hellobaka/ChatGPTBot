@@ -150,6 +150,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static ushort QdrantPort { get; set; }
 
+        public static bool QdrantSearchOnlyPerson { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -231,6 +233,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             QdrantPort = ConfigHelper.GetConfig("QdrantPort", (ushort)6334);
             QdrantAPIKey = ConfigHelper.GetConfig("QdrantAPIKey", "aFZsX4Xe2pzWybnX61Vi");
             QdrantCertPassword = ConfigHelper.GetConfig("QdrantCertPassword", "T93dGAuVHqBGTkq3uUBQ");
+            QdrantSearchOnlyPerson = ConfigHelper.GetConfig("QdrantSearchOnlyPerson", false);
 
             ConfigHelper.EnableHotReload();
         }

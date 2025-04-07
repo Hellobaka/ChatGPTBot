@@ -48,7 +48,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Time = DateTime.Now,
                 MessageID = messageID
             };
-            record.ParsedMessage = record.ParseMessage(message);
+            record.ParsedMessage = record.ParseMessage();
             return record;
         }
 
@@ -62,7 +62,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Time = DateTime.Now,
                 MessageID = messageID,
             };
-            record.ParsedMessage = record.ParseMessage(message);
+            record.ParsedMessage = record.ParseMessage();
             return record;
         }
 
@@ -105,8 +105,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return db.Queryable<ChatRecord>().First(x => id == x.Id);
         }
 
-        private string ParseMessage(string message)
+        public string ParseMessage()
         {
+            string message = (string)RawMessage.Clone();
+
             Relationship = Relationship.GetRelationShip(GroupID, QQ);
             StringBuilder stringBuilder = new();
 
