@@ -3,7 +3,7 @@
 - 触发、Prompt以及关系心情等模块逻辑抄自[MaiBot](https://github.com/MaiM-with-u/MaiBot)
 
 ## 功能
-- 记忆模块，由[Qdrant](https://github.com/qdrant/qdrant)提供向量数据库。喜欢可以用 docker，不喜欢 docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6_tls.zip)
+- 记忆模块，由[Qdrant](https://github.com/qdrant/qdrant)提供向量数据库。
 - 心情模块
 - 关系模块
 - 自适应回复意愿
@@ -18,6 +18,11 @@
 
 ## 自v1更新
 建议删除配置文件，并重新配置
+
+## 自搭Qdrant
+Qdrant提供 Docker 版本  
+不喜欢 docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6_tls.zip)  
+若使用此版本，请将里面的`tls\ca.pfx`放置到插件的数据目录根目录中
 
 ## 配置文件
 配置文件支持热重载，保存后若格式无误则会即时生效
