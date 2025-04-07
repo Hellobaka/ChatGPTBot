@@ -157,7 +157,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         {
             var mood = MoodMap.AsParallel()
                 .Select(x => new { Mood = x.Key, Distance = Math.Sqrt(Math.Pow(x.Value.valence - Valence, 2) + Math.Pow(x.Value.arousal - Arousal, 2)) })
-                .OrderByDescending(x => x.Distance)
+                .OrderBy(x => x.Distance)
                 .FirstOrDefault().Mood;
 
             return $"当前心情：{mood}。你现在心情{(Valence > 0.5 ? "很好" : (Valence < -0.5 ? "不太好" : "一般"))}，" +
