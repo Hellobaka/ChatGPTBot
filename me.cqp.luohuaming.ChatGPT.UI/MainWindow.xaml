@@ -5,232 +5,34 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="配置窗口"
-    Width="800"
-    Height="450"
+    Width="1200"
+    Height="700"
+    ui:WindowHelper.UseModernWindowStyle="True"
     Loaded="Window_Loaded"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
-    <DockPanel>
-        <Menu DockPanel.Dock="Top">
-            <MenuItem
-                x:Name="SettingButton"
-                Margin="0,5"
-                Click="SettingButton_Click"
-                Header="详细设置" />
-        </Menu>
-        <TabControl>
-            <TabItem Header="Chat">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="auto" />
-                        <RowDefinition Height="auto" />
-                    </Grid.RowDefinitions>
-                    <Grid Margin="10,5,10,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <CheckBox x:Name="EnableSpliter" VerticalAlignment="Center">分行</CheckBox>
-                        <TextBlock
-                            Grid.Column="1"
-                            Margin="15,0,0,0"
-                            VerticalAlignment="Center">
-                            Prompt 预设：
-                        </TextBlock>
-                        <ComboBox
-                            x:Name="ChatPromptList"
-                            Grid.Column="2"
-                            SelectionChanged="ChatPromptList_SelectionChanged" />
-                    </Grid>
-                    <ProgressBar
-                        x:Name="ChatStatus"
-                        Grid.Row="3"
-                        Height="3"
-                        Margin="10,0,10,10"
-                        IsIndeterminate="True"
-                        Visibility="Hidden" />
-                    <ScrollViewer
-                        x:Name="ChatScroller"
-                        Grid.Row="1"
-                        VerticalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="ChatContainer" Margin="10" />
-                    </ScrollViewer>
-                    <Grid Grid.Row="2" Margin="10,10,10,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="auto" />
-                        </Grid.ColumnDefinitions>
-                        <Button
-                            x:Name="ChatResetButton"
-                            Grid.Column="0"
-                            Width="60"
-                            Margin="0,0,10,0"
-                            Click="ChatResetButton_Click"
-                            Content="清空" />
-                        <TextBox
-                            x:Name="ChatTestInput"
-                            Grid.Column="1"
-                            MaxHeight="100"
-                            AcceptsReturn="True"
-                            MaxLines="65535"
-                            PreviewKeyDown="ChatTestInput_PreviewKeyDown"
-                            TextWrapping="Wrap" />
-                        <Button
-                            x:Name="ChatSendButton"
-                            Grid.Column="2"
-                            Width="60"
-                            Margin="10,0,0,0"
-                            Click="ChatSendButton_Click"
-                            Content="发送" />
-                    </Grid>
-                </Grid>
-            </TabItem>
-            <TabItem Header="TTS">
-                <StackPanel Margin="10">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" Text="TTS 状态：" />
-                        <TextBlock
-                            x:Name="TTSStatus"
-                            VerticalAlignment="Center"
-                            Text="Enabled" />
-                        <Button
-                            x:Name="TTSSwitchStatusButton"
-                            Width="60"
-                            Margin="10,0,0,0"
-                            Click="TTSSwitchStatusButton_Click"
-                            Content="切换" />
-                        <Button
-                            x:Name="TTSReinitButton"
-                            Width="60"
-                            Margin="10,0,0,0"
-                            Click="TTSReinitButton_Click"
-                            Content="重新检查" />
-                    </StackPanel>
-                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                        <TextBlock>测试</TextBlock>
-                        <ProgressBar
-                            x:Name="TestTTSStatus"
-                            Width="100"
-                            Margin="10,0,0,0"
-                            IsIndeterminate="True"
-                            Visibility="Collapsed" />
-                    </StackPanel>
-                    <Grid Margin="0,5,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="TTSInput" />
-                        <Button
-                            x:Name="TTSTestButton"
-                            Grid.Column="1"
-                            Width="60"
-                            Margin="10,0,0,0"
-                            Click="TTSTestButton_Click"
-                            Content="生成" />
-                    </Grid>
-                </StackPanel>
-            </TabItem>
-            <TabItem Header="Prompt 管理">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="7*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid Margin="5">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="auto" />
-                        </Grid.RowDefinitions>
-                        <ListBox
-                            x:Name="PromptList"
-                            Grid.Row="0"
-                            SelectionChanged="PromptList_SelectionChanged" />
-                        <Grid Grid.Row="1" Margin="0,5,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition />
-                                <ColumnDefinition />
-                            </Grid.ColumnDefinitions>
-                            <Button x:Name="PromptAddButton" Click="PromptAddButton_Click">+</Button>
-                            <Button
-                                x:Name="PromptRemoveButton"
-                                Grid.Column="1"
-                                Margin="10,0,0,0"
-                                Click="PromptRemoveButton_Click">
-                                -
-                            </Button>
-                        </Grid>
-                        <Button
-                            x:Name="PromptSaveButton"
-                            Grid.Row="2"
-                            Margin="0,5"
-                            Click="PromptSaveButton_Click">
-                            保存
-                        </Button>
-                    </Grid>
-                    <Grid Grid.Column="1" Margin="5">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="auto" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="auto" />
-                        </Grid.RowDefinitions>
-                        <GroupBox Header="预设名称">
-                            <TextBox
-                                Name="PromptName"
-                                Margin="5"
-                                TextChanged="PromptName_TextChanged" />
-                        </GroupBox>
-                        <GroupBox Grid.Row="1" Header="预设内容">
-                            <TextBox
-                                x:Name="PromptPriview"
-                                Margin="5"
-                                MaxLength="65535"
-                                TextChanged="PromptPriview_TextChanged"
-                                TextWrapping="Wrap" />
-                        </GroupBox>
-                        <GroupBox Grid.Row="2" Header="变量">
-                            <StackPanel Margin="5">
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="$ModelName$    当前使用的模型名称"
-                                    Tag="$ModelName$" />
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="$Time$    当前时间"
-                                    Tag="$Time$" />
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="$BotName$    机器人昵称"
-                                    Tag="$BotName$" />
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="$Id$    调用者ID"
-                                    Tag="$Id$" />
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="$GroupName$    群组名称"
-                                    Tag="$GroupName$" />
-                                <Button
-                                    Margin="0,2"
-                                    Click="PromptAddVarible_Click"
-                                    Content="&lt;@QQ&gt;    转换为At消息的模板"
-                                    Tag="&lt;@QQ&gt;" />
-                            </StackPanel>
-                        </GroupBox>
-                    </Grid>
-                </Grid>
-            </TabItem>
-        </TabControl>
-    </DockPanel>
+    <ui:NavigationView
+        IsBackButtonVisible="Collapsed"
+        IsBackEnabled="False"
+        IsPaneOpen="False"
+        IsSettingsVisible="False"
+        PaneDisplayMode="Top"
+        SelectionChanged="NavigationView_SelectionChanged">
+        <ui:NavigationView.MenuItems>
+            <ui:NavigationViewItem
+                Content="Chat"
+                IsSelected="True"
+                Tag="Chat" />
+            <ui:NavigationViewItem Content="TTS" Tag="TTS" />
+            <ui:NavigationViewItem Content="设置" Tag="Settings" />
+            <ui:NavigationViewItem Content="心情" Tag="Mood" />
+            <ui:NavigationViewItem Content="回复意愿" Tag="ReplyWilling" />
+            <ui:NavigationViewItem Content="关系" Tag="Relationship" />
+            <ui:NavigationViewItem Content="知识" Tag="Knowledge" />
+            <ui:NavigationViewItem Content="Token统计" Tag="TokenStatistics" />
+        </ui:NavigationView.MenuItems>
+        <ui:Frame x:Name="MainFrame" Style="{DynamicResource CascadeDataContextFrame}" />
+    </ui:NavigationView>
 </Window>

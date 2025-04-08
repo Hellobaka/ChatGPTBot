@@ -2,8 +2,10 @@
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -24,8 +26,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             InitializeComponent();
             Topmost = true;
         }
-
-        private string Prompt { get; set; } = AppConfig.GroupPrompt;
+        private Dictionary<string, object> PageCache { get; set; } = new();
 
         public static void ShowError(string message)
         {
@@ -54,330 +55,43 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                     ShowError("加载配置文件, 内容格式不正确，无法加载");
                 }
                 AppConfig.Init();
-                BuildPromptList();
                 SQLHelper.CreateDB();
-                Qdrant qdrant = new Qdrant(AppConfig.QdrantHost, AppConfig.QdrantPort);
-                if (!qdrant.CheckConnection())
-                {
-                    ShowError("Qdrant Connection Failed.");
-                }
+                //Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
+                //if (!qdrant.CheckConnection())
+                //{
+                //    ShowError("Qdrant Connection Failed.");
+                //}
             }
 
-            RefreshTTSStatus();
-
-            ChatBubble.OnCopy += ChatBubble_OnCopy;
-            ChatBubble.OnRetry += ChatBubble_OnRetry;
-
-            InitPromptList();
             Topmost = false;
         }
 
-        private void InitPromptList()
+        private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
-            ChatPromptList.Items.Clear();
-            PromptList.Items.Clear();
-
-            ChatPromptList.Items.Add(new ComboBoxItem
+            var selectedItem = (NavigationViewItem)args.SelectedItem;
+            if (selectedItem != null)
             {
-                Tag = AppConfig.GroupPrompt,
-                Content = "群组 Prompt"
-            });
-            ChatPromptList.Items.Add(new ComboBoxItem
-            {
-                Tag = AppConfig.PrivatePrompt,
-                Content = "私聊 Prompt"
-            });
-
-            PromptList.Items.Add(new ListBoxItem
-            {
-                Tag = AppConfig.GroupPrompt,
-                Content = "群组 Prompt"
-            });
-            PromptList.Items.Add(new ListBoxItem
-            {
-                Tag = AppConfig.PrivatePrompt,
-                Content = "私聊 Prompt"
-            });
-
-            foreach (var item in MainSave.Prompts)
-            {
-                ChatPromptList.Items.Add(new ComboBoxItem
+                string selectedItemTag = (string)selectedItem.Tag;
+                if (PageCache.TryGetValue(selectedItemTag, out object? page))
                 {
-                    Tag = item.Value,
-                    Content = item.Key
-                });
-                string prompt = File.ReadAllText(Path.Combine(MainSave.AppDirectory, item.Value));
-                PromptList.Items.Add(new ListBoxItem
-                {
-                    Tag = prompt,
-                    Content = item.Key
-                });
-            }
-
-            ChatPromptList.SelectedIndex = 0;
-            PromptList.SelectedIndex = 0;
-        }
-
-        private void ChatBubble_OnRetry(ChatBubble bubble)
-        {
-        }
-
-        private void ChatBubble_OnCopy(string message)
-        {
-            ChatContainer.Dispatcher.Invoke(() =>
-            {
-                try
-                {
-                    Clipboard.SetText(message);
+                    MainFrame.Navigate(page);
                 }
-                catch
+                else
                 {
-                    ShowError("复制文本失败");
-                }
-            });
-        }
-
-        private void AddChatBlock(string msg, bool leftAlign, int pos = -1)
-        {
-            if (pos >= 0)
-            {
-                ChatContainer.Children.Insert(pos, new ChatBubble(msg, leftAlign));
-            }
-            else
-            {
-                ChatContainer.Children.Add(new ChatBubble(msg, leftAlign));
-            }
-        }
-
-        private void RefreshTTSStatus()
-        {
-            TTSStatus.Text = TTSHelper.Enabled ? "启用中" : "已禁用";
-            TTSStatus.Foreground = TTSHelper.Enabled ? Brushes.Green : Brushes.Red;
-        }
-
-        private void SettingButton_Click(object sender, RoutedEventArgs e)
-        {
-            var form = new Settings();
-            form.ShowDialog();
-            form.Close();
-        }
-
-        private void TTSSwitchStatusButton_Click(object sender, RoutedEventArgs e)
-        {
-            TTSHelper.Enabled = !TTSHelper.Enabled;
-            RefreshTTSStatus();
-        }
-
-        private async void TTSReinitButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (AppConfig.EnableTTS is false)
-            {
-                ShowError("配置已禁用TTS，请启用后重新进行检查");
-                return;
-            }
-            TestTTSStatus.Visibility = Visibility.Visible;
-            var check = await Task.Run<bool>(() =>
-            {
-                TTSHelper.CheckTTS();
-                return TTSHelper.Enabled;
-            });
-            RefreshTTSStatus();
-            TestTTSStatus.Visibility = Visibility.Collapsed;
-            ShowInfo($"TTS服务检查结果为：{check}");
-        }
-
-        private async void TTSTestButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(TTSInput.Text))
-            {
-                ShowError("合成的文本不可为空");
-                return;
-            }
-            TestTTSStatus.Visibility = Visibility.Visible;
-            string dir = Path.Combine(MainSave.RecordDirectory, "ChatGPT-TTS");
-            Directory.CreateDirectory(dir);
-            string fileName = $"{DateTime.Now:yyyyMMddHHmmss}.mp3";
-            string testText = TTSInput.Text;
-            var ttsResult = await Task.Run<bool>(() =>
-            {
-                return TTSHelper.TTS(testText, Path.Combine(dir, fileName), AppConfig.TTSVoice);
-            });
-            TestTTSStatus.Visibility = Visibility.Collapsed;
-            if (ttsResult)
-            {
-                if (ShowConfirm("TTS 成功，点击\"是\"打开音频"))
-                {
-                    Process.Start(Path.Combine(dir, fileName));
-                }
-            }
-            else
-            {
-                ShowError("音频合成失败，查看日志排查问题");
-            }
-        }
-
-        private void ChatSendButton_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private async Task ShowAssistantMessage(string response)
-        {
-            if (EnableSpliter.IsChecked ?? false)
-            {
-                var lines = await Task.Run(() => new Spliter(response).Split());
-                foreach (var line in lines.Where(x => !string.IsNullOrWhiteSpace(x)))
-                {
-                    if (AppConfig.EnableSpliterRandomDelay)
+                    Type? pageType = typeof(MainWindow).Assembly.GetType("me.cqp.luohuaming.ChatGPT.UI.Pages." + selectedItemTag);
+                    if (pageType == null)
                     {
-                        double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
-                        double typeTime = line.Length * typeSpeed;
-                        int randomSleep = MainSave.Random.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
-                        await Task.Delay(TimeSpan.FromMilliseconds(typeTime + randomSleep));
+                        return;
                     }
-                    AddChatBlock(line, true);
+                    var obj = Activator.CreateInstance(pageType);
+                    if (obj == null)
+                    {
+                        return;
+                    }
+                    PageCache.Add(selectedItemTag, obj);
+                    MainFrame.Navigate(obj);
                 }
             }
-            else
-            {
-                AddChatBlock(response, true);
-            }
-        }
-
-        private void ChatTestInput_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.Enter)
-            {
-                e.Handled = true;
-                ChatSendButton_Click(sender, e);
-            }
-        }
-
-        private void ChatResetButton_Click(object sender, RoutedEventArgs e)
-        {
-        }
-
-        private void ChatPromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            
-        }
-
-        private void BuildPromptList()
-        {
-            MainSave.Prompts.Clear();
-            string promptPath = Path.Combine(MainSave.AppDirectory, "Prompts");
-            Directory.CreateDirectory(promptPath);
-            foreach (var file in Directory.GetFiles(promptPath, "*.txt"))
-            {
-                MainSave.Prompts.Add(Path.GetFileNameWithoutExtension(file), file);
-            }
-        }
-
-        private void PromptList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (PromptList.SelectedIndex < 0)
-            {
-                return;
-            }
-            PromptRemoveButton.IsEnabled = PromptList.SelectedIndex > 1;
-
-            string name = (PromptList.SelectedItem as ListBoxItem).Content.ToString();
-            string prompt = (PromptList.SelectedItem as ListBoxItem).Tag.ToString();
-
-            PromptPriview.Text = prompt;
-            PromptName.Text = name;
-            PromptName.IsEnabled = PromptList.SelectedIndex > 1;
-        }
-
-        private void PromptAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            string name = "新建 Prompt";
-            string content = AppConfig.PrivatePrompt;
-            PromptList.Items.Add(new ListBoxItem
-            {
-                Tag = content,
-                Content = name
-            });
-            PromptList.SelectedIndex = PromptList.Items.Count - 1;
-        }
-
-        private void PromptRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (PromptList.SelectedIndex <= 1)
-            {
-                return;
-            }
-            var item = PromptList.SelectedItem as ListBoxItem;
-
-            if (ShowConfirm($"确认要删除 {item.Content} 预设吗？"))
-            {
-                int index = PromptList.SelectedIndex;
-                PromptList.Items.RemoveAt(PromptList.SelectedIndex);
-                index = Math.Max(0, index - 1);
-                if (PromptList.Items.Count > index)
-                {
-                    PromptList.SelectedIndex = index;
-                }
-            }
-        }
-
-        private void PromptSaveButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (PromptList.Items.Count < 2)
-            {
-                ShowError("默认 Prompt 丢失，请重载插件以重启 UI");
-                return;
-            }
-            string promptDir = Path.Combine(MainSave.AppDirectory, "Prompts");
-            var invalid = Path.GetInvalidFileNameChars();
-            List<string> files = new List<string>();
-            for (int i = 2; i < PromptList.Items.Count; i++)
-            {
-                var item = PromptList.Items[i] as ListBoxItem;
-                if (invalid.Any(item.Content.ToString().Contains))
-                {
-                    ShowError($"{item.Content} 含有无效文件名，无法保存");
-                    return;
-                }
-                File.WriteAllText(Path.Combine(promptDir, item.Content.ToString() + ".txt"), item.Tag.ToString());
-                files.Add(item.Content.ToString() + ".txt");
-            }
-            foreach (var file in Directory.GetFiles(promptDir, "*.txt"))
-            {
-                string name = Path.GetFileName(file);
-                if (!files.Contains(name))
-                {
-                    File.Delete(file);
-                }
-            }
-            AppConfig.GroupPrompt = (PromptList.Items[0] as ListBoxItem).Tag.ToString();
-            AppConfig.PrivatePrompt = (PromptList.Items[1] as ListBoxItem).Tag.ToString();
-
-            ConfigHelper.DisableHotReload();
-            ConfigHelper.SetConfig("GroupPrompt", AppConfig.GroupPrompt);
-            ConfigHelper.SetConfig("PrivatePrompt", AppConfig.PrivatePrompt);
-            ConfigHelper.EnableHotReload();
-
-            BuildPromptList();
-            InitPromptList();
-
-            ShowInfo("保存成功");
-        }
-
-        private void PromptAddVarible_Click(object sender, RoutedEventArgs e)
-        {
-            PromptPriview.AppendText((sender as Button).Tag.ToString());
-        }
-
-        private void PromptPriview_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var item = PromptList.SelectedItem as ListBoxItem;
-            item.Tag = PromptPriview.Text;
-        }
-
-        private void PromptName_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var item = PromptList.SelectedItem as ListBoxItem;
-            item.Content = PromptName.Text;
         }
     }
 }
