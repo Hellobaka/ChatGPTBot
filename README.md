@@ -21,8 +21,11 @@
 
 ## 自搭Qdrant
 Qdrant提供 Docker 版本  
-不喜欢 docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6_tls.zip)  
-若使用此版本，请将里面的`tls\ca.pfx`放置到插件的数据目录根目录中
+不喜欢 Docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6_tls.zip)  
+若使用此版本，请将里面的`tls\ca.pfx`放置到插件的数据目录根目录中  
+若使用 Docker 版本，请
+    1. 修改配置中的Api-Key，并将修改后的值填入配置的`QdrantAPIKey`项中
+    2. 按官方教程配置TLS证书，之后将pfx证书放置到插件的数据目录根目录中，之后将生成证书使用的密码填入到配置的`QdrantCertPassword`项中
 
 ## 配置文件
 配置文件支持热重载，保存后若格式无误则会即时生效
@@ -92,9 +95,17 @@ Qdrant提供 Docker 版本
 | EnableTencentSign                | false                                      | 是否启用腾讯云签名(v3)功能                    |
 | TencentSecretKey                 | ""                                         | 腾讯云密钥                                 |
 | TencentSecretId                  | ""                                         | 腾讯云秘钥ID                               |
-| QdrantHost                       | localhost                                  | Qdrant服务主机                           |
-| QdrantPort                       | 6334                                       | Qdrant服务端口                           |
+| QdrantHost                       | localhost                                  | Qdrant 服务主机                           |
+| QdrantPort                       | 6334                                       | Qdrant 服务端口                           |
 | QdrantAPIKey                     | aFZsX4Xe2pzWybnX61Vi                      | Qdrant 的API密钥                         |
 | QdrantCertPassword               | T93dGAuVHqBGTkq3uUBQ                      | Qdrant 的证书密码                         |
-| QdrantSearchOnlyPerson           | false                                      | Qdrant是否只搜索个人记忆                          |
+| QdrantSearchOnlyPerson           | false                                      | Qdrant 是否只搜索个人记忆                          |
 
+## TODO
+- [ ] 使用 ToolCalling 扩展Bot能力：可能有联网搜索、主动记忆召回、主动记忆添加
+- [ ] UI: 配置窗口
+- [ ] UI: Token 用量统计 (分接口、月度、分小时、图表)
+- [ ] UI: 回复意愿、心情等，实时监看与修改
+- [ ] 实现对Vist变声器的TTS对接
+- [ ] 睡觉时间段特殊回复
+- [ ] 其他的饼
