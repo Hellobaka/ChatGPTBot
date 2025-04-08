@@ -7,12 +7,12 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace me.cqp.luohuaming.ChatGPT.UI
+namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
     /// <summary>
     /// Settings.xaml 的交互逻辑
     /// </summary>
-    public partial class Settings : Window
+    public partial class Settings : Page
     {
         public Settings()
         {
@@ -256,60 +256,65 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         private void SetConfigToStackPanel(PropertyInfo[] properties, StackPanel container)
         {
-            foreach (UIElement item in container.Children)
+            try
             {
-                if (item is TextBox textBox)
+                foreach (UIElement item in container.Children)
                 {
-                    var property = properties.FirstOrDefault(x => x.Name == textBox.Name);
-                    if (property != null)
+                    if (item is TextBox textBox)
                     {
-                        textBox.Text = property.GetValue(null).ToString();
-                    }
-                }
-                else if (item is StackPanel stackPanel)
-                {
-                    foreach (UIElement child in stackPanel.Children)
-                    {
-                        if (child is CheckBox checkBox)
+                        var property = properties.FirstOrDefault(x => x.Name == textBox.Name);
+                        if (property != null)
                         {
-                            var property = properties.FirstOrDefault(x => x.Name == checkBox.Name);
-                            if (property != null)
+                            textBox.Text = property.GetValue(null).ToString();
+                        }
+                    }
+                    else if (item is StackPanel stackPanel)
+                    {
+                        foreach (UIElement child in stackPanel.Children)
+                        {
+                            if (child is CheckBox checkBox)
                             {
-                                checkBox.IsChecked = (bool)property.GetValue(null);
+                                var property = properties.FirstOrDefault(x => x.Name == checkBox.Name);
+                                if (property != null)
+                                {
+                                    checkBox.IsChecked = (bool)property.GetValue(null);
+                                }
                             }
                         }
                     }
-                }
-                else if (item is ListBox listbox)
-                {
-                    var property = properties.FirstOrDefault(x => x.Name == listbox.Name);
-                    if (property == null)
+                    else if (item is ListBox listbox)
                     {
-                        Debugger.Break();
-                        continue;
-                    }
-                    listbox.Items.Clear();
-                    var list = property?.GetValue(null, null);
-                    if (list is List<long> l)
-                    {
-                        foreach (var i in l)
+                        var property = properties.FirstOrDefault(x => x.Name == listbox.Name);
+                        if (property == null)
                         {
-                            listbox.Items.Add(i);
+                            Debugger.Break();
+                            continue;
+                        }
+                        listbox.Items.Clear();
+                        var list = property?.GetValue(null, null);
+                        if (list is List<long> l)
+                        {
+                            foreach (var i in l)
+                            {
+                                listbox.Items.Add(i);
+                            }
                         }
                     }
-                }
-                else if (item is ComboBox combobox)
-                {
-                    var property = properties.FirstOrDefault(x => x.Name == combobox.Name);
-                    if (property == null)
+                    else if (item is ComboBox combobox)
                     {
-                        Debugger.Break();
-                        continue;
+                        var property = properties.FirstOrDefault(x => x.Name == combobox.Name);
+                        if (property == null)
+                        {
+                            Debugger.Break();
+                            continue;
+                        }
+                        var v = property?.GetValue(null, null);
+                        combobox.SelectedIndex = (int)v;
                     }
-                    var v = property?.GetValue(null, null);
-                    combobox.SelectedIndex = (int)v;
                 }
             }
+            catch
+            { }
         }
 
         private void TextTemplate_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -342,9 +347,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             return true;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            var properties = typeof(AppConfig).GetProperties(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+            var properties = typeof(AppConfig).GetProperties(BindingFlags.Static | BindingFlags.Public);
             SetConfigToStackPanel(properties, APIContainer);
             SetConfigToStackPanel(properties, CommandContainer);
             SetConfigToStackPanel(properties, ResponseContainer);
