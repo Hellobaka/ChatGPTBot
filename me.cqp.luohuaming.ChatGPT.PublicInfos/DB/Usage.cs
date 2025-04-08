@@ -17,9 +17,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string Endpoint { get; set; }
 
+        public string ModelName { get; set; }
+
+        public string Purpose { get; set; }
+
         public DateTime Time { get; set; }
 
-        public static void Insert(string endpoint, int inputToken, int outputToken)
+        public static void Insert(string endpoint, string modelName, string purpose, int inputToken, int outputToken)
         {
             using var db = SQLHelper.GetInstance();
             var u = new Usage()
@@ -27,15 +31,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Endpoint = endpoint,
                 InputToken = inputToken,
                 OutputToken = outputToken,
+                ModelName = modelName,
+                Purpose = purpose,
                 Time = DateTime.Now,
             };
 
             db.Insertable(u).ExecuteCommand();
-        }
-
-        public static void Insert(string endpoint, ChatTokenUsage usage)
-        {
-            Insert(endpoint, usage.InputTokenCount, usage.OutputTokenCount);
         }
 
         public static (int inputToken, int outputToken) GetDayUsage(DateTime time)

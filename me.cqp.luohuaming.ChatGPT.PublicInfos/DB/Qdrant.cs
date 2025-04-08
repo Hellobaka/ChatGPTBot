@@ -65,7 +65,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("检查连接", $"连接失败：{e.Message}");
+                MainSave.CQLog?.Error("检查连接", $"连接失败：{e.Message}");
                 return false;
             }
         }

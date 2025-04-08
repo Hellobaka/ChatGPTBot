@@ -34,7 +34,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 new SystemChatMessage(prompt),
                 new UserChatMessage(Message)
-            }, AppConfig.SpliterModelName);
+            }, AppConfig.SpliterModelName, Chat.Purpose.分段);
             if (result != Chat.ErrorMessage)
             {
                 try

@@ -243,7 +243,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
-            ], AppConfig.ChatModelName);
+            ], AppConfig.ChatModelName, Chat.Purpose.聊天);
         }
 
         private void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)

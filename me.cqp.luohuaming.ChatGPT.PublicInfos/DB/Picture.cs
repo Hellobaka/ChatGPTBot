@@ -94,7 +94,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             var emotion = Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
                 [
                     new SystemChatMessage(string.Format($"这是你将要发送的消息内容:{text}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。"))
-                ], AppConfig.ImageDescriberModelName);
+                ], AppConfig.ImageDescriberModelName, Chat.Purpose.表情包推荐);
 
             if (emotion == Chat.ErrorMessage)
             {

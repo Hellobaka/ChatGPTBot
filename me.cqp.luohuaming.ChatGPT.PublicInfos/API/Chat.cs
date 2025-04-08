@@ -11,6 +11,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
     public class Chat
     {
+        public enum Purpose
+        {
+            聊天,
+            图片描述,
+            日程获取,
+            分段,
+            表情包推荐,
+            获取心情
+        }
+
         public const string ErrorMessage = "连接发生问题，查看日志排查问题";
 
         private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
@@ -21,7 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         /// <param name="chatMessages"></param>
         /// <param name="modelName"></param>
         /// <returns></returns>
-        public static string GetChatResult(string baseUrl, string apiKey, List<ChatMessage> chatMessages, string modelName, bool useSearch = false)
+        public static string GetChatResult(string baseUrl, string apiKey, List<ChatMessage> chatMessages, string modelName, Purpose purpose, bool useSearch = false)
         {
             string AppendContentToMessage(ChatMessageContent contentes)
             {
@@ -85,7 +95,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         inputToken = completion.Value.Usage.InputTokenCount;
                         outputToken = completion.Value.Usage.OutputTokenCount;
                     }
-                    Usage.Insert(baseUrl, inputToken, outputToken);
+                    Usage.Insert(baseUrl, modelName, purpose.ToString(), inputToken, outputToken);
 
                     switch (finishReason)
                     {

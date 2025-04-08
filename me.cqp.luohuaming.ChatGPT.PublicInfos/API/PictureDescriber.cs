@@ -22,7 +22,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 [
                     new SystemChatMessage(prompt), 
                     new UserChatMessage(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"))
-                ], AppConfig.ImageDescriberModelName);
+                ], AppConfig.ImageDescriberModelName, Chat.Purpose.图片描述);
         }
 
         public static string? DescribePicture(CQCode img)

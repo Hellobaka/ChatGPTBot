@@ -108,7 +108,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             MoodDecreaseTimer = new()
             {
                 AutoReset = true,
-                Interval = 1000,
+                Interval = 30000,
             };
             MoodDecreaseTimer.Elapsed += MoodDecreaseTimer_Elapsed;
             MoodDecreaseTimer.Start();
@@ -120,7 +120,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             string reply = Chat.GetChatResult(AppConfig.SpliterUrl, AppConfig.SpliterApiKey,
                 [
                     new SystemChatMessage(prompt),
-                ], AppConfig.SpliterModelName);
+                ], AppConfig.SpliterModelName, Chat.Purpose.获取心情);
             var split = reply.Split('-');
 
             if (split.Length == 2)
