@@ -100,11 +100,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 {
                     foreach (UIElement child in stackPanel.Children)
                     {
-                        if (child is CheckBox checkBox)
+                        if (child is ModernWpf.Controls.ToggleSwitch checkBox)
                         {
                             var property = properties.FirstOrDefault(x => x.Name == checkBox.Name);
-                            property?.SetValue(null, checkBox.IsChecked);
-                            ConfigHelper.SetConfig(checkBox.Name, checkBox.IsChecked);
+                            property?.SetValue(null, checkBox.IsOn);
+                            ConfigHelper.SetConfig(checkBox.Name, checkBox.IsOn);
                         }
                     }
                 }
@@ -272,12 +272,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     {
                         foreach (UIElement child in stackPanel.Children)
                         {
-                            if (child is CheckBox checkBox)
+                            if (child is ModernWpf.Controls.ToggleSwitch checkBox)
                             {
                                 var property = properties.FirstOrDefault(x => x.Name == checkBox.Name);
                                 if (property != null)
                                 {
-                                    checkBox.IsChecked = (bool)property.GetValue(null);
+                                    checkBox.IsOn = (bool)property.GetValue(null);
                                 }
                             }
                         }
