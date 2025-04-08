@@ -7,12 +7,11 @@
     xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
-    d:DesignHeight="450"
+    d:DesignHeight="850"
     d:DesignWidth="800"
     Loaded="Page_Loaded"
     mc:Ignorable="d">
     <ui:ScrollViewerEx>
-
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
@@ -27,6 +26,8 @@
                 IsExpanded="True">
                 <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
                     <TextBlock VerticalAlignment="Center">服务商：</TextBlock>
+                    <ComboBox />
+                    <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">模型：</TextBlock>
                     <ComboBox />
                     <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">用途：</TextBlock>
                     <ComboBox />
@@ -119,9 +120,9 @@
                     </Grid.ColumnDefinitions>
                     <GroupBox Header="饼图">
                         <WrapPanel>
-                            <CheckBox>模型</CheckBox>
-                            <CheckBox>用途</CheckBox>
-                            <CheckBox>服务商</CheckBox>
+                            <CheckBox IsChecked="True">模型</CheckBox>
+                            <CheckBox IsChecked="True">用途</CheckBox>
+                            <CheckBox IsChecked="True">服务商</CheckBox>
                         </WrapPanel>
                     </GroupBox>
                     <GroupBox Grid.Column="1" Header="柱状图">
@@ -184,7 +185,6 @@
                     Margin="10,0"
                     Header="时段详细">
                     <lvc:CartesianChart MinHeight="200" LegendPosition="Right" />
-
                 </GroupBox>
             </Grid>
         </Grid>
