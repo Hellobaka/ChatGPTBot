@@ -140,38 +140,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void ChangeFilterDay_Clicked(object sender, RoutedEventArgs e)
         {
-            FilterEndDate = DateTime.Now;
             var filterDay = (sender as Button).Tag.ToString();
-            switch (filterDay)
+            if (int.TryParse(filterDay, out int day))
             {
-                case "0":
-                    FilterStartDate = DateTime.Now.Date;
-                    break;
-
-                case "1":
-                    FilterStartDate = DateTime.Now.AddDays(-1);
-                    break;
-
-                case "7":
-                    FilterStartDate = DateTime.Now.AddDays(-7);
-                    break;
-
-                case "30":
-                    FilterStartDate = DateTime.Now.AddDays(-30);
-                    break;
-
-                case "90":
-                    FilterStartDate = DateTime.Now.AddDays(-90);
-                    break;
-
-                case "180":
-                    FilterStartDate = DateTime.Now.AddDays(-180);
-                    break;
-
-                case "365":
-                    FilterStartDate = DateTime.Now.AddDays(-365);
-                    break;
+                FilterStartDate = DateTime.Now.AddDays(-1 * day).Date;
             }
+            else
+            {
+                MainWindow.ShowError("所选筛选时间无效");
+                return;
+            }
+            FilterEndDate = DateTime.Now.Date;
             TriggerFilter();
             DoFilter();
         }
