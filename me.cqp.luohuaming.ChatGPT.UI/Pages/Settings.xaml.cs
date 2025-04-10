@@ -33,9 +33,42 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     return false;
                 }
             }
+            else if (type.Name == "UInt16")
+            {
+                if (ushort.TryParse(input, out ushort v))
+                {
+                    value = v;
+                }
+                else
+                {
+                    return false;
+                }
+            }
             else if (type.Name == "Int64")
             {
                 if (long.TryParse(input, out long v))
+                {
+                    value = v;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (type.Name == "Single")
+            {
+                if (float.TryParse(input, out float v))
+                {
+                    value = v;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (type.Name == "Double")
+            {
+                if (double.TryParse(input, out double v))
                 {
                     value = v;
                 }
@@ -125,6 +158,15 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                             l.Add(long.Parse(i.ToString()));
                         }
                         ConfigHelper.SetConfig(listbox.Name, l);
+                    }
+                    else if (list is List<string> l2)
+                    {
+                        l2.Clear();
+                        foreach (var i in listbox.Items)
+                        {
+                            l2.Add(i.ToString());
+                        }
+                        ConfigHelper.SetConfig(listbox.Name, l2);
                     }
                 }
                 else if (item is ComboBox comboBox)
@@ -224,6 +266,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 var properties = typeof(AppConfig).GetProperties(System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
                 if (VerifyInput(properties, APIContainer, out string err)
+                    && VerifyInput(properties, ChatContainer, out err)
+                    && VerifyInput(properties, MemoryContainer, out err)
+                    && VerifyInput(properties, EmojiContainer, out err)
+                    && VerifyInput(properties, ScheduleContainer, out err)
                     && VerifyInput(properties, CommandContainer, out err)
                     && VerifyInput(properties, ResponseContainer, out err)
                     && VerifyInput(properties, TTSContainer, out err)
@@ -235,6 +281,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     GetAndSetConfigFromStackPanel(properties, ResponseContainer);
                     GetAndSetConfigFromStackPanel(properties, TTSContainer);
                     GetAndSetConfigFromStackPanel(properties, GroupContainer);
+                    GetAndSetConfigFromStackPanel(properties, ChatContainer);
+                    GetAndSetConfigFromStackPanel(properties, MemoryContainer);
+                    GetAndSetConfigFromStackPanel(properties, EmojiContainer);
+                    GetAndSetConfigFromStackPanel(properties, ScheduleContainer);
                     ConfigHelper.EnableHotReload();
                     MainWindow.ShowInfo("配置保存成功");
                 }
@@ -299,6 +349,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                                 listbox.Items.Add(i);
                             }
                         }
+                        else if (list is List<string> l2)
+                        {
+                            foreach (var i in l2)
+                            {
+                                listbox.Items.Add(i);
+                            }
+                        }
                     }
                     else if (item is ComboBox combobox)
                     {
@@ -355,6 +412,46 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             SetConfigToStackPanel(properties, ResponseContainer);
             SetConfigToStackPanel(properties, TTSContainer);
             SetConfigToStackPanel(properties, GroupContainer);
+            SetConfigToStackPanel(properties, ChatContainer);
+            SetConfigToStackPanel(properties, MemoryContainer);
+            SetConfigToStackPanel(properties, EmojiContainer);
+            SetConfigToStackPanel(properties, ScheduleContainer);
+        }
+
+        private void BotNicknameRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (BotNicknames.SelectedIndex < 0)
+            {
+                MainWindow.ShowError("请选择一项");
+                return;
+            }
+            BotNicknames.Items.RemoveAt(BotNicknames.SelectedIndex);
+        }
+
+        private void BotNicknameAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(BotNicknameAdd.Text))
+            {
+                bool duplicate = false;
+                foreach (var item in BotNicknames.Items)
+                {
+                    if (item.ToString() == BotNicknameAdd.Text)
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (duplicate)
+                {
+                    MainWindow.ShowError("已存在相同项");
+                    return;
+                }
+                BotNicknames.Items.Add(BotNicknameAdd.Text);
+            }
+            else
+            {
+                MainWindow.ShowError("输入内容格式错误");
+            }
         }
     }
 }

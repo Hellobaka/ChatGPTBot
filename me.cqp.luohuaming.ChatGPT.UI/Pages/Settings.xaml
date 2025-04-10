@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
-    d:Height="700"
+    d:Height="1500"
     d:Width="1200"
     Loaded="Page_Loaded"
     mc:Ignorable="d">
@@ -19,19 +19,23 @@
             <TabItem Header="API设置">
                 <ScrollViewer>
                     <StackPanel x:Name="APIContainer" Margin="16,16,22,16">
+                        <TextBlock
+                            Margin="0,0,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            Chat 图片生成 日程生成
+                        </TextBlock>
                         <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
-                        <TextBox x:Name="APIKey" Margin="0,5,0,0" />
+                        <TextBox x:Name="ChatAPIKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                             <TextBlock>API URL:</TextBlock>
                             <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
                             <TextBlock>/chat/completions</TextBlock>
                         </StackPanel>
-                        <TextBox x:Name="BaseURL" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">对话模型名称:</TextBlock>
-                        <TextBox x:Name="ModelName" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">对话最大Token:</TextBlock>
-                        <TextBox x:Name="ChatMaxTokens" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">绘图画布尺寸:</TextBlock>
+                        <TextBox x:Name="ChatBaseURL" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
+                        <TextBox x:Name="ChatModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图画布尺寸:</TextBlock>
                         <ComboBox x:Name="ImageGenerateSize" Margin="0,5,0,0">
                             <ComboBoxItem
                                 Content="256x256"
@@ -42,7 +46,7 @@
                             <ComboBoxItem Content="1024x1792" Tag="3" />
                             <ComboBoxItem Content="1792x1024" Tag="4" />
                         </ComboBox>
-                        <TextBlock VerticalAlignment="Center">绘图质量:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图质量:</TextBlock>
                         <ComboBox x:Name="ImageGenerateQuality" Margin="0,5,0,0">
                             <ComboBoxItem
                                 Content="Standard"
@@ -50,14 +54,105 @@
                                 Tag="0" />
                             <ComboBoxItem Content="High" Tag="1" />
                         </ComboBox>
-                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">移除思维链输出:</TextBlock>
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            分段
+                        </TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">API 令牌:</TextBlock>
+                        <TextBox x:Name="SpliterApiKey" Margin="0,5,0,0" />
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock>/chat/completions</TextBlock>
+                        </StackPanel>
+                        <TextBox x:Name="SpliterUrl" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
+                        <TextBox x:Name="SpliterModelName" Margin="0,5,0,0" />
+
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            图片描述
+                        </TextBlock>
+                        <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
+                        <TextBox x:Name="ImageDescriberApiKey" Margin="0,5,0,0" />
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock>/chat/completions</TextBlock>
+                        </StackPanel>
+                        <TextBox x:Name="ImageDescriberUrl" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
+                        <TextBox x:Name="ImageDescriberModelName" Margin="0,5,0,0" />
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            Embedding
+                        </TextBlock>
+                        <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
+                        <TextBox x:Name="EmbeddingApiKey" Margin="0,5,0,0" />
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock>/embedding</TextBlock>
+                        </StackPanel>
+                        <TextBox x:Name="EmbeddingUrl" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
+                        <TextBox x:Name="EmbeddingModelName" Margin="0,5,0,0" />
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            Rerank
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否启用 Rerank 功能:</TextBlock>
                             <ui:ToggleSwitch
-                                x:Name="RemoveThinkBlock"
-                                Margin="10,0,0,0"
+                                x:Name="EnableRerank"
+                                Margin="10,5,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
+
+                        <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
+                        <TextBox x:Name="RerankApiKey" Margin="0,5,0,0" />
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock>/rerank</TextBlock>
+                        </StackPanel>
+                        <TextBox x:Name="RerankUrl" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
+                        <TextBox x:Name="RerankModelName" Margin="0,5,0,0" />
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            腾讯云设置 (Embedding Rerank使用腾讯云接口)
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否启用腾讯云签名(v3):</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableTencentSign"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">腾讯云密钥:</TextBlock>
+                        <TextBox x:Name="TencentSecretKey" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">腾讯云密钥Id:</TextBlock>
+                        <TextBox x:Name="TencentSecretId" Margin="0,5,0,0" />
+
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            其他设置
+                        </TextBlock>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">流式输出:</TextBlock>
                             <ui:ToggleSwitch
@@ -74,20 +169,69 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-                        <TextBlock VerticalAlignment="Center">Bot 名称:</TextBlock>
+                        <TextBlock VerticalAlignment="Center">Bocha APIKey:</TextBlock>
+                        <TextBox x:Name="BochaAPIKey" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">最大Token:</TextBlock>
+                        <TextBox x:Name="ChatMaxTokens" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Temperature:</TextBlock>
+                        <TextBox x:Name="ChatTemperature" Margin="0,5,0,0" />
+
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Chat设置">
+                <ScrollViewer>
+                    <StackPanel x:Name="ChatContainer" Margin="16,16,22,16">
+                        <TextBlock VerticalAlignment="Center">Bot 首选名称:</TextBlock>
                         <TextBox x:Name="BotName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Bot 名称列表:</TextBlock>
+                        <ListBox
+                            x:Name="BotNicknames"
+                            MinHeight="20"
+                            MaxHeight="150"
+                            Margin="0,5,0,0" />
+                        <Grid Margin="0,5,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                x:Name="BotNicknameRemoveButton"
+                                Grid.Column="0"
+                                Width="50"
+                                Margin="0,0,10,0"
+                                Click="BotNicknameRemoveButton_Click">
+                                删除
+                            </Button>
+                            <TextBox x:Name="BotNicknameAdd" Grid.Column="1" />
+                            <Button
+                                x:Name="BotNicknameAddButton"
+                                Grid.Column="2"
+                                Width="50"
+                                Margin="10,0,0,0"
+                                Click="BotNicknameAddButton_Click">
+                                添加
+                            </Button>
+                        </Grid>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">每次对话携带的上下文数量:</TextBlock>
+                        <TextBox x:Name="ContextMaxLength" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">空聊天回应:</TextBlock>
+                        <TextBox x:Name="ChatEmptyResponse" Margin="0,5,0,0" />
+
                         <TextBlock Margin="0,10,0,0">私聊使用的默认 Prompt:</TextBlock>
                         <TextBox
                             x:Name="PrivatePrompt"
                             Margin="0,5,0,0"
                             AcceptsReturn="True"
                             TextWrapping="Wrap" />
-                        <TextBlock VerticalAlignment="Center">群组使用的默认 Prompt:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">群组使用的默认 Prompt:</TextBlock>
                         <TextBox
                             x:Name="GroupPrompt"
                             Margin="0,5,0,0"
                             TextWrapping="Wrap" />
-                        <TextBlock VerticalAlignment="Center">Prompt 文本模板支持的变量 (点击可复制)：</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Prompt 文本模板支持的变量 (点击可复制)：</TextBlock>
                         <TextBlock
                             Margin="10,5,0,0"
                             Cursor="Hand"
@@ -135,31 +279,11 @@
             <TabItem Header="指令设置">
                 <ScrollViewer>
                     <StackPanel x:Name="CommandContainer" Margin="16,16,22,16">
-                        <TextBlock VerticalAlignment="Center">对话:</TextBlock>
-                        <TextBox x:Name="ResponsePrefix" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">触发聊天时发送的文本:</TextBlock>
-                        <TextBox x:Name="WelcomeText" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">连续模式:</TextBlock>
-                        <TextBox x:Name="ContinueModeOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">添加预设:</TextBlock>
-                        <TextBox x:Name="AddPromptOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">移除预设:</TextBlock>
-                        <TextBox x:Name="RemovePromptOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">预设列表:</TextBlock>
-                        <TextBox x:Name="ListPromptOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">启用单群聊天:</TextBlock>
-                        <TextBox x:Name="EnableChatOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">禁用单群聊天:</TextBlock>
-                        <TextBox x:Name="DisableChatOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">重置对话上下文:</TextBlock>
-                        <TextBox x:Name="ResetChatOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">使用预设进行对话:</TextBlock>
-                        <TextBox x:Name="ChatPromptOrder" Margin="0,5,0,0" />
                         <TextBlock VerticalAlignment="Center">绘图:</TextBlock>
                         <TextBox x:Name="ImageGenerationOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">添加黑名单:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">添加黑名单:</TextBlock>
                         <TextBox x:Name="AddBlackListOrder" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">移除黑名单:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">移除黑名单:</TextBlock>
                         <TextBox x:Name="RemoveBlackListOrder" Margin="0,5,0,0" />
                     </StackPanel>
                 </ScrollViewer>
@@ -167,16 +291,6 @@
             <TabItem Header="响应设置">
                 <ScrollViewer>
                     <StackPanel x:Name="ResponseContainer" Margin="16,16,22,16">
-                        <TextBlock VerticalAlignment="Center">会话保留时长 (秒):</TextBlock>
-                        <TextBox x:Name="ChatTimeout" Margin="0,5,0,0" />
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">响应最后添加请求耗时 (秒):</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="AppendExecuteTime"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">使用回复模式发送消息:</TextBlock>
                             <ui:ToggleSwitch
@@ -186,72 +300,26 @@
                                 OnContent="" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">回复消息 + @Bot 时触发聊天:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="ReplyResponse"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">@Bot 时触发聊天:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="AtResponse"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">@ 块可不在消息头:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="AtAnyPosition"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">每条消息附加发送者昵称 (配合 Prompt 使用):</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="AppendGroupNick"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">随机回复开关:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="RandomReply"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <TextBlock VerticalAlignment="Center">随机回复采样时长 (分钟):</TextBlock>
-                        <TextBox x:Name="RandomReplyMinuteInterval" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">采样周期中群组最大对话数量:</TextBlock>
-                        <TextBox x:Name="RandomReplyConversationCount" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">采样周期中私聊最大对话数量:</TextBlock>
-                        <TextBox x:Name="RandomReplyPersonalConversationCount" Margin="0,5,0,0" />
-
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">随机回复时启用分段功能:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">是否启用分段功能:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableSpliter"
                                 Margin="10,5,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-                        <TextBlock VerticalAlignment="Center">分段使用的大模型名称:</TextBlock>
-                        <TextBox x:Name="SpliterModelName" Margin="0,5,0,0" />
+
                         <TextBlock VerticalAlignment="Center">分段使用的 Prompt:</TextBlock>
                         <TextBox
                             x:Name="SpliterPrompt"
-                            Height="60"
                             Margin="0,5,0,0"
+                            AcceptsReturn="True"
                             TextWrapping="Wrap" />
-                        <TextBlock VerticalAlignment="Center">最大分段数量:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">最大分段数量:</TextBlock>
                         <TextBox x:Name="SpliterMaxLines" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">使用分段的最小文本长度:</TextBlock>
+                        <TextBox x:Name="SpliterMinLength" Margin="0,5,0,0" />
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">移除分段末尾句号:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">移除分段末尾标点符号:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="SpliterRegexRemovePunctuation"
                                 Margin="10,5,0,0"
@@ -276,10 +344,95 @@
                         </StackPanel>
                         <TextBlock VerticalAlignment="Center">分段模拟打字速度（字符/分钟）:</TextBlock>
                         <TextBox x:Name="SpliterSimulateTypeSpeed" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">分段随机等待延时随机数下限（毫秒）:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">分段随机等待延时随机数下限（毫秒）:</TextBlock>
                         <TextBox x:Name="SpliterRandomDelayMin" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">分段随机等待延时随机数上限（毫秒）:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">分段随机等待延时随机数上限（毫秒）:</TextBlock>
                         <TextBox x:Name="SpliterRandomDelayMax" Margin="0,5,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="表情包设置">
+                <ScrollViewer>
+                    <StackPanel x:Name="EmojiContainer" Margin="16,16,22,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否启用表情发送:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableEmojiSend"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center">发送表情的概率 (%):</TextBlock>
+                        <TextBox x:Name="EmojiSendProbablity" Margin="0,5,0,0" />
+
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否从推荐中随机发送表情 (否则只发送最符合的图片):</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="RandomSendEmoji"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center">推荐的表情数量:</TextBlock>
+                        <TextBox x:Name="RecommendEmojiCount" Margin="0,5,0,0" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">只处理表情包图片:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="IgnoreNotEmoji"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="日程设置">
+                <ScrollViewer>
+                    <StackPanel x:Name="ScheduleContainer" Margin="16,16,22,16">
+                        <TextBlock VerticalAlignment="Center">获取日程的人格文本:</TextBlock>
+                        <TextBox
+                            x:Name="SchedulePrompt"
+                            Margin="0,5,0,0"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap" />
+                        <TextBlock VerticalAlignment="Center">默认日程安排:</TextBlock>
+                        <TextBox x:Name="DefaultSchedule" Margin="0,5,0,0" />
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="记忆设置">
+                <ScrollViewer>
+                    <StackPanel x:Name="MemoryContainer" Margin="16,16,22,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否启用记忆功能:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableMemory"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center">召回最小记忆相似度:</TextBlock>
+                        <TextBox x:Name="MinMemorySimilarty" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">召回最大记忆数量:</TextBlock>
+                        <TextBox x:Name="MaxMemoryCount" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 服务IP:</TextBlock>
+                        <TextBox x:Name="QdrantHost" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 服务端口:</TextBlock>
+                        <TextBox x:Name="QdrantPort" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 的API密钥:</TextBlock>
+                        <TextBox x:Name="QdrantAPIKey" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 的证书密码:</TextBlock>
+                        <TextBox x:Name="QdrantCertPassword" Margin="0,5,0,0" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">Qdrant 是否只搜索个人记忆:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="QdrantSearchOnlyPerson"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -288,7 +441,7 @@
                     <StackPanel x:Name="GroupContainer" Margin="16,16,22,16">
                         <TextBlock VerticalAlignment="Center">管理员 QQ:</TextBlock>
                         <TextBox x:Name="MasterQQ" Margin="0,5,0,0" />
-                        <TextBlock VerticalAlignment="Center">启用群列表:</TextBlock>
+                        <TextBlock Margin="0,10,0,0" VerticalAlignment="Center">启用群列表:</TextBlock>
                         <ListBox
                             x:Name="GroupList"
                             MinHeight="20"
@@ -319,7 +472,7 @@
                             </Button>
                         </Grid>
 
-                        <TextBlock VerticalAlignment="Center">启用私聊列表:</TextBlock>
+                        <TextBlock Margin="0,10,0,0" VerticalAlignment="Center">启用私聊列表:</TextBlock>
                         <ListBox
                             x:Name="PersonList"
                             MinHeight="20"
@@ -349,7 +502,7 @@
                                 添加
                             </Button>
                         </Grid>
-                        <TextBlock VerticalAlignment="Center">黑名单:</TextBlock>
+                        <TextBlock Margin="0,10,0,0" VerticalAlignment="Center">黑名单:</TextBlock>
                         <ListBox
                             x:Name="BlackList"
                             MinHeight="20"
@@ -389,22 +542,6 @@
                             <TextBlock VerticalAlignment="Center">TTS开关:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableTTS"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">发送音频前发送文本:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="SendTextBeforeTTS"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">合成音频错误时发送提示文本:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="SendErrorTextWhenTTSFail"
                                 Margin="10,5,0,0"
                                 OffContent=""
                                 OnContent="" />
