@@ -10,5 +10,10 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
 
-    <Grid />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">我是谁？我在哪？</TextBlock>
+    </Grid>
 </Page>

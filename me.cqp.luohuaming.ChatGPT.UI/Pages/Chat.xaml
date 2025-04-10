@@ -8,75 +8,12 @@
     Title="Chat"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    Loaded="Page_Loaded"
     mc:Ignorable="d">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="auto" />
-            <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <Grid Margin="10,5,10,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" />
-                <ColumnDefinition Width="auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <CheckBox x:Name="EnableSpliter" VerticalAlignment="Center">分行</CheckBox>
-            <TextBlock
-                Grid.Column="1"
-                Margin="15,0,0,0"
-                VerticalAlignment="Center">
-                Prompt 预设：
-            </TextBlock>
-            <ComboBox
-                x:Name="ChatPromptList"
-                Grid.Column="2"
-                SelectionChanged="ChatPromptList_SelectionChanged" />
-        </Grid>
-        <ProgressBar
-            x:Name="ChatStatus"
-            Grid.Row="3"
-            Height="3"
-            Margin="10,0,10,10"
-            IsIndeterminate="True"
-            Visibility="Hidden" />
-        <ScrollViewer
-            x:Name="ChatScroller"
-            Grid.Row="1"
-            VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="ChatContainer" Margin="10" />
-        </ScrollViewer>
-        <Grid Grid.Row="2" Margin="10,10,10,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="auto" />
-            </Grid.ColumnDefinitions>
-            <Button
-                x:Name="ChatResetButton"
-                Grid.Column="0"
-                Width="60"
-                Margin="0,0,10,0"
-                Click="ChatResetButton_Click"
-                Content="清空" />
-            <TextBox
-                x:Name="ChatTestInput"
-                Grid.Column="1"
-                MaxHeight="100"
-                AcceptsReturn="True"
-                MaxLines="65535"
-                PreviewKeyDown="ChatTestInput_PreviewKeyDown"
-                TextWrapping="Wrap" />
-            <Button
-                x:Name="ChatSendButton"
-                Grid.Column="2"
-                Width="60"
-                Margin="10,0,0,0"
-                Click="ChatSendButton_Click"
-                Content="发送" />
-        </Grid>
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">我是谁？我在哪？</TextBlock>
     </Grid>
 </Page>
