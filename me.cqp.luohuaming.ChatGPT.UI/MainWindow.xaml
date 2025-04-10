@@ -7,8 +7,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="配置窗口"
-    Width="1200"
-    Height="700"
+    Width="1470"
+    Height="800"
+    MinWidth="900"
+    MinHeight="550"
     ui:WindowHelper.UseModernWindowStyle="True"
     Closing="Window_Closing"
     Loaded="Window_Loaded"
@@ -31,16 +33,16 @@
         SelectionChanged="NavigationView_SelectionChanged">
         <ui:NavigationView.MenuItems>
             <ui:NavigationViewItem
-                Content="Chat"
+                Content="Token统计"
                 IsSelected="True"
-                Tag="Chat" />
-            <ui:NavigationViewItem Content="TTS" Tag="TTS" />
+                Tag="TokenStatistics" />
+            <ui:NavigationViewItem Content="Chat" Tag="Chat" />
             <ui:NavigationViewItem Content="设置" Tag="Settings" />
-            <ui:NavigationViewItem Content="心情" Tag="Mood" />
             <ui:NavigationViewItem Content="回复意愿" Tag="ReplyWilling" />
+            <ui:NavigationViewItem Content="心情" Tag="Mood" />
             <ui:NavigationViewItem Content="关系" Tag="Relationship" />
             <ui:NavigationViewItem Content="知识" Tag="Knowledge" />
-            <ui:NavigationViewItem Content="Token统计" Tag="TokenStatistics" />
+            <ui:NavigationViewItem Content="TTS" Tag="TTS" />
         </ui:NavigationView.MenuItems>
         <ui:Frame x:Name="MainFrame" Style="{DynamicResource CascadeDataContextFrame}" />
     </ui:NavigationView>
