@@ -82,6 +82,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         {
             lock (WriteLock)
             {
+                DisableHotReload();
                 if (CurrentJObject == null)
                 {
                     CurrentJObject = new JObject();
@@ -96,6 +97,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 }
 
                 File.WriteAllText(ConfigFileName, CurrentJObject.ToString(Newtonsoft.Json.Formatting.Indented));
+                EnableHotReload();
             }
         }
 

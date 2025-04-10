@@ -1,4 +1,5 @@
-﻿using OpenAI.Chat;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using OpenAI.Chat;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public DateTime Time { get; set; }
 
+        public static event Action<Usage> OnUsageInserted;
+
         public static void Insert(string endpoint, string modelName, string purpose, int inputToken, int outputToken)
         {
             using var db = SQLHelper.GetInstance();
@@ -37,33 +40,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             };
 
             db.Insertable(u).ExecuteCommand();
-        }
-
-        public static (int inputToken, int outputToken) GetDayUsage(DateTime time)
-        {
-            using var db = SQLHelper.GetInstance();
-            int i = 0, o = 0;
-            foreach (var item in db.Queryable<Usage>().Where(x => x.Time.Date == time.Date).ToList())
-            {
-                i += item.InputToken;
-                o += item.OutputToken;
-            }
-            return (i, o);
-        }
-
-        public static (int inputToken, int outputToken) GetRangeUsage(DateTime start, DateTime end)
-        {
-            start = start.Date;
-            end = end.Date;
-
-            using var db = SQLHelper.GetInstance();
-            int i = 0, o = 0;
-            foreach (var item in db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList())
-            {
-                i += item.InputToken;
-                o += item.OutputToken;
-            }
-            return (i, o);
+            OnUsageInserted?.BeginInvoke(u, null, null);
         }
 
         public static List<Usage> GetDayUsageDetail(DateTime time)
@@ -76,10 +53,43 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static List<Usage> GetRangeUsageDetail(DateTime start, DateTime end)
         {
             start = start.Date;
-            end = end.Date;
+            end = end.Date.AddDays(1);
             using var db = SQLHelper.GetInstance();
 
             return db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList();
+        }
+
+        public static (string[] services, string[] models, string[] puropses) GetGroups()
+        {
+            using var db = SQLHelper.GetInstance();
+            var services = db.Queryable<Usage>().Select(x => x.Endpoint).Distinct().ToList();
+            var models = db.Queryable<Usage>().Select(x => x.ModelName).Distinct().ToList();
+            var puropses = db.Queryable<Usage>().Select(x => x.Purpose).Distinct().ToList();
+            services.RemoveAll(x => string.IsNullOrEmpty(x));
+            models.RemoveAll(x => string.IsNullOrEmpty(x));
+            puropses.RemoveAll(x => string.IsNullOrEmpty(x));
+
+            return (services.ToArray(), models.ToArray(), puropses.ToArray());
+        }
+
+        public static void Test()
+        {
+            using var db = SQLHelper.GetInstance();
+            Random random = new();
+            string[] models = ["gpt-4o", "gpt-4o-mini", "deepseek-chat", "deepseek-v3", "deepseek-v3-0324"];
+            string[] puropses = [Chat.Purpose.聊天.ToString(), Chat.Purpose.分段.ToString(), Chat.Purpose.日程获取.ToString(), Chat.Purpose.表情包推荐.ToString(), Chat.Purpose.图片描述.ToString(), Chat.Purpose.获取心情.ToString()];
+            db.Queryable<Usage>().ToList().ForEach(x =>
+            {
+                if (string.IsNullOrEmpty(x.ModelName))
+                {
+                    x.ModelName = models[random.Next(0, models.Length)];
+                }
+                if (string.IsNullOrEmpty(x.Purpose))
+                {
+                    x.Purpose = puropses[random.Next(0, puropses.Length)];
+                }
+                db.Updateable(x).ExecuteCommand();
+            });
         }
     }
 }

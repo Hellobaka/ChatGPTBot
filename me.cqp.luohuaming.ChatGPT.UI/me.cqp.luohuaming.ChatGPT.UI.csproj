@@ -81,6 +81,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ChatBubble.cs" />
+    <Compile Include="Converter\Converters.cs" />
+    <Compile Include="Model\Items.cs" />
     <Compile Include="Pages\Chat.xaml.cs">
       <DependentUpon>Chat.xaml</DependentUpon>
     </Compile>

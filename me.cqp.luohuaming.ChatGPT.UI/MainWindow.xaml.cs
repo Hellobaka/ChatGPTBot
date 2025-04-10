@@ -1,8 +1,11 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+﻿using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using ModernWpf.Controls;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -56,12 +59,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 }
                 AppConfig.Init();
                 SQLHelper.CreateDB();
+                //Usage.Test();
                 //Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 //if (!qdrant.CheckConnection())
                 //{
                 //    ShowError("Qdrant Connection Failed.");
                 //}
             }
+            LiveCharts.Configure(config => config.HasGlobalSKTypeface(SKFontManager.Default.MatchCharacter('汉')));
 
             Topmost = false;
         }
