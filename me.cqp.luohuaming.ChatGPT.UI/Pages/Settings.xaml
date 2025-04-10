@@ -98,7 +98,7 @@
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                             <TextBlock>API URL:</TextBlock>
                             <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
-                            <TextBlock>/embedding</TextBlock>
+                            <TextBlock>/embeddings</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="EmbeddingUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
@@ -122,7 +122,7 @@
                         <TextBox x:Name="RerankApiKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                             <TextBlock>API URL:</TextBlock>
-                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://lkeap.tencentcloudapi.com</TextBlock>
                             <TextBlock>/rerank</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="RerankUrl" Margin="0,5,0,0" />
