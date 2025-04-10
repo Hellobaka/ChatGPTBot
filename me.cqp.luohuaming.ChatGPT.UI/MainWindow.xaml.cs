@@ -1,21 +1,15 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using ModernWpf;
 using ModernWpf.Controls;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace me.cqp.luohuaming.ChatGPT.UI
 {
@@ -28,7 +22,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         {
             InitializeComponent();
             Topmost = true;
+            Instance = this;
         }
+
+        public static event Action OnWindowClosing;
+
+        public static MainWindow Instance { get; private set; }
+
         private Dictionary<string, object> PageCache { get; set; } = new();
 
         public static void ShowError(string message)
@@ -59,7 +59,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 }
                 AppConfig.Init();
                 SQLHelper.CreateDB();
-                //Usage.Test();
                 //Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 //if (!qdrant.CheckConnection())
                 //{
@@ -97,6 +96,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                     MainFrame.Navigate(obj);
                 }
             }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            OnWindowClosing?.Invoke();
         }
     }
 }

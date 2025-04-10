@@ -71,25 +71,5 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             return (services.ToArray(), models.ToArray(), puropses.ToArray());
         }
-
-        public static void Test()
-        {
-            using var db = SQLHelper.GetInstance();
-            Random random = new();
-            string[] models = ["gpt-4o", "gpt-4o-mini", "deepseek-chat", "deepseek-v3", "deepseek-v3-0324"];
-            string[] puropses = [Chat.Purpose.聊天.ToString(), Chat.Purpose.分段.ToString(), Chat.Purpose.日程获取.ToString(), Chat.Purpose.表情包推荐.ToString(), Chat.Purpose.图片描述.ToString(), Chat.Purpose.获取心情.ToString()];
-            db.Queryable<Usage>().ToList().ForEach(x =>
-            {
-                if (string.IsNullOrEmpty(x.ModelName))
-                {
-                    x.ModelName = models[random.Next(0, models.Length)];
-                }
-                if (string.IsNullOrEmpty(x.Purpose))
-                {
-                    x.Purpose = puropses[random.Next(0, puropses.Length)];
-                }
-                db.Updateable(x).ExecuteCommand();
-            });
-        }
     }
 }

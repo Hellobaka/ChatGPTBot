@@ -2,36 +2,35 @@
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Windows;
 
 namespace me.cqp.luohuaming.ChatGPT.UI
 {
     public class Event_MenuCall : IMenuCall
     {
-        private MainWindow window = null;
+        private App App { get; set; }
 
         public void MenuCall(object sender, CQMenuCallEventArgs e)
         {
             try
             {
-                if (window == null)
+                if (App == null)
                 {
-                    Thread thread = new Thread(() =>
+                    MainWindow.OnWindowClosing += MainWindow_OnWindowClosing;
+                    Thread thread = new(() =>
                     {
-                        window = new MainWindow();
-                        window.Closing += Window_Closing;
-                        window.ShowDialog();
+                        App = new();
+                        App.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                        App.InitializeComponent();
+                        App.Run();
                     });
                     thread.SetApartmentState(ApartmentState.STA);
                     thread.Start();
                 }
                 else
                 {
-                    window.Dispatcher.BeginInvoke(new Action(window.Show));
+                    MainWindow.Instance.Dispatcher.BeginInvoke(new Action(MainWindow.Instance.Show));
                 }
             }
             catch (Exception exc)
@@ -40,12 +39,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             }
         }
 
-        ///<summary>
-        ///窗体关闭时触发
-        ///</summary>
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void MainWindow_OnWindowClosing()
         {
-            window = null;
+            MainWindow.Instance.Dispatcher.BeginInvoke(new Action(MainWindow.Instance.Hide));
         }
     }
 }

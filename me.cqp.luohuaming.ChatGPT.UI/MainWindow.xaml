@@ -10,9 +10,18 @@
     Width="1200"
     Height="700"
     ui:WindowHelper.UseModernWindowStyle="True"
+    Closing="Window_Closing"
     Loaded="Window_Loaded"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemeResources />
+                <ui:XamlControlsResources />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <ui:NavigationView
         IsBackButtonVisible="Collapsed"
         IsBackEnabled="False"
