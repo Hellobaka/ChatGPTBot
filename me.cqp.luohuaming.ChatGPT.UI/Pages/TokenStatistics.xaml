@@ -309,6 +309,7 @@
                         Header="模型占比"
                         Visibility="{Binding Pie_ModelChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                         <lvc:PieChart
+                            x:Name="PieModelChart"
                             MinWidth="100"
                             MinHeight="300"
                             HorizontalAlignment="Stretch"
@@ -321,6 +322,7 @@
                         Header="用途占比"
                         Visibility="{Binding Pie_PurposeChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                         <lvc:PieChart
+                            x:Name="PiePurposeChart"
                             MinWidth="100"
                             MinHeight="300"
                             HorizontalAlignment="Stretch"
@@ -333,6 +335,7 @@
                         Header="服务商占比"
                         Visibility="{Binding Pie_ServiceChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                         <lvc:PieChart
+                            x:Name="PieServiceChart"
                             MinWidth="100"
                             MinHeight="300"
                             HorizontalAlignment="Stretch"

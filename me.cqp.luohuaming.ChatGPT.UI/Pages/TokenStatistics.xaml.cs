@@ -277,6 +277,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void DrawPieChart()
         {
+            SKColor color = ThemeManager.Current.ActualApplicationTheme == ApplicationTheme.Dark ? SKColors.White : SKColors.Black;
+            var paint = new SolidColorPaint { Color = color, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") }; ;
+           
             Pie_ModelCollection = [];
             foreach (var model in FilterResult.GroupBy(x => x.ModelName).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
             {
@@ -286,7 +289,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     Name = model.Name,
                     Stroke = null,
                     DataLabelsSize = 14,
-                    DataLabelsPaint = new SolidColorPaint(SKColors.Black),
+                    DataLabelsPaint = paint,
                     DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                     DataLabelsFormatter = o => model.Name,
                 };
@@ -302,7 +305,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     Name = model.Name,
                     Stroke = null,
                     DataLabelsSize = 14,
-                    DataLabelsPaint = new SolidColorPaint(SKColors.Black),
+                    DataLabelsPaint = paint,
                     DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                     DataLabelsFormatter = o => model.Name,
                 };
@@ -318,7 +321,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     Name = model.Name,
                     Stroke = null,
                     DataLabelsSize = 14,
-                    DataLabelsPaint = new SolidColorPaint(SKColors.Black),
+                    DataLabelsPaint = paint,
                     DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                     DataLabelsFormatter = o => model.Name,
                 };
@@ -354,6 +357,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 Bar_OverviewChecked = true;
             }
+            TimeDetailChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
+            
+            PieModelChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
+            PiePurposeChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
+            PieServiceChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
         }
 
         private async Task LoadFilterGroup()
