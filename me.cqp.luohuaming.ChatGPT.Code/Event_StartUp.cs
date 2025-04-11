@@ -5,11 +5,9 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Interface;
 using System;
-using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.Code
 {
@@ -30,6 +28,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 MainSave.CQLog.Warning("加载配置文件", "内容格式不正确，无法加载");
             }
             AppConfig.Init();
+            if (new string[] { AppConfig.ChatAPIKey, AppConfig.ChatBaseURL, AppConfig.ChatModelName }.Any(string.IsNullOrEmpty))
+            {
+                MainSave.CQLog.Error("初始化", "关键 Chat 配置无效，插件无法使用");
+                return;
+            }
             foreach (var item in Assembly.GetAssembly(typeof(Event_GroupMessage)).GetTypes())
             {
                 if (item.IsInterface)
@@ -67,6 +70,40 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     qdrant.CreateCollection();
                 }
             }
+            if (AppConfig.EnableVision)
+            {
+                if (new string[] { AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey, AppConfig.ImageDescriberModelName,
+                    AppConfig.EmbeddingUrl, AppConfig.EmbeddingApiKey, AppConfig.EmbeddingModelName}.Any(string.IsNullOrEmpty))
+                {
+                    MainSave.CQLog.Error("初始化", "图像描述API配置无效，图像描述模块已禁用");
+                    AppConfig.EnableVision = false;
+                }
+            }
+            if (AppConfig.EnableRerank)
+            {
+                if (new string[] { AppConfig.RerankUrl, AppConfig.RerankApiKey, AppConfig.RerankModelName }.Any(string.IsNullOrEmpty))
+                {
+                    MainSave.CQLog.Error("初始化", "重排序API配置无效，重排序模块已禁用");
+                    AppConfig.EnableRerank = false;
+                }
+            }
+            if (AppConfig.EnableSpliter && !AppConfig.SpliterRegexFirst)
+            {
+                if (new string[] { AppConfig.SpliterApiKey, AppConfig.SpliterUrl, AppConfig.SpliterPrompt, AppConfig.SpliterModelName }.Any(string.IsNullOrEmpty))
+                {
+                    MainSave.CQLog.Error("初始化", "分段API配置无效，已切换至强制正则分段");
+                    AppConfig.SpliterRegexFirst = true;
+                }
+            }
+            if (AppConfig.EnableTencentSign)
+            {
+                if (new string[] { AppConfig.TencentSecretId, AppConfig.TencentSecretKey }.Any(string.IsNullOrEmpty))
+                {
+                    MainSave.CQLog.Error("初始化", "腾讯云签名配置无效，已禁用");
+                    AppConfig.EnableTencentSign = false;
+                }
+            }
+
             _ = new MoodManager();
             _ = new SchedulerManager();
 
