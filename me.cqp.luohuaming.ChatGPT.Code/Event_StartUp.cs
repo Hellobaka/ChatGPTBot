@@ -73,7 +73,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             if (AppConfig.EnableVision)
             {
                 if (new string[] { AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey, AppConfig.ImageDescriberModelName,
-                    AppConfig.EmbeddingUrl, AppConfig.EmbeddingApiKey, AppConfig.EmbeddingModelName}.Any(string.IsNullOrEmpty))
+                    AppConfig.EmbeddingUrl,  AppConfig.EmbeddingModelName}.Any(string.IsNullOrEmpty))
                 {
                     MainSave.CQLog.Error("初始化", "图像描述API配置无效，图像描述模块已禁用");
                     AppConfig.EnableVision = false;
@@ -81,7 +81,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             }
             if (AppConfig.EnableRerank)
             {
-                if (new string[] { AppConfig.RerankUrl, AppConfig.RerankApiKey, AppConfig.RerankModelName }.Any(string.IsNullOrEmpty))
+                if (new string[] { AppConfig.RerankUrl,  AppConfig.RerankModelName }.Any(string.IsNullOrEmpty))
                 {
                     MainSave.CQLog.Error("初始化", "重排序API配置无效，重排序模块已禁用");
                     AppConfig.EnableRerank = false;
