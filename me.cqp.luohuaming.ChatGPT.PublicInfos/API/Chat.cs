@@ -81,8 +81,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             msg += AppendContentToMessage(chatUpdate.ContentUpdate);
                             // TODO: tool stream update
                             finishReason = chatUpdate.FinishReason ?? ChatFinishReason.Stop;
-                            inputToken += chatUpdate.Usage.InputTokenCount;
-                            outputToken += chatUpdate.Usage.OutputTokenCount;
+                            inputToken += (chatUpdate.Usage?.InputTokenCount ?? 0);
+                            outputToken += (chatUpdate.Usage?.OutputTokenCount ?? 0);
                         }
                     }
                     else
