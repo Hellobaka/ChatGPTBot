@@ -145,7 +145,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             MainSave.CQLog.Debug("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
 
-            return ReplyWilling * baseProbablity;
+            return ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier;
         }
 
         public void ChangeReplyWillingAfterSendingMessage()
