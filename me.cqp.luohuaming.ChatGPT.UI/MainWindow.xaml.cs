@@ -1,14 +1,9 @@
-﻿using LiveChartsCore;
-using LiveChartsCore.SkiaSharpView;
-using me.cqp.luohuaming.ChatGPT.PublicInfos;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
-using ModernWpf;
 using ModernWpf.Controls;
-using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Windows;
 
 namespace me.cqp.luohuaming.ChatGPT.UI
@@ -65,7 +60,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 //    ShowError("Qdrant Connection Failed.");
                 //}
             }
-            LiveCharts.Configure(config => config.HasGlobalSKTypeface(SKFontManager.Default.MatchCharacter('汉')));
 
             Topmost = false;
         }
