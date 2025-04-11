@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -11,7 +12,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static (string document, float score)[] GetRerank(string text, string[] documents, int topn = 5)
         {
             string json;
-            bool tencent;
+            bool tencent, ali = false;
             if (AppConfig.RerankUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
             {
                 tencent = true;
@@ -25,13 +26,34 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             else
             {
                 tencent = false;
-                json = CommonHelper.Post("POST", AppConfig.RerankUrl, new
+                if (AppConfig.RerankUrl.Contains("aliyuncs.com"))
                 {
-                    model = AppConfig.RerankModelName,
-                    query = text,
-                    documents,
-                    top_n = topn,
-                }.ToJson(), AppConfig.RerankApiKey, 3000);
+                    ali = true;
+                    // 阿里百炼
+                    json = CommonHelper.Post("POST", AppConfig.RerankUrl, new
+                    {
+                        model = AppConfig.RerankModelName,
+                        input = new
+                        {
+                            query = text,
+                            documents,
+                        },
+                        parameters = new 
+                        {
+                            top_n = topn,
+                        }
+                    }.ToJson(), AppConfig.RerankApiKey, 3000);
+                }
+                else
+                {
+                    json = CommonHelper.Post("POST", AppConfig.RerankUrl, new
+                    {
+                        model = AppConfig.RerankModelName,
+                        query = text,
+                        documents,
+                        top_n = topn,
+                    }.ToJson(), AppConfig.RerankApiKey, 3000);
+                }
             }
             try
             {
@@ -47,7 +69,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
                 else
                 {
-                    foreach (var item in j["results"] as JArray)
+                    var arr = ali ? j["output"]["results"] : j["results"];
+                    foreach (var item in arr as JArray)
                     {
                         int index = ((int)item["index"]);
                         float score = ((float)item["relevance_score"]);
