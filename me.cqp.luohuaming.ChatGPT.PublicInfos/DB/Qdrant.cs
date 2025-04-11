@@ -1,16 +1,15 @@
-﻿using Grpc.Net.Client;
-using Grpc.Core.Interceptors;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
-using Qdrant.Client;
-using Qdrant.Client.Grpc;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using static Qdrant.Client.Grpc.Conditions;
-using System.IO;
+using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
@@ -22,8 +21,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private ushort Port { get; set; }
 
-        private QdrantClient QdrantClient { get; set; }
-
         private List<string> Collections { get; set; } = [];
 
         private static string CollectionName { get; set; } = "ChatMemroy";
@@ -32,35 +29,51 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             Host = host;
             Port = port;
-            WinHttpHandler handler = new()
-            {
-                SslProtocols = SslProtocols.Tls13,
-                WindowsProxyUsePolicy = WindowsProxyUsePolicy.DoNotUseProxy
-            };
-
-            X509Certificate2 cert = new(Path.Combine(MainSave.AppDirectory, "ca.pfx"), AppConfig.QdrantCertPassword);
-            handler.ClientCertificates.Add(cert);
-
-            var channel = GrpcChannel.ForAddress($"https://{host}:{port}", new GrpcChannelOptions
-            {
-                HttpHandler = handler
-            });
-            var callInvoker = channel.Intercept(metadata =>
-            {
-                metadata.Add("api-key", AppConfig.QdrantAPIKey);
-                return metadata;
-            });
-
-            var grpcClient = new QdrantGrpcClient(callInvoker);
-            QdrantClient = new QdrantClient(grpcClient);
             Instance = this;
+        }
+
+        private JObject? Request(string endpoint, string? payload, string method = "GET", int timeout = 60000)
+        {
+            string result = "";
+            try
+            {
+                using HttpClient client = new();
+                client.Timeout = TimeSpan.FromMilliseconds(timeout);
+
+                HttpRequestMessage request;
+                if (payload == null)
+                {
+                    request = new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}");
+                }
+                else
+                {
+                    request = new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}")
+                    {
+                        Content = new StringContent(payload, Encoding.UTF8, "application/json")
+                    };
+                }
+                request.Headers.Add("api-key", AppConfig.QdrantAPIKey);
+                HttpResponseMessage response = client.SendAsync(request).Result;
+                result = response.Content.ReadAsStringAsync().Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                    MainSave.CQLog?.Info("发送请求返回失败", result);
+                }
+                response.EnsureSuccessStatusCode();
+                return JObject.Parse(result);
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("发送请求", endpoint + "\n" + $"Payload: {payload}\n{result}\n" + ex.Message + ex.StackTrace);
+                return null;
+            }
         }
 
         public bool CheckConnection()
         {
             try
             {
-                Collections = QdrantClient.ListCollectionsAsync().Result.ToList();
+                Collections = (Request("collections", null)["result"]["collections"] as JArray).Select(x => x["name"].ToString()).ToList();
                 return true;
             }
             catch (Exception e)
@@ -78,12 +91,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             try
             {
-                QdrantClient.CreateCollectionAsync(CollectionName, new VectorParams
+                var r = Request($"collections/{CollectionName}", new
                 {
-                    Size = 1024,
-                    Distance = Distance.Cosine,
-                    OnDisk = true
-                }, timeout: TimeSpan.FromSeconds(30)).Wait();
+                    vectors = new
+                    {
+                        size = 1024,
+                        distance = "Cosine",
+                        on_disk = true
+                    }
+                }.ToJson(), "PUT");
+                if (r["status"].ToString() != "ok")
+                {
+                    throw new Exception($"创建集合失败：{r}");
+                }
 
                 Collections.Add(CollectionName);
                 return true;
@@ -107,18 +127,27 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             try
             {
-                var result = QdrantClient.UpsertAsync(CollectionName,
-                    [new PointStruct() {
-                    Id = (ulong)record.Id,
-                    Vectors = Embedding.GetEmbedding(record.Message_NoAppendInfo),
-                    Payload = {
-                        ["user_id"]=$"{record.GroupID}_{record.QQ}",
-                        ["timestamp"] = record.Time.GetTimeStamp(),
-                        ["text"] = record.Message_NoAppendInfo,
+                var r = Request($"collections/{CollectionName}/points", new
+                {
+                    points = new object[]
+                    {
+                        new
+                        {
+                            id = (ulong)record.Id,
+                            vector = Embedding.GetEmbedding(record.Message_NoAppendInfo),
+                            payload = new
+                            {
+                                user_id = $"{record.GroupID}_{record.QQ}",
+                                timestamp = record.Time.GetTimeStamp(),
+                                text = record.Message_NoAppendInfo,
+                            }
+                        }
                     }
-                }]).Result;
+                }.ToJson(), "PUT");
+                string result = r["status"].ToString();
+                string status = r["result"]["status"].ToString();
 
-                return result.Status == UpdateStatus.Completed || result.Status == UpdateStatus.Acknowledged;
+                return result == "ok" && (status == "acknowledged" || status == "completed");
             }
             catch (Exception ex)
             {
@@ -136,38 +165,86 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             try
             {
-                Filter filter;
-                if(record.GroupID > 0)
+                object filter;
+                object timeRange = new
                 {
-                    filter = (AppConfig.QdrantSearchOnlyPerson ? MatchKeyword("user_id", $"{record.GroupID}_{record.QQ}") : MatchText("user_id", $"{record.GroupID}_"))
-                        & Range("timestamp", new Range() { Gte = record.Time.AddMonths(-3).GetTimeStamp() });
+                    key = "timestamp",
+                    range = new
+                    {
+                        gte = record.Time.AddMonths(-3).GetTimeStamp()
+                    }
+                };
+                if (record.GroupID > 0)
+                {
+                    if (AppConfig.QdrantSearchOnlyPerson)
+                    {
+                        filter = new
+                        {
+                            key = "user_id",
+                            match = new
+                            {
+                                value = $"{record.GroupID}_{record.QQ}"
+                            }
+                        };
+                    }
+                    else
+                    {
+                        filter = new
+                        {
+                            key = "user_id",
+                            match = new
+                            {
+                                text = $"{record.GroupID}_"
+                            }
+                        };
+                    }
                 }
                 else
                 {
-                    filter = MatchKeyword("user_id", $"{record.GroupID}_{record.QQ}") & Range("timestamp", new Range() { Gte = record.Time.AddMonths(-3).GetTimeStamp() });
+                    filter = new
+                    {
+                        key = "user_id",
+                        match = new
+                        {
+                            value = $"{record.GroupID}_{record.QQ}"
+                        }
+                    };
                 }
-                var searchResult = QdrantClient.QueryAsync(
-                    collectionName: CollectionName,
-                    query: Embedding.GetEmbedding(record.Message_NoAppendInfo),
-                    filter: filter,
-                    limit: AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
-                    payloadSelector: true
-                ).Result;
-                searchResult = searchResult.Where(x => x.Id.Num != (ulong)record.Id).ToList();
+                var r = Request($"collections/{CollectionName}/points/query", new
+                {
+                    query = Embedding.GetEmbedding(record.Message_NoAppendInfo),
+                    limit = AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
+                    filter = new
+                    {
+                        must = new object[]
+                        {
+                            filter,
+                            timeRange
+                        }
+                    },
+                    with_payload = true
+                }.ToJson(), "POST");
+                if (r["status"].ToString() != "ok")
+                {
+                    MainSave.CQLog.Error("向量查询", $"查询失败：{r}");
+                    return [];
+                }
+                var searchResult = (r["result"]["points"] as JArray).Select(x => new { Id = (long)x["id"], Payload = x["payload"], Score = (float)x["score"] }).ToArray();
+                searchResult = searchResult.Where(x => x.Id != record.Id).ToArray();
                 using var db = SQLHelper.GetInstance();
                 if (AppConfig.EnableRerank)
                 {
-                    var search = searchResult.Select(x => x.Payload["text"].StringValue.ToString()).ToArray();
+                    var search = searchResult.Select(x => x.Payload["text"].ToString()).ToArray();
                     var rerank = Rerank.GetRerank(record.Message_NoAppendInfo, search, AppConfig.MaxMemoryCount);
                     (ChatRecord records, float score)[] result = [];
                     foreach (var (document, score) in rerank)
                     {
-                        var point = searchResult.FirstOrDefault(x => x.Payload["text"].StringValue.ToString() == document);
+                        var point = searchResult.FirstOrDefault(x => x.Payload["text"].ToString() == document);
                         if (point == null)
                         {
                             continue;
                         }
-                        var id = (int)point.Id.Num;
+                        var id = (int)point.Id;
                         result = [(ChatRecord.GetChatRecordById(db, id), score), .. result];
                     }
                     return result;
@@ -177,7 +254,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     (ChatRecord records, float score)[] result = [];
                     foreach (var item in searchResult.OrderByDescending(x => x.Score).Take(AppConfig.MaxMemoryCount))
                     {
-                        var id = (int)item.Id.Num;
+                        var id = (int)item.Id;
                         result = [(ChatRecord.GetChatRecordById(db, id), item.Score), .. result];
                     }
                     return result;

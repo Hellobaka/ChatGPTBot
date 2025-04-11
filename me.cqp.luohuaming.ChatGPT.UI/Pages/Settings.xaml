@@ -97,8 +97,6 @@
                         <TextBox x:Name="EmbeddingApiKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                             <TextBlock>API URL:</TextBlock>
-                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
-                            <TextBlock>/embeddings</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="EmbeddingUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
@@ -122,8 +120,6 @@
                         <TextBox x:Name="RerankApiKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                             <TextBlock>API URL:</TextBlock>
-                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://lkeap.tencentcloudapi.com</TextBlock>
-                            <TextBlock>/rerank</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="RerankUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
@@ -157,14 +153,6 @@
                             <TextBlock VerticalAlignment="Center">流式输出:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="StreamMode"
-                                Margin="10,5,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">启用视觉输入:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="EnableVision"
                                 Margin="10,5,0,0"
                                 OffContent=""
                                 OnContent="" />
@@ -355,6 +343,15 @@
                 <ScrollViewer>
                     <StackPanel x:Name="EmojiContainer" Margin="16,16,22,16">
                         <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">启用图片处理:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableVision"
+                                Margin="10,5,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">是否启用表情发送:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableEmojiSend"
@@ -413,7 +410,7 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-                        <TextBlock VerticalAlignment="Center">召回最小记忆相似度:</TextBlock>
+                        <TextBlock VerticalAlignment="Center">召回最小记忆相似度 (Rerank时无效):</TextBlock>
                         <TextBox x:Name="MinMemorySimilarty" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">召回最大记忆数量:</TextBlock>
                         <TextBox x:Name="MaxMemoryCount" Margin="0,5,0,0" />
@@ -423,8 +420,6 @@
                         <TextBox x:Name="QdrantPort" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 的API密钥:</TextBlock>
                         <TextBox x:Name="QdrantAPIKey" Margin="0,5,0,0" />
-                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Qdrant 的证书密码:</TextBlock>
-                        <TextBox x:Name="QdrantCertPassword" Margin="0,5,0,0" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">Qdrant 是否只搜索个人记忆:</TextBlock>
                             <ui:ToggleSwitch
