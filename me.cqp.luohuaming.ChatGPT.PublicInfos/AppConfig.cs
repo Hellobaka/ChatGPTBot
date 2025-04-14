@@ -216,7 +216,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             QdrantPort = ConfigHelper.GetConfig("QdrantPort", (ushort)6333);
             QdrantAPIKey = ConfigHelper.GetConfig("QdrantAPIKey", "aFZsX4Xe2pzWybnX61Vi");
             QdrantSearchOnlyPerson = ConfigHelper.GetConfig("QdrantSearchOnlyPerson", false);
-            ReplyWillingAmplifier = ConfigHelper.GetConfig("ReplyWillingAmplifier", 1);
+            ReplyWillingAmplifier = ConfigHelper.GetConfig("ReplyWillingAmplifier", (double)1);
             Filters = ConfigHelper.GetConfig("Filter", new List<string>() { "[CQ:", "&#" });
 
             ConfigHelper.EnableHotReload();
