@@ -57,6 +57,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             if (emoji)
             {
                 var embedding = API.Embedding.GetEmbedding(description);
+                if (embedding.Length == 0)
+                {
+                    MainSave.CQLog.Error("图片记录", $"由于获取Embedding失败，无法记录");
+                    return;
+                }
                 picture.Embedding = embedding;
             }
 
