@@ -28,6 +28,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 MainSave.CQLog.Warning("加载配置文件", "内容格式不正确，无法加载");
             }
             AppConfig.Init();
+            SQLHelper.CreateDB();
             if (new string[] { AppConfig.ChatAPIKey, AppConfig.ChatBaseURL, AppConfig.ChatModelName }.Any(string.IsNullOrEmpty))
             {
                 MainSave.CQLog.Error("初始化", "关键 Chat 配置无效，插件无法使用");
@@ -55,7 +56,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 }
             }
 
-            SQLHelper.CreateDB();
             TTSHelper.CheckTTS();
             if (AppConfig.EnableMemory)
             {
