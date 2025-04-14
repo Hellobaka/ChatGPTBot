@@ -7,6 +7,7 @@ using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using OpenAI.Chat;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public int Priority { get; set; } = 1;
 
-        private bool InProgress { get; set; }
+        private Dictionary<long, bool> InProgress { get; set; } = [];
 
         public string GetOrderStr() => "";
 
@@ -48,7 +49,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 Memory.AddMemory(record);
             }
-            if (InProgress)
+            bool busy = GetGroupBusy(e.FromGroup.Id);
+            if (busy)
             {
                 return new FunctionResult { Result = false, SendFlag = false };
             }
@@ -59,14 +61,14 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 if (record.IsEmpty)
                 {
-                    InProgress = false;
+                    SetGroupBusy(e.FromGroup, false);
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
 
                 if (MainSave.Random.NextDouble() < replyProbablity)
                 {
-                    InProgress = true;
+                    SetGroupBusy(e.FromGroup, true);
 
                     string reply = CreateReply(relationship, record);
 
@@ -97,7 +99,32 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             finally
             {
-                InProgress = false;
+                SetGroupBusy(e.FromGroup, false);
+            }
+        }
+
+        private bool GetGroupBusy(long id)
+        {
+            if (InProgress.TryGetValue(id, out bool busy))
+            {
+                return busy;
+            }
+            else
+            {
+                InProgress.Add(id, false);
+                return false;
+            }
+        }
+
+        private void SetGroupBusy(long id, bool busy)
+        {
+            if (InProgress.ContainsKey(id))
+            {
+                InProgress[id] = busy;
+            }
+            else
+            {
+                InProgress.Add(id, busy);
             }
         }
 
@@ -121,14 +148,20 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 Memory.AddMemory(record);
             }
+            bool busy = GetGroupBusy(e.FromQQ);
+            if (busy)
+            {
+                return new FunctionResult { Result = false, SendFlag = false };
+            }
             var relationship = Relationship.GetRelationShip(-1, e.FromQQ);
             try
             {
                 if (record.IsEmpty)
                 {
-                    InProgress = false;
+                    SetGroupBusy(e.FromQQ, false);
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
+                SetGroupBusy(e.FromQQ, true);
 
                 string reply = CreateReply(relationship, record);
 
@@ -149,6 +182,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 e.CQLog.Warning("触发回复", $"方法发生异常：{ex.Message}\n{ex.StackTrace}");
                 return new FunctionResult { Result = false, SendFlag = false };
+            }
+            finally
+            {
+                SetGroupBusy(e.FromQQ, false);
             }
         }
 
