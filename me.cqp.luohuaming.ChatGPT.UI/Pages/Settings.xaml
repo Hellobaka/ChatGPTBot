@@ -111,7 +111,7 @@
                             <TextBlock VerticalAlignment="Center">是否启用 Rerank 功能:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableRerank"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -134,7 +134,7 @@
                             <TextBlock VerticalAlignment="Center">是否启用腾讯云签名(v3):</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableTencentSign"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -153,7 +153,7 @@
                             <TextBlock VerticalAlignment="Center">流式输出:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="StreamMode"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -304,6 +304,15 @@
                         <TextBox x:Name="AddBlackListOrder" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">移除黑名单:</TextBlock>
                         <TextBox x:Name="RemoveBlackListOrder" Margin="0,5,0,0" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">输出调试日志:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="DebugMode"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -317,7 +326,7 @@
                             <TextBlock VerticalAlignment="Center">使用回复模式发送消息:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableGroupReply"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -325,7 +334,7 @@
                             <TextBlock VerticalAlignment="Center">是否启用分段功能:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableSpliter"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -344,7 +353,7 @@
                             <TextBlock VerticalAlignment="Center">移除分段末尾标点符号:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="SpliterRegexRemovePunctuation"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -352,7 +361,7 @@
                             <TextBlock VerticalAlignment="Center">分段仅使用正则表达式（按标点符号分句）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="SpliterRegexFirst"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -360,7 +369,7 @@
                             <TextBlock VerticalAlignment="Center">发送每个分段启用随机延时:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableSpliterRandomDelay"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -380,7 +389,7 @@
                             <TextBlock VerticalAlignment="Center">启用图片处理:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableVision"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -389,7 +398,7 @@
                             <TextBlock VerticalAlignment="Center">是否启用表情发送:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableEmojiSend"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -400,7 +409,7 @@
                             <TextBlock VerticalAlignment="Center">是否从推荐中随机发送表情 (否则只发送最符合的图片):</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="RandomSendEmoji"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -410,7 +419,7 @@
                             <TextBlock VerticalAlignment="Center">只处理表情包图片:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="IgnoreNotEmoji"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -440,7 +449,7 @@
                             <TextBlock VerticalAlignment="Center">是否启用记忆功能:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableMemory"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -458,7 +467,7 @@
                             <TextBlock VerticalAlignment="Center">Qdrant 是否只搜索个人记忆:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="QdrantSearchOnlyPerson"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
@@ -571,7 +580,7 @@
                             <TextBlock VerticalAlignment="Center">TTS开关:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableTTS"
-                                Margin="10,5,0,0"
+                                Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
