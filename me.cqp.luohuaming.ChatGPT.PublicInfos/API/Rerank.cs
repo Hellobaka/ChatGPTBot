@@ -11,6 +11,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public static (string document, float score)[] GetRerank(string text, string[] documents, int topn = 5)
         {
+            if (documents.Length == 0)
+            {
+                return [];
+            }
             string json;
             bool tencent, ali = false;
             if (AppConfig.RerankUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
