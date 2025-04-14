@@ -82,38 +82,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void BlackListAddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(BlackListAdd.Text) && long.TryParse(BlackListAdd.Text, out _))
-            {
-                bool duplicate = false;
-                foreach (var item in BlackList.Items)
-                {
-                    if (item.ToString() == BlackListAdd.Text)
-                    {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (duplicate)
-                {
-                    MainWindow.ShowError("已存在相同项");
-                    return;
-                }
-                BlackList.Items.Add(BlackListAdd.Text);
-            }
-            else
-            {
-                MainWindow.ShowError("输入内容格式错误");
-            }
+            ListAddButtonHandler(BlackListAdd, BlackList, true);
         }
 
         private void BlackListRemoveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (BlackList.SelectedIndex < 0)
-            {
-                MainWindow.ShowError("请选择一项");
-                return;
-            }
-            BlackList.Items.RemoveAt(BlackList.SelectedIndex);
+            ListRemoveButtonHandler(BlackList);
         }
 
         private void GetAndSetConfigFromStackPanel(PropertyInfo[] properties, StackPanel container)
@@ -184,38 +158,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void GroupListAddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(GroupListAdd.Text) && long.TryParse(GroupListAdd.Text, out _))
-            {
-                bool duplicate = false;
-                foreach (var item in GroupList.Items)
-                {
-                    if (item.ToString() == GroupListAdd.Text)
-                    {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (duplicate)
-                {
-                    MainWindow.ShowError("已存在相同项");
-                    return;
-                }
-                GroupList.Items.Add(GroupListAdd.Text);
-            }
-            else
-            {
-                MainWindow.ShowError("输入内容格式错误");
-            }
+            ListAddButtonHandler(GroupListAdd, GroupList, true);
         }
 
         private void GroupListRemoveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (GroupList.SelectedIndex < 0)
-            {
-                MainWindow.ShowError("请选择一项");
-                return;
-            }
-            GroupList.Items.RemoveAt(GroupList.SelectedIndex);
+            ListRemoveButtonHandler(GroupList);
         }
 
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
@@ -226,38 +174,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void PersonListAddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(PersonListAdd.Text) && long.TryParse(PersonListAdd.Text, out _))
-            {
-                bool duplicate = false;
-                foreach (var item in PersonList.Items)
-                {
-                    if (item.ToString() == PersonListAdd.Text)
-                    {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (duplicate)
-                {
-                    MainWindow.ShowError("已存在相同项");
-                    return;
-                }
-                PersonList.Items.Add(PersonListAdd.Text);
-            }
-            else
-            {
-                MainWindow.ShowError("输入内容格式错误");
-            }
+            ListAddButtonHandler(PersonListAdd, PersonList, true);
         }
 
         private void PersonListRemoveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (PersonList.SelectedIndex < 0)
-            {
-                MainWindow.ShowError("请选择一项");
-                return;
-            }
-            PersonList.Items.RemoveAt(PersonList.SelectedIndex);
+            ListRemoveButtonHandler(PersonList);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -420,22 +342,43 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void BotNicknameRemoveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (BotNicknames.SelectedIndex < 0)
-            {
-                MainWindow.ShowError("请选择一项");
-                return;
-            }
-            BotNicknames.Items.RemoveAt(BotNicknames.SelectedIndex);
+            ListRemoveButtonHandler(BotNicknames);
         }
 
         private void BotNicknameAddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(BotNicknameAdd.Text))
+            ListAddButtonHandler(BotNicknameAdd, BotNicknames);
+        }
+
+        private void FiltersRemoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            ListRemoveButtonHandler(Filters);
+        }
+
+        private void FiltersAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            ListAddButtonHandler(FiltersAdd, Filters);
+        }
+
+        private void ListRemoveButtonHandler(ListBox listBox)
+        {
+            if (listBox.SelectedIndex < 0)
+            {
+                MainWindow.ShowError("请选择一项");
+                return;
+            }
+            listBox.Items.RemoveAt(listBox.SelectedIndex);
+        }
+
+        private void ListAddButtonHandler(TextBox textBox, ListBox listBox, bool longcheck = false)
+        {
+            if (!string.IsNullOrEmpty(textBox.Text) 
+                && (!longcheck || long.TryParse(textBox.Text, out _)))
             {
                 bool duplicate = false;
-                foreach (var item in BotNicknames.Items)
+                foreach (var item in listBox.Items)
                 {
-                    if (item.ToString() == BotNicknameAdd.Text)
+                    if (item.ToString() == textBox.Text)
                     {
                         duplicate = true;
                         break;
@@ -446,7 +389,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     MainWindow.ShowError("已存在相同项");
                     return;
                 }
-                BotNicknames.Items.Add(BotNicknameAdd.Text);
+                listBox.Items.Add(textBox.Text);
+                textBox.Clear();
             }
             else
             {
