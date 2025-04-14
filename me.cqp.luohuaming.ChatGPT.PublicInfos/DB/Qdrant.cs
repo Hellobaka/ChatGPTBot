@@ -1,14 +1,9 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -127,6 +122,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             try
             {
+                var embedding = Embedding.GetEmbedding(record.Message_NoAppendInfo);
+                if (embedding.Length == 0)
+                {
+                    MainSave.CQLog.Error("插入向量", $"由于获取Embedding失败，无法插入");
+                    return false;
+                }
                 var r = Request($"collections/{CollectionName}/points", new
                 {
                     points = new object[]
@@ -134,7 +135,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         new
                         {
                             id = (ulong)record.Id,
-                            vector = Embedding.GetEmbedding(record.Message_NoAppendInfo),
+                            vector = embedding,
                             payload = new
                             {
                                 user_id = $"{record.GroupID}_{record.QQ}",
@@ -230,7 +231,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     return [];
                 }
                 var searchResult = (r["result"]["points"] as JArray).Select(x => new { Id = (long)x["id"], Payload = x["payload"], Score = (float)x["score"] }).ToArray();
-                searchResult = searchResult.Where(x => x.Id != record.Id).ToArray();
+                searchResult = searchResult.Where(x => x.Id != record.Id && x.Score >= AppConfig.MinMemorySimilarty).ToArray();
                 using var db = SQLHelper.GetInstance();
                 if (AppConfig.EnableRerank)
                 {
