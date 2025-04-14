@@ -453,7 +453,7 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-                        <TextBlock VerticalAlignment="Center">召回最小记忆相似度 (Rerank时无效):</TextBlock>
+                        <TextBlock VerticalAlignment="Center">召回最小记忆相似度:</TextBlock>
                         <TextBox x:Name="MinMemorySimilarty" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">召回最大记忆数量:</TextBlock>
                         <TextBox x:Name="MaxMemoryCount" Margin="0,5,0,0" />
