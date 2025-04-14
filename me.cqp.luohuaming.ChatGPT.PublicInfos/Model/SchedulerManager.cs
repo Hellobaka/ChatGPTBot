@@ -95,7 +95,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     var property = ((JObject)item).Children().First() as JProperty;
                     DateTime time = DateTime.Parse(property.Name);
                     string action = property.Value.ToString();
-                    MainSave.CQLog.Debug("日程生成", $"{time.ToShortTimeString()}: {action}");
+                    CommonHelper.DebugLog("日程生成", $"{time.ToShortTimeString()}: {action}");
                     Schedules.Add((time, action));
                 }
 

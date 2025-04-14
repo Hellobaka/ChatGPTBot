@@ -100,7 +100,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             Valence = Math.Max(-1, Math.Min(1, Valence + valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
 
-            MainSave.CQLog.Debug("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
+            CommonHelper.DebugLog("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
         }
 
         public void StartMoodDecreaseTimer()
@@ -133,7 +133,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     return (Mood.neutral, Stand.neutrality);
                 }
 
-                MainSave.CQLog.Debug("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
+                CommonHelper.DebugLog("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
 
                 return (mood, stand);
             }

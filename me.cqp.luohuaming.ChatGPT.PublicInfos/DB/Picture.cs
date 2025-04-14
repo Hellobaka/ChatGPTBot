@@ -98,10 +98,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (emotion == Chat.ErrorMessage)
             {
-                MainSave.CQLog.Debug("表情包推荐", $"请求失败");
+                CommonHelper.DebugLog("表情包推荐", $"请求失败");
                 return [];
             }
-            MainSave.CQLog.Debug("表情包推荐", $"转换后的情感：{emotion}");
+            CommonHelper.DebugLog("表情包推荐", $"转换后的情感：{emotion}");
             var embedding = API.Embedding.GetEmbedding(emotion);
 
             return GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
@@ -142,7 +142,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 .Take(count);
             foreach (var item in l)
             {
-                MainSave.CQLog.Debug("表情包结果", $"{item.Image.Hash}[{item.Similarity}%]: {item.Image.Description}");
+                CommonHelper.DebugLog("表情包结果", $"{item.Image.Hash}[{item.Similarity}%]: {item.Image.Description}");
             }
             return l.Select(x => x.Image).ToList();
         }

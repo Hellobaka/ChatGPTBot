@@ -433,7 +433,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 return string.Format(ErrorMessage, "搜索 APIKey 为空");
             }
-            MainSave.CQLog?.Debug("搜索", $"query={query} freshness={freshness} summary={summary} count={count} page={page}");
+            CommonHelper.DebugLog("搜索", $"query={query} freshness={freshness} summary={summary} count={count} page={page}");
             return CommonHelper.Post("POST", BaseUrl, new
             {
                 query,

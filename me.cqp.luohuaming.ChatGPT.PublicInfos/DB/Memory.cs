@@ -15,11 +15,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 if (Qdrant.Instance.Insert(record))
                 {
-                    MainSave.CQLog.Debug("记忆插入", $"MessageID={record.MessageID} 插入成功");
+                    CommonHelper.DebugLog("记忆插入", $"MessageID={record.MessageID} 插入成功");
                 }
                 else
                 {
-                    MainSave.CQLog.Debug("记忆插入", $"MessageID={record.MessageID} 插入失败");
+                    CommonHelper.DebugLog("记忆插入", $"MessageID={record.MessageID} 插入失败");
                 }
             });
         }

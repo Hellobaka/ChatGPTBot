@@ -244,5 +244,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 return null;
             }
         }
+
+        public static void DebugLog(string type, string message)
+        {
+            if (AppConfig.DebugMode)
+            {
+                MainSave.CQLog?.Debug(type, message);
+            }
+            else
+            {
+                // no impletment
+            }
+        }
     }
 }

@@ -202,7 +202,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (AppConfig.EnableMemory)
             {
                 var memories = Memory.GetMemories(record);
-                MainSave.CQLog.Debug("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
+                CommonHelper.DebugLog("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
                 if (memories.Length > 0)
                 {
                     stringBuilder.AppendLine("以下是你回忆起的记忆：");
@@ -242,7 +242,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
 
             string prompt = stringBuilder.ToString();
-            //MainSave.CQLog.Debug("Prompt", prompt);
+            //CommonHelper.DebugLog("Prompt", prompt);
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
@@ -288,7 +288,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             relationship.UpdateFavourability(mood, stand);
             if (AppConfig.EnableEmojiSend && MainSave.Random.Next(0, 100) < AppConfig.EmojiSendProbablity)
             {
-                MainSave.CQLog.Debug("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
+                CommonHelper.DebugLog("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
                 var emojis = Picture.GetRecommandEmoji(reply);
                 if (emojis.Count > 0)
                 {
@@ -300,16 +300,19 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         if (File.Exists(emoji.FilePath))
                         {
-                            MainSave.CQLog.Debug("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
+                            CommonHelper.DebugLog("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
                             var message = CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory));
                             RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, message) : MainSave.CQApi.SendPrivateMessage(fromQQ, message));
+                            emoji.UseCount++;
+                            emoji.Update();
+
                             break;
                         }
                     }
                 }
                 else
                 {
-                    MainSave.CQLog.Debug("获取表情包", $"没有查询到可推荐表情包");
+                    CommonHelper.DebugLog("获取表情包", $"没有查询到可推荐表情包");
                 }
             }
         }

@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 ContextMode = false;
             }
-            //MainSave.CQLog.Debug("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
+            //CommonHelper.DebugLog("回复意愿定时更新", $"定时更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
         }
 
         public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq)
@@ -143,7 +143,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyQQ = qq;
 
-            MainSave.CQLog.Debug("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
+            CommonHelper.DebugLog("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
 
             return ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier;
         }
@@ -155,7 +155,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyTime = DateTime.Now;
             MessageHoldCount = 0;
-            MainSave.CQLog.Debug("发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
+            CommonHelper.DebugLog("发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
         }
 
         public void ChangeReplyWillingAfterNotSendingMessage()
@@ -174,7 +174,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
 
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
-            MainSave.CQLog.Debug("不发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
+            CommonHelper.DebugLog("不发送后回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}");
         }
     }
 }

@@ -184,7 +184,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                 stringBuilder.Append($"[图片]");
                                 continue;
                             }
-                            MainSave.CQLog.Debug("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
+                            CommonHelper.DebugLog("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
                             string description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
                             if (description == Chat.ErrorMessage)
                             {
@@ -192,7 +192,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                 break;
                             }
                             Picture.InsertImageDescription(cqcode, emoji, description);
-                            MainSave.CQLog.Debug("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
+                            CommonHelper.DebugLog("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
                             stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
 
                             break;

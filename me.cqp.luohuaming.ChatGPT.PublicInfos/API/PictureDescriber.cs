@@ -41,10 +41,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             var existImage = Directory.GetFiles(GetPictureCachePath()).FirstOrDefault(x => Path.GetFileNameWithoutExtension(x).Equals(Path.GetFileNameWithoutExtension(fileName)));
             if (!string.IsNullOrEmpty(existImage))
             {
-                MainSave.CQLog.Debug("缓存图片", $"图片已经缓存，路径为 {existImage}");
+                CommonHelper.DebugLog("缓存图片", $"图片已经缓存，路径为 {existImage}");
                 return existImage;
             }
-            MainSave.CQLog.Debug("缓存图片", $"开始缓存图片 {img.Items["file"]}");
+            CommonHelper.DebugLog("缓存图片", $"开始缓存图片 {img.Items["file"]}");
             string path = MainSave.CQApi.ReceiveImage(img);
             if (!File.Exists(path))
             {
@@ -53,7 +53,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             string newPath = Path.Combine(GetPictureCachePath(), Path.GetFileName(path));
             File.Move(path, newPath);
-            MainSave.CQLog.Debug("缓存图片", $"图片缓存成功");
+            CommonHelper.DebugLog("缓存图片", $"图片缓存成功");
 
             return newPath;
         }

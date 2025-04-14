@@ -131,7 +131,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             Favorability += moodFavorValue;
             Favorability = Math.Max(-1000, Math.Min(1000, Favorability));
 
-            MainSave.CQLog.Debug("更新用户关系", $"[{QQ}] 心情：{mood}，计算后新的关系值为：{Favorability}");
+            CommonHelper.DebugLog("更新用户关系", $"[{QQ}] 心情：{mood}，计算后新的关系值为：{Favorability}");
 
             using var db = SQLHelper.GetInstance();
             db.Updateable(this).ExecuteCommand();

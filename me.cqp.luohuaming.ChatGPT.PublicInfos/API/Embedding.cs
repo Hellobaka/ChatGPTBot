@@ -41,7 +41,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Debug("Embedding", json ?? "null");
+                CommonHelper.DebugLog("Embedding", json ?? "null");
                 MainSave.CQLog.Error("获取Embedding", $"结果Json解析失败: {ex}");
 
                 return [];

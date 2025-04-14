@@ -23,7 +23,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public string[] Split()
         {
-            MainSave.CQLog?.Debug("消息分行", $"开始进行消息分行：{Message}");
+            CommonHelper.DebugLog("消息分行", $"开始进行消息分行：{Message}");
 
             if (AppConfig.SpliterRegexFirst || Message.Length <= AppConfig.SpliterMinLength)
             {
