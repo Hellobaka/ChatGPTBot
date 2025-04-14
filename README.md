@@ -23,6 +23,14 @@
 Qdrant提供 Docker 版本  
 不喜欢 Docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6.zip)  
 
+## 依赖文件
+- [libHarfBuzzSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libHarfBuzzSharp.dll)
+- [libSkiaSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libSkiaSharp.dll)
+- 放置在框架/加载器的
+- 1. 根目录 或者
+  2. x86 文件夹 或者
+  3. libraies 文件夹
+
 ## 配置文件
 配置文件支持热重载，保存后若格式无误则会即时生效
 
