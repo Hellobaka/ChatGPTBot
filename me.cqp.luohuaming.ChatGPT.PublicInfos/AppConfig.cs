@@ -140,6 +140,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static double ReplyWillingAmplifier { get; set; }
 
+        public static List<string> Filters { get; set; } = [];
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -215,6 +217,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             QdrantAPIKey = ConfigHelper.GetConfig("QdrantAPIKey", "aFZsX4Xe2pzWybnX61Vi");
             QdrantSearchOnlyPerson = ConfigHelper.GetConfig("QdrantSearchOnlyPerson", false);
             ReplyWillingAmplifier = ConfigHelper.GetConfig("ReplyWillingAmplifier", 1);
+            Filters = ConfigHelper.GetConfig("Filter", new List<string>() { "[CQ:", "&#" });
 
             ConfigHelper.EnableHotReload();
         }

@@ -37,8 +37,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new FunctionResult();
             }
-
             var record = ChatRecord.Create(e.FromGroup, e.FromQQ, e.Message.Text, e.Message.Id);
+            if (AppConfig.Filters.Any(record.ParsedMessage.Contains))
+            {
+                return result;
+            }
             ChatRecord.InsertRecord(record);
 
             if (AppConfig.EnableMemory)
