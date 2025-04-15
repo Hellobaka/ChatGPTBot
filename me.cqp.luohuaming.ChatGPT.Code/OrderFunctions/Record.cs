@@ -78,6 +78,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     if (reply == AppConfig.ChatEmptyResponse)
                     {
+                        e.CQLog.Info("触发回复", "大模型拒绝了回答");
                         return result;
                     }
                     SendReply(reply, e.FromGroup, e.FromQQ);
@@ -171,6 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 }
                 if (reply == AppConfig.ChatEmptyResponse)
                 {
+                    e.CQLog.Info("触发回复", "大模型拒绝了回答");
                     return result;
                 }
                 SendReply(reply, -1, e.FromQQ);
