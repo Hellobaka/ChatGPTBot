@@ -23,6 +23,9 @@
 Qdrant提供 Docker 版本  
 不喜欢 Docker 这有配好的 [1.13.6-windows](http://assets.hellobaka.xyz/static/qdrant-1.13.6.zip)  
 
+### 创建集合时崩溃？
+安装最新的[vc++运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+
 ## 依赖文件
 - [libHarfBuzzSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libHarfBuzzSharp.dll)
 - [libSkiaSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libSkiaSharp.dll)
