@@ -23,6 +23,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public double Favorability { get; set; }
 
+        public DateTime UpdateTime { get; set; }
+
         public static Relationship Create(long qq, string nickname)
         {
             return new Relationship
@@ -39,15 +41,24 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 NickName = nickname,
                 QQ = qq,
                 Card = card,
-                GroupID = groupId
+                GroupID = groupId,
+                UpdateTime = DateTime.Now
             };
+        }
+
+        public void Update()
+        {
+            using var db = SQLHelper.GetInstance();
+            UpdateTime = DateTime.Now;
+            db.Updateable(this).ExecuteCommand();
         }
 
         public static Relationship? GetRelationShip(long groupID, long qq)
         {
             using var db = SQLHelper.GetInstance();
             var relationship = db.Queryable<Relationship>().Where(x => x.GroupID == groupID && x.QQ == qq).First();
-            if (relationship == null)
+            if (relationship == null 
+                || (DateTime.Now - relationship.UpdateTime).TotalDays >= AppConfig.RelationshipUpdateTime)
             {
                 string nickname = null, card = null;
                 if (groupID > 0)
@@ -69,15 +80,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     }
                 }
 
-                relationship = Create(groupID, qq, nickname, card);
-                if (!string.IsNullOrEmpty(nickname) || !string.IsNullOrEmpty(card))
+                if (string.IsNullOrEmpty(nickname) && string.IsNullOrEmpty(card))
                 {
+                    MainSave.CQLog.Warning("缓存用户昵称", "获取的昵称与卡片均为null");
+                    return null;
+                }
+                else if(relationship == null)
+                {
+                    relationship = Create(groupID, qq, nickname, card);
                     db.Insertable(relationship).ExecuteCommand();
                 }
                 else
                 {
-                    MainSave.CQLog.Warning("缓存用户昵称", "获取的昵称与卡片均为null");
-                    return null;
+                    relationship.Card = card;
+                    relationship.NickName = nickname;
+                    relationship.Update();
                 }
             }
 
