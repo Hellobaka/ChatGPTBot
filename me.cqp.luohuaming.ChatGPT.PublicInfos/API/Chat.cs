@@ -54,7 +54,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
 
             string msg = "";
-            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromSeconds(300), });
+            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromMilliseconds(AppConfig.ChatTimeout), });
             var client = c.GetChatClient(modelName);
             var option = new ChatCompletionOptions
             {

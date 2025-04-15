@@ -25,7 +25,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     Model = AppConfig.RerankModelName,
                     Query = text,
                     Docs = documents
-                }.ToJson(), TencentAPIAction, 3000);
+                }.ToJson(), TencentAPIAction, AppConfig.RerankTimeout);
             }
             else
             {
@@ -46,7 +46,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         {
                             top_n = topn,
                         }
-                    }.ToJson(), AppConfig.RerankApiKey, 3000);
+                    }.ToJson(), AppConfig.RerankApiKey, AppConfig.RerankTimeout);
                 }
                 else
                 {
@@ -56,7 +56,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         query = text,
                         documents,
                         top_n = topn,
-                    }.ToJson(), AppConfig.RerankApiKey, 3000);
+                    }.ToJson(), AppConfig.RerankApiKey, AppConfig.RerankTimeout);
                 }
             }
             try

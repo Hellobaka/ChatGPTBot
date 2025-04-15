@@ -18,7 +18,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     Model = AppConfig.EmbeddingModelName,
                     Inputs = new string[] { text }
-                }.ToJson(), TencentAPIAction, 3000);
+                }.ToJson(), TencentAPIAction, AppConfig.EmbeddingTimeout);
             }
             else
             {
@@ -26,7 +26,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     model = AppConfig.EmbeddingModelName,
                     input = text
-                }.ToJson(), AppConfig.EmbeddingApiKey, 3000);
+                }.ToJson(), AppConfig.EmbeddingApiKey, AppConfig.EmbeddingTimeout);
             }
             try
             {

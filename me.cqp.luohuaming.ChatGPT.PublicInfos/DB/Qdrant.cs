@@ -90,7 +90,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 {
                     vectors = new
                     {
-                        size = 1024,
+                        size = AppConfig.MemoryDimensions,
                         distance = "Cosine",
                         on_disk = true
                     }
@@ -126,6 +126,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 if (embedding.Length == 0)
                 {
                     MainSave.CQLog.Error("插入向量", $"由于获取Embedding失败，无法插入");
+                    return false;
+                }
+                if (embedding.Length != AppConfig.MemoryDimensions)
+                {
+                    MainSave.CQLog.Error("插入向量", $"由于Embedding维度数量与记忆维度不符，无法插入");
                     return false;
                 }
                 var r = Request($"collections/{CollectionName}/points", new
