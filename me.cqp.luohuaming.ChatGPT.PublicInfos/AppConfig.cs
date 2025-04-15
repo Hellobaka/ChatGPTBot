@@ -18,6 +18,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int ImageGenerateQuality { get; set; } = 0;
 
+        public static string ImageGenerateBaseURL { get; set; } = "";
+
+        public static string ImageGenerateAPIKey { get; set; } = "";
+
         public static bool EnableGroupReply { get; set; }
 
         public static bool StreamMode { get; set; }
@@ -142,6 +146,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static List<string> Filters { get; set; } = [];
 
+        public static int RelationshipUpdateTime { get; set; } = 7;
+
+        public static int EmbeddingTimeout { get; set; } = 3000;
+
+        public static int RerankTimeout { get; set; } = 3000;
+
+        public static int ChatTimeout { get; set; } = 30000;
+
+        public static int MemoryDimensions { get; set; } = 1024;
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -156,13 +170,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 3000);
             ChatTemperature = ConfigHelper.GetConfig("ChatTemperature", 1.3f);
+
+            ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
             ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 2);
             ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 1);
+            ImageGenerateBaseURL = ConfigHelper.GetConfig("ImageGenerateBaseURL", "https://api.openai.com/v1");
+            ImageGenerateAPIKey = ConfigHelper.GetConfig("ImageGenerateAPIKey", "");
 
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
             BlackList = ConfigHelper.GetConfig("BlackList", new List<long>());
-            ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
             AddBlackListOrder = ConfigHelper.GetConfig("AddBlackListOrder", ".添加黑名单");
             RemoveBlackListOrder = ConfigHelper.GetConfig("RemoveBlackListOrder", ".移除黑名单");
             BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
@@ -196,9 +213,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
             EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
             EnableRerank = ConfigHelper.GetConfig("EnableRerank", true);
-            RerankUrl = ConfigHelper.GetConfig("RerankUrl", "https://lkeap.tencentcloudapi.com");
+            RerankUrl = ConfigHelper.GetConfig("RerankUrl", "");
             RerankApiKey = ConfigHelper.GetConfig("RerankApiKey", "");
-            RerankModelName = ConfigHelper.GetConfig("RerankModelName", "lke-reranker-base");
+            RerankModelName = ConfigHelper.GetConfig("RerankModelName", "");
             IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
             DebugMode = ConfigHelper.GetConfig("DebugMode", false);
             SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
@@ -218,6 +235,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             QdrantSearchOnlyPerson = ConfigHelper.GetConfig("QdrantSearchOnlyPerson", false);
             ReplyWillingAmplifier = ConfigHelper.GetConfig("ReplyWillingAmplifier", (double)1);
             Filters = ConfigHelper.GetConfig("Filter", new List<string>() { "[CQ:", "&#" });
+            RelationshipUpdateTime = ConfigHelper.GetConfig("RelationshipUpdateTime", 7);
+            EmbeddingTimeout = ConfigHelper.GetConfig("EmbeddingTimeout", 3000);
+            RerankTimeout = ConfigHelper.GetConfig("RerankTimeout", 3000);
+            ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 30000);
+            MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
 
             ConfigHelper.EnableHotReload();
         }

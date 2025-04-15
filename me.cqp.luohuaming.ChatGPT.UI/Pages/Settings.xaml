@@ -23,7 +23,7 @@
                             Margin="0,0,0,5"
                             VerticalAlignment="Center"
                             Style="{StaticResource SubtitleTextBlockStyle}">
-                            Chat 图片生成 日程生成
+                            Chat 日程生成
                         </TextBlock>
                         <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
                         <TextBox x:Name="ChatAPIKey" Margin="0,5,0,0" />
@@ -35,25 +35,7 @@
                         <TextBox x:Name="ChatBaseURL" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="ChatModelName" Margin="0,5,0,0" />
-                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图画布尺寸:</TextBlock>
-                        <ComboBox x:Name="ImageGenerateSize" Margin="0,5,0,0">
-                            <ComboBoxItem
-                                Content="256x256"
-                                IsSelected="True"
-                                Tag="0" />
-                            <ComboBoxItem Content="512x512" Tag="1" />
-                            <ComboBoxItem Content="1024x1024" Tag="2" />
-                            <ComboBoxItem Content="1024x1792" Tag="3" />
-                            <ComboBoxItem Content="1792x1024" Tag="4" />
-                        </ComboBox>
-                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图质量:</TextBlock>
-                        <ComboBox x:Name="ImageGenerateQuality" Margin="0,5,0,0">
-                            <ComboBoxItem
-                                Content="Standard"
-                                IsSelected="True"
-                                Tag="0" />
-                            <ComboBoxItem Content="High" Tag="1" />
-                        </ComboBox>
+
                         <TextBlock
                             Margin="0,10,0,5"
                             VerticalAlignment="Center"
@@ -87,6 +69,7 @@
                         <TextBox x:Name="ImageDescriberUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="ImageDescriberModelName" Margin="0,5,0,0" />
+
                         <TextBlock
                             Margin="0,10,0,5"
                             VerticalAlignment="Center"
@@ -96,11 +79,12 @@
                         <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
                         <TextBox x:Name="EmbeddingApiKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock>API URL: https://api.openai.com/v1/embeddings</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="EmbeddingUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="EmbeddingModelName" Margin="0,5,0,0" />
+
                         <TextBlock
                             Margin="0,10,0,5"
                             VerticalAlignment="Center"
@@ -115,15 +99,15 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-
                         <TextBlock VerticalAlignment="Center">API 令牌:</TextBlock>
                         <TextBox x:Name="RerankApiKey" Margin="0,5,0,0" />
                         <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
-                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock>API URL: https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="RerankUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="RerankModelName" Margin="0,5,0,0" />
+
                         <TextBlock
                             Margin="0,10,0,5"
                             VerticalAlignment="Center"
@@ -142,6 +126,40 @@
                         <TextBox x:Name="TencentSecretKey" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">腾讯云密钥Id:</TextBlock>
                         <TextBox x:Name="TencentSecretId" Margin="0,5,0,0" />
+
+                        <TextBlock
+                            Margin="0,10,0,5"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SubtitleTextBlockStyle}">
+                            图片生成
+                        </TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">API 令牌:</TextBlock>
+                        <TextBox x:Name="ImageGenerateAPIKey" Margin="0,5,0,0" />
+                        <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                            <TextBlock>API URL:</TextBlock>
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold">https://api.openai.com/v1</TextBlock>
+                            <TextBlock>/chat/completions</TextBlock>
+                        </StackPanel>
+                        <TextBox x:Name="ImageGenerateBaseURL" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图画布尺寸:</TextBlock>
+                        <ComboBox x:Name="ImageGenerateSize" Margin="0,5,0,0">
+                            <ComboBoxItem
+                                Content="256x256"
+                                IsSelected="True"
+                                Tag="0" />
+                            <ComboBoxItem Content="512x512" Tag="1" />
+                            <ComboBoxItem Content="1024x1024" Tag="2" />
+                            <ComboBoxItem Content="1024x1792" Tag="3" />
+                            <ComboBoxItem Content="1792x1024" Tag="4" />
+                        </ComboBox>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图质量:</TextBlock>
+                        <ComboBox x:Name="ImageGenerateQuality" Margin="0,5,0,0">
+                            <ComboBoxItem
+                                Content="Standard"
+                                IsSelected="True"
+                                Tag="0" />
+                            <ComboBoxItem Content="High" Tag="1" />
+                        </ComboBox>
 
                         <TextBlock
                             Margin="0,10,0,5"
