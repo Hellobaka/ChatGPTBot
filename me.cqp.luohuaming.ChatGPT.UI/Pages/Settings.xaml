@@ -471,6 +471,8 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
+                        <TextBlock VerticalAlignment="Center">Embedding的维度:</TextBlock>
+                        <TextBox x:Name="MemoryDimensions" Margin="0,5,0,0" />
                         <TextBlock VerticalAlignment="Center">召回最小记忆相似度:</TextBlock>
                         <TextBox x:Name="MinMemorySimilarty" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">召回最大记忆数量:</TextBlock>
