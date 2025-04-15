@@ -150,7 +150,15 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 MainWindow.ShowError("所选筛选时间无效");
                 return;
             }
-            FilterEndDate = DateTime.Now.Date;
+            if (day == -1)
+            {
+                // 昨天筛选只能到昨天
+                FilterEndDate = FilterStartDate;
+            }
+            else
+            {
+                FilterEndDate = DateTime.Now.Date;
+            }
             TriggerFilter();
             DoFilter();
         }
