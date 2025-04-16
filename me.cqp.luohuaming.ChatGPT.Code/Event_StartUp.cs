@@ -106,7 +106,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 
             _ = new MoodManager();
             _ = new SchedulerManager();
-
+            Picture.InitCache();
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
         }
     }

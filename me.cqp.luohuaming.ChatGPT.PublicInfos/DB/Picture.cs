@@ -27,6 +27,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public bool IsEmoji { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public int UseCount { get; set; }
 
         public DateTime AddTime { get; set; }
@@ -45,6 +47,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return;
             }
+            path = CommonHelper.GetRelativePath(path, MainSave.ImageDirectory);
 
             Picture picture = new()
             {
@@ -103,7 +106,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (emotion == Chat.ErrorMessage)
             {
-                CommonHelper.DebugLog("表情包推荐", $"请求失败");
+                MainSave.CQLog.Info("表情包推荐", $"请求失败");
                 return [];
             }
             CommonHelper.DebugLog("表情包推荐", $"转换后的情感：{emotion}");
@@ -116,38 +119,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             if (embedding.Length == 0)
             {
+                MainSave.CQLog.Info("表情包推荐", $"Embedding结果为空，无法推荐");
                 return [];
-            }
-
-            if (Cache.Count == 0)
-            {
-                using var db = SQLHelper.GetInstance();
-                var emojis = db.Queryable<Picture>().Where(x => x.IsEmoji).ToList();
-                foreach (var emoji in emojis)
-                {
-                    if (Cache.ContainsKey(emoji.Hash))
-                    {
-                        Cache[emoji.Hash] = emoji;
-                    }
-                    else
-                    {
-                        Cache.Add(emoji.Hash, emoji);
-                    }
-                }
-                if (Cache.Count > 0)
-                {
-                    MainSave.CQLog.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
-                }
             }
 
             var l = Cache.AsParallel()
                 .Select(x => new { Image = x.Value, Similarity = CosineSimilarity(embedding, x.Value.Embedding) })
                 .OrderByDescending(x => x.Similarity)
-                .Where(x => x.Similarity > 0)
+                .Where(x => x.Similarity > AppConfig.MinEmojiRecommendScore)
                 .Take(count);
             foreach (var item in l)
             {
-                CommonHelper.DebugLog("表情包结果", $"{item.Image.Hash}[{item.Similarity}%]: {item.Image.Description}");
+                CommonHelper.DebugLog("表情包结果", $"{item.Image.Hash}[{item.Similarity}]: {item.Image.Description}");
             }
             return l.Select(x => x.Image).ToList();
         }
@@ -156,6 +139,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             using var db = SQLHelper.GetInstance();
             db.Updateable(this).ExecuteCommand();
+        }
+
+        public void Delete()
+        {
+            IsDeleted = true;
+            Cache.Remove(Hash);
+            Update();
         }
 
         /// <summary>
@@ -186,6 +176,37 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             magnitudeB = Math.Sqrt(magnitudeB);
 
             return magnitudeA == 0 || magnitudeB == 0 ? 0.0 : dotProduct / (magnitudeA * magnitudeB);
+        }
+
+        public static void InitCache()
+        {
+            if (Cache.Count == 0)
+            {
+                using var db = SQLHelper.GetInstance();
+                var emojis = db.Queryable<Picture>().Where(x => x.IsEmoji && !x.IsDeleted).ToList();
+                foreach (var emoji in emojis)
+                {
+                    if (!File.Exists(emoji.FilePath) && !File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath)))
+                    {
+                        MainSave.CQLog.Info("表情包缓存", $"{emoji.Hash} 文件已不存在，标记为删除");
+                        emoji.IsDeleted = true;
+                        emoji.Update();
+                        continue;
+                    }
+                    if (Cache.ContainsKey(emoji.Hash))
+                    {
+                        Cache[emoji.Hash] = emoji;
+                    }
+                    else
+                    {
+                        Cache.Add(emoji.Hash, emoji);
+                    }
+                }
+                if (Cache.Count > 0)
+                {
+                    MainSave.CQLog.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
+                }
+            }
         }
     }
 }
