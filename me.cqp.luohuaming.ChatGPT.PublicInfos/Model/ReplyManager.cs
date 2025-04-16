@@ -101,6 +101,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public double ChangeReplyWilling(bool emoji, bool at, bool contain, long qq)
         {
+            CommonHelper.DebugLog("回复意愿更新", $"emoji={emoji}，at={at}，contain={contain}");
+
             MessageHoldCount++;
             if (qq == LastReplyQQ && (DateTime.Now - LastReplyTime).TotalMinutes < 2 && MessageHoldCount <= 5)
             {
@@ -143,7 +145,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyQQ = qq;
 
-            CommonHelper.DebugLog("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，会话模式：{ContextMode}，是否高回复模式：{HighReplyWilling}");
+            CommonHelper.DebugLog("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，回复倍率：{AppConfig.ReplyWillingAmplifier}，额外倍率：{baseProbablity}，最终计算结果：{ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier}");
 
             return ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier;
         }
