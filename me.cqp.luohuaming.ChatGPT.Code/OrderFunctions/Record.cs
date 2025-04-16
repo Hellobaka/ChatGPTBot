@@ -79,19 +79,20 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     if (reply == AppConfig.ChatEmptyResponse)
                     {
                         e.CQLog.Info("触发回复", "大模型拒绝了回答");
-                        return result;
+                        return new();
                     }
                     SendReply(reply, e.FromGroup, e.FromQQ);
 
                     replyManager.ChangeReplyWillingAfterSendingMessage();
 
                     SendEmoji(record, relationship, reply, e.FromGroup, e.FromQQ);
+                    return result;
                 }
                 else
                 {
                     replyManager.ChangeReplyWillingAfterNotSendingMessage();
+                    return new();
                 }
-                return result;
             }
             catch (Exception ex)
             {
@@ -173,7 +174,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 if (reply == AppConfig.ChatEmptyResponse)
                 {
                     e.CQLog.Info("触发回复", "大模型拒绝了回答");
-                    return result;
+                    return new();
                 }
                 SendReply(reply, -1, e.FromQQ);
                 SendEmoji(record, relationship, reply, -1, e.FromQQ);
@@ -337,21 +338,28 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     foreach (var emoji in emojis)
                     {
-                        if (File.Exists(emoji.FilePath))
+                        bool absoulute = File.Exists(emoji.FilePath);
+                        bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath));
+                        if (absoulute || relative)
                         {
-                            CommonHelper.DebugLog("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
-                            var message = CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory));
+                            MainSave.CQLog.Info("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
+                            var message = absoulute ? CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory))
+                                : CQApi.CQCode_Image(emoji.FilePath);
                             RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, message) : MainSave.CQApi.SendPrivateMessage(fromQQ, message));
                             emoji.UseCount++;
                             emoji.Update();
 
                             break;
                         }
+                        else
+                        {
+                            emoji.Delete();
+                        }
                     }
                 }
                 else
                 {
-                    CommonHelper.DebugLog("获取表情包", $"没有查询到可推荐表情包");
+                    MainSave.CQLog.Info("获取表情包", $"没有查询到可推荐表情包");
                 }
             }
         }
