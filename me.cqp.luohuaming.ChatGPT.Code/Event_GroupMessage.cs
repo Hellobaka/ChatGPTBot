@@ -22,7 +22,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     .Where(item => item.Judge(e.Message.Text)))
                 {
                     var r = item.Progress(e);
-                    if (r.Result && r.SendFlag)
+                    if (r.Result)
                     {
                         return r;
                     }

@@ -18,9 +18,14 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             };
             try
             {
-                foreach (var item in MainSave.Instances.Where(item => item.Judge(e.Message.Text)))
+                foreach (var item in MainSave.Instances.OrderByDescending(x => x.Priority)
+                            .Where(item => item.Judge(e.Message.Text)))
                 {
-                    return item.Progress(e);
+                    var r = item.Progress(e);
+                    if (r.Result)
+                    {
+                        return r;
+                    }
                 }
                 return result;
             }

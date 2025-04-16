@@ -41,7 +41,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             var record = ChatRecord.Create(e.FromGroup, e.FromQQ, e.Message.Text, e.Message.Id);
             if (AppConfig.Filters.Any(record.ParsedMessage.Contains))
             {
-                return result;
+                return new();
             }
             ChatRecord.InsertRecord(record);
 
