@@ -35,6 +35,8 @@
                         <TextBox x:Name="ChatBaseURL" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="ChatModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">接口调用超时（ms）:</TextBlock>
+                        <TextBox x:Name="ChatTimeout" Margin="0,5,0,0" />
 
                         <TextBlock
                             Margin="0,10,0,5"
@@ -52,6 +54,7 @@
                         <TextBox x:Name="SpliterUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="SpliterModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">本接口调用超时与 Chat 相同</TextBlock>
 
                         <TextBlock
                             Margin="0,10,0,5"
@@ -69,6 +72,7 @@
                         <TextBox x:Name="ImageDescriberUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="ImageDescriberModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">本接口调用超时与 Chat 相同</TextBlock>
 
                         <TextBlock
                             Margin="0,10,0,5"
@@ -84,6 +88,8 @@
                         <TextBox x:Name="EmbeddingUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="EmbeddingModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">接口调用超时（ms）:</TextBlock>
+                        <TextBox x:Name="EmbeddingTimeout" Margin="0,5,0,0" />
 
                         <TextBlock
                             Margin="0,10,0,5"
@@ -107,6 +113,8 @@
                         <TextBox x:Name="RerankUrl" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">模型名称:</TextBlock>
                         <TextBox x:Name="RerankModelName" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">接口调用超时（ms）:</TextBlock>
+                        <TextBox x:Name="RerankTimeout" Margin="0,5,0,0" />
 
                         <TextBlock
                             Margin="0,10,0,5"
@@ -141,6 +149,9 @@
                             <TextBlock>/chat/completions</TextBlock>
                         </StackPanel>
                         <TextBox x:Name="ImageGenerateBaseURL" Margin="0,5,0,0" />
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">接口调用超时（ms）:</TextBlock>
+                        <TextBox x:Name="ImageGenerationTimeout" Margin="0,5,0,0" />
+
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">绘图画布尺寸:</TextBlock>
                         <ComboBox x:Name="ImageGenerateSize" Margin="0,5,0,0">
                             <ComboBoxItem

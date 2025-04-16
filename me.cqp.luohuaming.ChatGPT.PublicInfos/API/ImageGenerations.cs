@@ -11,7 +11,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
     {
         public static string GetImageGenerationAsync(string prompt)
         {
-            ImageClient client = new("dall-e-3", new ApiKeyCredential(AppConfig.ImageGenerateAPIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.ImageGenerateBaseURL) });
+            ImageClient client = new("dall-e-3", new ApiKeyCredential(AppConfig.ImageGenerateAPIKey), new OpenAIClientOptions() { Endpoint = new(AppConfig.ImageGenerateBaseURL), NetworkTimeout = TimeSpan.FromMilliseconds(AppConfig.ImageGenerationTimeout) });
             GeneratedImage image = client.GenerateImage(prompt, new ImageGenerationOptions()
             {
                 Size = GetImageSize(),
