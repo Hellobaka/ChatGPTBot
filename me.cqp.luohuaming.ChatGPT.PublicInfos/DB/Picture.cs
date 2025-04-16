@@ -70,6 +70,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (Cache.ContainsKey(picture.Hash))
             {
+                MainSave.CQLog.Info("图片记录", $"重复的Hash: {picture.Hash}");
                 Cache[picture.Hash] = picture;
             }
             else
@@ -195,6 +196,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     }
                     if (Cache.ContainsKey(emoji.Hash))
                     {
+                        MainSave.CQLog.Info("表情包缓存", $"重复的Hash: {emoji.Hash}");
                         Cache[emoji.Hash] = emoji;
                     }
                     else
