@@ -127,10 +127,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 Mood mood = Enum.TryParse(split[1].ToLower(), out Mood v) ? v : Mood.None;
                 Stand stand = Enum.TryParse(split[0].ToLower(), out Stand v2) ? v2 : Stand.None;
-                if (mood == Mood.None || stand == Stand.None)
+                if (mood == Mood.None)
                 {
-                    MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
-                    return (Mood.neutral, Stand.neutrality);
+                    CommonHelper.DebugLog("情绪转换", $"无效的情绪转换：{split[1]}");
+                    mood = Mood.neutral;
+                }
+                if (stand == Stand.None)
+                {
+                    CommonHelper.DebugLog("情绪转换", $"无效的立场转换：{split[0]}");
+                    stand = Stand.neutrality;
                 }
 
                 CommonHelper.DebugLog("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
