@@ -152,7 +152,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public void ChangeReplyWillingAfterSendingMessage()
         {
-            ReplyWilling -= 0.3;
+            ReplyWilling -= 0.6;
             ContextMode = true;
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyTime = DateTime.Now;
