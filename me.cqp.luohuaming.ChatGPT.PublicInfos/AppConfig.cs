@@ -189,8 +189,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
             BotNicknames = ConfigHelper.GetConfig("BotNicknames", new List<string>() { BotName });
 
-            GroupPrompt = ConfigHelper.GetConfig("GroupPrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。");
-            PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。");
+            GroupPrompt = ConfigHelper.GetConfig("GroupPrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。,现在请你读读之前的聊天记录，然后给出日常且口语化的回复，平淡一些，尽量简短一些。感觉有趣也可以直接复读消息。请注意把握聊天内容，不要刻意突出自身学科背景，不要回复的太有条理，可以有个性，请回复时不要过多提及自身的背景。");
+            PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。现在请你读读之前的聊天记录，然后给出日常且口语化的回复，尽量简短一些。请注意把握聊天内容，不要刻意突出自身学科背景，不要回复的太有条理，可以有个性，请回复时不要过多提及自身的背景。");
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
             EnableSpliter = ConfigHelper.GetConfig("EnableSpliter", false);

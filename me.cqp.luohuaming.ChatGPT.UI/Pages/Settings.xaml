@@ -265,16 +265,16 @@
 
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">每次对话携带的上下文数量:</TextBlock>
                         <TextBox x:Name="ContextMaxLength" Margin="0,5,0,0" />
-                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">空聊天回应:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">不发送消息时的回应:</TextBlock>
                         <TextBox x:Name="ChatEmptyResponse" Margin="0,5,0,0" />
 
-                        <TextBlock Margin="0,10,0,0">私聊使用的默认 Prompt:</TextBlock>
+                        <TextBlock Margin="0,10,0,0">私聊使用的人格:</TextBlock>
                         <TextBox
                             x:Name="PrivatePrompt"
                             Margin="0,5,0,0"
                             AcceptsReturn="True"
                             TextWrapping="Wrap" />
-                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">群组使用的默认 Prompt:</TextBlock>
+                        <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">群组使用的人格:</TextBlock>
                         <TextBox
                             x:Name="GroupPrompt"
                             Margin="0,5,0,0"
