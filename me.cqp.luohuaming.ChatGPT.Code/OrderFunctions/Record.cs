@@ -105,31 +105,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private bool GetGroupBusy(long id)
-        {
-            if (InProgress.TryGetValue(id, out bool busy))
-            {
-                return busy;
-            }
-            else
-            {
-                InProgress.Add(id, false);
-                return false;
-            }
-        }
-
-        private void SetGroupBusy(long id, bool busy)
-        {
-            if (InProgress.ContainsKey(id))
-            {
-                InProgress[id] = busy;
-            }
-            else
-            {
-                InProgress.Add(id, busy);
-            }
-        }
-
         public FunctionResult Progress(CQPrivateMessageEventArgs e)
         {
             FunctionResult result = new()
@@ -225,7 +200,42 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return atCode.Any(x => x.Items["qq"] == MainSave.CurrentQQ.ToString());
         }
 
+        private bool GetGroupBusy(long id)
+        {
+            if (InProgress.TryGetValue(id, out bool busy))
+            {
+                return busy;
+            }
+            else
+            {
+                InProgress.Add(id, false);
+                return false;
+            }
+        }
+
+        private void SetGroupBusy(long id, bool busy)
+        {
+            if (InProgress.ContainsKey(id))
+            {
+                InProgress[id] = busy;
+            }
+            else
+            {
+                InProgress.Add(id, busy);
+            }
+        }
+
         private string CreateReply(Relationship relationship, ChatRecord record)
+        {
+            string prompt = BuildPrompt(relationship, record);
+            //CommonHelper.DebugLog("Prompt", prompt);
+            return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
+            [
+                new SystemChatMessage(prompt),
+            ], AppConfig.ChatModelName, Chat.Purpose.聊天);
+        }
+
+        public static string BuildPrompt(Relationship relationship, ChatRecord record)
         {
             if (relationship == null)
             {
@@ -281,15 +291,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 BuildPrivatePrompt(relationship, record, stringBuilder);
             }
 
-            string prompt = stringBuilder.ToString();
-            //CommonHelper.DebugLog("Prompt", prompt);
-            return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
-            [
-                new SystemChatMessage(prompt),
-            ], AppConfig.ChatModelName, Chat.Purpose.聊天);
+            return stringBuilder.ToString();
         }
 
-        private void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
+        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"现在你收到了`{relationship.Card ?? relationship.NickName}`说的:");
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
