@@ -74,19 +74,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
 
             if (DateTime.Now - WillingLastChangeTime > CurrentModeKeepInterval
-                || (!HighReplyWilling && MainSave.Random.NextDouble() < 0.1))
+                || (!HighReplyWilling && CommonHelper.NextDouble() < 0.1))
             {
                 if (HighReplyWilling)
                 {
                     HighReplyWilling = false;
                     ReplyWilling = 0.01;
-                    CurrentModeKeepInterval = TimeSpan.FromMinutes(MainSave.Random.Next(10, 20));
+                    CurrentModeKeepInterval = TimeSpan.FromMinutes(CommonHelper.Next(10, 20));
                 }
                 else
                 {
                     HighReplyWilling = true;
                     ReplyWilling = 1;
-                    CurrentModeKeepInterval = TimeSpan.FromMinutes(MainSave.Random.Next(3, 5));
+                    CurrentModeKeepInterval = TimeSpan.FromMinutes(CommonHelper.Next(3, 5));
                 }
                 WillingLastChangeTime = DateTime.Now;
                 MessageHoldCount = 0;
@@ -172,7 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
             else
             {
-                ReplyWilling += MainSave.Random.NextDouble(0.05, 0.1);
+                ReplyWilling += CommonHelper.NextDouble(0.05, 0.1);
             }
 
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));

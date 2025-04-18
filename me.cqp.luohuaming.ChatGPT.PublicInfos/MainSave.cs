@@ -22,7 +22,5 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static long CurrentQQ { get; set; }
 
         public static string RecordDirectory { get; set; }
-
-        public static Random Random { get; set; } = new Random();
     }
 }

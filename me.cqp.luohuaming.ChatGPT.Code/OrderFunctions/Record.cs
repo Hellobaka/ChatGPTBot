@@ -65,7 +65,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
-                double random = MainSave.Random.NextDouble();
+                double random = CommonHelper.NextDouble();
                 CommonHelper.DebugLog("触发回复", $"Random={random}, probablity={replyProbablity}");
                 if (random < replyProbablity)
                 {
@@ -330,7 +330,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
             MoodManager.Instance.UpdateMood(mood);
             relationship.UpdateFavourability(mood, stand);
-            if (AppConfig.EnableEmojiSend && MainSave.Random.Next(0, 100) < AppConfig.EmojiSendProbablity)
+            if (AppConfig.EnableEmojiSend && CommonHelper.Next(0, 100) < AppConfig.EmojiSendProbablity)
             {
                 CommonHelper.DebugLog("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
                 var emojis = Picture.GetRecommandEmoji(reply);
@@ -379,7 +379,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
                         double typeTime = item.Length * typeSpeed;
-                        int randomSleep = MainSave.Random.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
+                        int randomSleep = CommonHelper.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
                     }
                     RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, item) : MainSave.CQApi.SendPrivateMessage(fromQQ, item));

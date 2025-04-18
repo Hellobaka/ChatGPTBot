@@ -1,12 +1,11 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -88,8 +87,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             using var http = new HttpClient();
             try
             {
-                if (string.IsNullOrWhiteSpace(url)) return false;
-                if (!overwrite && File.Exists(Path.Combine(path, fileName))) return true;
+                if (string.IsNullOrWhiteSpace(url))
+                {
+                    return false;
+                }
+
+                if (!overwrite && File.Exists(Path.Combine(path, fileName)))
+                {
+                    return true;
+                }
+
                 var r = await http.GetAsync(url);
                 byte[] buffer = await r.Content.ReadAsByteArrayAsync();
                 Directory.CreateDirectory(path);
@@ -172,18 +179,44 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             return ls.ToArray();
         }
 
-        public static Random Random { get; set; } = new Random();
+        private static RNGCryptoServiceProvider Rng { get; set; } = new();
 
-        /// <summary>
-        /// 随机范围小数
-        /// </summary>
-        /// <param name="random"></param>
-        /// <param name="lower">0.x</param>
-        /// <param name="upper">0.x</param>
-        /// <returns></returns>
-        public static double NextDouble(this Random random, double lower, double upper)
+        public static int Next(int minValue, int maxValue)
         {
-            return random.NextDouble() * (upper - lower) + lower;
+            if (minValue >= maxValue)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            long diff = (long)maxValue - minValue;
+            byte[] uint32Buffer = new byte[4];
+            uint rand;
+            do
+            {
+                Rng.GetBytes(uint32Buffer);
+                rand = BitConverter.ToUInt32(uint32Buffer, 0);
+            }
+            while (rand >= (uint.MaxValue - (((uint.MaxValue % diff) + 1) % diff)));
+
+            return (int)(minValue + (rand % diff));
+        }
+
+        public static double NextDouble()
+        {
+            byte[] bytes = new byte[8];
+            Rng.GetBytes(bytes);
+            ulong ul = BitConverter.ToUInt64(bytes, 0) >> 11; // 53位精度
+            return ul / (double)(1UL << 53);
+        }
+
+        public static double NextDouble(double minValue, double maxValue)
+        {
+            if (minValue >= maxValue)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            return minValue + (maxValue - minValue) * NextDouble();
         }
 
         public static string GetRelativePath(string value, string currentDirectory)
@@ -193,14 +226,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 string fullPath = Path.GetFullPath(value).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
                 string currentDir = currentDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
 
-                if (fullPath.StartsWith(currentDir, StringComparison.OrdinalIgnoreCase))
-                {
-                    return fullPath.Substring(currentDir.Length);
-                }
-                else
-                {
-                    return fullPath;
-                }
+                return fullPath.StartsWith(currentDir, StringComparison.OrdinalIgnoreCase) ? fullPath.Substring(currentDir.Length) : fullPath;
             }
             else
             {
