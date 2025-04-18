@@ -65,8 +65,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
                 double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
-
-                if (MainSave.Random.NextDouble() < replyProbablity)
+                double random = MainSave.Random.NextDouble();
+                CommonHelper.DebugLog("触发回复", $"Random={random}, probablity={replyProbablity}");
+                if (random < replyProbablity)
                 {
                     SetGroupBusy(e.FromGroup, true);
 
