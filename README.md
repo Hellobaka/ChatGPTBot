@@ -21,9 +21,15 @@ Qdrant提供 Docker 版本
 ### 创建集合时崩溃？
 安装最新的[vc++运行库](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
+> [!WARNING]
+> 若更改Embedding的模型，请执行以下操作
+> 1. 重新配置Qdrant
+> 2. 从`core.db`中，删除`Picture`表
+
 ## 依赖文件
 - [libHarfBuzzSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libHarfBuzzSharp.dll)
 - [libSkiaSharp.dll](https://github.com/Hellobaka/BilibiliUpdateCheckBot/releases/download/2.0.0/libSkiaSharp.dll)
+- [SQLite.Interop.dll](https://github.com/Hellobaka/WordCloud/releases/download/1.0.0/SQLite.Interop.dll)
 - 放置在框架/加载器的
 - 1. 根目录 或者
   2. x86 文件夹 或者
@@ -55,8 +61,8 @@ Qdrant提供 Docker 版本
 | RemoveBlackListOrder             | .移除黑名单                                 | 移除黑名单命令                           |
 | BotName                          | ChatGPT                                    | 机器人名称（Prompt使用）                              |
 | BotNicknames                     | ["ChatGPT"]                                | 机器人昵称列表                           |
-| GroupPrompt                      | 胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。 | 群组的Prompt                           |
-| PrivatePrompt                    | 胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。 | 私聊的Prompt                           |
+| GroupPrompt                      | 胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。,现在请你读读之前的聊天记录，然后给出日常且口语化的回复，平淡一些，尽量简短一些。感觉有趣也可以直接复读消息。请注意把握聊天内容，不要刻意突出自身学科背景，不要回复的太有条理，可以有个性，请回复时不要过多提及自身的背景。 | 群组的Prompt                           |
+| PrivatePrompt                    | 胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。现在请你读读之前的聊天记录，然后给出日常且口语化的回复，尽量简短一些。请注意把握聊天内容，不要刻意突出自身学科背景，不要回复的太有条理，可以有个性，请回复时不要过多提及自身的背景。 | 私聊的Prompt                           |
 | EnableVision                     | true                                       | 是否启用视觉                        |
 | EnableSpliter                    | false                                      | 是否启用分段功能                        |
 | SpliterModelName                 | gpt-4o-mini                                | 使用的分段模型名称                      |
@@ -102,13 +108,19 @@ Qdrant提供 Docker 版本
 | QdrantAPIKey                     | aFZsX4Xe2pzWybnX61Vi                      | Qdrant 的API密钥                         |
 | QdrantSearchOnlyPerson           | false                                      | Qdrant 是否只搜索个人记忆                          |
 | ReplyWillingAmplifier           | 1                                      | 回复意愿倍率                          |
+|ImageGenerationTimeout |30000|图片生成接口超时(ms)|
+|RelationshipUpdateTime   |7|名片缓存过期时间(天)|
+|EmbeddingTimeout   |3000|Embedding接口超时(ms)|
+|RerankTimeout   |3000|Rerank接口超时(ms)|
+|ChatTimeout   |30000|聊天接口超时(ms)|
+|MemoryDimensions   |1024|向量数据库维度数|
 
 ## TODO
 - [ ] 使用 ToolCalling 扩展Bot能力：可能有联网搜索、主动记忆召回、主动记忆添加
 - [x] UI: 配置窗口
 - [x] UI: Token 用量统计 (分接口、月度、分小时、图表)
 - [ ] UI: 回复意愿、心情等，实时监看与修改
-- [ ] 实现对Vist变声器的TTS对接
+- [ ] ~实现对Vist变声器的TTS对接~
 - [ ] 睡觉时间段特殊回复
 - [ ] 知识库
 - [ ] 其他的饼
