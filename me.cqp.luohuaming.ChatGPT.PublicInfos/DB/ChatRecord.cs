@@ -171,6 +171,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         case CQFunction.Image:
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
+                            if (AppConfig.EnableVision is false)
+                            {
+                                stringBuilder.Append($"[图片]");
+                                break;
+                            }
 
                             (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
                             if (picture != null && !string.IsNullOrEmpty(picture.Description))
@@ -181,8 +186,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                 break;
                             }
                             // 禁用视觉或 启用视觉但开启仅表情包的配置时，图片不是表情包 或下载失败时
-                            if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji)
-                                || string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
+                            if ((!emoji && AppConfig.IgnoreNotEmoji) || string.IsNullOrEmpty(cachePath)
+                                || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
                             {
                                 stringBuilder.Append($"[图片]");
                                 // 配置关闭或失败，需要删除本次下载结果
