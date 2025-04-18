@@ -35,26 +35,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private static Dictionary<string, Picture> Cache { get; set; } = [];
 
-        public static void InsertImageDescription(CQCode cqcode, bool emoji, string description)
+        public static void InsertImageDescription(string filePath, string hash, bool emoji, string description)
         {
-            if (string.IsNullOrEmpty(description))
+            if (!File.Exists(filePath) || string.IsNullOrEmpty(hash))
             {
+                MainSave.CQLog.Error("图片缓存", $"文件不存在或Hash为空，无法记录");
                 return;
             }
-
-            string path = PictureDescriber.ReceiveImage(cqcode);
-            if (!File.Exists(path))
-            {
-                return;
-            }
-            path = CommonHelper.GetRelativePath(path, MainSave.ImageDirectory);
+            filePath = CommonHelper.GetRelativePath(filePath, MainSave.ImageDirectory);
 
             Picture picture = new()
             {
                 AddTime = DateTime.Now,
                 Description = description,
-                FilePath = path,
-                Hash = Path.GetFileNameWithoutExtension(cqcode.Items["file"]).ToUpper(),
+                FilePath = filePath,
+                Hash = hash.ToUpper(),
                 IsEmoji = emoji,
             };
             if (emoji)
@@ -82,20 +77,26 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             db.Insertable(picture).ExecuteCommand();
         }
 
-        public static Picture? GetPictureByHash(CQCode img)
+        public static (Picture? picture, string? cachePath, string? hash) TryGetImageHash(CQCode img, bool isEmoji)
         {
-            if (!img.IsImageCQCode)
+            if (!img.IsImageCQCode || (!isEmoji && AppConfig.IgnoreNotEmoji))
             {
-                return null;
+                return (null, null, null);
             }
-            string hash = Path.GetFileNameWithoutExtension(img.Items["file"]).ToUpper();
+            var filePath = PictureDescriber.ReceiveImage(img);
+            if (!File.Exists(filePath))
+            {
+                return (null, filePath, null);
+            }
+
+            string hash = PictureDescriber.ComputeImageHash(filePath);
             if (Cache.TryGetValue(hash, out Picture picture))
             {
-                return picture;
+                return (picture, filePath, hash);
             }
             using var db = SQLHelper.GetInstance();
 
-            return db.Queryable<Picture>().First(x => x.Hash == hash);
+            return (db.Queryable<Picture>().First(x => x.Hash == hash), filePath, hash);
         }
 
         public static List<Picture> GetRecommandEmoji(string text)

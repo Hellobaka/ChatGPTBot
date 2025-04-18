@@ -415,7 +415,7 @@
                 <ScrollViewer>
                     <StackPanel x:Name="EmojiContainer" Margin="16,16,22,16">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">启用图片处理:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">启用图片刮削:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableVision"
                                 Margin="10,0,0,0"

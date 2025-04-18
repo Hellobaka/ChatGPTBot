@@ -36,8 +36,8 @@
                 Content="Token统计"
                 IsSelected="True"
                 Tag="TokenStatistics" />
-            <ui:NavigationViewItem Content="Chat" Tag="Chat" />
             <ui:NavigationViewItem Content="设置" Tag="Settings" />
+            <ui:NavigationViewItem Content="表情包" Tag="Emoji" />
             <ui:NavigationViewItem Content="回复意愿" Tag="ReplyWilling" />
             <ui:NavigationViewItem Content="心情" Tag="Mood" />
             <ui:NavigationViewItem Content="关系" Tag="Relationship" />

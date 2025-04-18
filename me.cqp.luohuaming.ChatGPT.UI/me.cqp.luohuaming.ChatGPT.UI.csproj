@@ -83,8 +83,8 @@
     <Compile Include="ChatBubble.cs" />
     <Compile Include="Converter\Converters.cs" />
     <Compile Include="Model\Items.cs" />
-    <Compile Include="Pages\Chat.xaml.cs">
-      <DependentUpon>Chat.xaml</DependentUpon>
+    <Compile Include="Pages\Emoji.xaml.cs">
+      <DependentUpon>Emoji.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Knowledge.xaml.cs">
       <DependentUpon>Knowledge.xaml</DependentUpon>
@@ -123,7 +123,7 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Pages\Chat.xaml">
+    <Page Include="Pages\Emoji.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

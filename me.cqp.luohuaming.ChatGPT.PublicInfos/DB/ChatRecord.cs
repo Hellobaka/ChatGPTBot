@@ -172,27 +172,35 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
 
-                            var cache = Picture.GetPictureByHash(cqcode);
-                            if (cache != null && !string.IsNullOrEmpty(cache.Description))
+                            (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
+                            if (picture != null && !string.IsNullOrEmpty(picture.Description))
                             {
-                                stringBuilder.Append($"[这是一张图片，这是它的描述：{cache.Description}]");
+                                stringBuilder.Append($"[这是一张图片，这是它的描述：{picture.Description}]");
+                                // 从缓存或者数据库中检索到了同Hash，说明本次下载结果重复，需要删除
+                                PictureDescriber.DeleteImage(cachePath);
                                 break;
                             }
-                            // 需要缓存并获取图片描述
-                            if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji))
+                            // 禁用视觉或 启用视觉但开启仅表情包的配置时，图片不是表情包 或下载失败时
+                            if (AppConfig.EnableVision is false || (!emoji && AppConfig.IgnoreNotEmoji)
+                                || string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
                             {
                                 stringBuilder.Append($"[图片]");
+                                // 配置关闭或失败，需要删除本次下载结果
+                                PictureDescriber.DeleteImage(cachePath);
                                 continue;
                             }
-                            CommonHelper.DebugLog("图片描述", $"开始对图片 {cqcode.Items["file"]} 进行描述生成");
-                            string description = emoji ? PictureDescriber.DescribeEmoji(cqcode) : PictureDescriber.DescribePicture(cqcode);
+                            // 需要缓存并获取图片描述
+                            CommonHelper.DebugLog("图片描述", $"开始对图片 {hash} 进行描述生成");
+                            string description = emoji ? PictureDescriber.DescribeEmoji(cachePath) : PictureDescriber.DescribePicture(cachePath);
                             if (description == Chat.ErrorMessage)
                             {
                                 MainSave.CQLog.Error("图片描述", "描述失败，接口返回错误");
+                                // 获取描述失败，删除本次下载结果
+                                PictureDescriber.DeleteImage(cachePath);
                                 break;
                             }
-                            Picture.InsertImageDescription(cqcode, emoji, description);
-                            CommonHelper.DebugLog("图片描述", $"图片 {cqcode.Items["file"]} 的描述为：{description}");
+                            Picture.InsertImageDescription(cachePath, hash, emoji, description);
+                            CommonHelper.DebugLog("图片描述", $"图片 {hash} 的描述为：{description}");
                             stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
 
                             break;
