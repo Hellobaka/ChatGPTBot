@@ -82,9 +82,13 @@
     </ApplicationDefinition>
     <Compile Include="ChatBubble.cs" />
     <Compile Include="Converter\Converters.cs" />
+    <Compile Include="Model\Emoji.cs" />
     <Compile Include="Model\Items.cs" />
     <Compile Include="Pages\Emoji.xaml.cs">
       <DependentUpon>Emoji.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\EmojiEdit.xaml.cs">
+      <DependentUpon>EmojiEdit.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Knowledge.xaml.cs">
       <DependentUpon>Knowledge.xaml</DependentUpon>
@@ -124,6 +128,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Pages\Emoji.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\EmojiEdit.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -200,12 +208,21 @@
     <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF">
       <Version>2.0.0-rc5.4</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
+      <Version>9.0.4</Version>
+    </PackageReference>
     <PackageReference Include="ModernWpfUI">
       <Version>0.9.6</Version>
+    </PackageReference>
+    <PackageReference Include="PropertyChanged.Fody">
+      <Version>4.1.0</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.119</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="FodyWeavers.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
