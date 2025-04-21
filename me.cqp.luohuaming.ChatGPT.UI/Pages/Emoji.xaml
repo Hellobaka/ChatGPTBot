@@ -1,19 +1,264 @@
 ﻿<Page
-    x:Class="me.cqp.luohuaming.ChatGPT.UI.Pages.Chat"
+    x:Class="me.cqp.luohuaming.ChatGPT.UI.Pages.Emoji"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Chat"
-    d:DesignHeight="450"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="Emoji"
+    d:DesignHeight="850"
     d:DesignWidth="800"
+    Loaded="Page_Loaded"
     mc:Ignorable="d">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Page.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">我是谁？我在哪？</TextBlock>
-    </Grid>
+    <TabControl>
+        <TabItem Header="编辑">
+            <ui:ScrollViewerEx>
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" VerticalAlignment="Center">自然语言描述情绪：</TextBlock>
+                        <TextBox
+                            x:Name="QueryText"
+                            Grid.Column="1"
+                            ui:ControlHelper.PlaceholderText="放松且开心" />
+                        <Button
+                            x:Name="QueryButton"
+                            Grid.Column="2"
+                            Margin="5,0"
+                            Click="QueryButton_Click"
+                            Content="检索"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button
+                            x:Name="QueryResetButton"
+                            Grid.Column="3"
+                            Click="QueryResetButton_Click"
+                            Content="重置" />
+                    </Grid>
+                    <Expander Grid.Row="1">
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Text="{Binding RecommendCount, StringFormat=推荐 ({0}个)}" />
+                                <ui:ToggleSwitch
+                                    x:Name="RecommendDetailSwitch"
+                                    Margin="10,0"
+                                    OffContent="详细信息"
+                                    OnContent="详细信息" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+                            <DataGrid
+                                x:Name="RecommendDataGrid"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EnableRowVirtualization="True"
+                                HorizontalScrollBarVisibility="Auto"
+                                ItemsSource="{Binding RecommendEmojis}"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Binding="{Binding Checked}" />
+                                    <DataGridTemplateColumn Header="图">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image
+                                                    MaxWidth="100"
+                                                    MaxHeight="100"
+                                                    MouseDown="Image_MouseDown"
+                                                    RenderOptions.BitmapScalingMode="Fant"
+                                                    Source="{Binding ImageAbsoultePath}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn
+                                        Binding="{Binding Hash}"
+                                        Header="Hash"
+                                        Visibility="{Binding Source={x:Reference RecommendDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <DataGridTemplateColumn
+                                        Width="300"
+                                        Header="描述"
+                                        Visibility="{Binding Source={x:Reference RecommendDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Description}"
+                                                    TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn
+                                        Binding="{Binding EmbeddingDimensions}"
+                                        Header="Embedding维度"
+                                        Visibility="{Binding Source={x:Reference RecommendDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <DataGridTextColumn Binding="{Binding CosineSimilarity}" Header="余弦相似度" />
+                                    <DataGridTextColumn Binding="{Binding UseCount}" Header="使用次数" />
+                                    <DataGridTextColumn Binding="{Binding AddTime}" Header="添加时间" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <Button
+                                    x:Name="RecommendSelectAllButton"
+                                    Margin="5,0,0,0"
+                                    Click="RecommendSelectAllButton_Click"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                    全选
+                                </Button>
+                                <Button
+                                    x:Name="RecommendSelectNoneButton"
+                                    Margin="5,0,0,0"
+                                    Click="RecommendSelectNoneButton_Click">
+                                    全不选
+                                </Button>
+                                <Button
+                                    x:Name="RecommendDeleteButton"
+                                    Margin="5,0,0,0"
+                                    Click="RecommendBatchDeleteButton_Click">
+                                    删除
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+                    <Expander Grid.Row="2" IsExpanded="True">
+                        <Expander.Header>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Text="{Binding EmojiCount, StringFormat={}全部表情 ({0}个)}" />
+                                <ui:ToggleSwitch
+                                    x:Name="EmojiDetailSwitch"
+                                    Margin="10,0"
+                                    IsOn="True"
+                                    OffContent="详细信息"
+                                    OnContent="详细信息" />
+                            </StackPanel>
+                        </Expander.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+                            <DataGrid
+                                x:Name="EmojiDataGrid"
+                                AutoGenerateColumns="False"
+                                CanUserAddRows="False"
+                                CanUserDeleteRows="False"
+                                EnableRowVirtualization="True"
+                                HorizontalScrollBarVisibility="Auto"
+                                ItemsSource="{Binding Emojis}"
+                                SelectionMode="Single"
+                                SelectionUnit="FullRow"
+                                VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Columns>
+                                    <DataGridCheckBoxColumn Binding="{Binding Checked}" />
+                                    <DataGridTemplateColumn Header="图">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image
+                                                    MaxWidth="100"
+                                                    MaxHeight="100"
+                                                    MouseDown="Image_MouseDown"
+                                                    RenderOptions.BitmapScalingMode="Fant"
+                                                    Source="{Binding ImageAbsoultePath}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn
+                                        Binding="{Binding Hash}"
+                                        Header="Hash"
+                                        Visibility="{Binding Source={x:Reference EmojiDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <DataGridTemplateColumn
+                                        Width="300"
+                                        Header="描述"
+                                        Visibility="{Binding Source={x:Reference EmojiDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Description}"
+                                                    TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn
+                                        Binding="{Binding EmbeddingDimensions}"
+                                        Header="Embedding维度"
+                                        Visibility="{Binding Source={x:Reference EmojiDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <DataGridTextColumn Binding="{Binding UseCount}" Header="使用次数" />
+                                    <DataGridTemplateColumn Header="添加时间">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding AddTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"
+                                                    TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Header="操作">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button
+                                                        Margin="5,0,0,0"
+                                                        Click="EmojiEditButton_Click"
+                                                        Style="{StaticResource AccentButtonStyle}">
+                                                        编辑
+                                                    </Button>
+                                                    <Button Margin="5,0,0,0" Click="EmojiDeleteButton_Click">
+                                                        删除
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                <Button
+                                    x:Name="EmojiSelectAllButton"
+                                    Margin="5,0,0,0"
+                                    Click="EmojiSelectAllButton_Click"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                    全选
+                                </Button>
+                                <Button
+                                    x:Name="EmojiSelectNoneButton"
+                                    Margin="5,0,0,0"
+                                    Click="EmojiSelectNoneButton_Click">
+                                    全不选
+                                </Button>
+                                <Button
+                                    x:Name="EmojiDeleteButton"
+                                    Margin="5,0,0,0"
+                                    Click="EmojiBatchDeleteButton_Click">
+                                    删除
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Expander>
+                </Grid>
+            </ui:ScrollViewerEx>
+        </TabItem>
+        <TabItem Header="新增" />
+    </TabControl>
 </Page>

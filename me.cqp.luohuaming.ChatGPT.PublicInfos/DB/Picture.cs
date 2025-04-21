@@ -33,7 +33,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public DateTime AddTime { get; set; }
 
-        private static Dictionary<string, Picture> Cache { get; set; } = [];
+        public static event Action<Picture> OnPictureAdded;
+       
+        public static event Action<Picture> OnPictureRemoved;
+
+        [SugarColumn(IsIgnore = true)]
+        public static Dictionary<string, Picture> Cache { get; set; } = [];
 
         public static void InsertImageDescription(string filePath, string hash, bool emoji, string description)
         {
@@ -150,6 +155,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             Update();
         }
 
+        public static void Remove(Picture picture)
+        {
+            if (Cache.ContainsKey(picture.Hash))
+            {
+                Cache.Remove(picture.Hash);
+            }
+            OnPictureRemoved?.Invoke(picture);
+        }
+
         /// <summary>
         /// 余弦相似度
         /// </summary>
@@ -190,14 +204,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 {
                     if (!File.Exists(emoji.FilePath) && !File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath)))
                     {
-                        MainSave.CQLog.Info("表情包缓存", $"{emoji.Hash} 文件已不存在，标记为删除");
+                        MainSave.CQLog?.Info("表情包缓存", $"{emoji.Hash} 文件已不存在，标记为删除");
                         emoji.IsDeleted = true;
                         emoji.Update();
                         continue;
                     }
                     if (Cache.ContainsKey(emoji.Hash))
                     {
-                        MainSave.CQLog.Info("表情包缓存", $"重复的Hash: {emoji.Hash}");
+                        MainSave.CQLog?.Info("表情包缓存", $"重复的Hash: {emoji.Hash}");
                         Cache[emoji.Hash] = emoji;
                     }
                     else
@@ -207,7 +221,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 }
                 if (Cache.Count > 0)
                 {
-                    MainSave.CQLog.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
+                    MainSave.CQLog?.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
                 }
             }
         }

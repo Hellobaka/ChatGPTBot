@@ -47,6 +47,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             {
                 MainSave.AppDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 MainSave.RecordDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                MainSave.ImageDirectory = @"D:\Code\Another-Mirai-Native2\Another-Mirai-Native\bin\x86\Debug\net8.0-windows\data\image";
                 ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
                 if (ConfigHelper.Load() is false)
                 {
@@ -54,6 +55,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 }
                 AppConfig.Init();
                 SQLHelper.CreateDB();
+                Picture.InitCache();
                 //Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 //if (!qdrant.CheckConnection())
                 //{
