@@ -104,7 +104,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return (db.Queryable<Picture>().First(x => x.Hash == hash), filePath, hash);
         }
 
-        public static List<Picture> GetRecommandEmoji(string text)
+        public static List<(Picture emoji, double similarity)> GetRecommandEmoji(string text)
         {
             var emotion = Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
                 [
@@ -113,20 +113,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (emotion == Chat.ErrorMessage)
             {
-                MainSave.CQLog.Info("表情包推荐", $"请求失败");
+                MainSave.CQLog?.Info("表情包推荐", $"请求失败");
                 return [];
             }
-            CommonHelper.DebugLog("表情包推荐", $"转换后的情感：{emotion}");
+            MainSave.CQLog?.Info("表情包推荐", $"转换后的情感：{emotion}");
             var embedding = API.Embedding.GetEmbedding(emotion);
 
             return GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
         }
 
-        public static List<Picture> GetRecommandEmoji(float[] embedding, int count = 3)
+        public static List<(Picture emoji, double similarity)> GetRecommandEmoji(float[] embedding, int count = 3)
         {
             if (embedding.Length == 0)
             {
-                MainSave.CQLog.Info("表情包推荐", $"Embedding结果为空，无法推荐");
+                MainSave.CQLog?.Info("表情包推荐", $"Embedding结果为空，无法推荐");
                 return [];
             }
 
@@ -139,7 +139,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 CommonHelper.DebugLog("表情包结果", $"{item.Image.Hash}[{item.Similarity}]: {item.Image.Description}");
             }
-            return l.Select(x => x.Image).ToList();
+            return l.Select(x => (x.Image, x.Similarity)).ToList();
         }
 
         public void Update()
