@@ -340,7 +340,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         emojis = emojis.OrderBy(x => Guid.NewGuid()).ToList();
                     }
-                    foreach (var emoji in emojis)
+                    foreach ((Picture emoji, _) in emojis)
                     {
                         bool absoulute = File.Exists(emoji.FilePath);
                         bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath));

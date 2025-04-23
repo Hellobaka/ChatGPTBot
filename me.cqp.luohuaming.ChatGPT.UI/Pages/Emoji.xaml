@@ -14,6 +14,7 @@
     mc:Ignorable="d">
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
     </Page.Resources>
 
     <TabControl>
@@ -36,21 +37,36 @@
                         <TextBox
                             x:Name="QueryText"
                             Grid.Column="1"
-                            ui:ControlHelper.PlaceholderText="放松且开心" />
+                            ui:ControlHelper.PlaceholderText="放松且开心"
+                            AcceptsReturn="False"
+                            KeyDown="QueryText_KeyDown" />
                         <Button
                             x:Name="QueryButton"
                             Grid.Column="2"
                             Margin="5,0"
                             Click="QueryButton_Click"
-                            Content="检索"
-                            Style="{StaticResource AccentButtonStyle}" />
+                            IsEnabled="{Binding Querying, Converter={StaticResource BoolRevertConverter}}"
+                            Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center">检索</TextBlock>
+                                <ui:ProgressRing
+                                    Margin="10,0,0,0"
+                                    IsActive="True"
+                                    Visibility="{Binding Querying, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <ui:ProgressRing.Foreground>
+                                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                    </ui:ProgressRing.Foreground>
+                                </ui:ProgressRing>
+                            </StackPanel>
+                        </Button>
                         <Button
                             x:Name="QueryResetButton"
                             Grid.Column="3"
                             Click="QueryResetButton_Click"
-                            Content="重置" />
+                            Content="重置"
+                            IsEnabled="{Binding Querying, Converter={StaticResource BoolRevertConverter}}" />
                     </Grid>
-                    <Expander Grid.Row="1">
+                    <Expander x:Name="RecommendExpander" Grid.Row="1">
                         <Expander.Header>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock VerticalAlignment="Center" Text="{Binding RecommendCount, StringFormat=推荐 ({0}个)}" />
@@ -114,10 +130,39 @@
                                         Visibility="{Binding Source={x:Reference RecommendDetailSwitch}, Path=IsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     <DataGridTextColumn Binding="{Binding CosineSimilarity}" Header="余弦相似度" />
                                     <DataGridTextColumn Binding="{Binding UseCount}" Header="使用次数" />
-                                    <DataGridTextColumn Binding="{Binding AddTime}" Header="添加时间" />
+                                    <DataGridTemplateColumn Header="添加时间">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding AddTime, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"
+                                                    TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTemplateColumn Width="*" Header="操作">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button
+                                                        Margin="5,0,0,0"
+                                                        Click="EmojiEditButton_Click"
+                                                        Style="{StaticResource AccentButtonStyle}">
+                                                        编辑
+                                                    </Button>
+                                                    <Button Margin="5,0,0,0" Click="EmojiDeleteButton_Click">
+                                                        删除
+                                                    </Button>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                            <StackPanel
+                                Grid.Row="1"
+                                Margin="0,10,0,0"
+                                Orientation="Horizontal">
                                 <Button
                                     x:Name="RecommendSelectAllButton"
                                     Margin="5,0,0,0"
@@ -214,7 +259,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    <DataGridTemplateColumn Header="操作">
+                                    <DataGridTemplateColumn Width="*" Header="操作">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
@@ -233,7 +278,10 @@
                                     </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                            <StackPanel Grid.Row="1" Orientation="Horizontal">
+                            <StackPanel
+                                Grid.Row="1"
+                                Margin="0,10,0,0"
+                                Orientation="Horizontal">
                                 <Button
                                     x:Name="EmojiSelectAllButton"
                                     Margin="5,0,0,0"

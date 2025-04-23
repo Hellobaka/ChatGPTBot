@@ -24,10 +24,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public Model.Emoji Picture { get; set; }
 
-        public bool CorrectChecked { get; set; } = true;
-
-        public bool RedescribeChecked { get; set; }
-
         public bool Requesting { get; set; }
 
         public string ExtraDescription { get; set; }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace me.cqp.luohuaming.ChatGPT.UI
 {
@@ -28,17 +29,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI
 
         public static void ShowError(string message)
         {
-            MessageBox.Show(message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            Instance.Dispatcher.Invoke(() => MessageBox.Show(Instance, message, "错误", MessageBoxButton.OK, MessageBoxImage.Error));
         }
 
         public static void ShowInfo(string message)
         {
-            MessageBox.Show(message, "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+            Instance.Dispatcher.Invoke(() => MessageBox.Show(Instance, message, "提示", MessageBoxButton.OK, MessageBoxImage.Information));
         }
 
         public static bool ShowConfirm(string message)
         {
-            return MessageBox.Show(message, "提示", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+            return MessageBox.Show(Instance, message, "提示", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

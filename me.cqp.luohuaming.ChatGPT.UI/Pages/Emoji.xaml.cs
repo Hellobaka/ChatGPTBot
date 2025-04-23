@@ -1,10 +1,14 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using PropertyChanged;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -30,6 +34,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         [DoNotNotify]
         public bool PageLoaded { get; set; }
+
+        public bool Querying { get; set; }
 
         public int RecommendCount => RecommendEmojis.Count;
 
@@ -150,12 +156,54 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             RecommendEmojis.Remove(pic);
         }
 
-        private void QueryButton_Click(object sender, RoutedEventArgs e)
+        private async void QueryButton_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrEmpty(QueryText.Text))
+            {
+                MainWindow.ShowError("请输入要检索的文本");
+                return;
+            }
+            Querying = true;
+            try
+            {
+                RecommendEmojis.Clear();
+                string query = QueryText.Text;
+                List<(Picture emoji, double similarity)> pictures = [];
+                await Task.Run(() =>
+                {
+                    var embedding = PublicInfos.API.Embedding.GetEmbedding(query);
+                    pictures = Picture.GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
+                    if (pictures.Count == 0)
+                    {
+                        MainWindow.ShowError("没有找到符合条件的图片");
+                        return;
+                    }
+                });
+                foreach (var item in pictures)
+                {
+                    var emoji = Model.Emoji.ParseFromPicture(item.emoji);
+                    if (emoji != null)
+                    {
+                        emoji.CosineSimilarity = item.similarity;
+                        RecommendEmojis.Add(emoji);
+                    }
+                }
+                RecommendExpander.IsExpanded = true;
+            }
+            catch (Exception exc)
+            {
+                MainWindow.ShowError($"检索过程发生异常: {exc}");
+            }
+            finally
+            {
+                Querying = false;
+            }
         }
 
         private void QueryResetButton_Click(object sender, RoutedEventArgs e)
         {
+            QueryText.Text = string.Empty;
+            RecommendEmojis.Clear();
         }
 
         private void RecommendBatchDeleteButton_Click(object sender, RoutedEventArgs e)
@@ -183,6 +231,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             foreach (var item in Emojis)
             {
                 item.Checked = false;
+            }
+        }
+
+        private void QueryText_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                QueryButton_Click(sender, e);
             }
         }
     }
