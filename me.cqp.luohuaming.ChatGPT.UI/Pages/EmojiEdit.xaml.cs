@@ -140,7 +140,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 return;
             }
-            Embedding = Picture.Raw.Embedding;
+            Embedding = Picture.Raw?.Embedding ?? [];
             PictureDescription = Picture.Description;
             UpdateEmbeddingDisplay();
         }

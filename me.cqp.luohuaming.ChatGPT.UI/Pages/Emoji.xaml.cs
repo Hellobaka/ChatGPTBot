@@ -1,5 +1,7 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using Microsoft.Win32;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;
@@ -8,6 +10,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,9 +40,21 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public bool Querying { get; set; }
 
+        public bool Inserting { get; set; }
+
         public int RecommendCount => RecommendEmojis.Count;
 
         public ObservableCollection<Model.Emoji> RecommendEmojis { get; set; } = [];
+
+        public ObservableCollection<Model.Emoji> InsertEmojis { get; set; } = [];
+
+        public int InsertTaskCount => InsertEmojis.Count;
+
+        public int InsertTaskFinishedCount => InsertEmojis.Count(x => x.Finished);
+
+        public int InsertTaskSucceedCount => InsertEmojis.Count(x => x.Success);
+
+        public int EmojiInsertParallelCountValue => int.TryParse(EmojiInsertParallelCount.Text, out int value) ? value : -1;
 
         protected void OnPropertyChanged(string propertyName)
         {
@@ -65,6 +80,31 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 emoji.Raw.Delete();
                 Picture.Remove(emoji.Raw);
+            }
+        }
+
+        private async void EmojiRetryButton_Click(object sender, RoutedEventArgs e)
+        {
+            var emoji = (sender as Button).DataContext as Model.Emoji;
+            if (emoji == null)
+            {
+                MainWindow.ShowError($"重试表情包插入失败，所选表情包为null");
+            }
+            try
+            {
+                Inserting = true;
+                emoji.Finished = false;
+                emoji.Duplicated = false;
+                await InsertEmoji(emoji, true);
+            }
+            catch (Exception exc)
+            {
+                MainWindow.ShowError($"重试表情包插入失败，{exc}");
+            }
+            finally
+            {
+                emoji.Finished = true;
+                Inserting = false;
             }
         }
 
@@ -137,23 +177,32 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void Picture_OnPictureAdded(Picture picture)
         {
-            if (Emojis.Any(x => x.Hash == picture.Hash))
+            Dispatcher.BeginInvoke(() =>
             {
-                Emojis.Remove(Emojis.First(x => x.Hash == picture.Hash));
-            }
-            if (picture.IsEmoji)
-            {
-                Emojis.Add(Model.Emoji.ParseFromPicture(picture));
-            }
+                if (Emojis.Any(x => x.Hash == picture.Hash))
+                {
+                    Emojis.Remove(Emojis.First(x => x.Hash == picture.Hash));
+                }
+                if (picture.IsEmoji)
+                {
+                    Emojis.Add(Model.Emoji.ParseFromPicture(picture));
+                }
+            });
         }
 
         private void Picture_OnPictureRemoved(Picture picture)
         {
-            var pic = Emojis.FirstOrDefault(x => x.Hash == picture.Hash);
-            Emojis.Remove(pic);
+            Dispatcher.BeginInvoke(() =>
+            {
+                var pic = Emojis.FirstOrDefault(x => x.Hash == picture.Hash);
+                Emojis.Remove(pic);
 
-            pic = RecommendEmojis.FirstOrDefault(x => x.Hash == picture.Hash);
-            RecommendEmojis.Remove(pic);
+                pic = RecommendEmojis.FirstOrDefault(x => x.Hash == picture.Hash);
+                RecommendEmojis.Remove(pic);
+
+                pic = InsertEmojis.FirstOrDefault(x => x.Hash == picture.Hash);
+                InsertEmojis.Remove(pic);
+            });
         }
 
         private async void QueryButton_Click(object sender, RoutedEventArgs e)
@@ -239,6 +288,156 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             if (e.Key == Key.Enter)
             {
                 QueryButton_Click(sender, e);
+            }
+        }
+
+        private async void SelectImagesButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog()
+            {
+                Multiselect = true,
+                Filter = "图片文件|*.jpg;*.png;*.gif;*.jpeg;|所有文件|*.*",
+                CheckFileExists = true,
+            };
+            if (!(dialog.ShowDialog() ?? false))
+            {
+                return;
+            }
+            try
+            {
+                Inserting = true;
+                var files = dialog.FileNames;
+                foreach (var item in files)
+                {
+                    string newPath = Path.Combine(PictureDescriber.GetPictureCachePath(), Path.GetFileName(item));
+                    if (!File.Exists(newPath))
+                    {
+                        File.Copy(item, newPath, true);
+                    }
+                    var picture = new Model.Emoji
+                    {
+                        AddTime = DateTime.Now,
+                        Hash = PictureDescriber.ComputeImageHash(newPath),
+                        ImageAbsoultePath = newPath,
+                        FilePath = CommonHelper.GetRelativePath(newPath, MainSave.ImageDirectory),
+                    };
+                    try
+                    {
+                        var exist = InsertEmojis.FirstOrDefault(x => x.Hash == picture.Hash);
+                        if (exist != null)
+                        {
+                            InsertEmojis.Remove(exist);
+                        }
+                        InsertEmojis.Add(picture);
+                        NoticeInsertChanged();
+                    }
+                    catch { }
+                }
+                var taskArray = InsertEmojis.Where(x => !x.Finished);
+                if (EmojiInsertCanParallel.IsOn && EmojiInsertParallelCountValue > 0)
+                {
+                    var semaphore = new SemaphoreSlim(EmojiInsertParallelCountValue);
+                    var tasks = taskArray.Select(async x =>
+                    {
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            await InsertEmoji(x, false);
+                            NoticeInsertChanged();
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
+                    await Task.WhenAll(tasks);
+                }
+                else
+                {
+                    foreach (var item in taskArray)
+                    {
+                        await InsertEmoji(item, false);
+                        NoticeInsertChanged();
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                MainWindow.ShowError($"插入表情包失败：{exc}");
+            }
+            finally
+            {
+                Inserting = false;
+            }
+
+            void NoticeInsertChanged()
+            {
+                OnPropertyChanged(nameof(InsertTaskFinishedCount));
+                OnPropertyChanged(nameof(InsertTaskCount));
+                OnPropertyChanged(nameof(InsertTaskSucceedCount));
+                OnPropertyChanged(nameof(InsertEmojis));
+            }
+        }
+
+        private async Task InsertEmoji(Model.Emoji item, bool force)
+        {
+            try
+            {
+                if (!force && Picture.Cache.TryGetValue(item.Hash, out Picture raw))
+                {
+                    item.Duplicated = true;
+                    item.Raw = raw;
+                    item.Description = item.Raw.Description;
+                    item.EmbeddingDimensions = item.Raw.Embedding.Length;
+                    item.Success = true;
+                    return;
+                }
+                string description = await Task.Run(() => PictureDescriber.DescribeEmoji(item.ImageAbsoultePath));
+                if (string.IsNullOrEmpty(description) || description == Chat.ErrorMessage)
+                {
+                    return;
+                }
+                item.Description = description;
+                item.Raw = await Task.Run(() => Picture.InsertImageDescription(item.ImageAbsoultePath, item.Hash, true, description));
+                if (item.Raw == null)
+                {
+                    return;
+                }
+                item.EmbeddingDimensions = item.Raw.Embedding.Length;
+
+                item.Success = true;
+            }
+            catch (Exception exc)
+            {
+                CommonHelper.DebugLog("获取表情包描述", exc.ToString());
+                item.Success = false;
+            }
+            finally
+            {
+                item.Finished = true;
+            }
+        }
+
+        private void ClearInsertImagesButton_Click(object sender, RoutedEventArgs e)
+        {
+            InsertEmojis.Clear();
+        }
+
+        private void EmojiInsertParallelCount_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (EmojiInsertParallelCountValue <= 0)
+            {
+                MainWindow.ShowError("并行数量设置无效");
+                EmojiInsertParallelCount.Text = "3";
+            }
+        }
+
+        private void EmojiReloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            Emojis.Clear();
+            foreach (var item in Picture.Cache)
+            {
+                Emojis.Add(Model.Emoji.ParseFromPicture(item.Value));
             }
         }
     }

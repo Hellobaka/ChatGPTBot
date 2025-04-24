@@ -14,7 +14,10 @@
     mc:Ignorable="d">
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:BoolToVisibilityRevertConverter x:Key="BoolToVisibilityRevertConverter" />
         <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
+        <converter:InsertImageTaskListMultiConverter x:Key="InsertImageTaskListMultiConverter" />
+        <converter:InsertImageResultConverter x:Key="InsertImageResultConverter" />
     </Page.Resources>
 
     <TabControl>
@@ -301,12 +304,184 @@
                                     Click="EmojiBatchDeleteButton_Click">
                                     删除
                                 </Button>
+                                <Button
+                                    x:Name="EmojiReloadButton"
+                                    Margin="5,0,0,0"
+                                    Click="EmojiReloadButton_Click">
+                                    刷新
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Expander>
                 </Grid>
             </ui:ScrollViewerEx>
         </TabItem>
-        <TabItem Header="新增" />
+        <TabItem Header="新增">
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <Button
+                    x:Name="SelectInsertImagesButton"
+                    Margin="0,5"
+                    HorizontalAlignment="Stretch"
+                    Click="SelectImagesButton_Click"
+                    IsEnabled="{Binding Inserting, Converter={StaticResource BoolRevertConverter}}"
+                    Style="{StaticResource AccentButtonStyle}">
+                    选择图片
+                </Button>
+                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                    <ui:ToggleSwitch
+                        x:Name="EmojiInsertCanParallel"
+                        OffContent="允许并行"
+                        OnContent="允许并行" />
+                    <TextBlock VerticalAlignment="Center" Text="并行数量：" />
+                    <TextBox
+                        x:Name="EmojiInsertParallelCount"
+                        Margin="5,0"
+                        LostFocus="EmojiInsertParallelCount_LostFocus"
+                        Text="3" />
+                </StackPanel>
+                <GroupBox Grid.Row="2">
+                    <GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}">
+                                <TextBlock.Text>
+                                    <MultiBinding Converter="{StaticResource InsertImageTaskListMultiConverter}">
+                                        <Binding Path="InsertTaskFinishedCount" />
+                                        <Binding Path="InsertTaskCount" />
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                            <ui:ProgressRing
+                                Margin="10,0,0,0"
+                                IsActive="True"
+                                Visibility="{Binding Inserting, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <ui:ProgressRing.Foreground>
+                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                </ui:ProgressRing.Foreground>
+                            </ui:ProgressRing>
+                        </StackPanel>
+                    </GroupBox.Header>
+                    <DataGrid
+                        x:Name="AddPictureDataGrid"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        CanUserDeleteRows="False"
+                        EnableRowVirtualization="True"
+                        HorizontalScrollBarVisibility="Auto"
+                        ItemsSource="{Binding InsertEmojis}"
+                        SelectionMode="Single"
+                        SelectionUnit="FullRow"
+                        VerticalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Binding="{Binding Checked}" />
+                            <DataGridTemplateColumn Header="图">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image
+                                            MaxWidth="100"
+                                            MaxHeight="100"
+                                            MouseDown="Image_MouseDown"
+                                            RenderOptions.BitmapScalingMode="Fant"
+                                            Source="{Binding ImageAbsoultePath}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Binding="{Binding Hash}" Header="Hash" />
+                            <DataGridTemplateColumn Width="300" Header="路径">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Text="{Binding ImageAbsoultePath}"
+                                            TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="300" Header="描述">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Description}"
+                                            TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="*" Header="状态">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                TextWrapping="Wrap"
+                                                Visibility="{Binding Finished, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock.Text>
+                                                    <MultiBinding Converter="{StaticResource InsertImageResultConverter}">
+                                                        <Binding Path="Duplicated"/>
+                                                        <Binding Path="Success"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                            <ui:ProgressRing
+                                                Margin="10,0,0,0"
+                                                HorizontalAlignment="Center"
+                                                IsActive="True"
+                                                Visibility="{Binding Finished, Converter={StaticResource BoolToVisibilityRevertConverter}}">
+                                                <ui:ProgressRing.Foreground>
+                                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                                </ui:ProgressRing.Foreground>
+                                            </ui:ProgressRing>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="*" Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button
+                                                Margin="5,0,0,0"
+                                                Click="EmojiEditButton_Click"
+                                                IsEnabled="{Binding Source={x:Reference SelectInsertImagesButton}, Path=IsEnabled}"
+                                                Style="{StaticResource AccentButtonStyle}">
+                                                编辑
+                                            </Button>
+                                            <Button
+                                                Margin="5,0,0,0"
+                                                Click="EmojiRetryButton_Click"
+                                                IsEnabled="{Binding Source={x:Reference SelectInsertImagesButton}, Path=IsEnabled}">
+                                                重试
+                                            </Button>
+                                            <Button
+                                                Margin="5,0,0,0"
+                                                Click="EmojiDeleteButton_Click"
+                                                IsEnabled="{Binding Source={x:Reference SelectInsertImagesButton}, Path=IsEnabled}">
+                                                删除
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </GroupBox>
+                <Button
+                    x:Name="ClearInsertImagesButton"
+                    Grid.Row="3"
+                    Margin="0,5"
+                    HorizontalAlignment="Stretch"
+                    Click="ClearInsertImagesButton_Click"
+                    IsEnabled="{Binding Inserting, Converter={StaticResource BoolRevertConverter}}"
+                    Style="{StaticResource AccentButtonStyle}">
+                    清空
+                </Button>
+            </Grid>
+        </TabItem>
     </TabControl>
 </Page>

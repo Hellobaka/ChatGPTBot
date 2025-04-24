@@ -40,12 +40,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsIgnore = true)]
         public static Dictionary<string, Picture> Cache { get; set; } = [];
 
-        public static void InsertImageDescription(string filePath, string hash, bool emoji, string description)
+        public static Picture? InsertImageDescription(string filePath, string hash, bool emoji, string description)
         {
             if (!File.Exists(filePath) || string.IsNullOrEmpty(hash))
             {
                 MainSave.CQLog.Error("图片缓存", $"文件不存在或Hash为空，无法记录");
-                return;
+                return null;
             }
             filePath = CommonHelper.GetRelativePath(filePath, MainSave.ImageDirectory);
 
@@ -63,14 +63,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 if (embedding.Length == 0)
                 {
                     MainSave.CQLog.Error("图片记录", $"由于获取Embedding失败，无法记录");
-                    return;
+                    return null;
                 }
                 picture.Embedding = embedding;
             }
 
             if (Cache.ContainsKey(picture.Hash))
             {
-                MainSave.CQLog.Info("图片记录", $"重复的Hash: {picture.Hash}");
+                MainSave.CQLog?.Info("图片记录", $"重复的Hash: {picture.Hash}");
                 Cache[picture.Hash] = picture;
             }
             else
@@ -79,7 +79,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
 
             using var db = SQLHelper.GetInstance();
-            db.Insertable(picture).ExecuteCommand();
+            var exist = db.Queryable<Picture>().First(x => x.Hash == picture.Hash);
+            if (exist != null)
+            {
+                picture.Id = exist.Id;
+                db.Updateable(picture).ExecuteCommand();
+            }
+            else
+            {
+                picture.Id = db.Insertable(picture).ExecuteReturnIdentity();
+            }
+
+            OnPictureAdded?.Invoke(picture);
+            return picture;
         }
 
         public static (Picture? picture, string? cachePath, string? hash) TryGetImageHash(CQCode img, bool isEmoji)

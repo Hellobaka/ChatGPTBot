@@ -1,4 +1,6 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using PropertyChanged;
 using System;
 using System.Collections.Generic;
@@ -32,11 +34,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
 
         public Picture Raw { get; set; }
 
+        public bool Duplicated { get; set; }
+
+        public bool Finished { get; set; }
+
+        public bool Success { get; set; }
+
         public static Model.Emoji ParseFromPicture(Picture picture)
         {
             return new Model.Emoji
             {
-                ImageAbsoultePath = Path.GetFullPath(picture.FilePath),
+                ImageAbsoultePath = Path.Combine(MainSave.ImageDirectory, picture.FilePath),
                 FilePath = picture.FilePath,
                 Description = picture.Description,
                 Hash = picture.Hash,
