@@ -30,7 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return [];
             }
-            var memories = Qdrant.Instance.GetReleventCollection(record).Where(x => x.record.Id != record.Id);
+            var memories = Qdrant.Instance.GetReleventCollection(record).Where(x => x.record?.Id != record.Id);
             return memories.ToArray();
         }
     }

@@ -84,6 +84,7 @@
     <Compile Include="Converter\Converters.cs" />
     <Compile Include="Model\Emoji.cs" />
     <Compile Include="Model\Items.cs" />
+    <Compile Include="Model\MemoryNode.cs" />
     <Compile Include="Pages\Emoji.xaml.cs">
       <DependentUpon>Emoji.xaml</DependentUpon>
     </Compile>

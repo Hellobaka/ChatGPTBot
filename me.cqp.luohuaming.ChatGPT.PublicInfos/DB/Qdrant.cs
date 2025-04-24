@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -18,7 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private List<string> Collections { get; set; } = [];
 
-        private static string CollectionName { get; set; } = "ChatMemroy";
+        private static string CollectionName { get; set; } = "ChatMemory";
 
         public Qdrant(string host, ushort port)
         {
@@ -35,18 +36,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 using HttpClient client = new();
                 client.Timeout = TimeSpan.FromMilliseconds(timeout);
 
-                HttpRequestMessage request;
-                if (payload == null)
-                {
-                    request = new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}");
-                }
-                else
-                {
-                    request = new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}")
+                HttpRequestMessage request = payload == null
+                    ? new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}")
+                    : new HttpRequestMessage(new HttpMethod(method), $"http://{Host}:{Port}/{endpoint}")
                     {
                         Content = new StringContent(payload, Encoding.UTF8, "application/json")
                     };
-                }
                 request.Headers.Add("api-key", AppConfig.QdrantAPIKey);
                 HttpResponseMessage response = client.SendAsync(request).Result;
                 result = response.Content.ReadAsStringAsync().Result;
@@ -64,7 +59,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool CheckConnection()
+        public bool GetCollections()
         {
             try
             {
@@ -83,6 +78,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             if (Collections.Contains(CollectionName))
             {
                 return true;
+            }
+            else if (Collections.Contains("ChatMemroy"))
+            {
+                // 由于旧版本Typo错误，此处需要尝试进行集合改名
+                // 检查Qdrant进程是否在本地，若在本地则先关闭Qdrant，之后修改集合名称，随后再启动
+
+
             }
             try
             {
@@ -150,10 +152,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         }
                     }
                 }.ToJson(), "PUT");
-                string result = r["status"].ToString();
+                string resultStr = r["status"].ToString();
                 string status = r["result"]["status"].ToString();
 
-                return result == "ok" && (status == "acknowledged" || status == "completed");
+                bool result = resultStr == "ok" && (status == "acknowledged" || status == "completed");
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -182,28 +186,23 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 };
                 if (record.GroupID > 0)
                 {
-                    if (AppConfig.QdrantSearchOnlyPerson)
-                    {
-                        filter = new
+                    filter = AppConfig.QdrantSearchOnlyPerson
+                        ? (new
                         {
                             key = "user_id",
                             match = new
                             {
                                 value = $"{record.GroupID}_{record.QQ}"
                             }
-                        };
-                    }
-                    else
-                    {
-                        filter = new
+                        })
+                        : (new
                         {
                             key = "user_id",
                             match = new
                             {
                                 text = $"{record.GroupID}_"
                             }
-                        };
-                    }
+                        });
                 }
                 else
                 {
@@ -270,6 +269,57 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 MainSave.CQLog.Error("向量查询", $"输入: {record.Message_NoAppendInfo}，查询失败：{ex.Message}\n{ex.StackTrace}");
                 return [];
+            }
+        }
+
+        public bool Delete(int id)
+        {
+            try
+            {
+                var r = Request($"collections/{CollectionName}/points/delete?wait=true", new
+                {
+                    points = new int[] { id },
+                }.ToJson(), "POST");
+                bool ok = r?["status"]?.ToString() == "ok";
+
+                return ok;
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("Qdrant删除", $"删除失败：{ex.Message}\n{ex.StackTrace}");
+                return false;
+            }
+        }
+
+        public bool DropCollection()
+        {
+            try
+            {
+                var r = Request($"collections/{CollectionName}", null, "DELETE");
+                bool ok = r?["status"]?.ToString() == "ok";
+
+                return ok;
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("Qdrant删除集合", $"删除失败：{ex.Message}\n{ex.StackTrace}");
+                return false;
+            }
+        }
+
+        public int GetCollectionCount()
+        {
+            try
+            {
+                var r = Request($"collections/{CollectionName}/points/count", new
+                {
+                    exact = true,
+                }.ToJson(), "POST");
+                return r?["result"]?["count"]?.ToObject<int>() ?? 0;
+            }
+            catch
+            {
+                return 0;
             }
         }
     }

@@ -2,18 +2,201 @@
     x:Class="me.cqp.luohuaming.ChatGPT.UI.Pages.Memory"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Converter"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="Memory"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    Loaded="Page_Loaded"
     mc:Ignorable="d">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:BoolToVisibilityRevertConverter x:Key="BoolToVisibilityRevertConverter" />
+        <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
+        <converter:InsertImageTaskListMultiConverter x:Key="InsertImageTaskListMultiConverter" />
+        <converter:InsertImageResultConverter x:Key="InsertImageResultConverter" />
+    </Page.Resources>
 
-    <Grid>
+    <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">我是谁？我在哪？</TextBlock>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock
+                    x:Name="CollectionCountTextBlock"
+                    VerticalAlignment="Center"
+                    Foreground="Gray">
+                    Qdrant节点数量：-
+                </TextBlock>
+                <Button
+                    x:Name="ReloadQdrantButton"
+                    Margin="10,0,0,0"
+                    Click="ReloadQdrantButton_Click"
+                    IsEnabled="{Binding ReloadBusy, Converter={StaticResource BoolRevertConverter}}">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">刷新</TextBlock>
+                            <ui:ProgressRing
+                                Margin="10,0,0,0"
+                                IsActive="True"
+                                Visibility="{Binding ReloadBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <ui:ProgressRing.Foreground>
+                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                </ui:ProgressRing.Foreground>
+                            </ui:ProgressRing>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+            </StackPanel>
+            <Grid Grid.Row="1" Margin="0,10,0,0">
+                <ui:ToggleSwitch
+                    x:Name="GroupSelector"
+                    OffContent="私聊"
+                    OnContent="群组"
+                    Toggled="GroupSelector_Toggled" />
+            </Grid>
+            <Grid Grid.Row="2" Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center">
+                    群号：
+                </TextBlock>
+                <TextBox
+                    x:Name="GroupIdTextBox"
+                    Grid.Column="1"
+                    IsEnabled="{Binding QueryBusy, Converter={StaticResource BoolRevertConverter}}" />
+                <TextBlock
+                    Grid.Column="2"
+                    Margin="16,0,8,0"
+                    VerticalAlignment="Center">
+                    QQ：
+                </TextBlock>
+                <TextBox
+                    x:Name="QqTextBox"
+                    Grid.Column="3"
+                    IsEnabled="{Binding QueryBusy, Converter={StaticResource BoolRevertConverter}}" />
+                <TextBlock
+                    Grid.Column="4"
+                    Margin="16,0,8,0"
+                    VerticalAlignment="Center">
+                    查询内容：
+                </TextBlock>
+                <TextBox
+                    x:Name="QueryTextBox"
+                    Grid.Column="5"
+                    IsEnabled="{Binding QueryBusy, Converter={StaticResource BoolRevertConverter}}" />
+                <Button
+                    Grid.Column="6"
+                    Margin="10,0,0,0"
+                    Click="QueryButton_Click"
+                    IsEnabled="{Binding QueryBusy, Converter={StaticResource BoolRevertConverter}}"
+                    Style="{StaticResource AccentButtonStyle}">
+                    <Button.Content>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">查询</TextBlock>
+                            <ui:ProgressRing
+                                Margin="10,0,0,0"
+                                IsActive="True"
+                                Visibility="{Binding QueryBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <ui:ProgressRing.Foreground>
+                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                </ui:ProgressRing.Foreground>
+                            </ui:ProgressRing>
+                        </StackPanel>
+                    </Button.Content>
+                </Button>
+            </Grid>
+            <TextBlock
+                Grid.Row="3"
+                Margin="0,0,0,10"
+                Foreground="Red"
+                Text="{Binding ErrorContent}"
+                Visibility="{Binding ShowError, Converter={StaticResource BoolToVisibilityConverter}}" />
+        </Grid>
+        <DataGrid
+            x:Name="MemoryDataGrid"
+            Grid.Row="1"
+            Margin="0,0,0,16"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            EnableRowVirtualization="True"
+            HorizontalScrollBarVisibility="Auto"
+            ItemsSource="{Binding Memories, RelativeSource={RelativeSource AncestorType=Page}}"
+            SelectionMode="Single"
+            SelectionUnit="FullRow"
+            VerticalScrollBarVisibility="Auto">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding MessageId}" Header="消息ID" />
+                <DataGridTemplateColumn Width="700" Header="内容">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding Message}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Binding="{Binding GroupId}" Header="群" />
+                <DataGridTextColumn Binding="{Binding QQ}" Header="QQ" />
+                <DataGridTextColumn Binding="{Binding Score, StringFormat=F2}" Header="分数" />
+                <DataGridTextColumn Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}" Header="添加时间" />
+                <DataGridTemplateColumn Width="100" Header="操作">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button
+                                HorizontalAlignment="Stretch"
+                                Click="DeleteButton_Click"
+                                Content="删除"
+                                IsEnabled="{Binding Source={x:Reference RebuildButton}, Path=IsEnabled}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button
+            x:Name="RebuildButton"
+            Grid.Row="2"
+            HorizontalAlignment="Stretch"
+            Click="RebuildButton_Click"
+            IsEnabled="{Binding RebuildBusy, Converter={StaticResource BoolRevertConverter}}"
+            Style="{StaticResource ErrorButtonStyle}">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock VerticalAlignment="Center">重建记忆库</TextBlock>
+                    <ui:ProgressRing
+                        Margin="10,0,0,0"
+                        IsActive="True"
+                        Visibility="{Binding RebuildBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ui:ProgressRing.Foreground>
+                            <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                        </ui:ProgressRing.Foreground>
+                    </ui:ProgressRing>
+                </StackPanel>
+            </Button.Content>
+        </Button>
     </Grid>
 </Page>

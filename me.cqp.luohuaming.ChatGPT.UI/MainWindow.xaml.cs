@@ -57,11 +57,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 AppConfig.Init();
                 SQLHelper.CreateDB();
                 Picture.InitCache();
-                //Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
-                //if (!qdrant.CheckConnection())
-                //{
-                //    ShowError("Qdrant Connection Failed.");
-                //}
+                Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
+                if (!qdrant.GetCollections())
+                {
+                    ShowError("Qdrant Connection Failed.");
+                }
             }
 
             Topmost = false;

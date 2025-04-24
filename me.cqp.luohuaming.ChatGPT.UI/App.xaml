@@ -11,6 +11,12 @@
                 <ui:ThemeResources />
                 <ui:XamlControlsResources />
             </ResourceDictionary.MergedDictionaries>
+            <Style
+                x:Key="ErrorButtonStyle"
+                BasedOn="{StaticResource DefaultButtonStyle}"
+                TargetType="Button">
+                <Setter Property="Background" Value="#FF4D4F" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
