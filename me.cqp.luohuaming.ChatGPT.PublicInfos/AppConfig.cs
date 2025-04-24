@@ -160,6 +160,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static double MinEmojiRecommendScore { get; set; } = 0.5;
 
+        public static bool OnlySaveEmojiPicture { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -246,6 +248,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ImageGenerationTimeout = ConfigHelper.GetConfig("ImageGenerationTimeout", 30000);
             MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
             MinEmojiRecommendScore = ConfigHelper.GetConfig("MinEmojiRecommendScore", (double)0.5);
+            OnlySaveEmojiPicture = ConfigHelper.GetConfig("OnlySaveEmojiPicture", true);
 
             ConfigHelper.EnableHotReload();
         }

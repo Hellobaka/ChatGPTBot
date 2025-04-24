@@ -181,8 +181,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                             if (picture != null && !string.IsNullOrEmpty(picture.Description))
                             {
                                 stringBuilder.Append($"[这是一张图片，这是它的描述：{picture.Description}]");
-                                // 从缓存或者数据库中检索到了同Hash，说明本次下载结果重复，需要删除
-                                PictureDescriber.DeleteImage(cachePath);
                                 break;
                             }
                             // 禁用视觉或 启用视觉但开启仅表情包的配置时，图片不是表情包 或下载失败时
@@ -205,6 +203,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                 break;
                             }
                             Picture.InsertImageDescription(cachePath, hash, emoji, description);
+                            if (!emoji && AppConfig.OnlySaveEmojiPicture)
+                            {
+                                // 配置只保存表情包图片
+                                PictureDescriber.DeleteImage(cachePath);
+                            }
                             CommonHelper.DebugLog("图片描述", $"图片 {hash} 的描述为：{description}");
                             stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
 

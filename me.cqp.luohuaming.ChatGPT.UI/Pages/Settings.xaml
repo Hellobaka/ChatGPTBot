@@ -452,6 +452,14 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">只保存表情包图片:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="OnlySaveEmojiPicture"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
 
                     </StackPanel>
                 </ScrollViewer>

@@ -54,7 +54,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     return null;
                 }
                 string newPath = Path.Combine(GetPictureCachePath(), Path.GetFileName(path));
-                File.Move(path, newPath);
+                if (!File.Exists(newPath))
+                {
+                    File.Move(path, newPath);
+                }
+                else
+                {
+                    File.Delete(path);
+                }
                 CommonHelper.DebugLog("缓存图片", $"图片缓存成功");
 
                 return newPath;
