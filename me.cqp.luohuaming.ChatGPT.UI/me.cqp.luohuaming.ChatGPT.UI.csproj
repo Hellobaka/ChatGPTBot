@@ -220,6 +220,9 @@
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.119</Version>
     </PackageReference>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
+      <Version>6.1.0</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="FodyWeavers.xml" />
