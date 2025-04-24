@@ -481,5 +481,62 @@
                 </Button>
             </Grid>
         </TabItem>
+        <TabItem Header="维护">
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <Button
+                    x:Name="MaintClearButton"
+                    Margin="0,5"
+                    HorizontalAlignment="Stretch"
+                    Click="MaintClearButton_Click"
+                    Style="{StaticResource ErrorButtonStyle}">
+                    重建图片数据库
+                </Button>
+                <Button
+                    x:Name="MaintRebuildEmbeddingButton"
+                    Grid.Row="1"
+                    Margin="0,5"
+                    HorizontalAlignment="Stretch"
+                    Click="MaintRebuildEmbeddingButton_Click"
+                    Style="{StaticResource ErrorButtonStyle}">
+                    重建表情包所有Embedding
+                </Button>
+                <GroupBox
+                    Grid.Row="2"
+                    Margin="0,5"
+                    Header="维护状态">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ui:ProgressRing
+                            x:Name="MaintanceRunningStatus"
+                            Margin="0,0,10,0"
+                            IsActive="True"
+                            Visibility="Collapsed" />
+                        <TextBlock
+                            x:Name="MaintanceStatus"
+                            Grid.Column="1"
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Center">
+                            空闲...
+                        </TextBlock>
+                        <ui:ProgressBar
+                            x:Name="MaintanceProgress"
+                            Grid.Column="2"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            Maximum="100"
+                            Value="0" />
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </TabItem>
     </TabControl>
 </Page>

@@ -440,5 +440,130 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 Emojis.Add(Model.Emoji.ParseFromPicture(item.Value));
             }
         }
+
+        private async void MaintRebuildEmbeddingButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!MainWindow.ShowConfirm("确认要重建Embedding吗？此操作应该只有在更换Embedding模型之后进行。"))
+            {
+                return;
+            }
+            try
+            {
+                int total = Picture.Cache.Count;
+                int successCount = 0;
+
+                UpdateMaintStatus(true, successCount, total);
+
+                await Task.Run(() =>
+                {
+                    // 先尝试一个，测试Embedding接口是否正常
+                    if (!UpdateEmbedding(Picture.Cache.FirstOrDefault().Value))
+                    {
+                        MainWindow.ShowError("Embedding接口异常，无法重建");
+                        return;
+                    }
+                    successCount++;
+                    UpdateMaintStatus(true, successCount, total);
+
+                    var array = Picture.Cache.Values.Skip(1).ToArray();
+                    List<Picture> failPictures = [];
+                    Parallel.ForEach(array, new ParallelOptions { MaxDegreeOfParallelism = 3 }, (item) =>
+                    {
+                        if (UpdateEmbedding(item))
+                        {
+                            successCount++;
+                            UpdateMaintStatus(true, successCount, total);
+                        }
+                        else
+                        {
+                            failPictures.Add(item);
+                        }
+                    });
+                    foreach (var item in failPictures)
+                    {
+                        if (UpdateEmbedding(item))
+                        {
+                            successCount++;
+                            UpdateMaintStatus(true, successCount, total);
+                        }
+                    }
+                    if (successCount == total)
+                    {
+                        MainWindow.ShowInfo($"Embedding 重建完成，共计: {total} 个");
+                    }
+                    else
+                    {
+                        MainWindow.ShowError($"Embedding 重建完成，成功: {successCount} 个，失败: {total - successCount} 个");
+                    }
+                    Picture.InitCache();
+                });
+                EmojiReloadButton_Click(sender, e);
+            }
+            catch (Exception exc)
+            {
+                MainWindow.ShowError($"重建过程发生异常：{exc}");
+            }
+            finally
+            {
+                UpdateMaintStatus(true, -1, -1);
+            }
+
+            bool UpdateEmbedding(Picture emoji)
+            {
+                try
+                {
+                    var embedding = Embedding.GetEmbedding(emoji.Description);
+                    if (embedding.Length == 0)
+                    {
+                        return false;
+                    }
+                    emoji.Embedding = embedding;
+                    emoji.Update();
+                    return true;
+                }
+                catch (Exception e)
+                {
+                    MainSave.CQLog?.Info("Embedding重建", $"Hash={emoji.Hash} 请求失败：{e}");
+                    return false;
+                }
+            }
+        }
+
+        private async void MaintClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!MainWindow.ShowConfirm("确认要清空图片数据库吗？此操作不可逆"))
+            {
+                return;
+            }
+            await Task.Run(() =>
+            {
+                try
+                {
+                    Picture.DropAndRebuildTable();
+                    Picture.InitCache();
+
+                    MainWindow.ShowInfo("图片数据库清空成功");
+                }
+                catch (Exception exc)
+                {
+                    MainWindow.ShowError($"清空图片数据库失败：{exc}");
+                }
+            });
+            EmojiReloadButton_Click(sender, e);
+        }
+
+        private void UpdateMaintStatus(bool running, int current, int max)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                MaintanceRunningStatus.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
+                if (current > 0 && max > 0)
+                {
+                    MaintanceStatus.Text = $"进度：{current}/{max}";
+                    MaintanceProgress.Value = current;
+                    MaintanceProgress.Maximum = max;
+                }
+            });
+        }
     }
 }

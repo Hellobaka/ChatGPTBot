@@ -5,6 +5,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
     public static class SQLHelper
     {
+        public static object CommonLock = new object();
+
         public static SqlSugarClient GetInstance()
         {
             SqlSugarClient db = new(new ConnectionConfig()

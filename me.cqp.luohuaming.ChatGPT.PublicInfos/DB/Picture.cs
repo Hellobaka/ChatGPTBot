@@ -34,7 +34,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public DateTime AddTime { get; set; }
 
         public static event Action<Picture> OnPictureAdded;
-       
+
         public static event Action<Picture> OnPictureRemoved;
 
         [SugarColumn(IsIgnore = true)]
@@ -156,8 +156,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public void Update()
         {
-            using var db = SQLHelper.GetInstance();
-            db.Updateable(this).ExecuteCommand();
+            lock (SQLHelper.CommonLock)
+            {
+                using var db = SQLHelper.GetInstance();
+                db.Updateable(this).ExecuteCommand();
+            }
         }
 
         public void Delete()
@@ -165,6 +168,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             IsDeleted = true;
             Cache.Remove(Hash);
             Update();
+        }
+
+        public static void DropAndRebuildTable()
+        {
+            using var db = SQLHelper.GetInstance();
+            db.DbMaintenance.DropTable<Picture>();
+
+            db.CodeFirst.InitTables(typeof(Picture));
         }
 
         public static void Remove(Picture picture)
@@ -208,33 +219,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void InitCache()
         {
-            if (Cache.Count == 0)
+            Cache.Clear();
+
+            using var db = SQLHelper.GetInstance();
+            var emojis = db.Queryable<Picture>().Where(x => x.IsEmoji && !x.IsDeleted).ToList();
+            foreach (var emoji in emojis)
             {
-                using var db = SQLHelper.GetInstance();
-                var emojis = db.Queryable<Picture>().Where(x => x.IsEmoji && !x.IsDeleted).ToList();
-                foreach (var emoji in emojis)
+                if (!File.Exists(emoji.FilePath) && !File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath)))
                 {
-                    if (!File.Exists(emoji.FilePath) && !File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath)))
-                    {
-                        MainSave.CQLog?.Info("表情包缓存", $"{emoji.Hash} 文件已不存在，标记为删除");
-                        emoji.IsDeleted = true;
-                        emoji.Update();
-                        continue;
-                    }
-                    if (Cache.ContainsKey(emoji.Hash))
-                    {
-                        MainSave.CQLog?.Info("表情包缓存", $"重复的Hash: {emoji.Hash}");
-                        Cache[emoji.Hash] = emoji;
-                    }
-                    else
-                    {
-                        Cache.Add(emoji.Hash, emoji);
-                    }
+                    MainSave.CQLog?.Info("表情包缓存", $"{emoji.Hash} 文件已不存在，标记为删除");
+                    emoji.IsDeleted = true;
+                    emoji.Update();
+                    continue;
                 }
-                if (Cache.Count > 0)
+                if (Cache.ContainsKey(emoji.Hash))
                 {
-                    MainSave.CQLog?.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
+                    MainSave.CQLog?.Info("表情包缓存", $"重复的Hash: {emoji.Hash}");
+                    Cache[emoji.Hash] = emoji;
                 }
+                else
+                {
+                    Cache.Add(emoji.Hash, emoji);
+                }
+            }
+            if (Cache.Count > 0)
+            {
+                MainSave.CQLog?.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
             }
         }
     }
