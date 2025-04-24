@@ -2,9 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Management;
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -81,10 +83,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             else if (Collections.Contains("ChatMemroy"))
             {
-                // 由于旧版本Typo错误，此处需要尝试进行集合改名
-                // 检查Qdrant进程是否在本地，若在本地则先关闭Qdrant，之后修改集合名称，随后再启动
-
-
+                // 由于旧版本发生Typo错误，此处需要进行自动修正
+                // 检查Qdrant进程是否在本地，若在本地则先关闭Qdrant，之后修改集合名称，随后再启动qdrant
+                if (!RepairCollectionTypoIfNeeded())
+                {
+                    MainSave.CQLog?.Error("Qdrant集合修复", "自动修复集合名失败");
+                    return false;
+                }
+                return true;
             }
             try
             {
@@ -321,6 +327,82 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return 0;
             }
+        }
+
+        /// <summary>
+        /// 修复Qdrant本地集合名拼写错误（ChatMemroy→ChatMemory），需本地部署Qdrant且有操作权限
+        /// </summary>
+        /// <returns>修复是否成功</returns>
+        public bool RepairCollectionTypoIfNeeded()
+        {
+            try
+            {
+                var processes = Process.GetProcessesByName("qdrant");
+                bool wasRunning = processes.Length > 0;
+                string exePath = null;
+                if (wasRunning)
+                {
+                    MainSave.CQLog?.Error("Qdrant集合修复", "qdrant似乎未在本地，无法修改集合名称");
+                    return false;
+                }
+                exePath = GetProcessExePath(processes[0].Id);
+                processes[0].Kill();
+                processes[0].WaitForExit(2000);
+
+                if (!File.Exists(exePath))
+                {
+                    MainSave.CQLog?.Error("Qdrant集合修复", "未能定位到qdrant.exe，无法修复");
+                    return false;
+                }
+                string qdrantDir = Path.GetDirectoryName(exePath);
+                string baseDir = Path.Combine(qdrantDir, "storage", "collections");
+                string oldPath = Path.Combine(baseDir, "ChatMemroy");
+                string newPath = Path.Combine(baseDir, CollectionName);
+                if (Directory.Exists(oldPath))
+                {
+                    if (Directory.Exists(newPath))
+                    {
+                        MainSave.CQLog?.Error("Qdrant集合修复", "目标新集合目录已存在，无法重命名");
+                        return false;
+                    }
+                    Directory.Move(oldPath, newPath);
+                    MainSave.CQLog?.Info("Qdrant集合修复", $"已修复集合名称错误");
+                }
+                else
+                {
+                    MainSave.CQLog?.Info("Qdrant集合修复", "未发现旧集合目录，无需修复");
+                }
+
+                if (wasRunning && exePath != null)
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        WorkingDirectory = Path.GetDirectoryName(exePath),
+                        FileName = exePath
+                    });
+                    MainSave.CQLog?.Info("Qdrant集合修复", "已重启Qdrant进程");
+                }
+
+                GetCollections();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MainSave.CQLog?.Error("Qdrant集合修复", $"本地目录修复失败：{ex.Message}\n{ex.StackTrace}");
+                return false;
+            }
+        }
+
+        private static string GetProcessExePath(int processId)
+        {
+            string query = $"SELECT ExecutablePath FROM Win32_Process WHERE ProcessId = {processId}";
+            using ManagementObjectSearcher searcher = new(query);
+            using ManagementObjectCollection results = searcher.Get();
+            foreach (var obj in results)
+            {
+                return obj["ExecutablePath"]?.ToString();
+            }
+            return null;
         }
     }
 }

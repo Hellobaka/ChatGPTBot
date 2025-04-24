@@ -62,6 +62,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 {
                     ShowError("Qdrant Connection Failed.");
                 }
+                else
+                {
+                    qdrant.CreateCollection();
+                }
             }
 
             Topmost = false;
