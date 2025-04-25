@@ -5,15 +5,119 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
     Title="Mood"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    Loaded="Page_Loaded"
     mc:Ignorable="d">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">我是谁？我在哪？</TextBlock>
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <GroupBox Header="情绪简单.jpg">
+            <Canvas
+                x:Name="MoodCanvas"
+                Width="400"
+                Height="400"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                MouseMove="MoodCanvas_MouseMove">
+                <!--  400x400  -->
+                <!--  坐标轴  -->
+                <Line
+                    Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                    StrokeThickness="1"
+                    X1="0"
+                    X2="400"
+                    Y1="200"
+                    Y2="200" />
+                <Line
+                    Stroke="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                    StrokeThickness="1"
+                    X1="200"
+                    X2="200"
+                    Y1="0"
+                    Y2="400" />
+
+                <!--  坐标轴刻度  -->
+                <TextBlock
+                    Canvas.Left="200"
+                    Canvas.Top="200"
+                    Margin="5,5,0,0"
+                    Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                    Text="0" />
+                <TextBlock
+                    Canvas.Left="380"
+                    Canvas.Top="200"
+                    Text="1.0" />
+                <TextBlock
+                    Canvas.Left="200"
+                    Canvas.Top="0"
+                    Text="1.0" />
+                <TextBlock
+                    Canvas.Left="0"
+                    Canvas.Top="200"
+                    Text="-1.0" />
+                <TextBlock
+                    Canvas.Left="200"
+                    Canvas.Top="380"
+                    Text="-1.0" />
+
+                <TextBlock
+                    Canvas.Left="360"
+                    Canvas.Top="180"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="愉悦度" />
+                <TextBlock
+                    Canvas.Left="155"
+                    Canvas.Top="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="唤醒值" />
+
+                <!--  可拖动的点  -->
+                <Ellipse
+                    x:Name="MoodPoint"
+                    Canvas.Left="195"
+                    Canvas.Top="195"
+                    Width="10"
+                    Height="10"
+                    Fill="{DynamicResource SystemControlForegroundAccentBrush}"
+                    MouseLeftButtonDown="MoodPoint_MouseLeftButtonDown"
+                    MouseLeftButtonUp="MoodPoint_MouseLeftButtonUp">
+                    <ToolTipService.ToolTip>
+                        <ToolTip x:Name="MoodDisplay" />
+                    </ToolTipService.ToolTip>
+                </Ellipse>
+            </Canvas>
+        </GroupBox>
+        <GroupBox Grid.Column="1" Header="情绪控制">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <GroupBox Header="当前情绪">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock>X:</TextBlock>
+                        <TextBlock Margin="5,0" Text="{Binding Valence, StringFormat=F2}" />
+                        <TextBlock>Y:</TextBlock>
+                        <TextBlock Margin="5,0" Text="{Binding Arousal, StringFormat=F2}" />
+                        <TextBlock>转换后的情绪:</TextBlock>
+                        <TextBlock Margin="5,0" Text="{Binding CurrentMood}" />
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Grid.Row="1" Header="控制1">
+                    <WrapPanel x:Name="MoodControl1Panel" />
+                </GroupBox>
+                <GroupBox Grid.Row="2" Header="控制2">
+                    <WrapPanel x:Name="MoodControl2Panel" />
+                </GroupBox>
+            </Grid>
+        </GroupBox>
     </Grid>
 </Page>

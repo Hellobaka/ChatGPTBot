@@ -103,9 +103,6 @@
     <Compile Include="Pages\Relationship.xaml.cs">
       <DependentUpon>Relationship.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Pages\ReplyWilling.xaml.cs">
-      <DependentUpon>ReplyWilling.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Pages\TTS.xaml.cs">
       <DependentUpon>TTS.xaml</DependentUpon>
     </Compile>
@@ -149,10 +146,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\Relationship.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Pages\ReplyWilling.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

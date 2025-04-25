@@ -39,7 +39,6 @@
             <ui:NavigationViewItem Content="设置" Tag="Settings" />
             <ui:NavigationViewItem Content="表情包" Tag="Emoji" />
             <ui:NavigationViewItem Content="记忆" Tag="Memory" />
-            <ui:NavigationViewItem Content="回复意愿" Tag="ReplyWilling" />
             <ui:NavigationViewItem Content="心情" Tag="Mood" />
             <ui:NavigationViewItem Content="关系" Tag="Relationship" />
             <ui:NavigationViewItem Content="知识" Tag="Knowledge" />

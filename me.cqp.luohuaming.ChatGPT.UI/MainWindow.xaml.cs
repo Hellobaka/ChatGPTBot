@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
@@ -57,6 +58,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 AppConfig.Init();
                 SQLHelper.CreateDB();
                 Picture.InitCache();
+                _ = new MoodManager();
                 Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 if (!qdrant.GetCollections())
                 {

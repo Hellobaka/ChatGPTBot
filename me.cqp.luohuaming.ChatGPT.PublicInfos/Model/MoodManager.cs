@@ -18,6 +18,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public static MoodManager Instance { get; private set; }
 
+        public event Action MoodChanged;
+
         public const string Prompt = @"请根据以下对话内容，完成以下任务：
 1. 判断回复者的立场是'supportive'（支持）、'opposed'（反对）还是'neutrality'（中立）。
 2. 从'happy,angry,sad,surprised,disgusted,fearful,neutral'中选出最匹配的1个情感标签。
@@ -60,7 +62,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 { Mood.neutral, 0.3 }
             };
 
-        private static Dictionary<Mood, (double valence, double arousal)> MoodValues { get; set; } =
+        public static Dictionary<Mood, (double valence, double arousal)> MoodValues { get; set; } =
             new()
             {
                 { Mood.happy, (0.8, 0.6) },
@@ -72,7 +74,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 { Mood.neutral, (0.0, 0.5) }
             };
 
-        private static Dictionary<string, (double valence, double arousal)> MoodMap { get; set; } =
+        public static Dictionary<string, (double valence, double arousal)> MoodMap { get; set; } =
             new()
             {
                 {"兴奋", (0.5, 0.7) },
@@ -81,11 +83,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 {"愤怒", (-0.5, 0.7) },
                 {"焦虑", (-0.3, 0.8) },
                 {"烦躁", (-0.2, 0.65) },
-                {"悲伤", (-0.5, 0.3) },
-                {"疲倦", (-0.4, 0.15) },
-                {"平静", (0.2, 0.45) },
-                {"安宁", (0.3, 0.4) },
-                {"放松", (0.5, 0.3) },
+                {"悲伤", (-0.5, -0.3) },
+                {"疲倦", (-0.4, -0.15) },
+                {"平静", (0.2, -0.45) },
+                {"安宁", (0.3, -0.4) },
+                {"放松", (0.5, -0.3) },
             };
 
         public MoodManager()
@@ -99,6 +101,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             var (valence, arousal) = MoodValues[mood];
             Valence = Math.Max(-1, Math.Min(1, Valence + valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
+
+            MoodChanged?.Invoke();
 
             CommonHelper.DebugLog("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
         }
@@ -156,14 +160,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             Valence = Math.Max(-1, Math.Min(1, Valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal));
+
+            MoodChanged?.Invoke();
+        }
+
+        public static string GetCurrentMoodText(double valence, double arousal)
+        {
+            return MoodMap.AsParallel()
+                .Select(x => new { Mood = x.Key, Distance = Math.Sqrt(Math.Pow(x.Value.valence - valence, 2) + Math.Pow(x.Value.arousal - arousal, 2)) })
+                .OrderBy(x => x.Distance)
+                .FirstOrDefault().Mood;
         }
 
         public override string ToString()
         {
-            var mood = MoodMap.AsParallel()
-                .Select(x => new { Mood = x.Key, Distance = Math.Sqrt(Math.Pow(x.Value.valence - Valence, 2) + Math.Pow(x.Value.arousal - Arousal, 2)) })
-                .OrderBy(x => x.Distance)
-                .FirstOrDefault().Mood;
+            var mood = GetCurrentMoodText(Valence, Arousal);
 
             return $"当前心情：{mood}。你现在心情{(Valence > 0.5 ? "很好" : (Valence < -0.5 ? "不太好" : "一般"))}，" +
                 $"情绪比较{(Arousal > 0.7 ? "激动" : (Valence < -0.5 ? "平静" : "普通"))}。";
