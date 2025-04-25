@@ -94,30 +94,28 @@
                 </Ellipse>
             </Canvas>
         </GroupBox>
-        <GroupBox Grid.Column="1" Header="情绪控制">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <GroupBox Header="当前情绪">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock>X:</TextBlock>
-                        <TextBlock Margin="5,0" Text="{Binding Valence, StringFormat=F2}" />
-                        <TextBlock>Y:</TextBlock>
-                        <TextBlock Margin="5,0" Text="{Binding Arousal, StringFormat=F2}" />
-                        <TextBlock>转换后的情绪:</TextBlock>
-                        <TextBlock Margin="5,0" Text="{Binding CurrentMood}" />
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Grid.Row="1" Header="控制1">
-                    <WrapPanel x:Name="MoodControl1Panel" />
-                </GroupBox>
-                <GroupBox Grid.Row="2" Header="控制2">
-                    <WrapPanel x:Name="MoodControl2Panel" />
-                </GroupBox>
-            </Grid>
-        </GroupBox>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <GroupBox Header="当前情绪">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock>X:</TextBlock>
+                    <TextBlock Margin="5,0" Text="{Binding Valence, StringFormat=F2}" />
+                    <TextBlock>Y:</TextBlock>
+                    <TextBlock Margin="5,0" Text="{Binding Arousal, StringFormat=F2}" />
+                    <TextBlock>转换后的情绪:</TextBlock>
+                    <TextBlock Margin="5,0" Text="{Binding CurrentMood}" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Row="1" Header="控制1">
+                <WrapPanel x:Name="MoodControl1Panel" />
+            </GroupBox>
+            <GroupBox Grid.Row="2" Header="控制2">
+                <WrapPanel x:Name="MoodControl2Panel" />
+            </GroupBox>
+        </Grid>
     </Grid>
 </Page>
