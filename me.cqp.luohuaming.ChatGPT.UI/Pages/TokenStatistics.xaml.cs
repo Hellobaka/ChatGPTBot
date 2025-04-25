@@ -173,8 +173,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             ConfigHelper.SetConfig(propertyName, (bool)GetType().GetProperty(propertyName).GetValue(this));
         }
 
-        private void DoFilter()
+        private async void DoFilter()
         {
+            await LoadFilterGroup(false);
+
             var searchResult = Usage.GetRangeUsageDetail(FilterStartDate, FilterEndDate);
             FilterResult = searchResult.Where(x => Services.Any(o => o.Checked && o.Name == x.Endpoint)
                 && (Models.Count <= 0 || Models.Any(o => o.Checked && o.Name == x.ModelName))
@@ -287,7 +289,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             SKColor color = ThemeManager.Current.ActualApplicationTheme == ApplicationTheme.Dark ? SKColors.White : SKColors.Black;
             var paint = new SolidColorPaint { Color = color, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") }; ;
-           
+
             Pie_ModelCollection = [];
             foreach (var model in FilterResult.GroupBy(x => x.ModelName).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
             {
@@ -366,25 +368,40 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 Bar_OverviewChecked = true;
             }
             TimeDetailChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
-            
+
             PieModelChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
             PiePurposeChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
             PieServiceChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
         }
 
-        private async Task LoadFilterGroup()
+        private async Task LoadFilterGroup(bool newChecked)
         {
-            Services.Clear();
-            Models.Clear();
-            Purposes.Clear();
-
             var (services, models, puropses) = await Task.Run(Usage.GetGroups);
+            var notContain = Services.Where(x => !services.Any(o => o == x.Name)).ToList();
+            foreach (var item in notContain)
+            {
+                Services.Remove(item);
+            }
+            notContain = Models.Where(x => !models.Any(o => o == x.Name)).ToList();
+            foreach (var item in notContain)
+            {
+                Models.Remove(item);
+            }
+            notContain = Purposes.Where(x => !puropses.Any(o => o == x.Name)).ToList();
+            foreach (var item in notContain)
+            {
+                Purposes.Remove(item);
+            }
             foreach (var group in services)
             {
+                if (Services.Any(x => x.Name == group))
+                {
+                    continue;
+                }
                 var item = new CheckableItem()
                 {
                     Name = group,
-                    Checked = true
+                    Checked = newChecked
                 };
                 Services.Add(item);
                 item.PropertyChanged += (sender, e) =>
@@ -397,10 +414,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
             foreach (var group in puropses)
             {
+                if (Purposes.Any(x => x.Name == group))
+                {
+                    continue;
+                }
                 var item = new CheckableItem()
                 {
                     Name = group,
-                    Checked = true
+                    Checked = newChecked
                 };
                 Purposes.Add(item);
                 item.PropertyChanged += (sender, e) =>
@@ -413,10 +434,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
             foreach (var group in models)
             {
+                if (Models.Any(x => x.Name == group))
+                {
+                    continue;
+                }
                 var item = new CheckableItem()
                 {
                     Name = group,
-                    Checked = true
+                    Checked = newChecked
                 };
                 Models.Add(item);
                 item.PropertyChanged += (sender, e) =>
@@ -446,7 +471,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             ThemeManager.Current.ActualApplicationThemeChanged += (_, _) => ChangeBarChartColor();
             Usage.OnUsageInserted += Usage_OnUsageInserted;
 
-            await LoadFilterGroup();
+            await LoadFilterGroup(true);
             LoadChartPerference();
             UpdateGridLayout();
             DoFilter();
