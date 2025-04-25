@@ -340,7 +340,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 var processes = Process.GetProcessesByName("qdrant");
                 bool wasRunning = processes.Length > 0;
                 string exePath = null;
-                if (wasRunning)
+                if (!wasRunning)
                 {
                     MainSave.CQLog?.Error("Qdrant集合修复", "qdrant似乎未在本地，无法修改集合名称");
                     return false;
