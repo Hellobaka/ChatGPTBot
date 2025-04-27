@@ -124,6 +124,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             string reply = Chat.GetChatResult(AppConfig.SpliterUrl, AppConfig.SpliterApiKey,
                 [
                     new SystemChatMessage(prompt),
+                    new UserChatMessage("请回复")
                 ], AppConfig.SpliterModelName, Chat.Purpose.获取心情);
             var split = reply.Split('-');
 

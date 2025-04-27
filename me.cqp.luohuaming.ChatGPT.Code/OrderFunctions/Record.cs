@@ -233,6 +233,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
+                new UserChatMessage("请回复")
             ], AppConfig.ChatModelName, Chat.Purpose.聊天);
         }
 

@@ -74,7 +74,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             string prompt = string.Format(Prompt, AppConfig.BotName, AppConfig.SchedulePrompt, DateTime.Now.ToLongDateString(), DateTime.Now.ToString("dddd"));
             var json = Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
-                new SystemChatMessage(prompt)
+                new SystemChatMessage(prompt),
+                new UserChatMessage("请回复")
             ], AppConfig.ChatModelName, Chat.Purpose.日程获取);
 
             if (json == Chat.ErrorMessage)
