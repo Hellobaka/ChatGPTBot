@@ -217,11 +217,19 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 RecommendEmojis.Clear();
                 string query = QueryText.Text;
+                bool embeddingFirst = QueryEmbeddingFirst.IsOn;
                 List<(Picture emoji, double similarity)> pictures = [];
                 await Task.Run(() =>
                 {
-                    var embedding = PublicInfos.API.Embedding.GetEmbedding(query);
-                    pictures = Picture.GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
+                    if (embeddingFirst)
+                    {
+                        var embedding = Embedding.GetEmbedding(query);
+                        pictures = Picture.GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
+                    }
+                    else
+                    {
+                        pictures = Picture.GetRecommandEmoji(query);
+                    }
                     if (pictures.Count == 0)
                     {
                         MainWindow.ShowError("没有找到符合条件的图片");

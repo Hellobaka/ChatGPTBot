@@ -31,20 +31,27 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="auto" />
+                        <ColumnDefinition Width="auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="auto" />
                         <ColumnDefinition Width="auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" VerticalAlignment="Center">自然语言描述情绪：</TextBlock>
+                    <ui:ToggleSwitch
+                        x:Name="QueryEmbeddingFirst"
+                        Grid.Column="1"
+                        IsOn="True"
+                        OffContent="LLM理解"
+                        OnContent="直接转换" />
                     <TextBox
                         x:Name="QueryText"
-                        Grid.Column="1"
+                        Grid.Column="2"
                         ui:ControlHelper.PlaceholderText="放松且开心"
                         AcceptsReturn="False"
                         KeyDown="QueryText_KeyDown" />
                     <Button
                         x:Name="QueryButton"
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Margin="5,0"
                         Click="QueryButton_Click"
                         IsEnabled="{Binding Querying, Converter={StaticResource BoolRevertConverter}}"
@@ -63,7 +70,7 @@
                     </Button>
                     <Button
                         x:Name="QueryResetButton"
-                        Grid.Column="3"
+                        Grid.Column="4"
                         Click="QueryResetButton_Click"
                         Content="重置"
                         IsEnabled="{Binding Querying, Converter={StaticResource BoolRevertConverter}}" />
