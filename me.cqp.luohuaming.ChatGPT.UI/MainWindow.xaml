@@ -40,6 +40,7 @@
             <ui:NavigationViewItem Content="表情包" Tag="Emoji" />
             <ui:NavigationViewItem Content="记忆" Tag="Memory" />
             <ui:NavigationViewItem Content="心情" Tag="Mood" />
+            <ui:NavigationViewItem Content="日程" Tag="Schedule" />
             <ui:NavigationViewItem Content="关系" Tag="Relationship" />
             <ui:NavigationViewItem Content="知识" Tag="Knowledge" />
             <ui:NavigationViewItem Content="TTS" Tag="TTS" />

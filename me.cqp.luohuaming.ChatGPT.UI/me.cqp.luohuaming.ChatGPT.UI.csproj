@@ -100,6 +100,9 @@
     <Compile Include="Pages\Mood.xaml.cs">
       <DependentUpon>Mood.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Pages\Schedule.xaml.cs">
+      <DependentUpon>Schedule.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Pages\Relationship.xaml.cs">
       <DependentUpon>Relationship.xaml</DependentUpon>
     </Compile>
@@ -144,6 +147,10 @@
     <Page Include="Pages\Mood.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\Schedule.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Pages\Relationship.xaml">
       <SubType>Designer</SubType>

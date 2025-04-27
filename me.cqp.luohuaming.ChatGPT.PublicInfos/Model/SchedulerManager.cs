@@ -18,7 +18,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 3. 晚上的计划和休息时间
 请按照时间顺序列出具体时间点和对应的活动，用一个时间点而不是时间段来表示时间，用JSON格式返回日程表，
 仅返回内容，不要返回注释，不要添加任何markdown或代码块样式，时间采用24小时制，
-格式为[{{""时间"": ""活动""}},{{""时间"": ""活动""}}]
+格式为[{{""24小时制时间"": ""活动""}},{{""24小时制时间"": ""活动""}}]
 例如[{{""07:00"": ""起床""}},{{""08:00"": ""打游戏""}},{{""11:00"": ""去食堂吃饭""}},{{""13:00"": ""午觉""}}]。
 ";
         public SchedulerManager()
@@ -64,7 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                         if (Schedules.Count > 0)
                         {
                             LastUpdateTime = lastUpdate;
-                            MainSave.CQLog.Info("日程生成", $"已加载日程缓存：{LastUpdateTime:G}. 获取到 {Schedules.Count} 条日程");
+                            MainSave.CQLog?.Info("日程生成", $"已加载日程缓存：{LastUpdateTime:G}. 获取到 {Schedules.Count} 条日程");
                             return;
                         }
                     }
@@ -72,6 +72,24 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 catch { }
             }
             string prompt = string.Format(Prompt, AppConfig.BotName, AppConfig.SchedulePrompt, DateTime.Now.ToLongDateString(), DateTime.Now.ToString("dddd"));
+            var schedules = GetSchedule(prompt);
+            if (schedules.Count == 0)
+            {
+                MainSave.CQLog?.Error("日程生成", $"获取日程失败");
+                return;
+            }
+            Schedules = [];
+            foreach(var item in schedules)
+            {
+                Schedules.Add(item);
+            }
+            MainSave.CQLog?.Info("日程生成", $"获取到 {Schedules.Count} 条日程");
+            LastUpdateTime = DateTime.Now;
+            CacheSchedules(path);
+        }
+
+        public static List<(DateTime time, string action)> GetSchedule(string prompt)
+        {
             var json = Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
             [
                 new SystemChatMessage(prompt),
@@ -80,32 +98,30 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
             if (json == Chat.ErrorMessage)
             {
-                MainSave.CQLog.Error("日程生成", $"请求失败");
-                return;
+                MainSave.CQLog?.Error("日程生成", $"请求失败");
+                return [];
             }
             try
             {
+                List<(DateTime, string)> results = [];
                 JArray schedule = JArray.Parse(json);
                 if (schedule.Count == 0)
                 {
-                    return;
+                    return [];
                 }
-                Schedules = [];
                 foreach (var item in schedule)
                 {
                     var property = ((JObject)item).Children().First() as JProperty;
                     DateTime time = DateTime.Parse(property.Name);
                     string action = property.Value.ToString();
                     CommonHelper.DebugLog("日程生成", $"{time.ToShortTimeString()}: {action}");
-                    Schedules.Add((time, action));
+                    results.Add((time, action));
                 }
-
-                MainSave.CQLog.Info("日程生成", $"获取到 {Schedules.Count} 条日程");
-                LastUpdateTime = DateTime.Now;
-                CacheSchedules(path);
+                return results;
             }
             catch
             { }
+            return [];
         }
 
         private void CacheSchedules(string path)
@@ -119,7 +135,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private Timer UpdateSchedulerTimer {  get; set; }
 
-        private DateTime LastUpdateTime { get; set; }
+        public DateTime LastUpdateTime { get; set; }
 
         public List<(DateTime time, string action)> Schedules { get; private set; } = [];
 

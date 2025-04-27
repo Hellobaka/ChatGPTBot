@@ -1,0 +1,134 @@
+﻿<Page
+    x:Class="me.cqp.luohuaming.ChatGPT.UI.Pages.Schedule"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    Title="Relationship"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    Loaded="Page_Loaded"
+    mc:Ignorable="d">
+
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <GroupBox Header="今日日程">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    x:Name="UpdateTime"
+                    Margin="0,5"
+                    Text="更新时间：" />
+                <ListBox
+                    x:Name="ScheduleList"
+                    Grid.Row="1"
+                    Background="Transparent"
+                    MouseDoubleClick="ScheduleList_MouseDoubleClick" />
+                <TextBlock
+                    x:Name="ScheduleEmptyHint"
+                    Grid.Row="1"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Text="空空如也~" />
+                <Grid Grid.Row="2" Margin="0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        x:Name="ReloadButton"
+                        Margin="0,0,5,0"
+                        HorizontalAlignment="Stretch"
+                        Click="ReloadButton_Click"
+                        Content="重新读取" />
+                    <Button
+                        x:Name="DeleteButton"
+                        Grid.Column="1"
+                        Margin="0,0,5,0"
+                        HorizontalAlignment="Stretch"
+                        Click="DeleteButton_Click"
+                        Content="删除选中"
+                        Style="{StaticResource ErrorButtonStyle}" />
+                    <Button
+                        x:Name="SaveButton"
+                        Grid.Column="2"
+                        Margin="5,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        Click="SaveButton_Click"
+                        Content="保存"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </Grid>
+        </GroupBox>
+        <Grid Grid.Column="1" Margin="10,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <GroupBox Header="Prompt">
+                <StackPanel>
+                    <TextBox
+                        x:Name="SchedulePrompt"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap" />
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <Button
+                            x:Name="PromptRefreshButton"
+                            Margin="0,0,5,0"
+                            Click="PromptRefreshButton_Click"
+                            Content="刷新" />
+                        <Button
+                            x:Name="PromptRegenerateButton"
+                            Margin="5,0"
+                            Click="PromptRegenerateButton_Click"
+                            Style="{StaticResource AccentButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center">生成日程</TextBlock>
+                                <ui:ProgressRing
+                                    x:Name="Regenerating"
+                                    Margin="10,0,0,0"
+                                    IsActive="True"
+                                    Visibility="Collapsed">
+                                    <ui:ProgressRing.Foreground>
+                                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                                    </ui:ProgressRing.Foreground>
+                                </ui:ProgressRing>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Row="1" Header="修改">
+                <StackPanel>
+                    <TextBlock Margin="0,0,0,5" Text="时间" />
+                    <TextBox x:Name="SelectItemTime" Margin="0,5" />
+                    <TextBlock Margin="0,5" Text="日程内容" />
+                    <TextBox x:Name="SelectItemSchedule" Margin="0,5" />
+                    <Button
+                        x:Name="SelectSaveButton"
+                        Margin="0,5"
+                        HorizontalAlignment="Stretch"
+                        Click="SelectSaveButton_Click"
+                        Content="保存"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button
+                        x:Name="SelectAddButton"
+                        Margin="0,5"
+                        HorizontalAlignment="Stretch"
+                        Click="SelectAddButton_Click"
+                        Content="新增" />
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+    </Grid>
+</Page>

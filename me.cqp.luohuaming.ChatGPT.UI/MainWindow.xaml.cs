@@ -59,6 +59,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 SQLHelper.CreateDB();
                 Picture.InitCache();
                 _ = new MoodManager();
+                _ = new SchedulerManager();
                 Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 if (!qdrant.GetCollections())
                 {
