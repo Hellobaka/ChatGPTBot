@@ -1,6 +1,7 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using SqlSugar;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -53,11 +54,29 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             db.Updateable(this).ExecuteCommand();
         }
 
+        public void Delete()
+        {
+            using var db = SQLHelper.GetInstance();
+            db.Deleteable(this).ExecuteCommand();
+        }
+
+        public static List<long> GetRelationShipGroups()
+        {
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<Relationship>().GroupBy(x => x.GroupID).Select(x => x.GroupID).ToList();
+        }
+
+        public static List<Relationship> GetRelationShipByGroup(long groupId)
+        {
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<Relationship>().Where(x => x.GroupID == groupId).ToList();
+        }
+
         public static Relationship? GetRelationShip(long groupID, long qq)
         {
             using var db = SQLHelper.GetInstance();
             var relationship = db.Queryable<Relationship>().Where(x => x.GroupID == groupID && x.QQ == qq).First();
-            if (relationship == null 
+            if (relationship == null
                 || (DateTime.Now - relationship.UpdateTime).TotalDays >= AppConfig.RelationshipUpdateTime)
             {
                 string nickname = null, card = null;
@@ -85,7 +104,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     MainSave.CQLog.Warning("缓存用户昵称", "获取的昵称与卡片均为null");
                     return null;
                 }
-                else if(relationship == null)
+                else if (relationship == null)
                 {
                     relationship = Create(groupID, qq, nickname, card);
                     db.Insertable(relationship).ExecuteCommand();
@@ -101,50 +120,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return relationship;
         }
 
-        private static int GetFavorOver850Count()
-        {
-            using var db = SQLHelper.GetInstance();
-            return db.Queryable<Relationship>().Count(x => x.Favorability > 850);
-        }
-
         public void UpdateFavourability(MoodManager.Mood mood, MoodManager.Stand stand)
         {
             double moodFavorValue = MoodManager.MoodFavorValue[mood];
-            if (Favorability >= 0)
-            {
-                if (moodFavorValue > 0 && stand != MoodManager.Stand.opposed)
-                {
-                    moodFavorValue *= Math.Cos(Math.PI * Favorability / 2000);
-
-                    if (Favorability > 500)
-                    {
-                        moodFavorValue *= 3 / (GetFavorOver850Count() + 3);
-                    }
-                }
-                else if (moodFavorValue < 0 && stand != MoodManager.Stand.supportive)
-                {
-                    moodFavorValue *= Math.Exp(Favorability / 1000);
-                }
-                else
-                {
-                    moodFavorValue = 0;
-                }
-            }
-            else
-            {
-                if (moodFavorValue > 0 && stand != MoodManager.Stand.opposed)
-                {
-                    moodFavorValue *= Math.Exp(Favorability / 1000);
-                }
-                else if (moodFavorValue < 0 && stand != MoodManager.Stand.supportive)
-                {
-                    moodFavorValue *= Math.Cos(Math.PI * Favorability / 2000);
-                }
-                else
-                {
-                    moodFavorValue = 0;
-                }
-            }
             Favorability += moodFavorValue;
             Favorability = Math.Max(-1000, Math.Min(1000, Favorability));
 
@@ -178,7 +156,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 6 => ("暧昧", "无条件支持"),
                 _ => ("", "")
             };
-            return string.Format("你对昵称为{0}的用户的态度为{1},回复态度为{2},关系等级为{3}", Card ?? NickName, attritude.Item1, attritude.Item2, level);
+            return string.Format("你对昵称为[{0}]的用户的态度为{1},回复态度为{2},关系等级为{3}", Card ?? NickName, attritude.Item1, attritude.Item2, level);
         }
     }
 }

@@ -53,13 +53,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public static Dictionary<Mood, double> MoodFavorValue { get; set; }
             = new()
             {
-                { Mood.happy, 1.5 },
-                { Mood.angry, -3 },
-                { Mood.sad, -1.5 },
-                { Mood.surprised, 0.6 },
-                { Mood.disgusted, -4.5 },
-                { Mood.fearful, -2 },
-                { Mood.neutral, 0.3 }
+                { Mood.happy, 15 },
+                { Mood.angry, -30 },
+                { Mood.sad, -15 },
+                { Mood.surprised, 6 },
+                { Mood.disgusted, -45 },
+                { Mood.fearful, -20 },
+                { Mood.neutral, 3 }
             };
 
         public static Dictionary<Mood, (double valence, double arousal)> MoodValues { get; set; } =
