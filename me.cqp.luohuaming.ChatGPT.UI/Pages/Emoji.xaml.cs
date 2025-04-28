@@ -31,7 +31,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public int EmojiCount => Emojis.Count;
+        public int EmojiCount => SearchedEmojis.Count;
+
+        public ObservableCollection<Model.Emoji> SearchedEmojis { get; set; } = [];
 
         public ObservableCollection<Model.Emoji> Emojis { get; set; } = [];
 
@@ -56,6 +58,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public int EmojiInsertParallelCountValue => int.TryParse(EmojiInsertParallelCount.Text, out int value) ? value : -1;
 
+        private Debouncer SearchDebouncer { get; set; } = new();
+
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -65,7 +69,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             if (MainWindow.ShowConfirm("确定要删除这些图片吗？"))
             {
-                foreach (var item in Emojis.Where(x => x.Checked))
+                foreach (var item in SearchedEmojis.Where(x => x.Checked))
                 {
                     item.Raw.Delete();
                     Picture.Remove(item.Raw);
@@ -128,7 +132,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void EmojiSelectAllButton_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in Emojis)
+            foreach (var item in SearchedEmojis)
             {
                 item.Checked = true;
             }
@@ -136,7 +140,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void EmojiSelectNoneButton_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in Emojis)
+            foreach (var item in SearchedEmojis)
             {
                 item.Checked = false;
             }
@@ -159,7 +163,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
             Picture.OnPictureAdded += Picture_OnPictureAdded;
             Picture.OnPictureRemoved += Picture_OnPictureRemoved;
-            Emojis.CollectionChanged += (s, e) =>
+            SearchedEmojis.CollectionChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(EmojiCount));
             };
@@ -173,6 +177,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 Emojis.Add(Model.Emoji.ParseFromPicture(item.Value));
             }
+            RefilterEmoji();
         }
 
         private void Picture_OnPictureAdded(Picture picture)
@@ -187,6 +192,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 {
                     Emojis.Add(Model.Emoji.ParseFromPicture(picture));
                 }
+                RefilterEmoji();
             });
         }
 
@@ -202,6 +208,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
                 pic = InsertEmojis.FirstOrDefault(x => x.Hash == picture.Hash);
                 InsertEmojis.Remove(pic);
+                RefilterEmoji();
             });
         }
 
@@ -272,12 +279,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     item.Raw.Delete();
                     Picture.Remove(item.Raw);
                 }
+                RefilterEmoji();
             }
         }
 
         private void RecommendSelectAllButton_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in Emojis)
+            foreach (var item in RecommendEmojis)
             {
                 item.Checked = true;
             }
@@ -285,7 +293,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void RecommendSelectNoneButton_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in Emojis)
+            foreach (var item in RecommendEmojis)
             {
                 item.Checked = false;
             }
@@ -447,6 +455,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 Emojis.Add(Model.Emoji.ParseFromPicture(item.Value));
             }
+            RefilterEmoji();
         }
 
         private async void MaintRebuildEmbeddingButton_Click(object sender, RoutedEventArgs e)
@@ -571,6 +580,26 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     MaintanceProgress.Value = current;
                     MaintanceProgress.Maximum = max;
                 }
+            });
+        }
+
+        private void EmojiQueryInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SearchDebouncer.Debounce(RefilterEmoji, 500);
+        }
+
+        private void RefilterEmoji()
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                string search = EmojiQueryInput.Text;
+
+                if (string.IsNullOrWhiteSpace(search))
+                {
+                    SearchedEmojis = [.. Emojis];
+                    return;
+                }
+                SearchedEmojis = [.. Emojis.Where(x => x.Hash.Contains(search) || x.Description.Contains(search))];
             });
         }
     }

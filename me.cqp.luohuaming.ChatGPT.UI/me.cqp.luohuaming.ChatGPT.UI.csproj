@@ -82,6 +82,7 @@
     </ApplicationDefinition>
     <Compile Include="ChatBubble.cs" />
     <Compile Include="Converter\Converters.cs" />
+    <Compile Include="Debouncer.cs" />
     <Compile Include="Model\Emoji.cs" />
     <Compile Include="Model\Items.cs" />
     <Compile Include="Model\MemoryNode.cs" />

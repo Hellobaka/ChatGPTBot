@@ -40,6 +40,7 @@
                     <ui:ToggleSwitch
                         x:Name="QueryEmbeddingFirst"
                         Grid.Column="1"
+                        Width="124"
                         IsOn="True"
                         OffContent="LLM理解"
                         OnContent="直接转换" />
@@ -208,17 +209,30 @@
                     </Expander.Header>
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="auto" />
                         </Grid.RowDefinitions>
+                        <Grid Margin="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock VerticalAlignment="Center" Text="模糊查询：" />
+                            <TextBox
+                                x:Name="EmojiQueryInput"
+                                Grid.Column="1"
+                                TextChanged="EmojiQueryInput_TextChanged" />
+                        </Grid>
                         <DataGrid
                             x:Name="EmojiDataGrid"
+                            Grid.Row="1"
                             AutoGenerateColumns="False"
                             CanUserAddRows="False"
                             CanUserDeleteRows="False"
                             EnableRowVirtualization="True"
                             HorizontalScrollBarVisibility="Auto"
-                            ItemsSource="{Binding Emojis}"
+                            ItemsSource="{Binding SearchedEmojis}"
                             SelectionMode="Single"
                             SelectionUnit="FullRow"
                             VerticalScrollBarVisibility="Auto">
@@ -288,7 +302,7 @@
                             </DataGrid.Columns>
                         </DataGrid>
                         <StackPanel
-                            Grid.Row="1"
+                            Grid.Row="2"
                             Margin="0,10,0,0"
                             Orientation="Horizontal">
                             <Button
