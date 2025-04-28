@@ -302,7 +302,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
             stringBuilder.AppendLine($"你和他(她)的关系为：{relationship},{MoodManager.Instance.ToString()}");
             stringBuilder.AppendLine($"`<MainRule>`");
-            stringBuilder.AppendLine($"正在{SchedulerManager.Instance.GetCurrentScheduler(DateTime.Now)}的你同时也在一边聊天");
+            stringBuilder.AppendLine($"你当前正在：{SchedulerManager.Instance.GetCurrentScheduler(DateTime.Now)}。同时也在一边和朋友聊天");
             stringBuilder.AppendLine($"你的昵称是:{AppConfig.BotName},{AppConfig.PrivatePrompt}");
             stringBuilder.AppendLine($"不要输出多余内容(包括前后缀，冒号和引号，括号，表情等)，**只输出回复内容**。");
             stringBuilder.AppendLine($"如果你不想或者不能回答，请只回复`{AppConfig.ChatEmptyResponse}`");
@@ -317,7 +317,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
             stringBuilder.AppendLine($"引起了你的注意,{relationship},{MoodManager.Instance.ToString()}");
             stringBuilder.AppendLine($"`<MainRule>`");
-            stringBuilder.AppendLine($"正在{SchedulerManager.Instance.GetCurrentScheduler(DateTime.Now)}的你同时也在一边和群里聊天");
+            stringBuilder.AppendLine($"你当前正在：{SchedulerManager.Instance.GetCurrentScheduler(DateTime.Now)}。同时也在一边和群里聊天");
             stringBuilder.AppendLine($"你的昵称是:{AppConfig.BotName},{AppConfig.GroupPrompt}");
             stringBuilder.AppendLine($"不要输出多余内容(包括前后缀，冒号和引号，括号，表情等)，**只输出回复内容**。");
             stringBuilder.AppendLine($"如果你不想或者不能回答，请只回复`{AppConfig.ChatEmptyResponse}`");
