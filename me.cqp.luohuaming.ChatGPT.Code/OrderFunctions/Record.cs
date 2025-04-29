@@ -82,7 +82,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         e.CQLog.Info("触发回复", "大模型拒绝了回答");
                         return new();
                     }
-                    SendReply(reply, e.FromGroup, e.FromQQ);
+                    SendReply(reply, e.FromGroup, e.FromQQ, e.Message.Id);
 
                     replyManager.ChangeReplyWillingAfterSendingMessage();
 
@@ -152,7 +152,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     e.CQLog.Info("触发回复", "大模型拒绝了回答");
                     return new();
                 }
-                SendReply(reply, -1, e.FromQQ);
+                SendReply(reply, -1, e.FromQQ, e.Message.Id);
                 SendEmoji(record, relationship, reply, -1, e.FromQQ);
 
                 return result;
@@ -369,25 +369,36 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private void SendReply(string reply, long fromGroup, long fromQQ)
+        private void SendReply(string reply, long fromGroup, long fromQQ, int msgId)
         {
             if (AppConfig.EnableSpliter)
             {
                 var splits = new Spliter(reply).Split();
+                bool firstSend = true;
                 foreach (var item in splits.Where(x => !string.IsNullOrWhiteSpace(x)))
                 {
+                    string r = item;
                     if (AppConfig.EnableSpliterRandomDelay)
                     {
                         double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
-                        double typeTime = item.Length * typeSpeed;
+                        double typeTime = r.Length * typeSpeed;
                         int randomSleep = CommonHelper.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
                     }
+                    if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply)
+                    {
+                        r = $"[CQ:reply,id={msgId}] " + r;
+                    }
                     RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, item) : MainSave.CQApi.SendPrivateMessage(fromQQ, item));
+                    firstSend = false;
                 }
             }
             else
             {
+                if (fromGroup > 0 && AppConfig.EnableGroupReply)
+                {
+                    reply = $"[CQ:reply,id={msgId}] " + reply;
+                }
                 RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, reply) : MainSave.CQApi.SendPrivateMessage(fromQQ, reply));
             }
         }
