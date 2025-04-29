@@ -387,9 +387,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply)
                     {
-                        r = $"[CQ:reply,id={msgId}] " + r;
+                        r = $"[CQ:reply,id={msgId}]" + r;
                     }
-                    RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, item) : MainSave.CQApi.SendPrivateMessage(fromQQ, item));
+                    RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, r) : MainSave.CQApi.SendPrivateMessage(fromQQ, r));
                     firstSend = false;
                 }
             }
@@ -397,7 +397,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 if (fromGroup > 0 && AppConfig.EnableGroupReply)
                 {
-                    reply = $"[CQ:reply,id={msgId}] " + reply;
+                    reply = $"[CQ:reply,id={msgId}]" + reply;
                 }
                 RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, reply) : MainSave.CQApi.SendPrivateMessage(fromQQ, reply));
             }
