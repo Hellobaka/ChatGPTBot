@@ -262,15 +262,6 @@
                                 添加
                             </Button>
                         </Grid>
-
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">移除思维链输出:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="RemoveThinkBlock"
-                                Margin="10,0,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">每次对话携带的上下文数量:</TextBlock>
                         <TextBox x:Name="ContextMaxLength" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">不发送消息时的回应:</TextBlock>
@@ -376,6 +367,15 @@
                                 OnContent="" />
                         </StackPanel>
 
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">移除思维链输出:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="RemoveThinkBlock"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+
                         <TextBlock VerticalAlignment="Center">分段使用的 Prompt:</TextBlock>
                         <TextBox
                             x:Name="SpliterPrompt"
@@ -423,7 +423,7 @@
                 <ScrollViewer>
                     <StackPanel x:Name="EmojiContainer" Margin="16,16,22,16">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">启用图片刮削:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">启用图片刮削（不开启所有图片都不处理）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableVision"
                                 Margin="10,0,0,0"
@@ -443,7 +443,7 @@
                         <TextBox x:Name="EmojiSendProbablity" Margin="0,5,0,0" />
 
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">是否从推荐中随机发送表情 (否则只发送最符合的图片):</TextBlock>
+                            <TextBlock VerticalAlignment="Center">是否从推荐中随机发送表情（否则只发送得分最高的图片）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="RandomSendEmoji"
                                 Margin="10,0,0,0"
@@ -453,7 +453,7 @@
                         <TextBlock VerticalAlignment="Center">推荐的表情数量:</TextBlock>
                         <TextBox x:Name="RecommendEmojiCount" Margin="0,5,0,0" />
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">只处理表情包图片:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">只处理表情包图片（不处理非表情包图片）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="IgnoreNotEmoji"
                                 Margin="10,0,0,0"
@@ -461,9 +461,17 @@
                                 OnContent="" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">只保存表情包图片:</TextBlock>
+                            <TextBlock VerticalAlignment="Center">只保存表情包图片（非表情包图片处理后自动删除）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="OnlySaveEmojiPicture"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">引用图片并提及时临时启用视觉（不受图片刮削配置控制、不限制图片类型）:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableVisionWhenMentioned"
                                 Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />

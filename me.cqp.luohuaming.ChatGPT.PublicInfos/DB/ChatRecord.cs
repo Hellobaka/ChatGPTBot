@@ -38,6 +38,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public bool IsEmpty { get; set; }
 
+        [SugarColumn(IsIgnore = true)]
+        public bool IsMentioned { get; set; }
+
         public static ChatRecord Create(long qq, string message, int messageID)
         {
             var record = new ChatRecord
@@ -46,7 +49,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 QQ = qq,
                 RawMessage = message,
                 Time = DateTime.Now,
-                MessageID = messageID
+                MessageID = messageID,
+                IsMentioned = CheckAt(message, false)
             };
             record.ParsedMessage = record.ParseMessage();
             return record;
@@ -75,16 +79,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15)
         {
             using var db = SQLHelper.GetInstance();
-            List<ChatRecord> results;
-            if (qq > 0)
-            {
-                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
-            }
-            else
-            {
-                results = db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId).OrderByDescending(x => x.Time).Take(count).ToList();
-            }
-
+            List<ChatRecord> results = qq > 0
+                ? db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList()
+                : db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId).OrderByDescending(x => x.Time).Take(count).ToList();
             return results;
         }
 
@@ -171,46 +168,48 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         case CQFunction.Image:
                             image++;
                             bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
-                            if (AppConfig.EnableVision is false)
+                            if (!ShouldProcessImage(IsMentioned, emoji))
                             {
-                                stringBuilder.Append($"[图片]");
+                                stringBuilder.Append("[图片]");
                                 break;
                             }
 
+                            // 获取图片
                             (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
+
+                            // 图片无效
+                            if (string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
+                            {
+                                stringBuilder.Append("[图片]");
+                                PictureDescriber.DeleteImage(cachePath);
+                                break;
+                            }
+
+                            // 已有描述
                             if (picture != null && !string.IsNullOrEmpty(picture.Description))
                             {
                                 stringBuilder.Append($"[这是一张图片，这是它的描述：{picture.Description}]");
                                 break;
                             }
-                            // 禁用视觉或 启用视觉但开启仅表情包的配置时，图片不是表情包 或下载失败时
-                            if ((!emoji && AppConfig.IgnoreNotEmoji) || string.IsNullOrEmpty(cachePath)
-                                || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
-                            {
-                                stringBuilder.Append($"[图片]");
-                                // 配置关闭或失败，需要删除本次下载结果
-                                PictureDescriber.DeleteImage(cachePath);
-                                continue;
-                            }
-                            // 需要缓存并获取图片描述
-                            CommonHelper.DebugLog("图片描述", $"开始对图片 {hash} 进行描述生成");
+
+                            // 生成描述
                             string description = emoji ? PictureDescriber.DescribeEmoji(cachePath) : PictureDescriber.DescribePicture(cachePath);
                             if (description == Chat.ErrorMessage)
                             {
                                 MainSave.CQLog.Error("图片描述", "描述失败，接口返回错误");
-                                // 获取描述失败，删除本次下载结果
                                 PictureDescriber.DeleteImage(cachePath);
                                 break;
                             }
+
                             Picture.InsertImageDescription(cachePath, hash, emoji, description);
+
+                            // 非表情包且只保存表情包图片
                             if (!emoji && AppConfig.OnlySaveEmojiPicture)
                             {
-                                // 配置只保存表情包图片
                                 PictureDescriber.DeleteImage(cachePath);
                             }
-                            CommonHelper.DebugLog("图片描述", $"图片 {hash} 的描述为：{description}");
-                            stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
 
+                            stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
                             break;
                     }
                 }
@@ -226,6 +225,54 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             using var db = SQLHelper.GetInstance();
             return db.Queryable<ChatRecord>().First(x => x.MessageID == id);
+        }
+
+        public static bool CheckAt(string input, bool forceBegin)
+        {
+            // 要求CQ码必须在开头, 所以只检查原始文本开头是否为At CQ码即可
+            if (forceBegin && input.StartsWith("[CQ:at"))
+            {
+                return false;
+            }
+
+            var cqcodes = CQCode.Parse(input);
+            var atCode = cqcodes.Where(x => x.Function == Sdk.Cqp.Enum.CQFunction.At);
+            var replyCode = cqcodes.FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
+            if (replyCode != null && int.TryParse(replyCode.Items["id"], out int id))
+            {
+                var msg = ChatRecord.GetRecordByMessageId(id);
+                if (msg != null && msg.QQ == MainSave.CurrentQQ)
+                {
+                    return true;
+                }
+            }
+            if (atCode == null || atCode.Count() == 0)
+            {
+                return false;
+            }
+            // 强制开头检查 取第一个CQ码 检查QQ是否为本机QQ
+            if (forceBegin)
+            {
+                return atCode.FirstOrDefault()?.Items["qq"] == MainSave.CurrentQQ.ToString();
+            }
+
+            // 非强制开头检查 检查第一个QQ为本机QQ是否存在
+            return atCode.Any(x => x.Items["qq"] == MainSave.CurrentQQ.ToString());
+        }
+
+        private bool ShouldProcessImage(bool isMentioned, bool isEmoji)
+        {
+            if (AppConfig.EnableVisionWhenMentioned && isMentioned)
+            {
+                return true;
+            }
+
+            if (!AppConfig.EnableVision)
+            {
+                return false;
+            }
+
+            return !(AppConfig.IgnoreNotEmoji && !isEmoji);
         }
     }
 }

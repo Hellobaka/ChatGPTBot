@@ -164,6 +164,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool RemoveThinkBlock { get; set; }
 
+        public static bool EnableVisionWhenMentioned { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -252,6 +254,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             MinEmojiRecommendScore = ConfigHelper.GetConfig("MinEmojiRecommendScore", (double)0.5);
             OnlySaveEmojiPicture = ConfigHelper.GetConfig("OnlySaveEmojiPicture", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
+            EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
 
             ConfigHelper.EnableHotReload();
         }

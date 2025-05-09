@@ -64,7 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     SetGroupBusy(e.FromGroup, false);
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
-                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, CheckAt(e.Message, false), AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
+                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, record.IsMentioned, AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
                 double random = CommonHelper.NextDouble();
                 CommonHelper.DebugLog("触发回复", $"Random={random}, probablity={replyProbablity}");
                 if (random < replyProbablity)
@@ -166,39 +166,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 SetGroupBusy(e.FromQQ, false);
             }
-        }
-
-        private bool CheckAt(string input, bool forceBegin)
-        {
-            // 要求CQ码必须在开头, 所以只检查原始文本开头是否为At CQ码即可
-            if (forceBegin && input.StartsWith("[CQ:at"))
-            {
-                return false;
-            }
-
-            var cqcodes = CQCode.Parse(input);
-            var atCode = cqcodes.Where(x => x.Function == Sdk.Cqp.Enum.CQFunction.At);
-            var replyCode = cqcodes.FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
-            if (replyCode != null && int.TryParse(replyCode.Items["id"], out int id))
-            {
-                var msg = ChatRecord.GetRecordByMessageId(id);
-                if (msg != null && msg.QQ == MainSave.CurrentQQ)
-                {
-                    return true;
-                }
-            }
-            if (atCode == null || atCode.Count() == 0)
-            {
-                return false;
-            }
-            // 强制开头检查 取第一个CQ码 检查QQ是否为本机QQ
-            if (forceBegin)
-            {
-                return atCode.FirstOrDefault()?.Items["qq"] == MainSave.CurrentQQ.ToString();
-            }
-
-            // 非强制开头检查 检查第一个QQ为本机QQ是否存在
-            return atCode.Any(x => x.Items["qq"] == MainSave.CurrentQQ.ToString());
         }
 
         private bool GetGroupBusy(long id)
