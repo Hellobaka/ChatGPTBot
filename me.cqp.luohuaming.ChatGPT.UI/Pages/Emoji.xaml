@@ -48,6 +48,7 @@
                         x:Name="QueryText"
                         Grid.Column="2"
                         ui:ControlHelper.PlaceholderText="放松且开心"
+                        ui:TextBoxHelper.IsDeleteButtonVisible="True"
                         AcceptsReturn="False"
                         KeyDown="QueryText_KeyDown" />
                     <Button
@@ -222,6 +223,7 @@
                             <TextBox
                                 x:Name="EmojiQueryInput"
                                 Grid.Column="1"
+                                ui:TextBoxHelper.IsDeleteButtonVisible="True"
                                 TextChanged="EmojiQueryInput_TextChanged" />
                         </Grid>
                         <DataGrid
