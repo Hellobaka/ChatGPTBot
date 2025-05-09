@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -143,7 +144,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     switch (cqcode.Function)
                     {
                         case CQFunction.Reply:
-                            stringBuilder.Append($"[QuoteMessage:{cqcode.Items["id"]}]");
+                            if (int.TryParse(cqcode.Items["id"], out int id))
+                            {
+                                var msg = GetRecordByMessageId(id);
+                                if (msg != null)
+                                {
+                                    var quoteMessage = msg.IsImage
+                                        ? HandleImage(CQCode.Parse(msg.RawMessage).FirstOrDefault(x => x.IsImageCQCode))
+                                        : msg.ParsedMessage;
+                                    stringBuilder.Append($"[QuoteMessage@{cqcode.Items["id"]}:{quoteMessage}]");
+                                }
+                            }
                             break;
 
                         case CQFunction.At:
@@ -167,49 +178,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
                         case CQFunction.Image:
                             image++;
-                            bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
-                            if (!ShouldProcessImage(IsMentioned, emoji))
+                            string reply = HandleImage(cqcode);
+                            if (!string.IsNullOrWhiteSpace(reply))
+                            {
+                                stringBuilder.Append(reply);
+                            }
+                            else
                             {
                                 stringBuilder.Append("[图片]");
-                                break;
                             }
-
-                            // 获取图片
-                            (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
-
-                            // 图片无效
-                            if (string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
-                            {
-                                stringBuilder.Append("[图片]");
-                                PictureDescriber.DeleteImage(cachePath);
-                                break;
-                            }
-
-                            // 已有描述
-                            if (picture != null && !string.IsNullOrEmpty(picture.Description))
-                            {
-                                stringBuilder.Append($"[这是一张图片，这是它的描述：{picture.Description}]");
-                                break;
-                            }
-
-                            // 生成描述
-                            string description = emoji ? PictureDescriber.DescribeEmoji(cachePath) : PictureDescriber.DescribePicture(cachePath);
-                            if (description == Chat.ErrorMessage)
-                            {
-                                MainSave.CQLog.Error("图片描述", "描述失败，接口返回错误");
-                                PictureDescriber.DeleteImage(cachePath);
-                                break;
-                            }
-
-                            Picture.InsertImageDescription(cachePath, hash, emoji, description);
-
-                            // 非表情包且只保存表情包图片
-                            if (!emoji && AppConfig.OnlySaveEmojiPicture)
-                            {
-                                PictureDescriber.DeleteImage(cachePath);
-                            }
-
-                            stringBuilder.Append($"[这是一张图片，这是它的描述：{description}]");
                             break;
                     }
                 }
@@ -273,6 +250,54 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
 
             return !(AppConfig.IgnoreNotEmoji && !isEmoji);
+        }
+
+        private string? HandleImage(CQCode cqcode)
+        {
+            if (!cqcode.IsImageCQCode)
+            {
+                return null;
+            }
+            bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
+            if (!ShouldProcessImage(IsMentioned, emoji))
+            {
+                return "[图片]";
+            }
+
+            // 获取图片
+            (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
+
+            // 图片无效
+            if (string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))
+            {
+                PictureDescriber.DeleteImage(cachePath);
+                return "[图片]";
+            }
+
+            // 已有描述
+            if (picture != null && !string.IsNullOrEmpty(picture.Description))
+            {
+                return $"[这是一张图片，这是它的描述：{picture.Description}]";
+            }
+
+            // 生成描述
+            string description = emoji ? PictureDescriber.DescribeEmoji(cachePath) : PictureDescriber.DescribePicture(cachePath);
+            if (description == Chat.ErrorMessage)
+            {
+                MainSave.CQLog.Error("图片描述", "描述失败，接口返回错误");
+                PictureDescriber.DeleteImage(cachePath);
+                return null;
+            }
+
+            Picture.InsertImageDescription(cachePath, hash, emoji, description);
+
+            // 非表情包且只保存表情包图片
+            if (!emoji && AppConfig.OnlySaveEmojiPicture)
+            {
+                PictureDescriber.DeleteImage(cachePath);
+            }
+
+            return $"[这是一张图片，这是它的描述：{description}]";
         }
     }
 }
