@@ -122,6 +122,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             return AppConfig.ChatEmptyResponse;
                     }
                 } while (requiresAction);
+
+                if (AppConfig.RemoveThinkBlock)
+                {
+                    msg = ThinkBlockRegex.Replace(msg, "");
+                    while (msg.StartsWith("\n") || msg.StartsWith("\r") || msg.StartsWith(" "))
+                    {
+                        msg = msg.Remove(0, 1);
+                    }
+                }
             }
             catch (Exception ex)
             {
