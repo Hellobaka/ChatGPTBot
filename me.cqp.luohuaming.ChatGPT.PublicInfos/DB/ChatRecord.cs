@@ -51,7 +51,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 RawMessage = message,
                 Time = DateTime.Now,
                 MessageID = messageID,
-                IsMentioned = CheckAt(message, false)
             };
             record.ParsedMessage = record.ParseMessage();
             return record;
@@ -66,6 +65,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 RawMessage = message,
                 Time = DateTime.Now,
                 MessageID = messageID,
+                IsMentioned = CheckAt(message, false)
             };
             record.ParsedMessage = record.ParseMessage();
             return record;
@@ -149,8 +149,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                 var msg = GetRecordByMessageId(id);
                                 if (msg != null)
                                 {
-                                    var quoteMessage = msg.IsImage
-                                        ? HandleImage(CQCode.Parse(msg.RawMessage).FirstOrDefault(x => x.IsImageCQCode))
+                                    var img = CQCode.Parse(msg.RawMessage).FirstOrDefault(x => x.IsImageCQCode);
+                                    var quoteMessage = img != null
+                                        ? HandleImage(img)
                                         : msg.ParsedMessage;
                                     stringBuilder.Append($"[QuoteMessage@{cqcode.Items["id"]}:{quoteMessage}]");
                                 }
@@ -265,7 +266,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
 
             // 获取图片
-            (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode, emoji);
+            (Picture? picture, string? cachePath, string? hash) = Picture.TryGetImageHash(cqcode);
 
             // 图片无效
             if (string.IsNullOrEmpty(cachePath) || !File.Exists(cachePath) || string.IsNullOrEmpty(hash))

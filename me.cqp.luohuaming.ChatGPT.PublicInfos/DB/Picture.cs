@@ -94,9 +94,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return picture;
         }
 
-        public static (Picture? picture, string? cachePath, string? hash) TryGetImageHash(CQCode img, bool isEmoji)
+        public static (Picture? picture, string? cachePath, string? hash) TryGetImageHash(CQCode img)
         {
-            if (!img.IsImageCQCode || (!isEmoji && AppConfig.IgnoreNotEmoji))
+            if (!img.IsImageCQCode)
             {
                 return (null, null, null);
             }
