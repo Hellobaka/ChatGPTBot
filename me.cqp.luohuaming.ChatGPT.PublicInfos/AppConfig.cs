@@ -162,6 +162,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool OnlySaveEmojiPicture { get; set; }
 
+        public static bool LogThinkBlock { get; set; }
+
         public static bool RemoveThinkBlock { get; set; }
 
         public static bool EnableVisionWhenMentioned { get; set; }
@@ -253,6 +255,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
             MinEmojiRecommendScore = ConfigHelper.GetConfig("MinEmojiRecommendScore", (double)0.5);
             OnlySaveEmojiPicture = ConfigHelper.GetConfig("OnlySaveEmojiPicture", true);
+            LogThinkBlock = ConfigHelper.GetConfig("LogThinkBlock", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
 
