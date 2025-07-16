@@ -64,10 +64,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     SetGroupBusy(e.FromGroup, false);
                     return new FunctionResult { Result = false, SendFlag = false };
                 }
-                double replyProbablity = replyManager.ChangeReplyWilling(record.IsImage, record.IsMentioned, AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
+                double replyProbability = replyManager.ChangeReplyWilling(record.IsImage, record.IsMentioned, AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
                 double random = CommonHelper.NextDouble();
-                CommonHelper.DebugLog("触发回复", $"Random={random}, probablity={replyProbablity}");
-                if (random < replyProbablity)
+                CommonHelper.DebugLog("触发回复", $"Random={random}, probability={replyProbability}");
+                if (random < replyProbability)
                 {
                     SetGroupBusy(e.FromGroup, true);
 
@@ -77,7 +77,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         throw new ArgumentNullException("请求结果失败");
                     }
-                    if (reply == AppConfig.ChatEmptyResponse)
+                    if (reply.Contains(AppConfig.ChatEmptyResponse))
                     {
                         e.CQLog.Info("触发回复", "大模型拒绝了回答");
                         return new();
@@ -310,12 +310,12 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     foreach ((Picture emoji, _) in emojis)
                     {
-                        bool absoulute = File.Exists(emoji.FilePath);
+                        bool absolute = File.Exists(emoji.FilePath);
                         bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, emoji.FilePath));
-                        if (absoulute || relative)
+                        if (absolute || relative)
                         {
                             MainSave.CQLog.Info("获取表情包", $"表情包获取成功，为 {emoji.FilePath}");
-                            var message = absoulute ? CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory))
+                            var message = absolute ? CQApi.CQCode_Image(CommonHelper.GetRelativePath(emoji.FilePath, MainSave.ImageDirectory))
                                 : CQApi.CQCode_Image(emoji.FilePath);
                             RecordSelfMessage(fromGroup, fromGroup > 0 ? MainSave.CQApi.SendGroupMessage(fromGroup, message) : MainSave.CQApi.SendPrivateMessage(fromQQ, message));
                             emoji.UseCount++;
