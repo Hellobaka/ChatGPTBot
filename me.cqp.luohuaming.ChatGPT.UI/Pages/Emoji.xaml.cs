@@ -173,7 +173,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             };
 
             Emojis.Clear();
-            foreach (var item in Picture.Cache)
+            foreach (var item in Picture.Cache.Where(x => x.Value.IsEmoji))
             {
                 Emojis.Add(Model.Emoji.ParseFromPicture(item.Value));
             }
