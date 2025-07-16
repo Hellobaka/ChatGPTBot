@@ -121,11 +121,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public (Mood mood, Stand stand) GetTextMood(string input, string detailMessage)
         {
             string prompt = string.Format(Prompt, detailMessage, input);
-            string reply = Chat.GetChatResult(AppConfig.SpliterUrl, AppConfig.SpliterApiKey,
+            string reply = Chat.GetChatResult(AppConfig.SplitterUrl, AppConfig.SplitterApiKey,
                 [
                     new SystemChatMessage(prompt),
                     new UserChatMessage("请回复")
-                ], AppConfig.SpliterModelName, Chat.Purpose.获取心情);
+                ], AppConfig.SplitterModelName, Chat.Purpose.获取心情);
             var split = reply.Split('-');
 
             if (split.Length == 2)

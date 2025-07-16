@@ -56,35 +56,35 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
 
-        public static bool EnableSpliter { get; set; }
+        public static bool EnableSplitter { get; set; }
 
-        public static string SpliterModelName { get; set; }
+        public static string SplitterModelName { get; set; }
 
-        public static string SpliterPrompt { get; set; }
+        public static string SplitterPrompt { get; set; }
 
-        public static int SpliterMaxLines { get; set; } = 3;
+        public static int SplitterMaxLines { get; set; } = 3;
 
-        public static bool SpliterRegexFirst { get; set; }
+        public static bool SplitterRegexFirst { get; set; }
 
-        public static bool SpliterRegexRemovePunctuation { get; set; }
+        public static bool SplitterRegexRemovePunctuation { get; set; }
 
-        public static int SpliterSimulateTypeSpeed { get; set; }
+        public static int SplitterSimulateTypeSpeed { get; set; }
 
-        public static bool EnableSpliterRandomDelay { get; set; }
+        public static bool EnableSplitterRandomDelay { get; set; }
 
-        public static int SpliterRandomDelayMin { get; set; }
+        public static int SplitterRandomDelayMin { get; set; }
 
-        public static int SpliterRandomDelayMax { get; set; }
+        public static int SplitterRandomDelayMax { get; set; }
 
         public static string BochaAPIKey { get; set; }
 
         public static bool EnableEmojiSend {  get; set; }
 
-        public static int EmojiSendProbablity {  get; set; }
+        public static int EmojiSendProbability {  get; set; }
 
-        public static string SpliterUrl {  get; set; }
+        public static string SplitterUrl {  get; set; }
 
-        public static string SpliterApiKey {  get; set; }
+        public static string SplitterApiKey {  get; set; }
 
         public static string ImageDescriberUrl {  get; set; }
 
@@ -122,11 +122,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableMemory { get; set; }
 
-        public static double MinMemorySimilarty { get; set; }
+        public static double MinMemorySimilarity { get; set; }
 
         public static int MaxMemoryCount { get; set; }
 
-        public static int SpliterMinLength { get; set; }
+        public static int SplitterMinLength { get; set; }
 
         public static bool EnableTencentSign { get; set; }
 
@@ -201,22 +201,22 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             PrivatePrompt = ConfigHelper.GetConfig("PrivatePrompt", "胆小害羞，说话简单意骇，心情好时会使用emoji与颜文字。现在请你读读之前的聊天记录，然后给出日常且口语化的回复，尽量简短一些。请注意把握聊天内容，不要刻意突出自身学科背景，不要回复的太有条理，可以有个性，请回复时不要过多提及自身的背景。");
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
-            EnableSpliter = ConfigHelper.GetConfig("EnableSpliter", false);
-            SpliterModelName = ConfigHelper.GetConfig("SpliterModelName", "gpt-4o-mini");
-            SpliterPrompt = ConfigHelper.GetConfig("SpliterPrompt", "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要");
-            SpliterMaxLines = ConfigHelper.GetConfig("SpliterMaxLines", 3);
-            SpliterRegexFirst = ConfigHelper.GetConfig("SpliterRegexFirst", false);
-            SpliterRegexRemovePunctuation = ConfigHelper.GetConfig("SpliterRegexRemovePunctuation", false);
-            SpliterSimulateTypeSpeed = ConfigHelper.GetConfig("SpliterSimulateTypeSpeed", 100);
-            EnableSpliterRandomDelay = ConfigHelper.GetConfig("EnableSpliterRandomDelay", true);
+            EnableSplitter = ConfigHelper.GetConfig("EnableSplitter", false);
+            SplitterModelName = ConfigHelper.GetConfig("SplitterModelName", "gpt-4o-mini");
+            SplitterPrompt = ConfigHelper.GetConfig("SplitterPrompt", "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要");
+            SplitterMaxLines = ConfigHelper.GetConfig("SplitterMaxLines", 3);
+            SplitterRegexFirst = ConfigHelper.GetConfig("SplitterRegexFirst", false);
+            SplitterRegexRemovePunctuation = ConfigHelper.GetConfig("SplitterRegexRemovePunctuation", false);
+            SplitterSimulateTypeSpeed = ConfigHelper.GetConfig("SplitterSimulateTypeSpeed", 100);
+            EnableSplitterRandomDelay = ConfigHelper.GetConfig("EnableSplitterRandomDelay", true);
             EnableEmojiSend = ConfigHelper.GetConfig("EnableEmojiSend", false);
-            SpliterRandomDelayMin = ConfigHelper.GetConfig("SpliterRandomDelayMin", 1000);
-            SpliterRandomDelayMax = ConfigHelper.GetConfig("SpliterRandomDelayMax", 4500);
-            SpliterMinLength = ConfigHelper.GetConfig("SpliterMinLength", 10);
-            EmojiSendProbablity = ConfigHelper.GetConfig("EmojiSendProbablity", 10);
+            SplitterRandomDelayMin = ConfigHelper.GetConfig("SplitterRandomDelayMin", 1000);
+            SplitterRandomDelayMax = ConfigHelper.GetConfig("SplitterRandomDelayMax", 4500);
+            SplitterMinLength = ConfigHelper.GetConfig("SplitterMinLength", 10);
+            EmojiSendProbability = ConfigHelper.GetConfig("EmojiSendProbability", 10);
             ContextMaxLength = ConfigHelper.GetConfig("ContextMaxLength", 20);
-            SpliterUrl = ConfigHelper.GetConfig("SpliterUrl", "https://api.openai.com/v1");
-            SpliterApiKey = ConfigHelper.GetConfig("SpliterApiKey", "");
+            SplitterUrl = ConfigHelper.GetConfig("SplitterUrl", "https://api.openai.com/v1");
+            SplitterApiKey = ConfigHelper.GetConfig("SplitterApiKey", "");
             ImageDescriberUrl = ConfigHelper.GetConfig("ImageDescriberUrl", "https://api.openai.com/v1");
             ImageDescriberApiKey = ConfigHelper.GetConfig("ImageDescriberApiKey", "");
             ImageDescriberModelName = ConfigHelper.GetConfig("ImageDescriberModelName", "gpt-4o-mini");
@@ -236,7 +236,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RandomSendEmoji = ConfigHelper.GetConfig("RandomSendEmoji", true);
             RecommendEmojiCount = ConfigHelper.GetConfig("RecommendEmojiCount", 5);
             EnableMemory = ConfigHelper.GetConfig("EnableMemory", true);
-            MinMemorySimilarty = ConfigHelper.GetConfig("MinMemorySimilarty", 0.8);
+            MinMemorySimilarity = ConfigHelper.GetConfig("MinMemorySimilarity", 0.8);
             MaxMemoryCount = ConfigHelper.GetConfig("MaxMemoryCount", 5);
             EnableTencentSign = ConfigHelper.GetConfig("EnableTencentSign", false);
             TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");

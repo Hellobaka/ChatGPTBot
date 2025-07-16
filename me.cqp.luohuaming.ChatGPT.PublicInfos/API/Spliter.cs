@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
-    public class Spliter
+    public class Splitter
     {
-        public Spliter(string message)
+        public Splitter(string message)
         {
             Message = message;
         }
@@ -24,20 +24,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public string[] Split()
         {
             CommonHelper.DebugLog("消息分行", $"开始进行消息分行：{Message}");
-            if (Message.Length <= AppConfig.SpliterMinLength)
+            if (Message.Length <= AppConfig.SplitterMinLength)
             {
                 return [Message];
             }
-            if (AppConfig.SpliterRegexFirst)
+            if (AppConfig.SplitterRegexFirst)
             {
                 return RegexSplit();
             }
-            string prompt = AppConfig.SpliterPrompt.Replace("$MaxLines$", AppConfig.SpliterMaxLines.ToString());
-            string result = Chat.GetChatResult(AppConfig.SpliterUrl, AppConfig.SpliterApiKey, new List<ChatMessage>
+            string prompt = AppConfig.SplitterPrompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
+            string result = Chat.GetChatResult(AppConfig.SplitterUrl, AppConfig.SplitterApiKey, new List<ChatMessage>
             {
                 new SystemChatMessage(prompt),
                 new UserChatMessage(Message)
-            }, AppConfig.SpliterModelName, Chat.Purpose.分段);
+            }, AppConfig.SplitterModelName, Chat.Purpose.分段);
             if (result != Chat.ErrorMessage)
             {
                 try
@@ -48,11 +48,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     foreach (var line in arr)
                     {
                         var str = line.ToString();
-                        if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
+                        if (AppConfig.SplitterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
                         {
                             str = str.Substring(0, str.Length - 1);
                         }
-                        if (lines.Count < AppConfig.SpliterMaxLines)
+                        if (lines.Count < AppConfig.SplitterMaxLines)
                         {
                             lines.Add(str);
                         }
@@ -82,28 +82,28 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         {
             string[] sentences = LineSplitRegex.Split(Message);
 
-            if (sentences.Length <= AppConfig.SpliterMaxLines)
+            if (sentences.Length <= AppConfig.SplitterMaxLines)
             {
                 return sentences;
             }
 
-            string[] limitedArray = new string[AppConfig.SpliterMaxLines];
-            for (int i = 0; i < AppConfig.SpliterMaxLines; i++)
+            string[] limitedArray = new string[AppConfig.SplitterMaxLines];
+            for (int i = 0; i < AppConfig.SplitterMaxLines; i++)
             {
                 limitedArray[i] = sentences[i];
             }
             for (int i = 0; i < limitedArray.Length; i++)
             {
                 string str = limitedArray[i];
-                if (AppConfig.SpliterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
+                if (AppConfig.SplitterRegexRemovePunctuation && (str.EndsWith("。") || str.EndsWith(".") || str.EndsWith("，") || str.EndsWith(",")))
                 {
                     str = str.Substring(0, str.Length - 1);
                 }
                 limitedArray[i] = str;
             }
 
-            string overflow = string.Join("", sentences, AppConfig.SpliterMaxLines - 1, sentences.Length - (AppConfig.SpliterMaxLines - 1));
-            limitedArray[AppConfig.SpliterMaxLines - 1] = overflow;
+            string overflow = string.Join("", sentences, AppConfig.SplitterMaxLines - 1, sentences.Length - (AppConfig.SplitterMaxLines - 1));
+            limitedArray[AppConfig.SplitterMaxLines - 1] = overflow;
 
             return limitedArray;
         }

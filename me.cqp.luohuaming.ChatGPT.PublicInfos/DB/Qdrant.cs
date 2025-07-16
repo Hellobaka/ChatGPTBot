@@ -241,7 +241,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     return [];
                 }
                 var searchResult = (r["result"]["points"] as JArray).Select(x => new { Id = (long)x["id"], Payload = x["payload"], Score = (float)x["score"] }).ToArray();
-                searchResult = searchResult.Where(x => x.Id != record.Id && x.Score >= AppConfig.MinMemorySimilarty).ToArray();
+                searchResult = searchResult.Where(x => x.Id != record.Id && x.Score >= AppConfig.MinMemorySimilarity).ToArray();
                 using var db = SQLHelper.GetInstance();
                 if (AppConfig.EnableRerank)
                 {

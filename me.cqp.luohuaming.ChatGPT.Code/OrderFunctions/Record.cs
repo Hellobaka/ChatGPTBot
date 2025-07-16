@@ -298,7 +298,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
             MoodManager.Instance.UpdateMood(mood);
             relationship.UpdateFavourability(mood, stand);
-            if (AppConfig.EnableEmojiSend && CommonHelper.Next(0, 100) < AppConfig.EmojiSendProbablity)
+            if (AppConfig.EnableEmojiSend && CommonHelper.Next(0, 100) < AppConfig.EmojiSendProbability)
             {
                 CommonHelper.DebugLog("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
                 var emojis = Picture.GetRecommandEmoji(reply);
@@ -338,18 +338,18 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         private void SendReply(string reply, long fromGroup, long fromQQ, int msgId)
         {
-            if (AppConfig.EnableSpliter)
+            if (AppConfig.EnableSplitter)
             {
-                var splits = new Spliter(reply).Split();
+                var splits = new Splitter(reply).Split();
                 bool firstSend = true;
                 foreach (var item in splits.Where(x => !string.IsNullOrWhiteSpace(x)))
                 {
                     string r = item;
-                    if (AppConfig.EnableSpliterRandomDelay)
+                    if (AppConfig.EnableSplitterRandomDelay)
                     {
-                        double typeSpeed = AppConfig.SpliterSimulateTypeSpeed / 60;
+                        double typeSpeed = AppConfig.SplitterSimulateTypeSpeed / 60;
                         double typeTime = r.Length * typeSpeed;
-                        int randomSleep = CommonHelper.Next(AppConfig.SpliterRandomDelayMin, AppConfig.SpliterRandomDelayMax);
+                        int randomSleep = CommonHelper.Next(AppConfig.SplitterRandomDelayMin, AppConfig.SplitterRandomDelayMax);
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
                     }
                     if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply)

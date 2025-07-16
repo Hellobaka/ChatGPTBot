@@ -87,12 +87,12 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     AppConfig.EnableRerank = false;
                 }
             }
-            if (AppConfig.EnableSpliter && !AppConfig.SpliterRegexFirst)
+            if (AppConfig.EnableSplitter && !AppConfig.SplitterRegexFirst)
             {
-                if (new string[] { AppConfig.SpliterApiKey, AppConfig.SpliterUrl, AppConfig.SpliterPrompt, AppConfig.SpliterModelName }.Any(string.IsNullOrEmpty))
+                if (new string[] { AppConfig.SplitterApiKey, AppConfig.SplitterUrl, AppConfig.SplitterPrompt, AppConfig.SplitterModelName }.Any(string.IsNullOrEmpty))
                 {
                     MainSave.CQLog.Error("初始化", "分段API配置无效，已切换至强制正则分段");
-                    AppConfig.SpliterRegexFirst = true;
+                    AppConfig.SplitterRegexFirst = true;
                 }
             }
             if (AppConfig.EnableTencentSign)

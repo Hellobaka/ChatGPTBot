@@ -128,26 +128,26 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 ReplyWilling *= 0.1;
             }
 
-            double baseProbablity = 0;
+            double baseProbability = 0;
             if (ContextMode)
             {
-                baseProbablity = HighReplyWilling ? 0.5 : 0.25;
+                baseProbability = HighReplyWilling ? 0.5 : 0.25;
             }
             else if (HighReplyWilling)
             {
-                baseProbablity = (MessageHoldCount >= 4 && MessageHoldCount <= 8) ? 0.5 : 0.2;
+                baseProbability = (MessageHoldCount >= 4 && MessageHoldCount <= 8) ? 0.5 : 0.2;
             }
             else
             {
-                baseProbablity = MessageHoldCount > 15 ? 0.3 : (0.03 * Math.Min(MessageHoldCount, 10));
+                baseProbability = MessageHoldCount > 15 ? 0.3 : (0.03 * Math.Min(MessageHoldCount, 10));
             }
 
             ReplyWilling = Math.Min(3, Math.Max(0, ReplyWilling));
             LastReplyQQ = qq;
 
-            CommonHelper.DebugLog("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，回复倍率：{AppConfig.ReplyWillingAmplifier}，额外倍率：{baseProbablity}，最终计算结果：{ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier}");
+            CommonHelper.DebugLog("回复意愿更新", $"更新后的回复意愿为：{ReplyWilling}，回复倍率：{AppConfig.ReplyWillingAmplifier}，额外倍率：{baseProbability}，最终计算结果：{ReplyWilling * baseProbability * AppConfig.ReplyWillingAmplifier}");
 
-            return ReplyWilling * baseProbablity * AppConfig.ReplyWillingAmplifier;
+            return ReplyWilling * baseProbability * AppConfig.ReplyWillingAmplifier;
         }
 
         public void ChangeReplyWillingAfterSendingMessage()
