@@ -105,7 +105,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("下载文件", e.Message + e.StackTrace);
+                MainSave.CQLog.Error("下载文件", e);
                 return false;
             }
         }
@@ -159,7 +159,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("发送请求", url + "\n" + $"Payload: {payload}\n{result}\n" + ex.Message + ex.StackTrace);
+                MainSave.CQLog?.Error("发送请求", url + "\n" + $"Payload: {payload}\n{result}\n" + ex);
                 return null;
             }
         }
@@ -266,7 +266,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("发送请求", $"腾讯云接口：Action={action}，Payload={payload}" + ex.Message + ex.StackTrace);
+                MainSave.CQLog?.Error("发送请求", $"腾讯云接口：Action={action}，Payload={payload}" + ex);
                 return null;
             }
         }

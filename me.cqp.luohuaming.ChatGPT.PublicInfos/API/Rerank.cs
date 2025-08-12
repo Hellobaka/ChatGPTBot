@@ -90,7 +90,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             catch (Exception ex)
             {
                 CommonHelper.DebugLog("Rerank", json ?? "null");
-                MainSave.CQLog.Error("获取Rerank", $"结果Json解析失败: {ex.Message}");
+                MainSave.CQLog.Error("获取Rerank", $"结果Json解析失败: {ex}");
 
                 return [];
             }

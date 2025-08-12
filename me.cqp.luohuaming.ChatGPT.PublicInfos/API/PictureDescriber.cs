@@ -68,7 +68,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("缓存图片", $"缓存图片失败，错误信息：{e.Message}");
+                MainSave.CQLog.Error("缓存图片", $"缓存图片失败，错误信息：{e}");
                 return null;
             }
         }
@@ -97,7 +97,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("计算图片Hash", $"计算Hash失败，错误信息：{e.Message}");
+                MainSave.CQLog.Error("计算图片Hash", $"计算Hash失败，错误信息：{e}");
                 return null;
             }
         }
@@ -113,7 +113,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("删除图片", $"删除图片失败，错误信息：{e.Message}");
+                MainSave.CQLog.Error("删除图片", $"删除图片失败，错误信息：{e}");
             }
         }
     }

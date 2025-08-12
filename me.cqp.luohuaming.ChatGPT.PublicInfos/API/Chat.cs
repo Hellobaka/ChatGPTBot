@@ -131,7 +131,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Info("OpenAI_ChatCompletions失败", ex.Message + ex.StackTrace);
+                MainSave.CQLog?.Info("OpenAI_ChatCompletions失败", ex);
                 msg = ErrorMessage;
             }
             return msg;

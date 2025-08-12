@@ -56,7 +56,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("发送请求", endpoint + "\n" + $"Payload: {payload}\n{result}\n" + ex.Message + ex.StackTrace);
+                MainSave.CQLog?.Error("发送请求", endpoint + "\n" + $"Payload: {payload}\n{result}\n" + ex);
                 return null;
             }
         }
@@ -113,7 +113,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Error("初始化向量数据库", $"初始化失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog.Error("初始化向量数据库", $"初始化失败：{ex}");
                 return false;
             }
         }
@@ -167,7 +167,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Error("插入向量", $"插入失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog.Error("插入向量", $"插入失败：{ex}");
                 return false;
             }
         }
@@ -273,7 +273,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Error("向量查询", $"输入: {record.Message_NoAppendInfo}，查询失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog.Error("向量查询", $"输入: {record.Message_NoAppendInfo}，查询失败：{ex}");
                 return [];
             }
         }
@@ -292,7 +292,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("Qdrant删除", $"删除失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog?.Error("Qdrant删除", $"删除失败：{ex}");
                 return false;
             }
         }
@@ -308,7 +308,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("Qdrant删除集合", $"删除失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog?.Error("Qdrant删除集合", $"删除失败：{ex}");
                 return false;
             }
         }
@@ -388,7 +388,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             catch (Exception ex)
             {
-                MainSave.CQLog?.Error("Qdrant集合修复", $"本地目录修复失败：{ex.Message}\n{ex.StackTrace}");
+                MainSave.CQLog?.Error("Qdrant集合修复", $"本地目录修复失败：{ex}");
                 return false;
             }
         }
