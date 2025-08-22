@@ -6,6 +6,7 @@ using System.ClientModel;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -62,15 +63,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     int inputToken = 0, outputToken = 0;
                     if (AppConfig.StreamMode)
                     {
+                        ToolCallStreamBuilder builder = new();
                         foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, option))
                         {
                             msg += AppendContentToMessage(chatUpdate.ContentUpdate);
                             reasoning += AppendReasoningContentToMessage(chatUpdate);
-                            // TODO: tool stream update
+                            builder.Append(chatUpdate.ToolCallUpdates);
+
                             finishReason = chatUpdate.FinishReason ?? ChatFinishReason.Stop;
                             inputToken += (chatUpdate.Usage?.InputTokenCount ?? 0);
                             outputToken += (chatUpdate.Usage?.OutputTokenCount ?? 0);
                         }
+                        toolCall = builder.Build();
                     }
                     else
                     {
@@ -221,6 +225,57 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
             }
             return msg;
+        }
+    }
+
+    public class ToolCallStreamBuilder
+    {
+        private Dictionary<int, string> ToolCallId { get; set; } = [];
+
+        private Dictionary<int, string> ToolCallFunctionName { get; set; } = [];
+
+        private Dictionary<int, byte[]> ToolCallFunctionArguments { get; set; } = [];
+
+        public void Append(IReadOnlyList<StreamingChatToolCallUpdate> toolCallUpdates)
+        {
+            foreach (var item in toolCallUpdates)
+            {
+                if (item.ToolCallId != null)
+                {
+                    ToolCallId[item.Index] = item.ToolCallId;
+                }
+                if (item.FunctionName != null)
+                {
+                    ToolCallFunctionName[item.Index] = item.FunctionName;
+                }
+                if (item.FunctionArgumentsUpdate != null)
+                {
+                    if (ToolCallFunctionArguments.TryGetValue(item.Index, out var value))
+                    {
+                        ToolCallFunctionArguments[item.Index] = [.. value, .. item.FunctionArgumentsUpdate.ToArray()];
+                    }
+                    else
+                    {
+                        ToolCallFunctionArguments[item.Index] = [.. item.FunctionArgumentsUpdate.ToArray()];
+                    }
+                }
+            }
+        }
+
+        public List<ChatToolCall> Build()
+        {
+            List<ChatToolCall> toolCalls = [];
+            foreach (var item in ToolCallId)
+            {
+                var index = item.Key;
+                var id = item.Value;
+                var functionName = ToolCallFunctionName[index];
+                var argument = ToolCallFunctionArguments[index];
+
+                var toolCall = ChatToolCall.CreateFunctionToolCall(id, functionName, BinaryData.FromBytes(argument));
+                toolCalls.Add(toolCall);
+            }
+            return toolCalls;
         }
     }
 }
