@@ -100,6 +100,27 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Converter
         }
     }
 
+    public class ArrayDisplayConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is IList<string> values)
+            {
+                return string.Join(" ", values);
+            }
+            if (value is IList<int> intValues)
+            {
+                return string.Join(" ", intValues);
+            }
+            return "";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class InsertImageTaskListMultiConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

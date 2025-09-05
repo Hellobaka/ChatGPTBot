@@ -37,6 +37,7 @@
                 IsSelected="True"
                 Tag="TokenStatistics" />
             <ui:NavigationViewItem Content="设置" Tag="Settings" />
+            <ui:NavigationViewItem Content="Key管理" Tag="KeyManage" />
             <ui:NavigationViewItem Content="表情包" Tag="Emoji" />
             <ui:NavigationViewItem Content="记忆" Tag="Memory" />
             <ui:NavigationViewItem Content="心情" Tag="Mood" />

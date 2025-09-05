@@ -5,6 +5,7 @@ using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -41,6 +42,19 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         public static bool ShowConfirm(string message)
         {
             return MessageBox.Show(Instance, message, "提示", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        }
+
+        public static async Task<bool> ShowConfirmDialog(string title, string message)
+        {
+            ContentDialog dialog = new()
+            {
+                Title = title,
+                Content = message,
+                DefaultButton = ContentDialogButton.Primary,
+                PrimaryButtonText = "确认",
+                SecondaryButtonText = "取消",
+            };
+            return await dialog.ShowAsync() == ContentDialogResult.Primary;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

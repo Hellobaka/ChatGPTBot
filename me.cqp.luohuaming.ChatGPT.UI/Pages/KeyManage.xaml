@@ -1,0 +1,109 @@
+﻿<Page
+    x:Class="me.cqp.luohuaming.ChatGPT.UI.Pages.KeyManage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Converter"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodel="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.ViewModel"
+    Title="KeyManage"
+    d:DataContext="{d:DesignInstance Type=viewmodel:KeyManageViewModel}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:ArrayDisplayConverter x:Key="ArrayDisplayConverter" />
+    </Page.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+        <Button
+            Grid.Row="0"
+            Margin="0,0,0,10"
+            HorizontalAlignment="Stretch"
+            Click="CreateKeyButton_Click">
+            新增
+        </Button>
+        <Button
+            Grid.Row="1"
+            Margin="0,0,0,10" Click="ReloadButton_Click"
+            HorizontalAlignment="Stretch">
+            刷新
+        </Button>
+        <DataGrid
+            x:Name="KeyDataGrid"
+            Grid.Row="2"
+            VerticalAlignment="Stretch"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            EnableRowVirtualization="True"
+            HorizontalScrollBarVisibility="Auto"
+            ItemsSource="{Binding APIKeys}"
+            SelectionMode="Single"
+            SelectionUnit="FullRow"
+            VerticalScrollBarVisibility="Auto">
+            <DataGrid.Columns>
+                <DataGridTextColumn Binding="{Binding Name}" Header="名称" />
+                <DataGridTemplateColumn Width="*" Header="EndPoint">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding EndPoint}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="*" Header="APIKey">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding APIKey}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Width="*" Header="APIKey">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Text="{Binding AvailableModels, Converter={StaticResource ArrayDisplayConverter}}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Binding="{Binding TokenConsume}" Header="消耗的Token" />
+                <DataGridTemplateColumn Width="200" Header="操作">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button
+                                    Margin="5,0,0,0"
+                                    Click="ApiKeyEdit_Click"
+                                    Style="{StaticResource AccentButtonStyle}">
+                                    编辑
+                                </Button>
+                                <Button
+                                    Margin="5,0,0,0"
+                                    Click="ApiKeyDelete_Click"
+                                    Style="{StaticResource ErrorButtonStyle}">
+                                    删除
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page>
