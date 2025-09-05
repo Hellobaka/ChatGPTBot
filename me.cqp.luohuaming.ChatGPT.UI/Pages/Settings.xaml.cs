@@ -1,11 +1,15 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using static me.cqp.luohuaming.ChatGPT.PublicInfos.API.Chat;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
@@ -18,6 +22,18 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             InitializeComponent();
         }
+
+        private ObservableCollection<APIKeyPurpose> KeyPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> ChatPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> ImageDescriptionPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> EmbeddingPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> RerankPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> SplitterPurposes { get; set; } = new();
 
         private static bool TryParse(string input, Type type, out object value)
         {
@@ -209,6 +225,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     GetAndSetConfigFromStackPanel(properties, ScheduleContainer);
 
                     AppConfig.ReloadAPIKey();
+                    SavePurpose();
                     ConfigHelper.EnableHotReload();
                     MainWindow.ShowInfo("配置保存成功");
                 }
@@ -340,6 +357,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             SetConfigToStackPanel(properties, MemoryContainer);
             SetConfigToStackPanel(properties, EmojiContainer);
             SetConfigToStackPanel(properties, ScheduleContainer);
+
+            ReloadPurpose();
         }
 
         private void BotNicknameRemoveButton_Click(object sender, RoutedEventArgs e)
@@ -398,6 +417,119 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 MainWindow.ShowError("输入内容格式错误");
             }
+        }
+
+        private async void KeyPurposeEditButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is APIKeyPurpose purpose)
+            {
+                KeyPurposeEdit purposeEdit = new(purpose.Clone());
+                await purposeEdit.ShowAsync();
+                if (purposeEdit.DialogResult == ModernWpf.Controls.ContentDialogResult.Primary)
+                {
+                    int index = KeyPurposes.IndexOf(purpose);
+                    if (index >= 0)
+                    {
+                        KeyPurposes[index] = purposeEdit.APIKeyPurpose;
+                    }
+                }
+            }
+        }
+
+        private async void KeyPurposeDeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (await MainWindow.ShowConfirmDialog("删除确认", "确认删除该 API Key 吗？")
+                && sender is Button button
+                && button.DataContext is APIKeyPurpose purpose)
+            {
+                KeyPurposes.Remove(purpose);
+            }
+        }
+
+        private void KeyPurposeTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            switch ((KeyPurposeTabControl.SelectedItem as TabItem).Tag.ToString())
+            {
+                case "Chat":
+                    KeyPurposes = ChatPurposes;
+                    break;
+
+                case "Splitter":
+                    KeyPurposes = SplitterPurposes;
+                    break;
+
+                case "ImageDescriber":
+                    KeyPurposes = ImageDescriptionPurposes;
+                    break;
+
+                case "Embedding":
+                    KeyPurposes = EmbeddingPurposes;
+                    break;
+
+                case "Rerank":
+                    KeyPurposes = RerankPurposes;
+                    break;
+
+                default:
+                    MainWindow.ShowError("未知的数据源选项");
+                    break;
+            }
+            SetTimeoutBoxVisible();
+            KeyPurposeDataGrid.ItemsSource = KeyPurposes;
+        }
+
+        private void SetTimeoutBoxVisible()
+        {
+            string tag = (KeyPurposeTabControl.SelectedItem as TabItem).Tag.ToString();
+            ChatTimeout.Visibility = tag == "Chat" ? Visibility.Visible : Visibility.Collapsed;
+            RerankTimeout.Visibility = tag == "Rerank" ? Visibility.Visible : Visibility.Collapsed;
+            EmbeddingTimeout.Visibility = tag == "Embedding" ? Visibility.Visible : Visibility.Collapsed;
+            SplitterTimeout.Visibility = tag == "Splitter" ? Visibility.Visible : Visibility.Collapsed;
+            ImageDescriberTimeout.Visibility = tag == "ImageDescriber" ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async void CreateKeyButton_Click(object sender, RoutedEventArgs e)
+        {
+            KeyPurposeEdit purposeEdit = new(new APIKeyPurpose());
+            await purposeEdit.ShowAsync();
+            if (purposeEdit.DialogResult == ModernWpf.Controls.ContentDialogResult.Primary)
+            {
+                KeyPurposes.Add(purposeEdit.APIKeyPurpose);
+            }
+        }
+
+        private async void ReloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!await MainWindow.ShowConfirmDialog("刷新确认", "刷新可能导致未保存的更改丢失，确定要刷新吗？"))
+            {
+                return;
+            }
+            ReloadPurpose();
+        }
+
+        private void ReloadPurpose()
+        {
+            ChatPurposes = AppConfig.ChatAPIKeyId.ToObservableCollection();
+            SplitterPurposes = AppConfig.SplitterApiKeyId.ToObservableCollection();
+            ImageDescriptionPurposes = AppConfig.ImageDescriberApiKeyId.ToObservableCollection();
+            EmbeddingPurposes = AppConfig.EmbeddingApiKeyId.ToObservableCollection();
+            RerankPurposes = AppConfig.RerankApiKeyId.ToObservableCollection();
+            KeyPurposeTabControl_SelectionChanged(null, null);
+        }
+
+        private void SavePurpose()
+        {
+            AppConfig.ChatAPIKeyId = ChatPurposes.ToList();
+            AppConfig.SplitterApiKeyId = SplitterPurposes.ToList();
+            AppConfig.ImageDescriberApiKeyId = ImageDescriptionPurposes.ToList();
+            AppConfig.EmbeddingApiKeyId = EmbeddingPurposes.ToList();
+            AppConfig.RerankApiKeyId = RerankPurposes.ToList();
+
+            ConfigHelper.SetConfig("ChatAPIKeyId", AppConfig.ChatAPIKeyId);
+            ConfigHelper.SetConfig("SplitterApiKeyId", AppConfig.SplitterApiKeyId);
+            ConfigHelper.SetConfig("ImageDescriberApiKeyId", AppConfig.ImageDescriberApiKeyId);
+            ConfigHelper.SetConfig("EmbeddingApiKeyId", AppConfig.EmbeddingApiKeyId);
+            ConfigHelper.SetConfig("RerankApiKeyId", AppConfig.RerankApiKeyId);
         }
     }
 }

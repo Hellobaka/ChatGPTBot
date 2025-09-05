@@ -1,6 +1,6 @@
-﻿using SqlSugar;
+﻿using Newtonsoft.Json;
+using SqlSugar;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
@@ -12,6 +12,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public APIKeys Key { get; set; }
 
         public string ModelName { get; set; } = string.Empty;
+
+        public APIKeyPurpose Clone()
+        {
+            return new APIKeyPurpose
+            {
+                Id = this.Id,
+                Key = this.Key?.Clone(),
+                ModelName = this.ModelName
+            };
+        }
     }
 
     [SugarTable]
@@ -39,6 +49,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsIgnore = true)]
         public static Dictionary<int, APIKeys> KeyCache { get; set; } = [];
 
+        public override bool Equals(object obj)
+        {
+            if (obj is APIKeys key)
+            {
+                return key.Id == this.Id;
+            }
+            return false;
+        }
+        
         public APIKeys Clone()
         {
             return new APIKeys
@@ -88,7 +107,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             using var db = SQLHelper.GetInstance();
             if (Id == 0)
             {
-                Id = db.Insertable(this).ExecuteCommand();
+                Id = db.Insertable(this).ExecuteReturnIdentity();
             }
             else
             {

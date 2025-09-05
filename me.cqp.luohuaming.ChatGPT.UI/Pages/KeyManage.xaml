@@ -28,7 +28,8 @@
             Grid.Row="0"
             Margin="0,0,0,10"
             HorizontalAlignment="Stretch"
-            Click="CreateKeyButton_Click">
+            Click="CreateKeyButton_Click"
+            Style="{StaticResource AccentButtonStyle}">
             新增
         </Button>
         <Button

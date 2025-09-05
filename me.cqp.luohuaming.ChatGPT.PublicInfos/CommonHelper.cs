@@ -2,6 +2,8 @@
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -256,6 +258,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             {
                 // no impletment
             }
+        }
+
+        public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> enumerable)
+        {
+            ObservableCollection<T> collection = [];
+            foreach (var item in enumerable)
+            {
+                if (item is T tItem)
+                {
+                    collection.Add(tItem);
+                }
+            }
+            return collection;
         }
     }
 }
