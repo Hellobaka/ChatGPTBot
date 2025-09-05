@@ -81,6 +81,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ChatBubble.cs" />
+    <Compile Include="Controls\EditableListBox_String.xaml.cs">
+      <DependentUpon>EditableListBox_String.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\EditableListBox_Int.xaml.cs">
+      <DependentUpon>EditableListBox_Int.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Converter\Converters.cs" />
     <Compile Include="Debouncer.cs" />
     <Compile Include="Model\Emoji.cs" />
@@ -91,6 +97,12 @@
     </Compile>
     <Compile Include="Pages\EmojiEdit.xaml.cs">
       <DependentUpon>EmojiEdit.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\KeyEdit.xaml.cs">
+      <DependentUpon>KeyEdit.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\KeyManage.xaml.cs">
+      <DependentUpon>KeyManage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Knowledge.xaml.cs">
       <DependentUpon>Knowledge.xaml</DependentUpon>
@@ -116,6 +128,15 @@
     <Compile Include="Pages\TokenStatistics.xaml.cs">
       <DependentUpon>TokenStatistics.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ViewModel\KeyManageViewModel.cs" />
+    <Page Include="Controls\EditableListBox_String.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\EditableListBox_Int.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -134,6 +155,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\EmojiEdit.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\KeyEdit.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\KeyManage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -211,7 +240,10 @@
       <Version>2.0.0-rc5.4</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
-      <Version>9.0.4</Version>
+      <Version>10.0.0-preview.4.25258.110</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions">
+      <Version>9.0.8</Version>
     </PackageReference>
     <PackageReference Include="ModernWpfUI">
       <Version>0.9.6</Version>
@@ -222,8 +254,14 @@
     <PackageReference Include="System.Data.SQLite">
       <Version>1.0.119</Version>
     </PackageReference>
+    <PackageReference Include="System.Memory">
+      <Version>4.6.3</Version>
+    </PackageReference>
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
-      <Version>6.1.0</Version>
+      <Version>6.1.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.Json">
+      <Version>9.0.8</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
