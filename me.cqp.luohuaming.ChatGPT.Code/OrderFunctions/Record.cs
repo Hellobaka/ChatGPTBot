@@ -201,7 +201,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             [
                 new SystemChatMessage(prompt),
                 new UserChatMessage("请回复")
-            ], Chat.Purpose.聊天);
+            ], Chat.Purpose.聊天, AppConfig.ChatTimeout);
         }
 
         public static string BuildPrompt(Relationship relationship, ChatRecord record)

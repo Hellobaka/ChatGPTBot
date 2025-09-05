@@ -120,7 +120,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int ChatTimeout { get; set; } = 30000;
 
-        public static int ImageGenerationTimeout { get; set; } = 30000;
+        public static int SplitterTimeout { get; set; } = 30000;
+
+        public static int ImageDescriberTimeout { get; set; } = 30000;
 
         public static int MemoryDimensions { get; set; } = 1024;
 
@@ -197,7 +199,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingTimeout = ConfigHelper.GetConfig("EmbeddingTimeout", 3000);
             RerankTimeout = ConfigHelper.GetConfig("RerankTimeout", 3000);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 30000);
-            ImageGenerationTimeout = ConfigHelper.GetConfig("ImageGenerationTimeout", 30000);
+            SplitterTimeout = ConfigHelper.GetConfig("SplitterTimeout", 30000);
+            ImageDescriberTimeout = ConfigHelper.GetConfig("ImageDescriberTimeout", 30000);
             MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
             MinEmojiRecommendScore = ConfigHelper.GetConfig("MinEmojiRecommendScore", (double)0.5);
             OnlySaveEmojiPicture = ConfigHelper.GetConfig("OnlySaveEmojiPicture", true);
@@ -205,6 +208,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
             EnableRawImageInput = ConfigHelper.GetConfig("EnableRawImageInput", false);
+            EnableEmojiSingleSend = ConfigHelper.GetConfig("EnableEmojiSingleSend", false);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();

@@ -126,7 +126,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 [
                     new SystemChatMessage(prompt),
                     new UserChatMessage("请回复")
-                ], Chat.Purpose.获取心情);
+                ], Chat.Purpose.获取心情, AppConfig.SplitterTimeout);
             var split = reply.Split('-');
 
             if (split.Length == 2)

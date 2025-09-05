@@ -30,27 +30,28 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
 
-        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose)
+        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
         {
-            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose);
+            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose, timeout);
         }
 
-        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose)
+        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
         {
             if (key == null)
             {
                 MainSave.CQLog?.Info("GetChatResult", "Key 为 null");
                 return ErrorMessage;
             }
-            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose);
+            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose, timeout);
         }
 
-        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose)
+        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
         {
+            baseUrl = baseUrl.Replace("/chat/completions", "");
             string msg = "";
             string reasoning = "";
 
-            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromMilliseconds(AppConfig.ChatTimeout), });
+            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromMilliseconds(timeout), });
             var client = c.GetChatClient(modelName);
             var option = new ChatCompletionOptions
             {
