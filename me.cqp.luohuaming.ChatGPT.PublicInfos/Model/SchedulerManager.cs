@@ -90,11 +90,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public static List<(DateTime time, string action)> GetSchedule(string prompt)
         {
-            var json = Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
+            var json = Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
                 new SystemChatMessage(prompt),
                 new UserChatMessage("请回复")
-            ], AppConfig.ChatModelName, Chat.Purpose.日程获取);
+            ], Chat.Purpose.日程获取);
 
             if (json == Chat.ErrorMessage)
             {

@@ -30,13 +30,22 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
 
-        /// <summary>
-        /// 最底层对话调用方法
-        /// </summary>
-        /// <param name="chatMessages"></param>
-        /// <param name="modelName"></param>
-        /// <returns></returns>
-        public static string GetChatResult(string baseUrl, string apiKey, List<ChatMessage> chatMessages, string modelName, Purpose purpose, bool useSearch = false)
+        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose)
+        {
+            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose);
+        }
+
+        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose)
+        {
+            if (key == null)
+            {
+                MainSave.CQLog?.Info("GetChatResult", "Key 为 null");
+                return ErrorMessage;
+            }
+            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose);
+        }
+
+        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose)
         {
             string msg = "";
             string reasoning = "";
@@ -48,10 +57,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 MaxOutputTokenCount = AppConfig.ChatMaxTokens,
                 Temperature = AppConfig.ChatTemperature
             };
-            if (useSearch)
-            {
-                option.Tools.Add(ChatTool.CreateFunctionTool(nameof(BochaSearch.Search), "从近百亿网页和生态内容源中搜索高质量世界知识，例如新闻、图片、百科、文库等。", BinaryData.FromString(BochaSearch.ToolParameters), true));
-            }
             try
             {
                 bool requiresAction;
@@ -102,9 +107,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             {
                                 switch (tool.FunctionName)
                                 {
-                                    case nameof(BochaSearch.Search):
-                                        chatMessages.Add(new ToolChatMessage(tool.Id, BochaSearch.HandleToolCall(tool.FunctionArguments)));
-                                        break;
                                 }
                             }
                             requiresAction = true;

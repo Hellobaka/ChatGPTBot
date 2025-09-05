@@ -33,11 +33,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 return RegexSplit();
             }
             string prompt = AppConfig.SplitterPrompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
-            string result = Chat.GetChatResult(AppConfig.SplitterUrl, AppConfig.SplitterApiKey, new List<ChatMessage>
+            string result = Chat.GetChatResult(AppConfig.SplitterApiKeyId, new List<ChatMessage>
             {
                 new SystemChatMessage(prompt),
                 new UserChatMessage(Message)
-            }, AppConfig.SplitterModelName, Chat.Purpose.分段);
+            }, Chat.Purpose.分段);
             if (result != Chat.ErrorMessage)
             {
                 try

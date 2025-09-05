@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -9,33 +10,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public static float[] GetEmbedding(string text)
         {
-            string json;
-            bool isTencentAPI = false;
-            if (AppConfig.EmbeddingUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
-            {
-                isTencentAPI = true;
-                json = CommonHelper.Post_TecentSignV3(new
-                {
-                    Model = AppConfig.EmbeddingModelName,
-                    Inputs = new string[] { text }
-                }.ToJson(), TencentAPIAction, AppConfig.EmbeddingTimeout);
-            }
-            else
-            {
-                json = CommonHelper.Post("POST", AppConfig.EmbeddingUrl, new
-                {
-                    model = AppConfig.EmbeddingModelName,
-                    input = text
-                }.ToJson(), AppConfig.EmbeddingApiKey, AppConfig.EmbeddingTimeout);
-            }
+            string json = null;
             try
             {
-                if (isTencentAPI)
+                var api = AppConfig.EmbeddingApiKeyId.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+                if (api == null)
                 {
+                    MainSave.CQLog.Error("获取Embedding", $"Embedding 的 API 为空");
+                    return [];
+                }
+                if (api.Key.UseTencentSign)
+                {
+                    json = CommonHelper.Post_TecentSignV3(new
+                    {
+                        Model = api.ModelName,
+                        Inputs = new string[] { text }
+                    }.ToJson(), TencentAPIAction, AppConfig.EmbeddingTimeout);
+
                     return JObject.Parse(json)["Response"]["Data"][0]["Embedding"].ToObject<float[]>();
                 }
                 else
                 {
+                    json = CommonHelper.Post("POST", api.Key.EndPoint, new
+                    {
+                        model = api.ModelName,
+                        input = text
+                    }.ToJson(), api.Key.APIKey, AppConfig.EmbeddingTimeout);
                     return JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
                 }
             }

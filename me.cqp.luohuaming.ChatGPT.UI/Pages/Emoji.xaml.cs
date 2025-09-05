@@ -235,7 +235,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     }
                     else
                     {
-                        pictures = Picture.GetRecommandEmoji(query);
+                        pictures = Picture.GetRecommendEmoji(query);
                     }
                     if (pictures.Count == 0)
                     {

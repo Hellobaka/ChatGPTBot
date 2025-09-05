@@ -8,6 +8,7 @@ using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
+    // TODO: 改为ToolCall更新，抛弃重新请求
     public class MoodManager
     {
         public double Valence { get; set; }
@@ -121,11 +122,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public (Mood mood, Stand stand) GetTextMood(string input, string detailMessage)
         {
             string prompt = string.Format(Prompt, detailMessage, input);
-            string reply = Chat.GetChatResult(AppConfig.SplitterUrl, AppConfig.SplitterApiKey,
+            string reply = Chat.GetChatResult(AppConfig.SplitterApiKeyId,
                 [
                     new SystemChatMessage(prompt),
                     new UserChatMessage("请回复")
-                ], AppConfig.SplitterModelName, Chat.Purpose.获取心情);
+                ], Chat.Purpose.获取心情);
             var split = reply.Split('-');
 
             if (split.Length == 2)

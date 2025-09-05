@@ -6,15 +6,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
     public static class AppConfig
     {
-        public static List<int> ChatAPIKeyId { get; set; } = [];
+        public static List<APIKeyPurpose> ChatAPIKeyId { get; set; } = [];
 
-        public static List<int> SplitterApiKeyId { get; set; } = [];
+        public static List<APIKeyPurpose> SplitterApiKeyId { get; set; } = [];
 
-        public static List<int> ImageDescriberApiKeyId { get; set; } = [];
+        public static List<APIKeyPurpose> ImageDescriberApiKeyId { get; set; } = [];
 
-        public static List<int> EmbeddingApiKeyId { get; set; } = [];
+        public static List<APIKeyPurpose> EmbeddingApiKeyId { get; set; } = [];
 
-        public static List<int> RerankApiKeyId { get; set; } = [];
+        public static List<APIKeyPurpose> RerankApiKeyId { get; set; } = [];
 
         public static int ChatMaxTokens { get; set; } = 1000;
 
@@ -134,26 +134,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVisionWhenMentioned { get; set; }
 
-        #region Key
-        public static APIKeys[] ChatKeys { get; set; } = [];
-
-        public static APIKeys[] SplitterKeys { get; set; } = [];
-
-        public static APIKeys[] ImageDescriberKeys { get; set; } = [];
-
-        public static APIKeys[] EmbeddingApiKeys { get; set; } = [];
-
-        public static APIKeys[] RerankKeys { get; set; } = [];
-        #endregion
-
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
-            ChatAPIKeyId = ConfigHelper.GetConfig("ChatAPIKeyId", new List<int>());
-            SplitterApiKeyId = ConfigHelper.GetConfig("SplitterApiKeyId", new List<int>());
-            ImageDescriberApiKeyId = ConfigHelper.GetConfig("ImageDescriberApiKeyId", new List<int>());
-            EmbeddingApiKeyId = ConfigHelper.GetConfig("EmbeddingApiKeyId", new List<int>());
-            RerankApiKeyId = ConfigHelper.GetConfig("RerankApiKeyId", new List<int>());
+            ChatAPIKeyId = ConfigHelper.GetConfig("ChatAPIKeyId", new List<APIKeyPurpose>());
+            SplitterApiKeyId = ConfigHelper.GetConfig("SplitterApiKeyId", new List<APIKeyPurpose>());
+            ImageDescriberApiKeyId = ConfigHelper.GetConfig("ImageDescriberApiKeyId", new List<APIKeyPurpose>());
+            EmbeddingApiKeyId = ConfigHelper.GetConfig("EmbeddingApiKeyId", new List<APIKeyPurpose>());
+            RerankApiKeyId = ConfigHelper.GetConfig("RerankApiKeyId", new List<APIKeyPurpose>());
 
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
@@ -224,11 +212,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static void ReloadAPIKey()
         {
-            ChatKeys = APIKeys.GetAllKeys().Where(x => ChatAPIKeyId.Contains(x.Id)).ToArray();
-            SplitterKeys = APIKeys.GetAllKeys().Where(x => SplitterApiKeyId.Contains(x.Id)).ToArray();
-            ImageDescriberKeys = APIKeys.GetAllKeys().Where(x => ImageDescriberApiKeyId.Contains(x.Id)).ToArray();
-            EmbeddingApiKeys = APIKeys.GetAllKeys().Where(x => EmbeddingApiKeyId.Contains(x.Id)).ToArray();
-            RerankKeys = APIKeys.GetAllKeys().Where(x => RerankApiKeyId.Contains(x.Id)).ToArray();
+            APIKeys.GetAllKeys();
+            foreach (var item in ChatAPIKeyId
+                .Concat(SplitterApiKeyId)
+                .Concat(ImageDescriberApiKeyId)
+                .Concat(EmbeddingApiKeyId)
+                .Concat(RerankApiKeyId))
+            {
+                item.Key = APIKeys.GetKeyById(item.Id);
+            }
         }
     }
 }

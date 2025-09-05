@@ -197,11 +197,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
         {
             string prompt = BuildPrompt(relationship, record);
             //CommonHelper.DebugLog("Prompt", prompt);
-            return Chat.GetChatResult(AppConfig.ChatBaseURL, AppConfig.ChatAPIKey,
+            return Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
                 new SystemChatMessage(prompt),
                 new UserChatMessage("请回复")
-            ], AppConfig.ChatModelName, Chat.Purpose.聊天);
+            ], Chat.Purpose.聊天);
         }
 
         public static string BuildPrompt(Relationship relationship, ChatRecord record)
@@ -301,7 +301,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             if (AppConfig.EnableEmojiSend && CommonHelper.Next(0, 100) < AppConfig.EmojiSendProbability)
             {
                 CommonHelper.DebugLog("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
-                var emojis = Picture.GetRecommandEmoji(reply);
+                var emojis = Picture.GetRecommendEmoji(reply);
                 if (emojis.Count > 0)
                 {
                     if (AppConfig.RandomSendEmoji)

@@ -1,8 +1,19 @@
 ﻿using SqlSugar;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
+    public class APIKeyPurpose
+    {
+        public int Id { get; set; }
+
+        [JsonIgnore]
+        public APIKeys Key { get; set; }
+
+        public string ModelName { get; set; } = string.Empty;
+    }
+
     [SugarTable]
     public class APIKeys
     {

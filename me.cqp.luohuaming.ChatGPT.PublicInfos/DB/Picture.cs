@@ -116,13 +116,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return (db.Queryable<Picture>().First(x => x.Hash == hash), filePath, hash);
         }
 
-        public static List<(Picture emoji, double similarity)> GetRecommandEmoji(string text)
+        public static List<(Picture emoji, double similarity)> GetRecommendEmoji(string text)
         {
-            var emotion = Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
+            var emotion = Chat.GetChatResult(AppConfig.ImageDescriberApiKeyId,
                 [
                     new SystemChatMessage(string.Format($"这是你将要发送的消息内容:{text}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。")),
                     new UserChatMessage("请回复")
-                ], AppConfig.ImageDescriberModelName, Chat.Purpose.表情包推荐);
+                ], Chat.Purpose.表情包推荐);
 
             if (emotion == Chat.ErrorMessage)
             {

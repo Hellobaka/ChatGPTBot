@@ -18,11 +18,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 return null;
             }
 
-            return Chat.GetChatResult(AppConfig.ImageDescriberUrl, AppConfig.ImageDescriberApiKey,
+            return Chat.GetChatResult(AppConfig.ImageDescriberApiKeyId,
                 [
                     new SystemChatMessage(prompt),
                     new UserChatMessage(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"))
-                ], AppConfig.ImageDescriberModelName, Chat.Purpose.图片描述);
+                ], Chat.Purpose.图片描述);
         }
 
         public static string? DescribePicture(string path)

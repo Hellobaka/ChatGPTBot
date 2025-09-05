@@ -110,31 +110,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
         }
 
-        public static string TextTemplateParse(string input, long id)
-        {
-            string modelName = AppConfig.ChatModelName;
-            string currentTime = DateTime.Now.ToString("G");
-            string botName = AppConfig.BotName;
-
-            input = input.Replace("$ModelName$", modelName)
-                .Replace("$Time$", currentTime)
-                .Replace("$BotName$", botName)
-                .Replace("$Id$", id.ToString());
-
-            string groupNamePattern = "$GroupName$";
-            if (input.Contains(groupNamePattern))
-            {
-                input = input.Replace(groupNamePattern, MainSave.CQApi.GetGroupInfo(id)?.Name ?? "未获取到昵称");
-            }
-
-            Regex regex = new("\\[CQ:at,qq=(\\d+)\\]");
-            input = regex.Replace(input, "<@$1>");
-
-            regex = new("<@(\\d+?)>");
-            input = regex.Replace(input, "[CQ:at,qq=$1]");
-            return input;
-        }
-
         public static string? Post(string method, string url, string payload, string token, int timeout = 60000)
         {
             string result = "";

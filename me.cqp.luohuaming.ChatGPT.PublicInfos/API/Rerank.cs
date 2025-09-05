@@ -15,56 +15,26 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 return [];
             }
-            string json;
-            bool tencent, ali = false;
-            if (AppConfig.RerankUrl.Contains("lkeap.tencentcloudapi.com") && AppConfig.EnableTencentSign)
+            string json = null;
+            var api = AppConfig.RerankApiKeyId.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+            if (api == null)
             {
-                tencent = true;
-                json = CommonHelper.Post_TecentSignV3(new
-                {
-                    Model = AppConfig.RerankModelName,
-                    Query = text,
-                    Docs = documents
-                }.ToJson(), TencentAPIAction, AppConfig.RerankTimeout);
-            }
-            else
-            {
-                tencent = false;
-                if (AppConfig.RerankUrl.Contains("aliyuncs.com"))
-                {
-                    ali = true;
-                    // 阿里百炼
-                    json = CommonHelper.Post("POST", AppConfig.RerankUrl, new
-                    {
-                        model = AppConfig.RerankModelName,
-                        input = new
-                        {
-                            query = text,
-                            documents,
-                        },
-                        parameters = new 
-                        {
-                            top_n = topn,
-                        }
-                    }.ToJson(), AppConfig.RerankApiKey, AppConfig.RerankTimeout);
-                }
-                else
-                {
-                    json = CommonHelper.Post("POST", AppConfig.RerankUrl, new
-                    {
-                        model = AppConfig.RerankModelName,
-                        query = text,
-                        documents,
-                        top_n = topn,
-                    }.ToJson(), AppConfig.RerankApiKey, AppConfig.RerankTimeout);
-                }
+                MainSave.CQLog.Error("Rerank", "没有可用的Rerank API Key");
+                return [];
             }
             try
             {
                 var j = JObject.Parse(json);
                 (string document, float score)[] results = [];
-                if (tencent)
+                // 针对腾讯云、阿里百炼进行特殊处理
+                if (api.Key.UseTencentSign)
                 {
+                    json = CommonHelper.Post_TecentSignV3(new
+                    {
+                        Model = api.ModelName,
+                        Query = text,
+                        Docs = documents
+                    }.ToJson(), TencentAPIAction, AppConfig.RerankTimeout);
                     for (int i = 0; i < documents.Length; i++)
                     {
                         var document = documents[i];
@@ -73,7 +43,37 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
                 else
                 {
-                    var arr = ali ? j["output"]["results"] : j["results"];
+                    JToken arr;
+                    if (api.Key.EndPoint.Contains("aliyuncs.com"))
+                    {
+                        // 阿里百炼
+                        json = CommonHelper.Post("POST", api.Key.EndPoint, new
+                        {
+                            model = api.ModelName,
+                            input = new
+                            {
+                                query = text,
+                                documents,
+                            },
+                            parameters = new
+                            {
+                                top_n = topn,
+                            }
+                        }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
+                        arr = j["output"]["results"];
+                    }
+                    else
+                    {
+                        json = CommonHelper.Post("POST", api.Key.EndPoint, new
+                        {
+                            model = api.ModelName,
+                            query = text,
+                            documents,
+                            top_n = topn,
+                        }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
+                        arr = j["results"];
+                    }
+
                     foreach (var item in arr as JArray)
                     {
                         int index = ((int)item["index"]);
