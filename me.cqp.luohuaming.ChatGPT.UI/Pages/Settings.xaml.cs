@@ -315,18 +315,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             { }
         }
 
-        private void TextTemplate_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            try
-            {
-                Clipboard.SetText((sender as TextBlock).Tag.ToString());
-            }
-            catch 
-            {
-                MainWindow.ShowError("复制文本失败");
-            }
-        }
-
         private bool VerifyInput(PropertyInfo[] properties, StackPanel container, out string err)
         {
             err = "";
