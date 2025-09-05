@@ -33,8 +33,9 @@
         </Button>
         <Button
             Grid.Row="1"
-            Margin="0,0,0,10" Click="ReloadButton_Click"
-            HorizontalAlignment="Stretch">
+            Margin="0,0,0,10"
+            HorizontalAlignment="Stretch"
+            Click="ReloadButton_Click">
             刷新
         </Button>
         <DataGrid

@@ -1,26 +1,24 @@
-﻿using System.Collections.Generic;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 {
     public static class AppConfig
     {
-        public static string ChatAPIKey { get; set; } = "";
+        public static List<int> ChatAPIKeyId { get; set; } = [];
 
-        public static string ChatBaseURL { get; set; } = "";
+        public static List<int> SplitterApiKeyId { get; set; } = [];
 
-        public static string ChatModelName { get; set; } = "";
+        public static List<int> ImageDescriberApiKeyId { get; set; } = [];
+
+        public static List<int> EmbeddingApiKeyId { get; set; } = [];
+
+        public static List<int> RerankApiKeyId { get; set; } = [];
 
         public static int ChatMaxTokens { get; set; } = 1000;
 
-        public static float ChatTemperature { get; set; } = 1.3f;
-
-        public static int ImageGenerateSize { get; set; } = 1;
-
-        public static int ImageGenerateQuality { get; set; } = 0;
-
-        public static string ImageGenerateBaseURL { get; set; } = "";
-
-        public static string ImageGenerateAPIKey { get; set; } = "";
+        public static float ChatTemperature { get; set; } = 1f;
 
         public static bool EnableGroupReply { get; set; }
 
@@ -28,17 +26,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static long MasterQQ { get; set; }
 
+        public static bool IsGroupBlackList { get; set; }
+
+        public static bool IsPersonBlackList { get; set; }
+
         public static List<long> GroupList { get; set; } = new List<long>();
 
-        public static List<long> BlackList { get; set; } = new List<long>();
-
         public static List<long> PersonList { get; set; } = new List<long>();
-
-        public static string ImageGenerationOrder { get; set; } = ".画图";
-
-        public static string AddBlackListOrder { get; set; } = ".添加黑名单";
-
-        public static string RemoveBlackListOrder { get; set; } = ".移除黑名单";
 
         public static string GroupPrompt { get; set; } = "";
 
@@ -50,15 +44,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVision { get; set; }
 
+        public static bool EnableRawImageInput { get; set; }
+
         public static bool IgnoreNotEmoji { get; set; }
 
-        public static bool EnableTTS { get; set; }
-
-        public static string TTSVoice { get; set; } = "zh-CN-YunxiNeural";
-
         public static bool EnableSplitter { get; set; }
-
-        public static string SplitterModelName { get; set; }
 
         public static string SplitterPrompt { get; set; }
 
@@ -76,29 +66,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int SplitterRandomDelayMax { get; set; }
 
-        public static string BochaAPIKey { get; set; }
+        public static bool EnableEmojiSend { get; set; }
 
-        public static bool EnableEmojiSend {  get; set; }
+        public static bool EnableEmojiSingleSend { get; set; }
 
-        public static int EmojiSendProbability {  get; set; }
+        public static int EmojiSendProbability { get; set; }
 
-        public static string SplitterUrl {  get; set; }
-
-        public static string SplitterApiKey {  get; set; }
-
-        public static string ImageDescriberUrl {  get; set; }
-
-        public static string ImageDescriberApiKey {  get; set; }
-
-        public static string ImageDescriberModelName {  get; set; }
-
-        public static int ContextMaxLength {  get; set; }
-
-        public static string EmbeddingUrl { get; set; }
-
-        public static string EmbeddingApiKey { get; set; }
-
-        public static string EmbeddingModelName { get; set; }
+        public static int ContextMaxLength { get; set; }
 
         public static string SchedulePrompt { get; set; }
 
@@ -114,12 +88,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableRerank { get; set; }
 
-        public static string RerankUrl { get; set; }
-
-        public static string RerankApiKey { get; set; }
-
-        public static string RerankModelName { get; set; }
-
         public static bool EnableMemory { get; set; }
 
         public static double MinMemorySimilarity { get; set; }
@@ -127,8 +95,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static int MaxMemoryCount { get; set; }
 
         public static int SplitterMinLength { get; set; }
-
-        public static bool EnableTencentSign { get; set; }
 
         public static string TencentSecretKey { get; set; }
 
@@ -168,32 +134,37 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVisionWhenMentioned { get; set; }
 
+        #region Key
+        public static APIKeys[] ChatKeys { get; set; } = [];
+
+        public static APIKeys[] SplitterKeys { get; set; } = [];
+
+        public static APIKeys[] ImageDescriberKeys { get; set; } = [];
+
+        public static APIKeys[] EmbeddingApiKeys { get; set; } = [];
+
+        public static APIKeys[] RerankKeys { get; set; } = [];
+        #endregion
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
+            ChatAPIKeyId = ConfigHelper.GetConfig("ChatAPIKeyId", new List<int>());
+            SplitterApiKeyId = ConfigHelper.GetConfig("SplitterApiKeyId", new List<int>());
+            ImageDescriberApiKeyId = ConfigHelper.GetConfig("ImageDescriberApiKeyId", new List<int>());
+            EmbeddingApiKeyId = ConfigHelper.GetConfig("EmbeddingApiKeyId", new List<int>());
+            RerankApiKeyId = ConfigHelper.GetConfig("RerankApiKeyId", new List<int>());
+
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
-            EnableTTS = ConfigHelper.GetConfig("EnableTTS", false);
-            TTSVoice = ConfigHelper.GetConfig("TTSVoice", "zh-CN-YunxiNeural");
-            ChatAPIKey = ConfigHelper.GetConfig("ChatAPIKey", "");
-            BochaAPIKey = ConfigHelper.GetConfig("BochaAPIKey", "");
-            ChatBaseURL = ConfigHelper.GetConfig("ChatBaseURL", "https://api.openai.com/v1");
-            ChatModelName = ConfigHelper.GetConfig("ChatModelName", "gpt-4o");
             MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 3000);
-            ChatTemperature = ConfigHelper.GetConfig("ChatTemperature", 1.3f);
-
-            ImageGenerationOrder = ConfigHelper.GetConfig("ImageGenerationOrder", ".画图");
-            ImageGenerateSize = ConfigHelper.GetConfig("ImageGenerateSize", 2);
-            ImageGenerateQuality = ConfigHelper.GetConfig("ImageGenerateQuality", 1);
-            ImageGenerateBaseURL = ConfigHelper.GetConfig("ImageGenerateBaseURL", "https://api.openai.com/v1");
-            ImageGenerateAPIKey = ConfigHelper.GetConfig("ImageGenerateAPIKey", "");
+            ChatTemperature = ConfigHelper.GetConfig("ChatTemperature", 1f);
 
             GroupList = ConfigHelper.GetConfig("GroupList", new List<long>());
             PersonList = ConfigHelper.GetConfig("PersonList", new List<long>());
-            BlackList = ConfigHelper.GetConfig("BlackList", new List<long>());
-            AddBlackListOrder = ConfigHelper.GetConfig("AddBlackListOrder", ".添加黑名单");
-            RemoveBlackListOrder = ConfigHelper.GetConfig("RemoveBlackListOrder", ".移除黑名单");
+            IsGroupBlackList = ConfigHelper.GetConfig("IsGroupBlackList", false);
+            IsPersonBlackList = ConfigHelper.GetConfig("IsPersonBlackList", false);
             BotName = ConfigHelper.GetConfig("BotName", "ChatGPT");
             BotNicknames = ConfigHelper.GetConfig("BotNicknames", new List<string>() { BotName });
 
@@ -202,7 +173,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
             EnableSplitter = ConfigHelper.GetConfig("EnableSplitter", false);
-            SplitterModelName = ConfigHelper.GetConfig("SplitterModelName", "gpt-4o-mini");
             SplitterPrompt = ConfigHelper.GetConfig("SplitterPrompt", "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要");
             SplitterMaxLines = ConfigHelper.GetConfig("SplitterMaxLines", 3);
             SplitterRegexFirst = ConfigHelper.GetConfig("SplitterRegexFirst", false);
@@ -215,19 +185,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SplitterMinLength = ConfigHelper.GetConfig("SplitterMinLength", 10);
             EmojiSendProbability = ConfigHelper.GetConfig("EmojiSendProbability", 10);
             ContextMaxLength = ConfigHelper.GetConfig("ContextMaxLength", 20);
-            SplitterUrl = ConfigHelper.GetConfig("SplitterUrl", "https://api.openai.com/v1");
-            SplitterApiKey = ConfigHelper.GetConfig("SplitterApiKey", "");
-            ImageDescriberUrl = ConfigHelper.GetConfig("ImageDescriberUrl", "https://api.openai.com/v1");
-            ImageDescriberApiKey = ConfigHelper.GetConfig("ImageDescriberApiKey", "");
-            ImageDescriberModelName = ConfigHelper.GetConfig("ImageDescriberModelName", "gpt-4o-mini");
 
-            EmbeddingUrl = ConfigHelper.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
-            EmbeddingApiKey = ConfigHelper.GetConfig("EmbeddingApiKey", "");
-            EmbeddingModelName = ConfigHelper.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
             EnableRerank = ConfigHelper.GetConfig("EnableRerank", true);
-            RerankUrl = ConfigHelper.GetConfig("RerankUrl", "");
-            RerankApiKey = ConfigHelper.GetConfig("RerankApiKey", "");
-            RerankModelName = ConfigHelper.GetConfig("RerankModelName", "");
             IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
             DebugMode = ConfigHelper.GetConfig("DebugMode", false);
             SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
@@ -238,7 +197,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableMemory = ConfigHelper.GetConfig("EnableMemory", true);
             MinMemorySimilarity = ConfigHelper.GetConfig("MinMemorySimilarity", 0.8);
             MaxMemoryCount = ConfigHelper.GetConfig("MaxMemoryCount", 5);
-            EnableTencentSign = ConfigHelper.GetConfig("EnableTencentSign", false);
             TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");
             TencentSecretId = ConfigHelper.GetConfig("TencentSecretId", "");
             QdrantHost = ConfigHelper.GetConfig("QdrantHost", "localhost");
@@ -258,8 +216,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             LogThinkBlock = ConfigHelper.GetConfig("LogThinkBlock", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
+            EnableRawImageInput = ConfigHelper.GetConfig("EnableRawImageInput", false);
 
+            ReloadAPIKey();
             ConfigHelper.EnableHotReload();
+        }
+
+        public static void ReloadAPIKey()
+        {
+            ChatKeys = APIKeys.GetAllKeys().Where(x => ChatAPIKeyId.Contains(x.Id)).ToArray();
+            SplitterKeys = APIKeys.GetAllKeys().Where(x => SplitterApiKeyId.Contains(x.Id)).ToArray();
+            ImageDescriberKeys = APIKeys.GetAllKeys().Where(x => ImageDescriberApiKeyId.Contains(x.Id)).ToArray();
+            EmbeddingApiKeys = APIKeys.GetAllKeys().Where(x => EmbeddingApiKeyId.Contains(x.Id)).ToArray();
+            RerankKeys = APIKeys.GetAllKeys().Where(x => RerankApiKeyId.Contains(x.Id)).ToArray();
         }
     }
 }

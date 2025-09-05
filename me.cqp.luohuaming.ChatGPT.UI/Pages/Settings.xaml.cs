@@ -207,6 +207,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     GetAndSetConfigFromStackPanel(properties, MemoryContainer);
                     GetAndSetConfigFromStackPanel(properties, EmojiContainer);
                     GetAndSetConfigFromStackPanel(properties, ScheduleContainer);
+
+                    AppConfig.ReloadAPIKey();
                     ConfigHelper.EnableHotReload();
                     MainWindow.ShowInfo("配置保存成功");
                 }

@@ -112,10 +112,7 @@
     <Compile Include="Event_PrivateMessage.cs" />
     <Compile Include="Event_GroupMessage.cs" />
     <Compile Include="Event_StartUp.cs" />
-    <Compile Include="OrderFunctions\AddBlackList.cs" />
     <Compile Include="OrderFunctions\Record.cs" />
-    <Compile Include="OrderFunctions\RemoveBlackList.cs" />
-    <Compile Include="OrderFunctions\ImageGeneration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
