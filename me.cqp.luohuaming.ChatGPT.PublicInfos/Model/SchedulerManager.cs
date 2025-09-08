@@ -40,7 +40,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void UpdateSchedulerTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            if (DateTime.Now.Date != LastUpdateTime.Date)
+            if (AppConfig.EnableSchedules && DateTime.Now.Date != LastUpdateTime.Date)
             {
                 UpdateScheduler();
             }

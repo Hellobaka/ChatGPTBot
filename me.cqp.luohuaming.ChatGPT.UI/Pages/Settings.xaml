@@ -214,6 +214,14 @@
             <TabItem Header="响应设置">
                 <ScrollViewer>
                     <StackPanel x:Name="ResponseContainer" Margin="16,16,22,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">触发消息为未记录消息时跳过回复:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="RecordNotExistSkipResponse"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
                         <TextBlock VerticalAlignment="Center">回复意愿倍率:</TextBlock>
                         <TextBox x:Name="ReplyWillingAmplifier" Margin="0,5,0,0" />
 
@@ -352,6 +360,14 @@
                                 OnContent="" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">限制原生视觉至触发时才启用（注意 Token 消耗）:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableRawImageSingleInput"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">允许只发送表情包（不发送文本）:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableEmojiSingleSend"
@@ -366,13 +382,21 @@
             <TabItem Header="日程设置">
                 <ScrollViewer>
                     <StackPanel x:Name="ScheduleContainer" Margin="16,16,22,16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">是否启用日程:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableEnableSchedules"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
                         <TextBlock VerticalAlignment="Center">获取日程的人格文本:</TextBlock>
                         <TextBox
                             x:Name="SchedulePrompt"
                             Margin="0,5,0,0"
                             AcceptsReturn="True"
                             TextWrapping="Wrap" />
-                        <TextBlock VerticalAlignment="Center">默认日程安排:</TextBlock>
+                        <TextBlock VerticalAlignment="Center">没有对应时间点的日程安排的默认值:</TextBlock>
                         <TextBox x:Name="DefaultSchedule" Margin="0,5,0,0" />
 
                     </StackPanel>

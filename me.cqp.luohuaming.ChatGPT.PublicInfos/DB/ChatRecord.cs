@@ -42,6 +42,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsIgnore = true)]
         public bool IsMentioned { get; set; }
 
+        [SugarColumn(IsIgnore = true)]
+        public bool IsInvalidReply { get; set; }
+
         public static ChatRecord Create(long qq, string message, int messageID)
         {
             var record = new ChatRecord
@@ -121,7 +124,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             else
             {
-                info += $" [昵称：{QQ}]: ";
+                info += $" [ID：{QQ}]: ";
             }
 
             var split = message.Replace("\n", "").SplitV2("\\[CQ:.*?\\]");
@@ -154,6 +157,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                                         ? HandleImage(img)
                                         : msg.ParsedMessage;
                                     stringBuilder.Append($"[QuoteMessage@{cqcode.Items["id"]}:{quoteMessage}]");
+                                }
+                                else
+                                {
+                                    IsInvalidReply = true;
                                 }
                             }
                             break;

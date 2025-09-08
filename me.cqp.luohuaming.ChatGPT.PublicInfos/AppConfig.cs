@@ -46,6 +46,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableRawImageInput { get; set; }
 
+        public static bool EnableRawImageSingleInput { get; set; }
+
         public static bool IgnoreNotEmoji { get; set; }
 
         public static bool EnableSplitter { get; set; }
@@ -73,6 +75,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static int EmojiSendProbability { get; set; }
 
         public static int ContextMaxLength { get; set; }
+
+        public static bool EnableSchedules { get; set; }
 
         public static string SchedulePrompt { get; set; }
 
@@ -136,6 +140,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVisionWhenMentioned { get; set; }
 
+        public static bool RecordNotExistSkipResponse { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -179,6 +185,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableRerank = ConfigHelper.GetConfig("EnableRerank", true);
             IgnoreNotEmoji = ConfigHelper.GetConfig("IgnoreNotEmoji", true);
             DebugMode = ConfigHelper.GetConfig("DebugMode", false);
+            EnableSchedules = ConfigHelper.GetConfig("EnableSchedules", true);
             SchedulePrompt = ConfigHelper.GetConfig("SchedulePrompt", "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜");
             DefaultSchedule = ConfigHelper.GetConfig("DefaultSchedule", "摸鱼");
             ChatEmptyResponse = ConfigHelper.GetConfig("ChatEmptyResponse", "<EMPTY>");
@@ -209,6 +216,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
             EnableRawImageInput = ConfigHelper.GetConfig("EnableRawImageInput", false);
             EnableEmojiSingleSend = ConfigHelper.GetConfig("EnableEmojiSingleSend", false);
+            RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
+            EnableRawImageSingleInput = ConfigHelper.GetConfig("EnableRawImageSingleInput", true);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();

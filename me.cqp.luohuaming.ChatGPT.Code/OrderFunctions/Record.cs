@@ -44,8 +44,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 return new();
             }
             ChatRecord.InsertRecord(record);
-
-            if (AppConfig.EnableMemory)
+            if (AppConfig.RecordNotExistSkipResponse && record.IsInvalidReply)
+            {
+                return new();
+            }
+            if (AppConfig.EnableMemory && !record.IsEmpty)
             {
                 Memory.AddMemory(record);
             }
@@ -195,7 +198,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         private string CreateReply(Relationship relationship, ChatRecord record)
         {
-            string prompt = BuildPrompt(relationship, record);
+            var prompt = BuildPrompt(relationship, record);
             //CommonHelper.DebugLog("Prompt", prompt);
             return Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
@@ -204,20 +207,26 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             ], Chat.Purpose.聊天, AppConfig.ChatTimeout);
         }
 
-        public static string BuildPrompt(Relationship relationship, ChatRecord record)
+        public static ChatMessageContentPart[] BuildPrompt(Relationship relationship, ChatRecord record)
         {
             if (relationship == null)
             {
                 return Chat.ErrorMessage;
             }
 
+            List<ChatMessageContentPart> parts = [];
             StringBuilder stringBuilder = new();
-            stringBuilder.AppendLine($"今天是{DateTime.Now:G}，你今天的日程是:`<schedule>");
-            foreach (var (time, action) in SchedulerManager.Instance.Schedules)
+            stringBuilder.AppendLine($"今天是{DateTime.Now:G}。");
+            if (AppConfig.EnableSchedules)
             {
-                stringBuilder.AppendLine($"{time.ToShortTimeString()} :{action}");
+                stringBuilder.AppendLine($"你今天的日程是:`<schedule>");
+
+                foreach (var (time, action) in SchedulerManager.Instance.Schedules)
+                {
+                    stringBuilder.AppendLine($"{time.ToShortTimeString()} :{action}");
+                }
+                stringBuilder.AppendLine($"</schedule>`");
             }
-            stringBuilder.AppendLine($"</schedule>`");
             if (AppConfig.EnableMemory)
             {
                 var memories = Memory.GetMemories(record);
@@ -235,6 +244,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             if (record.RawMessage.Contains("[CQ:reply"))
             {
+                stringBuilder.AppendLine("以下是当前消息引用的原消息：");
                 var reply = CQCode.Parse(record.RawMessage).FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
                 if (reply != null && int.TryParse(reply.Items["id"], out int id))
                 {
@@ -245,6 +255,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                 }
             }
+            stringBuilder.AppendLine("以下是当前聊天的上下文记录：");
             foreach (var item in relationship.GroupID == -1
                  ? ChatRecord.GetPrivateChatRecord(relationship.QQ, AppConfig.ContextMaxLength)
                  : ChatRecord.GetGroupChatRecord(relationship.GroupID, 0, AppConfig.ContextMaxLength))
@@ -263,7 +274,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return stringBuilder.ToString();
         }
 
-        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
+        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, List<ChatMessageContentPart> parts, StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"现在你收到了`{relationship.Card ?? relationship.NickName}`说的:");
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
@@ -278,7 +289,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
-        private static void BuildGroupPrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
+        private static void BuildGroupPrompt(Relationship relationship, ChatRecord record, List<ChatMessageContentPart> parts, StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"现在`{relationship.Card ?? relationship.NickName}`说的:");
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
