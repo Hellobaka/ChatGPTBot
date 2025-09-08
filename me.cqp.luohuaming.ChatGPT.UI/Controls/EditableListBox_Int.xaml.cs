@@ -39,7 +39,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         }
 
         public static readonly DependencyProperty CanDuplicateProperty =
-            DependencyProperty.Register("CanDuplicate", typeof(bool), typeof(EditableListBox_String), new PropertyMetadata(false));
+            DependencyProperty.Register("CanDuplicate", typeof(bool), typeof(EditableListBox_Int), new PropertyMetadata(false));
 
         public string AddItemInput { get; set; }
 

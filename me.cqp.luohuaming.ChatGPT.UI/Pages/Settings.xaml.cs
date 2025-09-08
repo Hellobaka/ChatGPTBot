@@ -1,15 +1,14 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using me.cqp.luohuaming.ChatGPT.UI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using static me.cqp.luohuaming.ChatGPT.PublicInfos.API.Chat;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
@@ -96,16 +95,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             return true;
         }
 
-        private void BlackListAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListAddButtonHandler(BlackListAdd, BlackList, true);
-        }
-
-        private void BlackListRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListRemoveButtonHandler(BlackList);
-        }
-
         private void GetAndSetConfigFromStackPanel(PropertyInfo[] properties, StackPanel container)
         {
             foreach (UIElement item in container.Children)
@@ -131,32 +120,42 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                         }
                     }
                 }
-                else if (item is ListBox listbox)
+                else if (item is EditableListBox_String listBox_String)
                 {
-                    var property = properties.FirstOrDefault(x => x.Name == listbox.Name);
+                    var property = properties.FirstOrDefault(x => x.Name == listBox_String.Name);
                     if (property == null)
                     {
                         Debugger.Break();
                         continue;
                     }
                     var list = property?.GetValue(null, null);
-                    if (list is List<long> l)
+                    if (list is List<string> strings)
                     {
-                        l.Clear();
-                        foreach (var i in listbox.Items)
+                        strings.Clear();
+                        foreach (var i in listBox_String.ItemSource)
                         {
-                            l.Add(long.Parse(i.ToString()));
+                            strings.Add(i.ToString());
                         }
-                        ConfigHelper.SetConfig(listbox.Name, l);
+                        ConfigHelper.SetConfig(listBox_String.Name, strings);
                     }
-                    else if (list is List<string> l2)
+                }
+                else if (item is EditableListBox_Int listBox_Int)
+                {
+                    var property = properties.FirstOrDefault(x => x.Name == listBox_Int.Name);
+                    if (property == null)
                     {
-                        l2.Clear();
-                        foreach (var i in listbox.Items)
+                        Debugger.Break();
+                        continue;
+                    }
+                    var list = property?.GetValue(null, null);
+                    if (list is List<long> longs)
+                    {
+                        longs.Clear();
+                        foreach (var i in listBox_Int.ItemSource)
                         {
-                            l2.Add(i.ToString());
+                            longs.Add(i);
                         }
-                        ConfigHelper.SetConfig(listbox.Name, l2);
+                        ConfigHelper.SetConfig(listBox_Int.Name, longs);
                     }
                 }
                 else if (item is ComboBox comboBox)
@@ -172,30 +171,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
         }
 
-        private void GroupListAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListAddButtonHandler(GroupListAdd, GroupList, true);
-        }
-
-        private void GroupListRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListRemoveButtonHandler(GroupList);
-        }
-
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             var uri = e.Uri;
             Process.Start(uri.ToString());
-        }
-
-        private void PersonListAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListAddButtonHandler(PersonListAdd, PersonList, true);
-        }
-
-        private void PersonListRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListRemoveButtonHandler(PersonList);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -208,16 +187,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     && VerifyInput(properties, MemoryContainer, out err)
                     && VerifyInput(properties, EmojiContainer, out err)
                     && VerifyInput(properties, ScheduleContainer, out err)
-                    && VerifyInput(properties, CommandContainer, out err)
                     && VerifyInput(properties, ResponseContainer, out err)
-                    && VerifyInput(properties, TTSContainer, out err)
                     && VerifyInput(properties, GroupContainer, out err))
                 {
                     ConfigHelper.DisableHotReload();
                     GetAndSetConfigFromStackPanel(properties, APIContainer);
-                    GetAndSetConfigFromStackPanel(properties, CommandContainer);
                     GetAndSetConfigFromStackPanel(properties, ResponseContainer);
-                    GetAndSetConfigFromStackPanel(properties, TTSContainer);
                     GetAndSetConfigFromStackPanel(properties, GroupContainer);
                     GetAndSetConfigFromStackPanel(properties, ChatContainer);
                     GetAndSetConfigFromStackPanel(properties, MemoryContainer);
@@ -273,29 +248,32 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                             }
                         }
                     }
-                    else if (item is ListBox listbox)
+                    else if (item is EditableListBox_String listBox_String)
                     {
-                        var property = properties.FirstOrDefault(x => x.Name == listbox.Name);
+                        var property = properties.FirstOrDefault(x => x.Name == listBox_String.Name);
                         if (property == null)
                         {
                             Debugger.Break();
                             continue;
                         }
-                        listbox.Items.Clear();
                         var list = property?.GetValue(null, null);
-                        if (list is List<long> l)
+                        if (list is List<string> strings)
                         {
-                            foreach (var i in l)
-                            {
-                                listbox.Items.Add(i);
-                            }
+                            listBox_String.ItemSource = new ObservableCollection<string>(strings);
                         }
-                        else if (list is List<string> l2)
+                    }
+                    else if (item is EditableListBox_Int listBox_Int)
+                    {
+                        var property = properties.FirstOrDefault(x => x.Name == listBox_Int.Name);
+                        if (property == null)
                         {
-                            foreach (var i in l2)
-                            {
-                                listbox.Items.Add(i);
-                            }
+                            Debugger.Break();
+                            continue;
+                        }
+                        var list = property?.GetValue(null, null);
+                        if (list is List<long> longs)
+                        {
+                            listBox_Int.ItemSource = new ObservableCollection<long>(longs);
                         }
                     }
                     else if (item is ComboBox combobox)
@@ -337,9 +315,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             var properties = typeof(AppConfig).GetProperties(BindingFlags.Static | BindingFlags.Public);
             SetConfigToStackPanel(properties, APIContainer);
-            SetConfigToStackPanel(properties, CommandContainer);
             SetConfigToStackPanel(properties, ResponseContainer);
-            SetConfigToStackPanel(properties, TTSContainer);
             SetConfigToStackPanel(properties, GroupContainer);
             SetConfigToStackPanel(properties, ChatContainer);
             SetConfigToStackPanel(properties, MemoryContainer);
@@ -347,64 +323,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             SetConfigToStackPanel(properties, ScheduleContainer);
 
             ReloadPurpose();
-        }
-
-        private void BotNicknameRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListRemoveButtonHandler(BotNicknames);
-        }
-
-        private void BotNicknameAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListAddButtonHandler(BotNicknameAdd, BotNicknames);
-        }
-
-        private void FiltersRemoveButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListRemoveButtonHandler(Filters);
-        }
-
-        private void FiltersAddButton_Click(object sender, RoutedEventArgs e)
-        {
-            ListAddButtonHandler(FiltersAdd, Filters);
-        }
-
-        private void ListRemoveButtonHandler(ListBox listBox)
-        {
-            if (listBox.SelectedIndex < 0)
-            {
-                MainWindow.ShowError("请选择一项");
-                return;
-            }
-            listBox.Items.RemoveAt(listBox.SelectedIndex);
-        }
-
-        private void ListAddButtonHandler(TextBox textBox, ListBox listBox, bool longcheck = false)
-        {
-            if (!string.IsNullOrEmpty(textBox.Text) 
-                && (!longcheck || long.TryParse(textBox.Text, out _)))
-            {
-                bool duplicate = false;
-                foreach (var item in listBox.Items)
-                {
-                    if (item.ToString() == textBox.Text)
-                    {
-                        duplicate = true;
-                        break;
-                    }
-                }
-                if (duplicate)
-                {
-                    MainWindow.ShowError("已存在相同项");
-                    return;
-                }
-                listBox.Items.Add(textBox.Text);
-                textBox.Clear();
-            }
-            else
-            {
-                MainWindow.ShowError("输入内容格式错误");
-            }
         }
 
         private async void KeyPurposeEditButton_Click(object sender, RoutedEventArgs e)
