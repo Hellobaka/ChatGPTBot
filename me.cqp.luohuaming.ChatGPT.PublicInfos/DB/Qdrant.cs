@@ -172,7 +172,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public (ChatRecord record, float score)[] GetReleventCollection(ChatRecord record)
+        public (ChatRecord record, float score)[] GetRelevantCollection(ChatRecord record)
         {
             if (record.IsEmpty || record.IsEmpty || string.IsNullOrEmpty(record.Message_NoAppendInfo))
             {
