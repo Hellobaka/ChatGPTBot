@@ -95,6 +95,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         outputToken = completion.Value.Usage.OutputTokenCount;
                     }
                     Usage.Insert(baseUrl, modelName, purpose.ToString(), inputToken, outputToken);
+                    APIKeys.UpdateTokenConsume(apiKey, inputToken + outputToken);
 
                     switch (finishReason)
                     {

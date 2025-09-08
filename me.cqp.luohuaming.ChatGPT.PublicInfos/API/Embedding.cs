@@ -27,7 +27,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         Inputs = new string[] { text }
                     }.ToJson(), TencentAPIAction, AppConfig.EmbeddingTimeout);
 
-                    return JObject.Parse(json)["Response"]["Data"][0]["Embedding"].ToObject<float[]>();
+                    var embeddings = JObject.Parse(json)["Response"]["Data"][0]["Embedding"].ToObject<float[]>();
+                    var tokenUsage = JObject.Parse(json)["Response"]["Usage"]["TotalTokens"].ToObject<long>();
+                    api.Key.AddTokenConsume(tokenUsage);
+
+                    return embeddings;
                 }
                 else
                 {
@@ -36,7 +40,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         model = api.ModelName,
                         input = text
                     }.ToJson(), api.Key.APIKey, AppConfig.EmbeddingTimeout);
-                    return JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
+                    var embeddings = JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
+                    var tokenUsage = JObject.Parse(json)["usage"]["total_tokens"].ToObject<long>();
+                    api.Key.AddTokenConsume(tokenUsage);
+
+                    return embeddings;
                 }
             }
             catch (Exception ex)

@@ -26,6 +26,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 var j = JObject.Parse(json);
                 (string document, float score)[] results = [];
+                long tokenUsage = 0;
+
                 // 针对腾讯云、阿里百炼进行特殊处理
                 if (api.Key.UseTencentSign)
                 {
@@ -40,6 +42,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         var document = documents[i];
                         results = [(document, (float)j["Response"]["ScoreList"][i]), .. results];
                     }
+                    tokenUsage = j["Response"]["Usage"]["TotalTokens"].ToObject<long>();
                 }
                 else
                 {
@@ -61,6 +64,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             }
                         }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
                         arr = j["output"]["results"];
+                        tokenUsage = j["usage"]["total_tokens"].ToObject<long>();
                     }
                     else
                     {
@@ -72,6 +76,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             top_n = topn,
                         }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
                         arr = j["results"];
+                        tokenUsage = j["tokens"]["input_tokens"].ToObject<long>()
+                            + j["tokens"]["output_tokens"].ToObject<long>();
                     }
 
                     foreach (var item in arr as JArray)
@@ -85,6 +91,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     }
                 }
 
+                api.Key.AddTokenConsume(tokenUsage);
                 return results.OrderByDescending(x => x.score).Take(topn).ToArray();
             }
             catch (Exception ex)

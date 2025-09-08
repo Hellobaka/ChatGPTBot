@@ -57,7 +57,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             return false;
         }
-        
+
         public APIKeys Clone()
         {
             return new APIKeys
@@ -77,7 +77,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             using var db = SQLHelper.GetInstance();
             var list = db.Queryable<APIKeys>().ToList();
-            foreach(var item in list)
+            foreach (var item in list)
             {
                 if (!KeyCache.ContainsKey(item.Id))
                 {
@@ -100,6 +100,27 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             using var db = SQLHelper.GetInstance();
             return db.Queryable<APIKeys>().First(x => x.Id == id);
+        }
+
+        public static APIKeys? GetKeyByAPIKey(string apiKey)
+        {
+            using var db = SQLHelper.GetInstance();
+            return db.Queryable<APIKeys>().First(x => x.APIKey == apiKey);
+        }
+
+        public static void UpdateTokenConsume(string apiKey, long tokens)
+        {
+            using var db = SQLHelper.GetInstance();
+            var key = db.Queryable<APIKeys>().First(x => x.APIKey == apiKey);
+            if (key != null)
+            {
+                key.TokenConsume += tokens;
+                db.Updateable(key).ExecuteCommand();
+                if (KeyCache.ContainsKey(key.Id))
+                {
+                    KeyCache[key.Id] = key;
+                }
+            }
         }
 
         public void Save()
@@ -134,6 +155,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     KeyCache.Remove(Id);
                 }
             }
+        }
+
+        public void AddTokenConsume(long tokens)
+        {
+            if (tokens <= 0)
+            {
+                return;
+            }
+            using var db = SQLHelper.GetInstance();
+            TokenConsume += tokens;
+            db.Updateable(this).ExecuteCommand();
         }
     }
 }
