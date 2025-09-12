@@ -14,7 +14,11 @@ namespace me.cqp.luohuaming.ChatGPT.Core
     {
         public void GroupMessage(object sender, CQGroupMessageEventArgs e)
         {
-            if (AppConfig.BlackList.Any(x => e.FromQQ == x))
+            if (AppConfig.IsGroupBlackList && AppConfig.GroupList.Contains(e.FromGroup))
+            {
+                return;
+            }
+            if (!AppConfig.IsGroupBlackList && !AppConfig.GroupList.Contains(e.FromGroup))
             {
                 return;
             }
@@ -47,7 +51,11 @@ namespace me.cqp.luohuaming.ChatGPT.Core
 
         public void PrivateMessage(object sender, CQPrivateMessageEventArgs e)
         {
-            if (AppConfig.BlackList.Any(x => e.FromQQ == x))
+            if (AppConfig.IsPersonBlackList && AppConfig.PersonList.Contains(e.FromQQ))
+            {
+                return;
+            }
+            if (!AppConfig.IsPersonBlackList && !AppConfig.PersonList.Contains(e.FromQQ))
             {
                 return;
             }

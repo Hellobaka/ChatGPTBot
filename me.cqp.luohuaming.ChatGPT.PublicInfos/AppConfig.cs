@@ -44,10 +44,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableVision { get; set; }
 
-        public static bool EnableRawImageInput { get; set; }
-
-        public static bool EnableRawImageSingleInput { get; set; }
-
         public static bool IgnoreNotEmoji { get; set; }
 
         public static bool EnableSplitter { get; set; }
@@ -214,10 +210,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             LogThinkBlock = ConfigHelper.GetConfig("LogThinkBlock", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
-            EnableRawImageInput = ConfigHelper.GetConfig("EnableRawImageInput", false);
             EnableEmojiSingleSend = ConfigHelper.GetConfig("EnableEmojiSingleSend", false);
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
-            EnableRawImageSingleInput = ConfigHelper.GetConfig("EnableRawImageSingleInput", true);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();

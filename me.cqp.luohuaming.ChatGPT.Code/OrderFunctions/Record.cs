@@ -207,7 +207,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             ], Chat.Purpose.聊天, AppConfig.ChatTimeout);
         }
 
-        public static ChatMessageContentPart[] BuildPrompt(Relationship relationship, ChatRecord record)
+        public static string BuildPrompt(Relationship relationship, ChatRecord record)
         {
             if (relationship == null)
             {
@@ -274,7 +274,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return stringBuilder.ToString();
         }
 
-        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, List<ChatMessageContentPart> parts, StringBuilder stringBuilder)
+        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"现在你收到了`{relationship.Card ?? relationship.NickName}`说的:");
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
@@ -289,7 +289,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
-        private static void BuildGroupPrompt(Relationship relationship, ChatRecord record, List<ChatMessageContentPart> parts, StringBuilder stringBuilder)
+        private static void BuildGroupPrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"现在`{relationship.Card ?? relationship.NickName}`说的:");
             stringBuilder.AppendLine($"`<UserMessage>{record.ParsedMessage}</UserMessage>`");
