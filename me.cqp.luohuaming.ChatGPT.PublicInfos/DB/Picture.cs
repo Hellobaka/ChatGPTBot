@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using Microsoft.Extensions.AI;
 using OpenAI.Chat;
 using SqlSugar;
 using System;
@@ -120,9 +121,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             var emotion = Chat.GetChatResult(AppConfig.ImageDescriberApiKeyId,
                 [
-                    new SystemChatMessage(string.Format($"这是你将要发送的消息内容:{text}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。")),
-                    new UserChatMessage("请回复")
-                ], Chat.Purpose.表情包推荐, AppConfig.ImageDescriberTimeout);
+                    new(ChatRole.System, string.Format($"这是你将要发送的消息内容:{text}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。")),
+                    new(ChatRole.User, "请回复")
+                ], Chat.Purpose.表情包推荐, timeout: AppConfig.ImageDescriberTimeout);
 
             if (emotion == Chat.ErrorMessage)
             {

@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using Microsoft.Extensions.AI;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
@@ -124,9 +125,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             string prompt = string.Format(Prompt, detailMessage, input);
             string reply = Chat.GetChatResult(AppConfig.SplitterApiKeyId,
                 [
-                    new SystemChatMessage(prompt),
-                    new UserChatMessage("请回复")
-                ], Chat.Purpose.获取心情, AppConfig.SplitterTimeout);
+                    new(ChatRole.System, prompt),
+                    new(ChatRole.User, "请回复")
+                ], Chat.Purpose.获取心情, timeout: AppConfig.SplitterTimeout);
             var split = reply.Split('-');
 
             if (split.Length == 2)

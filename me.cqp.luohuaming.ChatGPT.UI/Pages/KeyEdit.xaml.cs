@@ -1,21 +1,12 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using Microsoft.Extensions.AI;
 using ModernWpf.Controls;
-using OpenAI.Chat;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
@@ -64,7 +55,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 response = await Task.Run(() => Chat.GetChatResult(new APIKeyPurpose() { Key = ApiKey, ModelName = ApiKey.AvailableModels.FirstOrDefault() }, new List<ChatMessage>
                 {
-                    new UserChatMessage("Hello")
+                    new(ChatRole.User, "Hello")
                 }, Chat.Purpose.聊天));
             }
             catch 

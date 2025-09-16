@@ -1,5 +1,5 @@
 ﻿using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
-using OpenAI.Chat;
+using Microsoft.Extensions.AI;
 using System;
 using System.IO;
 using System.Linq;
@@ -20,9 +20,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
             return Chat.GetChatResult(AppConfig.ImageDescriberApiKeyId,
                 [
-                    new SystemChatMessage(prompt),
-                    new UserChatMessage(ChatMessageContentPart.CreateImagePart(BinaryData.FromBytes(File.ReadAllBytes(path)), "image/jpg"))
-                ], Chat.Purpose.图片描述, AppConfig.ImageDescriberTimeout);
+                    new(ChatRole.System, prompt),
+                    new(ChatRole.User, [new DataContent(File.ReadAllBytes(path), "image/jpg")])
+                ], Chat.Purpose.图片描述, timeout: AppConfig.ImageDescriberTimeout);
         }
 
         public static string? DescribePicture(string path)

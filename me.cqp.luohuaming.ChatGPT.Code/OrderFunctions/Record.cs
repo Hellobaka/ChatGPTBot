@@ -5,6 +5,7 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using Microsoft.Extensions.AI;
 using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
@@ -202,9 +203,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             //CommonHelper.DebugLog("Prompt", prompt);
             return Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
-                new SystemChatMessage(prompt),
-                new UserChatMessage("请回复")
-            ], Chat.Purpose.聊天, AppConfig.ChatTimeout);
+                new(ChatRole.System, prompt),
+                new(ChatRole.User, "请回复")
+            ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout);
         }
 
         public static string BuildPrompt(Relationship relationship, ChatRecord record)

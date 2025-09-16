@@ -1,12 +1,7 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+﻿using Microsoft.Extensions.AI;
 using Newtonsoft.Json.Linq;
-using OpenAI.Chat;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -35,9 +30,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             string prompt = AppConfig.SplitterPrompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
             string result = Chat.GetChatResult(AppConfig.SplitterApiKeyId, new List<ChatMessage>
             {
-                new SystemChatMessage(prompt),
-                new UserChatMessage(Message)
-            }, Chat.Purpose.分段, AppConfig.SplitterTimeout);
+                new(ChatRole.System, prompt),
+                new(ChatRole.User, Message)
+            }, Chat.Purpose.分段, jsonMode: true, timeout: AppConfig.SplitterTimeout);
             if (result != Chat.ErrorMessage)
             {
                 try
