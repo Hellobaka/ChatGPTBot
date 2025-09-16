@@ -70,7 +70,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Requesting = true;
             try
             {
-                string result = await Task.Run(() => PictureDescriber.Describe(prompt, Picture.ImageAbsoultePath));
+                string result = await Task.Run(() => PictureDescriber.Describe(prompt, Picture.ImageAbsolutePath));
                 if (string.IsNullOrEmpty(result) || result == Chat.ErrorMessage)
                 {
                     MainWindow.ShowError("请求描述失败，返回结果为空");

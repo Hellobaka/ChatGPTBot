@@ -16,7 +16,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
     {
         public bool Checked { get; set; }
 
-        public string ImageAbsoultePath { get; set; }
+        public string ImageAbsolutePath { get; set; }
 
         public string FilePath { get; set; }
 
@@ -44,7 +44,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
         {
             return new Model.Emoji
             {
-                ImageAbsoultePath = Path.Combine(MainSave.ImageDirectory, picture.FilePath),
+                ImageAbsolutePath = Path.Combine(MainSave.ImageDirectory, picture.FilePath),
                 FilePath = picture.FilePath,
                 Description = picture.Description,
                 Hash = picture.Hash,

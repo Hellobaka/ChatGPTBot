@@ -149,9 +149,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void Image_MouseDown(object sender, MouseButtonEventArgs e)
         {
             var emoji = (sender as Image).DataContext as Model.Emoji;
-            if (e.ClickCount == 2 && File.Exists(emoji.ImageAbsoultePath))
+            if (e.ClickCount == 2 && File.Exists(emoji.ImageAbsolutePath))
             {
-                Process.Start(emoji.ImageAbsoultePath);
+                Process.Start(emoji.ImageAbsolutePath);
             }
         }
 
@@ -334,7 +334,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     {
                         AddTime = DateTime.Now,
                         Hash = PictureDescriber.ComputeImageHash(newPath),
-                        ImageAbsoultePath = newPath,
+                        ImageAbsolutePath = newPath,
                         FilePath = CommonHelper.GetRelativePath(newPath, MainSave.ImageDirectory),
                     };
                     try
@@ -408,13 +408,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     item.Success = true;
                     return;
                 }
-                string description = await Task.Run(() => PictureDescriber.DescribeEmoji(item.ImageAbsoultePath));
+                string description = await Task.Run(() => PictureDescriber.DescribeEmoji(item.ImageAbsolutePath));
                 if (string.IsNullOrEmpty(description) || description == Chat.ErrorMessage)
                 {
                     return;
                 }
                 item.Description = description;
-                item.Raw = await Task.Run(() => Picture.InsertImageDescription(item.ImageAbsoultePath, item.Hash, true, description));
+                item.Raw = await Task.Run(() => Picture.InsertImageDescription(item.ImageAbsolutePath, item.Hash, true, description));
                 if (item.Raw == null)
                 {
                     return;
