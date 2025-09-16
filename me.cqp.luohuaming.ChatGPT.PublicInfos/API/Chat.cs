@@ -1,6 +1,9 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using OpenAI;
-using OpenAI.Chat;
 using System;
 using System.ClientModel;
 using System.Collections;
@@ -11,6 +14,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -30,95 +34,83 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static Regex ThinkBlockRegex { get; set; } = new Regex(@"<think>[\s\S]*?</think>");
 
-        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
+        private static IDistributedCache ChatCache { get; set; } = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
+
+        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
         {
-            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose, timeout);
+            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose, jsonMode, timeout);
         }
 
-        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
+        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
         {
             if (key == null)
             {
                 MainSave.CQLog?.Info("GetChatResult", "Key 为 null");
                 return ErrorMessage;
             }
-            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose, timeout);
+            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose, jsonMode, timeout);
         }
 
-        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose, int timeout = 10000)
+        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
         {
             baseUrl = baseUrl.Replace("/chat/completions", "");
             string msg = "";
             string reasoning = "";
 
-            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromMilliseconds(timeout), });
-            var client = c.GetChatClient(modelName);
-            var option = new ChatCompletionOptions
+            var c = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions() { Endpoint = new(baseUrl), NetworkTimeout = TimeSpan.FromMilliseconds(timeout), }).GetChatClient(modelName);
+            var client = c.AsIChatClient()
+                            .AsBuilder()
+                            .UseDistributedCache(ChatCache)
+                            .UseFunctionInvocation()
+                            .UseLogging()
+                            .Build();
+            var option = new ChatOptions
             {
-                MaxOutputTokenCount = AppConfig.ChatMaxTokens,
-                Temperature = AppConfig.ChatTemperature
+                MaxOutputTokens = AppConfig.ChatMaxTokens,
+                Temperature = AppConfig.ChatTemperature,
+                ResponseFormat = jsonMode ? ChatResponseFormat.Text : ChatResponseFormat.Json,
             };
             try
             {
-                bool requiresAction;
-                do
+                UsageDetails? usage = null;
+                if (AppConfig.StreamMode)
                 {
-                    requiresAction = false;
-                    List<ChatToolCall> toolCall = [];
-                    ChatFinishReason finishReason = ChatFinishReason.Stop;
-                    int inputToken = 0, outputToken = 0;
-                    if (AppConfig.StreamMode)
+                    Task.Run(async () =>
                     {
-                        ToolCallStreamBuilder builder = new();
-                        foreach (StreamingChatCompletionUpdate chatUpdate in client.CompleteChatStreaming(chatMessages, option))
+                        await foreach (var chatUpdate in client.GetStreamingResponseAsync(chatMessages, option))
                         {
-                            msg += AppendContentToMessage(chatUpdate.ContentUpdate);
-                            reasoning += AppendReasoningContentToMessage(chatUpdate);
-                            builder.Append(chatUpdate.ToolCallUpdates);
-
-                            finishReason = chatUpdate.FinishReason ?? ChatFinishReason.Stop;
-                            inputToken += (chatUpdate.Usage?.InputTokenCount ?? 0);
-                            outputToken += (chatUpdate.Usage?.OutputTokenCount ?? 0);
-                        }
-                        toolCall = builder.Build();
-                    }
-                    else
-                    {
-                        var completion = client.CompleteChat(chatMessages, option);
-                        msg += AppendContentToMessage(completion.Value.Content);
-                        reasoning += AppendReasoningContentToMessage(completion.Value);
-
-                        toolCall = [.. toolCall, .. completion.Value.ToolCalls];
-                        finishReason = completion.Value.FinishReason;
-
-                        inputToken = completion.Value.Usage.InputTokenCount;
-                        outputToken = completion.Value.Usage.OutputTokenCount;
-                    }
-                    Usage.Insert(baseUrl, modelName, purpose.ToString(), inputToken, outputToken);
-                    APIKeys.UpdateTokenConsume(apiKey, inputToken + outputToken);
-
-                    switch (finishReason)
-                    {
-                        case ChatFinishReason.Stop:
-                            chatMessages.Add(new AssistantChatMessage(msg));
-                            break;
-
-                        case ChatFinishReason.ToolCalls:
-                            chatMessages.Add(new AssistantChatMessage(toolCall));
-                            foreach (var tool in toolCall)
+                            if (chatUpdate.RawRepresentation is OpenAI.Chat.StreamingChatCompletionUpdate openAIUpdate)
                             {
-                                switch (tool.FunctionName)
-                                {
-                                }
+                                msg += AppendContentToMessage(openAIUpdate.ContentUpdate);
+                                reasoning += GetReasoningContent(openAIUpdate);
                             }
-                            requiresAction = true;
-                            break;
-
-                        case ChatFinishReason.ContentFilter:
-                            MainSave.CQLog.Info("发起对话", "触发内容过滤，返回空回复");
-                            return AppConfig.ChatEmptyResponse;
-                    }
-                } while (requiresAction);
+                            var usageDetail = chatUpdate.Contents.OfType<UsageContent>().FirstOrDefault()?.Details;
+                            if (usageDetail != null)
+                            {
+                                usage = usageDetail;
+                            }
+                        }
+                    }).Wait();
+                }
+                else
+                {
+                    Task.Run(async () =>
+                    {
+                        var response = await client.GetResponseAsync(chatMessages, option);
+                        if (response.RawRepresentation is OpenAI.Chat.StreamingChatCompletionUpdate openAIUpdate)
+                        {
+                            msg += AppendContentToMessage(openAIUpdate.ContentUpdate);
+                            reasoning += GetReasoningContent(openAIUpdate);
+                        }
+                        usage = response.Usage;
+                    }).Wait();
+                }
+                if (usage != null)
+                {
+                    Usage.Insert(baseUrl, modelName, purpose.ToString(), usage.InputTokenCount.Value, usage.OutputTokenCount.Value);
+                    APIKeys.UpdateTokenConsume(apiKey, usage.TotalTokenCount.Value);
+                }
+                chatMessages.Add(new(ChatRole.Assistant, msg));
 
                 if (AppConfig.RemoveThinkBlock)
                 {
@@ -145,7 +137,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return msg;
         }
 
-        private static string AppendReasoningContentToMessage(object chatUpdate)
+        private static string GetReasoningContent(OpenAI.Chat.StreamingChatCompletionUpdate chatUpdate)
         {
             var choicesProp = chatUpdate?.GetType().GetProperty(
                 "Choices",
@@ -211,10 +203,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return string.Join("\n", result);
         }
 
-        private static string AppendContentToMessage(ChatMessageContent contents)
+        private static string AppendContentToMessage(OpenAI.Chat.ChatMessageContent contents)
         {
             string msg = "";
-            foreach (ChatMessageContentPart contentPart in contents)
+            foreach (OpenAI.Chat.ChatMessageContentPart contentPart in contents)
             {
                 if (string.IsNullOrEmpty(contentPart.Text) && contentPart.ImageBytes != null && !contentPart.ImageBytes.IsEmpty)
                 {
@@ -229,57 +221,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
             }
             return msg;
-        }
-    }
-
-    public class ToolCallStreamBuilder
-    {
-        private Dictionary<int, string> ToolCallId { get; set; } = [];
-
-        private Dictionary<int, string> ToolCallFunctionName { get; set; } = [];
-
-        private Dictionary<int, byte[]> ToolCallFunctionArguments { get; set; } = [];
-
-        public void Append(IReadOnlyList<StreamingChatToolCallUpdate> toolCallUpdates)
-        {
-            foreach (var item in toolCallUpdates)
-            {
-                if (item.ToolCallId != null)
-                {
-                    ToolCallId[item.Index] = item.ToolCallId;
-                }
-                if (item.FunctionName != null)
-                {
-                    ToolCallFunctionName[item.Index] = item.FunctionName;
-                }
-                if (item.FunctionArgumentsUpdate != null)
-                {
-                    if (ToolCallFunctionArguments.TryGetValue(item.Index, out var value))
-                    {
-                        ToolCallFunctionArguments[item.Index] = [.. value, .. item.FunctionArgumentsUpdate.ToArray()];
-                    }
-                    else
-                    {
-                        ToolCallFunctionArguments[item.Index] = [.. item.FunctionArgumentsUpdate.ToArray()];
-                    }
-                }
-            }
-        }
-
-        public List<ChatToolCall> Build()
-        {
-            List<ChatToolCall> toolCalls = [];
-            foreach (var item in ToolCallId)
-            {
-                var index = item.Key;
-                var id = item.Value;
-                var functionName = ToolCallFunctionName[index];
-                var argument = ToolCallFunctionArguments[index];
-
-                var toolCall = ChatToolCall.CreateFunctionToolCall(id, functionName, BinaryData.FromBytes(argument));
-                toolCalls.Add(toolCall);
-            }
-            return toolCalls;
         }
     }
 }
