@@ -1,4 +1,5 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using Microsoft.Extensions.AI;
 using Newtonsoft.Json.Linq;
 using OpenAI.Chat;
 using System;
@@ -92,9 +93,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         {
             var json = Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
-                new SystemChatMessage(prompt),
-                new UserChatMessage("请回复")
-            ], Chat.Purpose.日程获取, AppConfig.ChatTimeout);
+                new(ChatRole.System, prompt),
+                new(ChatRole.User, "请回复")
+            ], Chat.Purpose.日程获取, jsonMode: true, timeout: AppConfig.ChatTimeout);
 
             if (json == Chat.ErrorMessage)
             {
