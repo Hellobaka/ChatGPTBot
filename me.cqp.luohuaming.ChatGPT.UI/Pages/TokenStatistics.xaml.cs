@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void AnimateTextChange(TextBlock textBlock, int newValue)
+        private void AnimateTextChange(TextBlock textBlock, long newValue)
         {
             var binding = textBlock.GetBindingExpression(TextBlock.TextProperty);
             var propertyName = binding?.ParentBinding?.Path?.Path;
@@ -293,7 +293,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Pie_ModelCollection = [];
             foreach (var model in FilterResult.GroupBy(x => x.ModelName).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
             {
-                var series = new PieSeries<int>
+                var series = new PieSeries<long>
                 {
                     Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
                     Name = model.Name,
@@ -309,7 +309,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Pie_PurposeCollection = [];
             foreach (var model in FilterResult.GroupBy(x => x.Purpose).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
             {
-                var series = new PieSeries<int>
+                var series = new PieSeries<long>
                 {
                     Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
                     Name = model.Name,
@@ -325,7 +325,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Pie_ServiceCollection = [];
             foreach (var model in FilterResult.GroupBy(x => x.Endpoint).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
             {
-                var series = new PieSeries<int>
+                var series = new PieSeries<long>
                 {
                     Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
                     Name = model.Name,
@@ -522,9 +522,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void UpdateTokenCount()
         {
             int callCount = 0;
-            int inputTokenCount = 0;
-            int outputTokenCount = 0;
-            int totalTokenCount = 0;
+            long inputTokenCount = 0;
+            long outputTokenCount = 0;
+            long totalTokenCount = 0;
             int maxRPM = 0;
 
             Dictionary<string, int> rpm = [];

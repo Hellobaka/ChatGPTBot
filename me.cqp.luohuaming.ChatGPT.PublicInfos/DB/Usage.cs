@@ -12,9 +12,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
         public int ID { get; set; }
 
-        public int InputToken { get; set; }
+        public long InputToken { get; set; }
 
-        public int OutputToken { get; set; }
+        public long OutputToken { get; set; }
 
         public string Endpoint { get; set; }
 
@@ -26,7 +26,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static event Action<Usage> OnUsageInserted;
 
-        public static void Insert(string endpoint, string modelName, string purpose, int inputToken, int outputToken)
+        public static void Insert(string endpoint, string modelName, string purpose, long inputToken, long outputToken)
         {
             using var db = SQLHelper.GetInstance();
             var u = new Usage()
