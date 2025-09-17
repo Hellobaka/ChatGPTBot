@@ -1,4 +1,5 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -27,7 +28,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             日程获取,
             分段,
             表情包推荐,
-            获取心情
         }
 
         public const string ErrorMessage = "连接发生问题，查看日志排查问题";
@@ -36,22 +36,22 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static IDistributedCache ChatCache { get; set; } = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
 
-        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
+        public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager mcp = null)
         {
-            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose, jsonMode, timeout);
+            return GetChatResult(key.OrderBy(x => Guid.NewGuid()).FirstOrDefault(), chatMessages, purpose, jsonMode, timeout, mcp);
         }
 
-        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
+        public static string GetChatResult(APIKeyPurpose? key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager mcp = null)
         {
             if (key == null)
             {
                 MainSave.CQLog?.Info("GetChatResult", "Key 为 null");
                 return ErrorMessage;
             }
-            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose, jsonMode, timeout);
+            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.ModelName, chatMessages, purpose, jsonMode, timeout, mcp);
         }
 
-        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000)
+        public static string GetChatResult(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager mcp = null)
         {
             baseUrl = baseUrl.Replace("/chat/completions", "");
             string msg = "";
@@ -70,6 +70,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 Temperature = AppConfig.ChatTemperature,
                 ResponseFormat = jsonMode ? ChatResponseFormat.Text : ChatResponseFormat.Json,
             };
+            if (mcp != null)
+            {
+                option.Tools = mcp.GetAIFunctions();
+            }
             try
             {
                 UsageDetails? usage = null;

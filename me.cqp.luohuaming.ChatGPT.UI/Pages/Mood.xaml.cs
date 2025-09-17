@@ -155,7 +155,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void MoodDiff_Click(object sender, RoutedEventArgs e)
         {
             MoodManager.Mood mood = (MoodManager.Mood)(sender as Button).Tag;
-            MoodManager.Instance.UpdateMood(mood);
+            MoodManager.Instance.UpdateMood(mood.ToString());
 
             SetPoint(MoodManager.Instance.Valence, MoodManager.Instance.Arousal);
         }

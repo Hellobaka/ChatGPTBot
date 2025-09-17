@@ -120,13 +120,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return relationship;
         }
 
-        public void UpdateFavourability(MoodManager.Mood mood, MoodManager.Stand stand)
+        public void UpdateFavorability(double value)
         {
-            double moodFavorValue = MoodManager.MoodFavorValue[mood];
-            Favorability += moodFavorValue;
+            Favorability += value;
             Favorability = Math.Max(-1000, Math.Min(1000, Favorability));
 
-            CommonHelper.DebugLog("更新用户关系", $"[{QQ}] 心情：{mood}，计算后新的关系值为：{Favorability}");
+            CommonHelper.DebugLog("更新用户关系", $"[{QQ}] 计算后新的关系值为：{Favorability}");
 
             using var db = SQLHelper.GetInstance();
             db.Updateable(this).ExecuteCommand();
@@ -146,7 +145,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public override string ToString()
         {
             int level = GetFavorLevel();
-            (string, string) attritude = level switch
+            (string, string) attitude = level switch
             {
                 1 => ("厌恶", "冷漠回应"),
                 2 => ("冷漠", "冷淡回复"),
@@ -156,7 +155,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 6 => ("暧昧", "无条件支持"),
                 _ => ("", "")
             };
-            return string.Format("你对昵称为[{0}]的用户的态度为{1},回复态度为{2},关系等级为{3}", Card ?? NickName, attritude.Item1, attritude.Item2, level);
+            return string.Format("你对昵称为[{0}]的用户的态度为{1},回复态度为{2},关系等级为{3}", Card ?? NickName, attitude.Item1, attitude.Item2, level);
         }
     }
 }

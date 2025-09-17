@@ -1,5 +1,4 @@
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.EventArgs;
@@ -93,7 +92,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     AppConfig.SplitterRegexFirst = true;
                 }
             }
-
+            MainSave.CQLog.Info("初始化", "加载 MCP 配置");
+            MCPClientManager.Load();
+            MCPClientManager.Rebuild();
+            MainSave.CQLog.Info("初始化", $"加载了 {MCPClientManager.Clients.Count} 个客户端，{MCPClientManager.MCPTools.Sum(x=>x.Value.Length)} 个工具");
+            
             _ = new MoodManager();
             _ = new SchedulerManager();
             Picture.InitCache();

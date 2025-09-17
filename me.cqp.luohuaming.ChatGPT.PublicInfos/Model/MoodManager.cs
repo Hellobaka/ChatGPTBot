@@ -98,17 +98,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             StartMoodDecreaseTimer();
         }
 
-        public void UpdateMood(Mood mood)
-        {
-            var (valence, arousal) = MoodValues[mood];
-            Valence = Math.Max(-1, Math.Min(1, Valence + valence));
-            Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
-
-            MoodChanged?.Invoke();
-
-            CommonHelper.DebugLog("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
-        }
-
         public void StartMoodDecreaseTimer()
         {
             MoodDecreaseTimer = new()
@@ -120,40 +109,23 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             MoodDecreaseTimer.Start();
         }
 
-        public (Mood mood, Stand stand) GetTextMood(string input, string detailMessage)
+        public void UpdateMood(string input)
         {
-            string prompt = string.Format(Prompt, detailMessage, input);
-            string reply = Chat.GetChatResult(AppConfig.SplitterApiKeyId,
-                [
-                    new(ChatRole.System, prompt),
-                    new(ChatRole.User, "请回复")
-                ], Chat.Purpose.获取心情, timeout: AppConfig.SplitterTimeout);
-            var split = reply.Split('-');
-
-            if (split.Length == 2)
+            Mood mood = Enum.TryParse(input.ToLower(), out Mood v) ? v : Mood.None;
+            if (mood == Mood.None)
             {
-                Mood mood = Enum.TryParse(split[1].ToLower(), out Mood v) ? v : Mood.None;
-                Stand stand = Enum.TryParse(split[0].ToLower(), out Stand v2) ? v2 : Stand.None;
-                if (mood == Mood.None)
-                {
-                    CommonHelper.DebugLog("情绪转换", $"无效的情绪转换：{split[1]}");
-                    mood = Mood.neutral;
-                }
-                if (stand == Stand.None)
-                {
-                    CommonHelper.DebugLog("情绪转换", $"无效的立场转换：{split[0]}");
-                    stand = Stand.neutrality;
-                }
-
-                CommonHelper.DebugLog("更新心情", $"输入获取到的心情为：{mood}，立场为：{stand}");
-
-                return (mood, stand);
+                CommonHelper.DebugLog("情绪转换", $"无效的情绪转换：{input}");
+                mood = Mood.neutral;
             }
-            else
-            {
-                MainSave.CQLog.Error("情绪转换", $"无效的情绪转换：{reply}");
-                return (Mood.None, Stand.None);
-            }
+
+            CommonHelper.DebugLog("更新心情", $"输入获取到的心情为：{mood}");
+            var (valence, arousal) = MoodValues[mood];
+            Valence = Math.Max(-1, Math.Min(1, Valence + valence));
+            Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
+
+            MoodChanged?.Invoke();
+
+            CommonHelper.DebugLog("更新心情", $"心情：{mood}，计算后新的愉悦值为：{Valence}，唤醒值为：{Arousal}");
         }
 
         private void MoodDecreaseTimer_Elapsed(object sender, ElapsedEventArgs e)

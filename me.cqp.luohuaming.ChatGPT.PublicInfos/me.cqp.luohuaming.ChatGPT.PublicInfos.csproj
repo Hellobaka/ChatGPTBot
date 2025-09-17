@@ -53,6 +53,10 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ModelContextProtocol.Core, Version=0.3.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Lib\ModelContextProtocol.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -86,6 +90,9 @@
     <Compile Include="FunctionResult.cs" />
     <Compile Include="MainSave.cs" />
     <Compile Include="Models.cs" />
+    <Compile Include="Model\CustomTools\MojiCityIdConverter.cs" />
+    <Compile Include="Model\MCPClientManager.cs" />
+    <Compile Include="Model\MCPClient.cs" />
     <Compile Include="Model\MoodManager.cs" />
     <Compile Include="Model\ReplyManager.cs" />
     <Compile Include="Model\SchedulerManager.cs" />
@@ -121,9 +128,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging">
       <Version>9.0.9</Version>
-    </PackageReference>
-    <PackageReference Include="ModelContextProtocol.Core">
-      <Version>0.3.0-preview.4</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>

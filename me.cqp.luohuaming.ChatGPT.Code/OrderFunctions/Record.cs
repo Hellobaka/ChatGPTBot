@@ -74,8 +74,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 if (random < replyProbability)
                 {
                     SetGroupBusy(e.FromGroup, true);
+                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ);
+                    mcp.UpdateRelationshipContext(relationship);
 
-                    string reply = CreateReply(relationship, record);
+                    string reply = CreateReply(relationship, record, mcp);
 
                     if (reply == Chat.ErrorMessage)
                     {
@@ -90,7 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
                     replyManager.ChangeReplyWillingAfterSendingMessage();
 
-                    SendEmoji(record, relationship, reply, e.FromGroup, e.FromQQ);
+                    SendEmoji(reply, e.FromGroup, e.FromQQ);
                     return result;
                 }
                 else
@@ -145,7 +147,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 }
                 SetGroupBusy(e.FromQQ, true);
 
-                string reply = CreateReply(relationship, record);
+                MCPClientManager mcp = new(-1, e.FromQQ);
+                mcp.UpdateRelationshipContext(relationship);
+
+                string reply = CreateReply(relationship, record, mcp);
 
                 if (reply == Chat.ErrorMessage)
                 {
@@ -157,7 +162,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     return new();
                 }
                 SendReply(reply, -1, e.FromQQ, e.Message.Id);
-                SendEmoji(record, relationship, reply, -1, e.FromQQ);
+                SendEmoji(reply, -1, e.FromQQ);
 
                 return result;
             }
@@ -197,7 +202,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private string CreateReply(Relationship relationship, ChatRecord record)
+        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp)
         {
             var prompt = BuildPrompt(relationship, record);
             //CommonHelper.DebugLog("Prompt", prompt);
@@ -205,7 +210,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             [
                 new(ChatRole.System, prompt),
                 new(ChatRole.User, "请回复")
-            ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout);
+            ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout, mcp: mcp);
         }
 
         public static string BuildPrompt(Relationship relationship, ChatRecord record)
@@ -305,11 +310,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
-        private void SendEmoji(ChatRecord record, Relationship relationship, string reply, long fromGroup, long fromQQ)
+        private void SendEmoji(string reply, long fromGroup, long fromQQ)
         {
-            (MoodManager.Mood mood, MoodManager.Stand stand) = MoodManager.Instance.GetTextMood(reply, record.ParsedMessage);
-            MoodManager.Instance.UpdateMood(mood);
-            relationship.UpdateFavourability(mood, stand);
             if (AppConfig.EnableEmojiSend && CommonHelper.Next(0, 100) < AppConfig.EmojiSendProbability)
             {
                 CommonHelper.DebugLog("获取表情包", $"开始对 {reply} 回复进行表情包推荐");
