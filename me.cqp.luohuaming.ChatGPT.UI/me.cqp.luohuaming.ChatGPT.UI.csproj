@@ -85,17 +85,32 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="ChatBubble.cs" />
+    <Compile Include="Controls\EditableListBox_Dict_String_String.xaml.cs">
+      <DependentUpon>EditableListBox_Dict_String_String.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\EditableListBox_String.xaml.cs">
       <DependentUpon>EditableListBox_String.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\EditableListBox_Int.xaml.cs">
       <DependentUpon>EditableListBox_Int.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\MCPClientEdit.xaml.cs">
+      <DependentUpon>MCPClientEdit.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\MCPCreateClient.xaml.cs">
+      <DependentUpon>MCPCreateClient.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\MCPToolTest.xaml.cs">
+      <DependentUpon>MCPToolTest.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Converter\Converters.cs" />
+    <Compile Include="Converter\TemplateSelector.cs" />
     <Compile Include="Debouncer.cs" />
     <Compile Include="Model\Emoji.cs" />
     <Compile Include="Model\Items.cs" />
+    <Compile Include="Model\MCPClientModel.cs" />
     <Compile Include="Model\MemoryNode.cs" />
+    <Compile Include="Model\ToolArgumentItem.cs" />
     <Compile Include="Pages\Emoji.xaml.cs">
       <DependentUpon>Emoji.xaml</DependentUpon>
     </Compile>
@@ -113,6 +128,9 @@
     </Compile>
     <Compile Include="Pages\Knowledge.xaml.cs">
       <DependentUpon>Knowledge.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\MCP.xaml.cs">
+      <DependentUpon>MCP.xaml</DependentUpon>
     </Compile>
     <Compile Include="Pages\Memory.xaml.cs">
       <DependentUpon>Memory.xaml</DependentUpon>
@@ -133,11 +151,30 @@
       <DependentUpon>TokenStatistics.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModel\KeyManageViewModel.cs" />
+    <Compile Include="ViewModel\MCPClientEditViewModel.cs" />
+    <Compile Include="ViewModel\MCPToolTestViewModel.cs" />
+    <Compile Include="ViewModel\MCPViewModel.cs" />
+    <Page Include="Controls\EditableListBox_Dict_String_String.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\EditableListBox_String.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\EditableListBox_Int.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\MCPClientEdit.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\MCPCreateClient.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\MCPToolTest.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -175,6 +212,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\Knowledge.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Pages\MCP.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -62,7 +62,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             .AsBuilder()
                             .UseDistributedCache(ChatCache)
                             .UseFunctionInvocation()
-                            .UseLogging()
                             .Build();
             var option = new ChatOptions
             {

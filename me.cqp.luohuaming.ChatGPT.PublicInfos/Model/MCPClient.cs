@@ -15,6 +15,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
     {
         public virtual MCPClientType ToolType { get; set; } = MCPClientType.STDIO;
 
+        public bool Enabled { get; set; }
+
         public string Name { get; set; } = string.Empty;
 
         public bool GroupEnabled { get; set; }

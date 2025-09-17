@@ -1,0 +1,79 @@
+﻿<UserControl
+    x:Class="me.cqp.luohuaming.ChatGPT.UI.Controls.MCPClientEdit"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Converter"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Model"
+    xmlns:ui="http://schemas.modernwpf.com/2019"
+    xmlns:viewmodel="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.ViewModel"
+    d:DataContext="{d:DesignInstance Type=viewmodel:MCPClientEditViewModel}"
+    d:DesignHeight="850"
+    d:DesignWidth="800"
+    Loaded="UserControl_Loaded"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converter:BoolToVisibilityRevertConverter x:Key="BoolToVisibilityRevertConverter" />
+        <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
+        <converter:InsertImageTaskListMultiConverter x:Key="InsertImageTaskListMultiConverter" />
+        <converter:InsertImageResultConverter x:Key="InsertImageResultConverter" />
+    </UserControl.Resources>
+
+    <ui:SimpleStackPanel Spacing="5">
+        <TextBox ui:ControlHelper.Header="名称" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        <CheckBox Content="启用" IsChecked="{Binding Enabled, Mode=TwoWay}" />
+        <CheckBox Content="群组聊天可用" IsChecked="{Binding GroupEnabled, Mode=TwoWay}" />
+        <CheckBox Content="个人聊天可用" IsChecked="{Binding PersonEnabled, Mode=TwoWay}" />
+        <ComboBox
+            x:Name="MCPClientTypeSelector"
+            HorizontalAlignment="Stretch"
+            ui:ControlHelper.Header="MCP 客户端类型"
+            SelectedItem="{Binding ToolType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            SelectionChanged="MCPClientTypeSelector_SelectionChanged">
+            <ComboBoxItem Content="STDIO" />
+            <ComboBoxItem Content="Http" />
+        </ComboBox>
+        <ui:SimpleStackPanel
+            x:Name="STDIOSettings"
+            Spacing="5"
+            Visibility="Collapsed">
+            <TextBox ui:ControlHelper.Header="命令行命令" Text="{Binding Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox ui:ControlHelper.Header="工作目录" Text="{Binding WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock FontSize="14" Text="参数" />
+            <local:EditableListBox_String CanDuplicate="True" ItemSource="{Binding Arguments}" />
+            <TextBlock FontSize="14" Text="环境变量" />
+            <local:EditableListBox_Dict_String_String ItemSource="{Binding EnvironmentVariables}" />
+        </ui:SimpleStackPanel>
+        <ui:SimpleStackPanel x:Name="HttpSettings" Spacing="5">
+            <ComboBox
+                HorizontalAlignment="Stretch"
+                ui:ControlHelper.Header="连接方式"
+                SelectedItem="{Binding TransportType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <ComboBoxItem Content="AutoDetect" />
+                <ComboBoxItem Content="Sse" />
+                <ComboBoxItem Content="StreamableHttp" />
+            </ComboBox>
+            <TextBox ui:ControlHelper.Header="目标 Url" Text="{Binding Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox ui:ControlHelper.Header="连接超时（秒）" Text="{Binding ConnectionTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock FontSize="14" Text="请求 Headers" />
+            <local:EditableListBox_Dict_String_String ItemSource="{Binding Headers}" />
+        </ui:SimpleStackPanel>
+        <ui:SimpleStackPanel Spacing="5" Visibility="{Binding GroupEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ui:ToggleSwitch
+                IsOn="{Binding IsGroupBlackList}"
+                OffContent="群组使用黑名单"
+                OnContent="群组使用黑名单" />
+            <local:EditableListBox_Int CanDuplicate="False" ItemSource="{Binding Groups}" />
+        </ui:SimpleStackPanel>
+        <ui:SimpleStackPanel Spacing="5" Visibility="{Binding PersonEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+            <ui:ToggleSwitch
+                IsOn="{Binding IsPersonBlackList}"
+                OffContent="私聊使用黑名单"
+                OnContent="私聊使用黑名单" />
+            <local:EditableListBox_Int CanDuplicate="False" ItemSource="{Binding Persons}" />
+        </ui:SimpleStackPanel>
+    </ui:SimpleStackPanel>
+</UserControl>
