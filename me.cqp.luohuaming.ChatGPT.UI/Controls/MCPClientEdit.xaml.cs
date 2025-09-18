@@ -1,5 +1,8 @@
-﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using me.cqp.luohuaming.ChatGPT.UI.Model;
 using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
+using System;
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -28,7 +31,15 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         }
 
         public static readonly DependencyProperty MCPClientModelProperty =
-            DependencyProperty.Register("MCPClientModel", typeof(MCPClientModel), typeof(MCPClientEdit), new PropertyMetadata(default));
+            DependencyProperty.Register("MCPClientModel", typeof(MCPClientModel), typeof(MCPClientEdit), new PropertyMetadata(default, OnMCPClientSet));
+
+        private static void OnMCPClientSet(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is MCPClientEdit control && e.NewValue is MCPClientModel model)
+            {
+                control.ViewModel = new MCPClientEditViewModel(model);
+            }
+        }
 
         public MCPClientModel GetResult()
         {
@@ -48,7 +59,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            ViewModel = new MCPClientEditViewModel(MCPClientModel);
+            // ViewModel = new MCPClientEditViewModel(MCPClientModel);
         }
     }
 }

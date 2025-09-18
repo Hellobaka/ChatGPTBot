@@ -45,7 +45,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public IEnumerable<ISeries> BarCollection { get; set; } = [];
 
-        public int CallCount { get; set; }
+        public long CallCount { get; set; }
 
         public int CheckedModelCount => Models.Count(item => item.Checked);
 
@@ -59,13 +59,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public DateTime FilterStartDate { get; set; }
 
-        public int InputTokenCount { get; set; }
+        public long InputTokenCount { get; set; }
 
-        public int MaxRPM { get; set; }
+        public long MaxRPM { get; set; }
 
         public ObservableCollection<CheckableItem> Models { get; set; } = [];
 
-        public int OutputTokenCount { get; set; }
+        public long OutputTokenCount { get; set; }
 
         public bool PageLoaded { get; set; }
 
@@ -85,7 +85,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public ObservableCollection<CheckableItem> Services { get; set; } = [];
 
-        public int TotalTokenCount { get; set; }
+        public long TotalTokenCount { get; set; }
 
         public bool UnitCountChecked { get; set; }
 

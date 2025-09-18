@@ -46,7 +46,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("加载MCP客户端", $"加载MCP客户端失败，错误信息：{e.Message}");
+                MainSave.CQLog?.Error("加载MCP客户端", $"加载MCP客户端失败，错误信息：{e.Message}");
             }
         }
 
@@ -63,7 +63,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
             catch (Exception e)
             {
-                MainSave.CQLog.Error("保存MCP客户端", $"保存MCP客户端失败，错误信息：{e.Message}");
+                MainSave.CQLog?.Error("保存MCP客户端", $"保存MCP客户端失败，错误信息：{e.Message}");
             }
         }
 
@@ -101,7 +101,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 catch (Exception e)
                 {
-                    MainSave.CQLog.Error("加载MCP客户端", $"加载MCP客户端 {client.Name} 失败，错误信息：{e.Message}");
+                    MainSave.CQLog?.Error("加载MCP客户端", $"加载MCP客户端 {client.Name} 失败，错误信息：{e.Message}");
                 }
             });
         }
@@ -176,7 +176,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 WriteIndented = true
             };
-            MainSave.CQLog.Info($"调用工具：{tool.Name}，参数：{System.Text.Json.JsonSerializer.Serialize(arg, options)}");
+            MainSave.CQLog?.Info($"调用工具：{tool.Name}，参数：{System.Text.Json.JsonSerializer.Serialize(arg, options)}");
         }
     }
 }

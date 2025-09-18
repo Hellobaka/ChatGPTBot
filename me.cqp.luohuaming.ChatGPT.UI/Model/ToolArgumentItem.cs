@@ -8,7 +8,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
     {
         public string ArgumentName { get; set; }
 
-        public JsonValueKind ArgumentType { get; set; }
+        public string ArgumentType { get; set; }
 
         public bool Required { get; set; }
 

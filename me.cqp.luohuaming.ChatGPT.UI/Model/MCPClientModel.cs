@@ -11,6 +11,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
 {
     public class MCPClientModel
     {
+        public bool IsSelected { get; set; }
+
         public MCPClientBase MCPClientBase { get; set; }
 
         public string Name => MCPClientBase?.Name;
@@ -42,6 +44,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
 
     public class MCPToolModel
     {
+        public bool IsSelected { get; set; }
+
         public AIFunction Tool { get; set; }
 
         public MCPClientModel Parent { get; set; }

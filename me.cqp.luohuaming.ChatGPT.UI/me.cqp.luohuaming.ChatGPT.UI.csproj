@@ -104,7 +104,6 @@
       <DependentUpon>MCPToolTest.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converter\Converters.cs" />
-    <Compile Include="Converter\TemplateSelector.cs" />
     <Compile Include="Debouncer.cs" />
     <Compile Include="Model\Emoji.cs" />
     <Compile Include="Model\Items.cs" />

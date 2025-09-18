@@ -1,4 +1,5 @@
 ﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
+using OpenAI.Responses;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,6 +13,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
     {
         public MCPToolTestViewModel(MCPToolModel toolModel)
         {
+            if (toolModel == null)
+            {
+                return;
+            }
             MCPToolModel = toolModel;
             CreateArguments();
         }
@@ -44,25 +49,19 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
             {
                 return;
             }
+            ToolName = MCPToolModel.Tool.Name;
+            ToolDescription = MCPToolModel.Tool.Description;
             foreach (var item in MCPToolModel.Tool.JsonSchema.EnumerateObject())
             {
-                if (item.Name == "title")
-                {
-                    ToolName = item.Value.GetString();
-                }
-                else if (item.Name == "description")
-                {
-                    ToolDescription = item.Value.GetString();
-                }
-                else if (item.Name == "properties")
+                if (item.Name == "properties")
                 {
                     foreach (var arg in item.Value.EnumerateObject())
                     {
                         var argumentItem = new ToolArgumentItem
                         {
                             ArgumentName = arg.Name,
-                            ArgumentType = Enum.TryParse<JsonValueKind>(arg.Value.GetProperty("type").GetString(), false, out var valueKind) ? valueKind : JsonValueKind.Undefined,
-                            DefaultValue = arg.Value.TryGetProperty("default", out var defaultValue) ? defaultValue.ToString() : string.Empty,
+                            ArgumentType = arg.Value.TryGetProperty("type", out var defaultValue) ? defaultValue.ToString() : string.Empty,
+                            DefaultValue = arg.Value.TryGetProperty("default", out defaultValue) ? defaultValue.ToString() : string.Empty,
                             Description = arg.Value.TryGetProperty("description", out defaultValue) ? defaultValue.ToString() : string.Empty,
                         };
                         argumentItem.PropertyChanged += ArgumentItem_PropertyChanged;
@@ -103,18 +102,20 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
             param.Add("arguments", arguments);
             foreach (var item in Arguments)
             {
-                JsonNode valueNode = item.ArgumentType switch
+                JsonNode valueNode = item.ArgumentType.ToLower() switch
                 {
-                    JsonValueKind.String => item.Value != null ? JsonValue.Create(item.Value) : null,
-                    JsonValueKind.Number => double.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
-                    JsonValueKind.True or JsonValueKind.False => bool.TryParse(item.Value, out var b) ? JsonValue.Create(b) : null,
+                    "string" => item.Value != null ? JsonValue.Create(item.Value) : null,
+                    "integer" => long.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
+                    "float" or "double" => double.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
+                    "boolean" => bool.TryParse(item.Value, out var b) ? JsonValue.Create(b) : null,
                     _ => null,
                 };
-                JsonNode defaultNode = item.ArgumentType switch
+                JsonNode defaultNode = item.ArgumentType.ToLower() switch
                 {
-                    JsonValueKind.String => item.Value != null ? JsonValue.Create(item.DefaultValue) : null,
-                    JsonValueKind.Number => double.TryParse(item.DefaultValue, out var num) ? JsonValue.Create(num) : null,
-                    JsonValueKind.True or JsonValueKind.False => bool.TryParse(item.DefaultValue, out var b) ? JsonValue.Create(b) : null,
+                    "string" => item.Value != null ? JsonValue.Create(item.Value) : null,
+                    "integer" => long.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
+                    "float" or "double" => double.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
+                    "boolean" => bool.TryParse(item.Value, out var b) ? JsonValue.Create(b) : null,
                     _ => null,
                 };
                 if (string.IsNullOrEmpty(item.Value))

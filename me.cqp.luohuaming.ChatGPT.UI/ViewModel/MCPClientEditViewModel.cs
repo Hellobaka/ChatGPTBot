@@ -15,6 +15,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
     {
         public MCPClientEditViewModel(MCPClientModel clientModel)
         {
+            if (clientModel == null)
+            {
+                return;
+            }
             MCPClientModel = clientModel;
 
             Name = clientModel.MCPClientBase.Name;
@@ -77,6 +81,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
         public int ConnectionTimeout { get; set; }
 
         private MCPClientModel MCPClientModel { get; set; }
+
+        public List<string> MCPTransportTypes { get; set; } = ["AutoDetect", "Sse", "StreamableHttp"];
+
+        public List<string> MCPToolTypes { get; set; } = ["STDIO", "Http"];
 
         public event PropertyChangedEventHandler PropertyChanged;
 

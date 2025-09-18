@@ -29,8 +29,9 @@
         IsBackEnabled="False"
         IsPaneOpen="False"
         IsSettingsVisible="False"
-        PaneDisplayMode="Top"
-        SelectionChanged="NavigationView_SelectionChanged">
+        PaneDisplayMode="Top" x:Name="PageSelector"
+        SelectionChanged="NavigationView_SelectionChanged"
+        SelectionFollowsFocus="Enabled">
         <ui:NavigationView.MenuItems>
             <ui:NavigationViewItem
                 Content="Token统计"

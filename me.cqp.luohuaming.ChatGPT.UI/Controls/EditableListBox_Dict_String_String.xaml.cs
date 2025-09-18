@@ -20,7 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
     /// <summary>
     /// EditableListBox_Dict_String_String.xaml 的交互逻辑
     /// </summary>
-    public partial class EditableListBox_Dict_String_String : System.Windows.Controls.UserControl, INotifyPropertyChanged
+    public partial class EditableListBox_Dict_String_String : UserControl, INotifyPropertyChanged
     {
         public EditableListBox_Dict_String_String()
         {
@@ -30,7 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         public IDictionary<string, string> ItemSource
         {
             get { return (IDictionary<string, string>)GetValue(ItemSourceProperty); }
-            set { SetValue(ItemSourceProperty, value); RerenderListBox(); }
+            set { SetValue(ItemSourceProperty, value); }
         }
 
         public static readonly DependencyProperty ItemSourceProperty =
@@ -83,6 +83,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
                 ItemDisplaySource.Add(new(AddItemKeyInput, AddItemValueInput));
                 EditableListBoxKey.Clear();
                 EditableListBoxValue.Clear();
+
+                RerenderListBox();
             }
             else
             {

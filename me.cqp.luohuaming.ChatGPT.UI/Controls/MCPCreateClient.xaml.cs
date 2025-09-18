@@ -1,4 +1,6 @@
-﻿using System;
+﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
+using ModernWpf.Controls;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,11 +20,42 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
     /// <summary>
     /// MCPCreateClient.xaml 的交互逻辑
     /// </summary>
-    public partial class MCPCreateClient : UserControl
+    public partial class MCPCreateClient : ContentDialog
     {
         public MCPCreateClient()
         {
             InitializeComponent();
+            MCPClient = new MCPClientModel
+            {
+                IsSelected = true,
+                MCPClientBase = new PublicInfos.Model.MCPHttpClient
+                {
+                    Enabled = true,
+                    Name = "新建 MCP 客户端",
+                    TransportType = ModelContextProtocol.Client.HttpTransportMode.AutoDetect,
+                    Headers = [],
+                    Groups = [],
+                    Persons = [],
+                }
+            };
+            MCPClientEditControl.MCPClientModel = MCPClient;
+        }
+
+        public ContentDialogResult DialogResult { get; set; } = ContentDialogResult.None;
+
+        public MCPClientModel MCPClient { get; set; }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = ContentDialogResult.Secondary;
+            Hide();
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = ContentDialogResult.Primary;
+            MCPClient = MCPClientEditControl.GetResult();
+            Hide();
         }
     }
 }

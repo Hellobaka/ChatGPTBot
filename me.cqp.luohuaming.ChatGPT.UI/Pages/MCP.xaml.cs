@@ -1,18 +1,11 @@
-﻿using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
-using System;
-using System.Collections.Generic;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using me.cqp.luohuaming.ChatGPT.UI.Controls;
+using me.cqp.luohuaming.ChatGPT.UI.Model;
+using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
@@ -33,19 +26,103 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             set { DataContext = value; }
         }
 
-        private void RebuildMCPButton_Click(object sender, RoutedEventArgs e)
-        {
+        public bool Rebuilt { get; set; }
 
+        public bool HasChanged { get; set; }
+
+        private async void RebuildMCPButton_Click(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Rebuilding = true;
+            await Task.Run(MCPClientManager.Rebuild);
+            ViewModel.LoadMCPClients();
+            ViewModel.Rebuilding = false;
+            Rebuilt = true;
         }
 
-        private void AddMCPButton_Click(object sender, RoutedEventArgs e)
+        private async void AddMCPButton_Click(object sender, RoutedEventArgs e)
         {
-
+            MCPCreateClient dialog = new();
+            _ = await dialog.ShowAsync();
+            if (dialog.DialogResult == ModernWpf.Controls.ContentDialogResult.Primary)
+            {
+                ViewModel.MCPClients.Add(dialog.MCPClient);
+            }
         }
 
         private void MCPClientContainer_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            ViewModel.SelectedMCPItem = [e.NewValue];
+            ViewModel.SelectedMCPItem = e.NewValue;
+            var item = ViewModel.SelectedMCPItem;
+            if (item != null)
+            {
+                if (item is MCPClientModel clientModel)
+                {
+                    MCPClientEditControl.MCPClientModel = clientModel;
+                    MCPClientEditControl.Visibility = Visibility.Visible;
+                    MCPToolTestControl.Visibility = Visibility.Collapsed;
+                    ActionContainer.Visibility = Visibility.Visible;
+                }
+                else if (item is MCPToolModel toolModel)
+                {
+                    MCPToolTestControl.MCPToolModel = toolModel;
+                    MCPClientEditControl.Visibility = Visibility.Collapsed;
+                    MCPToolTestControl.Visibility = Visibility.Visible;
+                    ActionContainer.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    MCPClientEditControl.Visibility = Visibility.Collapsed;
+                    MCPToolTestControl.Visibility = Visibility.Collapsed;
+                    ActionContainer.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                MCPClientEditControl.Visibility = Visibility.Collapsed;
+                MCPToolTestControl.Visibility = Visibility.Collapsed;
+                ActionContainer.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            MCPClientEditControl.Cancel();
+        }
+
+        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MCPClientEditControl.GetResult();
+            var index = ViewModel.MCPClients.IndexOf(ViewModel.SelectedMCPItem as MCPClientModel);
+            if (index >= 0)
+            {
+                ViewModel.MCPClients[index].MCPClientBase = result.MCPClientBase;
+                MCPClientManager.Clients = ViewModel.MCPClients.Select(x => x.MCPClientBase).ToList();
+                MCPClientManager.Save();
+                Rebuilt = false;
+                HasChanged = true;
+                MainWindow.ShowInfo("保存成功");
+            }
+            else
+            {
+                MainWindow.ShowError("未找到选中项对应的元素，无法保存");
+            }
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.LoadMCPClients();
+            ViewModel.Rebuilding = false;
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ViewModel.SelectedMCPItem != null && ViewModel.SelectedMCPItem is MCPClientModel clientModel
+                && MainWindow.ShowConfirm($"确认要删除客户端 {clientModel.Name} 吗？"))
+            {
+                MCPClientManager.Clients.Remove(clientModel.MCPClientBase);
+                ViewModel.MCPClients.Remove(clientModel);
+                MCPClientManager.Save();
+            }
         }
     }
 }

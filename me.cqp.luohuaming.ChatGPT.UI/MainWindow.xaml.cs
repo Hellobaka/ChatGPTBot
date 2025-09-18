@@ -1,6 +1,7 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using me.cqp.luohuaming.ChatGPT.UI.Pages;
 using ModernWpf.Controls;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
         public static event Action OnWindowClosing;
 
         public static MainWindow Instance { get; private set; }
+
+        private string CurrentPage { get; set; } = string.Empty;
 
         private Dictionary<string, object> PageCache { get; set; } = new();
 
@@ -75,6 +78,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 _ = new MoodManager();
                 _ = new SchedulerManager();
                 Qdrant qdrant = new(AppConfig.QdrantHost, AppConfig.QdrantPort);
+                MCPClientManager.Load();
                 if (!qdrant.GetCollections())
                 {
                     ShowError("Qdrant Connection Failed.");
@@ -94,8 +98,24 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             if (selectedItem != null)
             {
                 string selectedItemTag = (string)selectedItem.Tag;
+                if (selectedItemTag != "MCP" && CurrentPage == "MCP"
+                    && PageCache.TryGetValue("MCP", out var mcpPage) && mcpPage is MCP mcp
+                    && mcp.HasChanged && !mcp.Rebuilt)
+                {
+                    if (ShowConfirm("MCP 配置已保存但未重建工具列表，确认保持这个状态吗？"))
+                    {
+                        mcp.HasChanged = false;
+                    }
+                    else
+                    {
+                        //selectedItemTag = "MCP";
+                        PageSelector.SelectedItem = mcpPage;
+                        return;
+                    }
+                }
                 if (PageCache.TryGetValue(selectedItemTag, out object? page))
                 {
+                    CurrentPage = selectedItemTag;
                     MainFrame.Navigate(page);
                 }
                 else
@@ -111,6 +131,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                         return;
                     }
                     PageCache.Add(selectedItemTag, obj);
+                    CurrentPage = selectedItemTag;
                     MainFrame.Navigate(obj);
                 }
             }

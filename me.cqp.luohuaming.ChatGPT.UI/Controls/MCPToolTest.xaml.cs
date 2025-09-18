@@ -34,7 +34,15 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         }
 
         public static readonly DependencyProperty MCPToolModelProperty =
-            DependencyProperty.Register("MCPToolModel", typeof(MCPToolModel), typeof(MCPToolTest), new PropertyMetadata(default));
+            DependencyProperty.Register("MCPToolModel", typeof(MCPToolModel), typeof(MCPToolTest), new PropertyMetadata(default, OnMCPToolSet));
+
+        private static void OnMCPToolSet(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is MCPToolTest control && e.NewValue is MCPToolModel model)
+            {
+                control.ViewModel = new MCPToolTestViewModel(model);
+            }
+        }
 
         public MCPToolTestViewModel ViewModel
         {
@@ -44,7 +52,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            ViewModel = new MCPToolTestViewModel(MCPToolModel);
+            //ViewModel = new MCPToolTestViewModel(MCPToolModel);
         }
 
         private void SendRequestButton_Click(object sender, RoutedEventArgs e)

@@ -31,11 +31,9 @@
             x:Name="MCPClientTypeSelector"
             HorizontalAlignment="Stretch"
             ui:ControlHelper.Header="MCP 客户端类型"
+            ItemsSource="{Binding MCPToolTypes}"
             SelectedItem="{Binding ToolType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            SelectionChanged="MCPClientTypeSelector_SelectionChanged">
-            <ComboBoxItem Content="STDIO" />
-            <ComboBoxItem Content="Http" />
-        </ComboBox>
+            SelectionChanged="MCPClientTypeSelector_SelectionChanged" />
         <ui:SimpleStackPanel
             x:Name="STDIOSettings"
             Spacing="5"
@@ -43,37 +41,43 @@
             <TextBox ui:ControlHelper.Header="命令行命令" Text="{Binding Command, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox ui:ControlHelper.Header="工作目录" Text="{Binding WorkingDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock FontSize="14" Text="参数" />
-            <local:EditableListBox_String CanDuplicate="True" ItemSource="{Binding Arguments}" />
+            <local:EditableListBox_String
+                x:Name="STDIO_Arguments"
+                CanDuplicate="True"
+                ItemSource="{Binding Arguments}" />
             <TextBlock FontSize="14" Text="环境变量" />
-            <local:EditableListBox_Dict_String_String ItemSource="{Binding EnvironmentVariables}" />
+            <local:EditableListBox_Dict_String_String x:Name="STDIO_EnvromentVariables" ItemSource="{Binding EnvironmentVariables}" />
         </ui:SimpleStackPanel>
         <ui:SimpleStackPanel x:Name="HttpSettings" Spacing="5">
             <ComboBox
                 HorizontalAlignment="Stretch"
                 ui:ControlHelper.Header="连接方式"
-                SelectedItem="{Binding TransportType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <ComboBoxItem Content="AutoDetect" />
-                <ComboBoxItem Content="Sse" />
-                <ComboBoxItem Content="StreamableHttp" />
-            </ComboBox>
+                ItemsSource="{Binding MCPTransportTypes}"
+                SelectedItem="{Binding TransportType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox ui:ControlHelper.Header="目标 Url" Text="{Binding Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBox ui:ControlHelper.Header="连接超时（秒）" Text="{Binding ConnectionTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock FontSize="14" Text="请求 Headers" />
-            <local:EditableListBox_Dict_String_String ItemSource="{Binding Headers}" />
+            <local:EditableListBox_Dict_String_String x:Name="HTTP_Headers" ItemSource="{Binding Headers}" />
         </ui:SimpleStackPanel>
         <ui:SimpleStackPanel Spacing="5" Visibility="{Binding GroupEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
             <ui:ToggleSwitch
                 IsOn="{Binding IsGroupBlackList}"
                 OffContent="群组使用黑名单"
                 OnContent="群组使用黑名单" />
-            <local:EditableListBox_Int CanDuplicate="False" ItemSource="{Binding Groups}" />
+            <local:EditableListBox_Int
+                x:Name="Groups"
+                CanDuplicate="False"
+                ItemSource="{Binding Groups}" />
         </ui:SimpleStackPanel>
         <ui:SimpleStackPanel Spacing="5" Visibility="{Binding PersonEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
             <ui:ToggleSwitch
                 IsOn="{Binding IsPersonBlackList}"
                 OffContent="私聊使用黑名单"
                 OnContent="私聊使用黑名单" />
-            <local:EditableListBox_Int CanDuplicate="False" ItemSource="{Binding Persons}" />
+            <local:EditableListBox_Int
+                x:Name="Persons"
+                CanDuplicate="False"
+                ItemSource="{Binding Persons}" />
         </ui:SimpleStackPanel>
     </ui:SimpleStackPanel>
 </UserControl>

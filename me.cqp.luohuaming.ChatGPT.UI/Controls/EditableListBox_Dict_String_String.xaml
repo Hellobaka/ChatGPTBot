@@ -19,7 +19,7 @@
             x:Name="EditableListBox"
             MinHeight="70"
             Margin="0,5,0,0"
-            ItemsSource="{Binding ItemDisplaySource}"
+            ItemsSource="{Binding ItemDisplaySource, RelativeSource={RelativeSource AncestorType=UserControl}}"
             SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -45,6 +45,7 @@
                 Grid.Column="0"
                 Width="50"
                 Margin="0,0,10,0"
+                VerticalAlignment="Center"
                 Click="EditableListBoxRemoveButton_Click">
                 删除
             </Button>
@@ -55,6 +56,7 @@
             <TextBox
                 x:Name="EditableListBoxKey"
                 Grid.Column="2"
+                VerticalAlignment="Center"
                 PreviewKeyDown="EditableListBoxAdd_PreviewKeyDown"
                 Text="{Binding AddItemKeyInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             <TextBlock
@@ -72,6 +74,7 @@
                 Grid.Column="5"
                 Width="50"
                 Margin="10,0,0,0"
+                VerticalAlignment="Center"
                 Click="EditableListBoxAddButton_Click">
                 添加
             </Button>
