@@ -121,6 +121,23 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Converter
         }
     }
 
+    public class MCPColumnWidthConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double f)
+            {
+                return (f * 0.7) - 20;
+            }
+            return double.MaxValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class InsertImageTaskListMultiConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

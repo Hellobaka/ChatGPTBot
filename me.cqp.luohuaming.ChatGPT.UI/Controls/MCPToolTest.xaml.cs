@@ -50,14 +50,20 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
             set { DataContext = value; }
         }
 
-        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        private async void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            //ViewModel = new MCPToolTestViewModel(MCPToolModel);
+            await RemoveSelectEffect();
         }
 
-        private void SendRequestButton_Click(object sender, RoutedEventArgs e)
+        private async Task RemoveSelectEffect()
         {
+            await Task.Delay(100);
+            //MainWindow.SetElementNoSelectEffect(AppIdDisplayer);
+        }
 
+        private async void SendRequestButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.SendRequest();
         }
     }
 }

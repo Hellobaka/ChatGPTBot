@@ -10,7 +10,7 @@
     xmlns:ui="http://schemas.modernwpf.com/2019"
     xmlns:viewmodel="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.ViewModel"
     d:DataContext="{d:DesignInstance Type=viewmodel:MCPClientEditViewModel}"
-    d:DesignHeight="850"
+    d:DesignHeight="1050"
     d:DesignWidth="800"
     Loaded="UserControl_Loaded"
     mc:Ignorable="d">
@@ -23,6 +23,7 @@
     </UserControl.Resources>
 
     <ui:SimpleStackPanel Spacing="5">
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="连接设置" />
         <TextBox ui:ControlHelper.Header="名称" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <CheckBox Content="启用" IsChecked="{Binding Enabled, Mode=TwoWay}" />
         <CheckBox Content="群组聊天可用" IsChecked="{Binding GroupEnabled, Mode=TwoWay}" />
@@ -59,7 +60,22 @@
             <TextBlock FontSize="14" Text="请求 Headers" />
             <local:EditableListBox_Dict_String_String x:Name="HTTP_Headers" ItemSource="{Binding Headers}" />
         </ui:SimpleStackPanel>
+        <StackPanel>
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="工具名称转换器" />
+            <TextBlock
+                FontSize="14"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="当提供的工具名称不符合服务商要求时，添加映射" />
+            <Button
+                x:Name="AutoCreateToolNameConverterButton"
+                Margin="0,5"
+                Click="AutoCreateToolNameConverterButton_Click"
+                Content="从当前工具列表自动创建"
+                Style="{StaticResource AccentButtonStyle}" />
+            <local:EditableListBox_Dict_String_String x:Name="ToolNameConverterEditor" ItemSource="{Binding ToolNameConverter}" />
+        </StackPanel>
         <ui:SimpleStackPanel Spacing="5" Visibility="{Binding GroupEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="群可见性设置" />
             <ui:ToggleSwitch
                 IsOn="{Binding IsGroupBlackList}"
                 OffContent="群组使用黑名单"
@@ -70,6 +86,7 @@
                 ItemSource="{Binding Groups}" />
         </ui:SimpleStackPanel>
         <ui:SimpleStackPanel Spacing="5" Visibility="{Binding PersonEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="私聊可见性设置" />
             <ui:ToggleSwitch
                 IsOn="{Binding IsPersonBlackList}"
                 OffContent="私聊使用黑名单"

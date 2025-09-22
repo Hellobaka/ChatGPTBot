@@ -31,6 +31,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public long[] Persons { get; set; } = [];
 
+        public Dictionary<string, string> ToolNameConverters { get; set; } = [];
+
         public virtual IMcpClient Create()
         {
             throw new NotImplementedException();

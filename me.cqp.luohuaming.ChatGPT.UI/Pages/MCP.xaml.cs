@@ -101,6 +101,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 Rebuilt = false;
                 HasChanged = true;
                 MainWindow.ShowInfo("保存成功");
+                ViewModel.LoadMCPClients();
             }
             else
             {

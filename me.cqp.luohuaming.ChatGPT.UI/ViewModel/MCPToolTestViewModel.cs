@@ -1,11 +1,15 @@
-﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.UI.Model;
 using OpenAI.Responses;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 {
@@ -33,13 +37,79 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public string Response { get; set; }
 
+        public bool Requesting { get; set; }
+
         private MCPToolModel MCPToolModel { get; set; }
+
+        private static JsonSerializerOptions JsonSerializerOptions { get; set; } = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public async Task SendRequest()
+        {
+            if (MCPToolModel == null || MCPToolModel.Tool == null)
+            {
+                return;
+            }
+            Requesting = true;
+            try
+            {
+                Dictionary<string, object> argument = [];
+                foreach (var item in Arguments)
+                {
+                    var value = TryParseArgument(item, false);
+                    if (value == null)
+                    {
+                        if (!string.IsNullOrEmpty(item.DefaultValue))
+                        {
+                            value = TryParseArgument(item, true);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    argument.Add(item.ArgumentName, value);
+                }
+                var response = await MCPToolModel.Tool.InvokeAsync(new Microsoft.Extensions.AI.AIFunctionArguments(argument));
+                if (response is JsonElement json)
+                {
+                    Response = JsonSerializer.Serialize(json, JsonSerializerOptions);
+                }
+                else
+                {
+                    Response = response.ToString();
+                }
+            }
+            catch (Exception e)
+            {
+                MainWindow.ShowError($"发送 Tool 测试请求时发生错误：{e}");
+            }
+            finally
+            {
+                Requesting = false;
+            }
+        }
+
+        private object? TryParseArgument(ToolArgumentItem item, bool isDefault)
+        {
+            return item.ArgumentType.ToLower() switch
+            {
+                "string" => isDefault ? item.DefaultValue : item.Value,
+                "integer" => int.TryParse(isDefault ? item.DefaultValue : item.Value, out var num) ? num : (int?)null,
+                "float" or "double" => double.TryParse(isDefault ? item.DefaultValue : item.Value, out var num) ? num : (double?)null,
+                "boolean" => bool.TryParse(isDefault ? item.DefaultValue : item.Value, out var b) ? b : (bool?)null,
+                _ => null,
+            };
         }
 
         private void CreateArguments()
@@ -112,18 +182,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                 };
                 JsonNode defaultNode = item.ArgumentType.ToLower() switch
                 {
-                    "string" => item.Value != null ? JsonValue.Create(item.Value) : null,
-                    "integer" => long.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
-                    "float" or "double" => double.TryParse(item.Value, out var num) ? JsonValue.Create(num) : null,
-                    "boolean" => bool.TryParse(item.Value, out var b) ? JsonValue.Create(b) : null,
+                    "string" => item.DefaultValue != null ? JsonValue.Create(item.Value) : null,
+                    "integer" => long.TryParse(item.DefaultValue, out var num) ? JsonValue.Create(num) : 0,
+                    "float" or "double" => double.TryParse(item.DefaultValue, out var num) ? JsonValue.Create(num) : 0,
+                    "boolean" => bool.TryParse(item.DefaultValue, out var b) ? JsonValue.Create(b) : false,
                     _ => null,
                 };
                 if (string.IsNullOrEmpty(item.Value))
                 {
-                    if (!item.Required)
-                    {
-                        continue;
-                    }
                     if (!string.IsNullOrEmpty(item.DefaultValue))
                     {
                         arguments.Add(item.ArgumentName, defaultNode);
@@ -135,7 +201,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                 }
             }
 
-            ParsedRequest = CreatedRequest.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
+            ParsedRequest = CreatedRequest.ToJsonString(JsonSerializerOptions);
         }
     }
 }

@@ -27,6 +27,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
         public bool Rebuilding { get; set; } = true;
 
         public bool CreateMode { get; set; }
+
         public MCPClientModel CreatedMCPItem { get; internal set; }
 
         public void LoadMCPClients()

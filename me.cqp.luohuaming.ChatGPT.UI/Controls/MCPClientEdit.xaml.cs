@@ -1,8 +1,5 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
-using me.cqp.luohuaming.ChatGPT.UI.Model;
+﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
 using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
-using System;
-using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -59,7 +56,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            // ViewModel = new MCPClientEditViewModel(MCPClientModel);
+        }
+
+        private void AutoCreateToolNameConverterButton_Click(object sender, RoutedEventArgs e)
+        {
+            var tools = MCPClientModel.Tools;
+            ViewModel.ToolNameConverter = new();
+            for (int i = 0; i < tools.Count; i++)
+            {
+                ViewModel.ToolNameConverter.Add(tools[i].Name, $"tool_{i + 1}");
+            }
+            ToolNameConverterEditor.ItemSource = ViewModel.ToolNameConverter;
         }
     }
 }

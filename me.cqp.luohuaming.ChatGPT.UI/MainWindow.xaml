@@ -25,11 +25,12 @@
         </ResourceDictionary>
     </Window.Resources>
     <ui:NavigationView
+        x:Name="PageSelector"
         IsBackButtonVisible="Collapsed"
         IsBackEnabled="False"
         IsPaneOpen="False"
         IsSettingsVisible="False"
-        PaneDisplayMode="Top" x:Name="PageSelector"
+        PaneDisplayMode="Top"
         SelectionChanged="NavigationView_SelectionChanged"
         SelectionFollowsFocus="Enabled">
         <ui:NavigationView.MenuItems>

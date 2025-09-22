@@ -17,8 +17,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
     {
         public static List<MCPClientBase> Clients { get; set; } = [];
 
-        public static Dictionary<string, string> ToolNameConverters { get; set; } = [];
-
         public static Dictionary<MCPClientBase, AIFunction[]> MCPTools { get; set; } = [];
 
         private Relationship? RelationshipContext { get; set; }
@@ -40,7 +38,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     if (mcp != null)
                     {
                         Clients = mcp[nameof(Clients)].ToObject<List<MCPClientBase>>(new JsonSerializer() { TypeNameHandling = TypeNameHandling.Auto});
-                        ToolNameConverters = mcp[nameof(ToolNameConverters)].ToObject<Dictionary<string, string>>();
                     }
                 }
             }
@@ -58,7 +55,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 File.WriteAllText(path, JsonConvert.SerializeObject(new
                 {
                     Clients,
-                    ToolNameConverters
                 }, JsonSerializerSettings));
             }
             catch (Exception e)
@@ -86,7 +82,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     var functions = mcpClient.ListToolsAsync().Result;
                     foreach (var item in functions)
                     {
-                        if (ToolNameConverters.TryGetValue(item.Name, out var newName))
+                        if (client.ToolNameConverters.TryGetValue(item.Name, out var newName))
                         {
                             var renamedTool = item.WithName(newName);
                             renamedTool.BeforeToolCalled += Tool_BeforeToolCalled;

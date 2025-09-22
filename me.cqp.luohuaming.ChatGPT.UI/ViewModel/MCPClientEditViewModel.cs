@@ -30,6 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
             Groups = new ObservableCollection<long>(clientModel.MCPClientBase.Groups);
             Persons = new ObservableCollection<long>(clientModel.MCPClientBase.Persons);
             ToolType = clientModel.MCPClientBase.ToolType.ToString();
+            ToolNameConverter = clientModel.MCPClientBase.ToolNameConverters;
             if (MCPClientModel.MCPClientBase is MCPStdioClient stdioClient)
             {
                 Command = stdioClient.Command;
@@ -76,6 +77,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public string Endpoint { get; set; } = string.Empty;
 
+        public Dictionary<string, string> ToolNameConverter { get; set; } = [];
+
         public Dictionary<string, string> Headers { get; set; } = [];
 
         public int ConnectionTimeout { get; set; }
@@ -112,7 +115,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         Command = Command,
                         Arguments = Arguments.ToList(),
                         EnvironmentVariables = new Dictionary<string, string>(EnvironmentVariables),
-                        WorkingDirectory = WorkingDirectory
+                        WorkingDirectory = WorkingDirectory,
+                        ToolNameConverters = ToolNameConverter,
                     },
                     "Http" => new MCPHttpClient
                     {
@@ -125,6 +129,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         IsPersonBlackList = IsPersonBlackList,
                         Persons = Persons.ToArray(),
                         Endpoint = Endpoint,
+                        ToolNameConverters = ToolNameConverter,
                         Headers = new Dictionary<string, string>(Headers),
                         ConnectionTimeout = TimeSpan.FromSeconds(ConnectionTimeout),
                         TransportType = Enum.TryParse<HttpTransportMode>(TransportType, out var transportType) ? transportType : HttpTransportMode.AutoDetect

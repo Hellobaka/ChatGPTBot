@@ -18,7 +18,23 @@
         <converter:BoolToVisibilityRevertConverter x:Key="BoolToVisibilityRevertConverter" />
         <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
         <converter:InsertImageTaskListMultiConverter x:Key="InsertImageTaskListMultiConverter" />
-        <converter:InsertImageResultConverter x:Key="InsertImageResultConverter" />
+        <Style
+            x:Key="SelectableTextBlock"
+            BasedOn="{StaticResource {x:Type TextBox}}"
+            TargetType="TextBox">
+            <Style.Resources>
+                <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBorderBrush" Color="Transparent" />
+                <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="Transparent" />
+            </Style.Resources>
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -31,13 +47,10 @@
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <ui:SimpleStackPanel
-            Grid.ColumnSpan="2"
-            Margin="0,0,0,10"
-            Spacing="5">
-            <TextBlock Text="{Binding ToolName, StringFormat=当前工具：{0}}" />
-            <TextBlock Text="{Binding ToolDescription, StringFormat=描述：{0}}" />
-        </ui:SimpleStackPanel>
+        <StackPanel Grid.ColumnSpan="2" Margin="0,0,0,10">
+            <TextBox Style="{StaticResource SelectableTextBlock}" Text="{Binding ToolName, StringFormat=当前工具：{0}}" />
+            <TextBox Style="{StaticResource SelectableTextBlock}" Text="{Binding ToolDescription, StringFormat=描述：{0}}" />
+        </StackPanel>
         <GridSplitter
             Grid.Row="1"
             Width="3"
@@ -46,7 +59,7 @@
             Panel.ZIndex="99"
             Cursor="SizeWE"
             ResizeDirection="Columns" />
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" IsEnabled="{Binding Requesting, Converter={StaticResource BoolRevertConverter}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
                 <RowDefinition />
@@ -72,7 +85,7 @@
                                     Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock Text="{Binding ArgumentType}" />
                             </ui:SimpleStackPanel>
-                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Description}" />
+                            <TextBox Style="{StaticResource SelectableTextBlock}" Text="{Binding Description}" />
                             <TextBox ui:ControlHelper.PlaceholderText="{Binding DefaultValue}" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </ui:SimpleStackPanel>
                     </DataTemplate>
@@ -93,19 +106,15 @@
                 Grid.Row="1"
                 Margin="5,0,0,0"
                 IsReadOnly="True"
-                Text="{Binding ParsedRequest}" />
+                Text="{Binding ParsedRequest}"
+                TextWrapping="Wrap"
+                VerticalScrollBarVisibility="Auto" />
         </Grid>
         <Grid Grid.Row="2" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
                 <RowDefinition />
             </Grid.RowDefinitions>
-            <GridSplitter
-                Height="3"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Top"
-                Panel.ZIndex="99"
-                Cursor="SizeNS" />
             <TextBlock
                 Grid.Row="0"
                 Margin="0,5"
@@ -115,18 +124,30 @@
                 Grid.Row="1"
                 Margin="0,5"
                 IsReadOnly="True"
-                Text="{Binding Response}" />
+                Text="{Binding Response}"
+                TextWrapping="Wrap" />
         </Grid>
 
         <Button
             x:Name="SendRequestButton"
             Grid.Row="3"
             Grid.ColumnSpan="3"
-            Margin="5"
+            Margin="0,5"
             HorizontalAlignment="Stretch"
             Click="SendRequestButton_Click"
+            IsEnabled="{Binding Requesting, Converter={StaticResource BoolRevertConverter}}"
             Style="{StaticResource AccentButtonStyle}">
-            请求
+            <StackPanel Orientation="Horizontal">
+                <ui:ProgressRing IsActive="True" Visibility="{Binding Requesting, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ui:ProgressRing.Foreground>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.HighlightTextColorKey}}" />
+                    </ui:ProgressRing.Foreground>
+                </ui:ProgressRing>
+                <TextBlock
+                    Margin="10,0"
+                    VerticalAlignment="Center"
+                    Text="请求" />
+            </StackPanel>
         </Button>
     </Grid>
 </UserControl>
