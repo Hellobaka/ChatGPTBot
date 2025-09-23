@@ -133,10 +133,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             MainSave.CQLog?.Info("表情包推荐", $"转换后的情感：{emotion}");
             var embedding = API.Embedding.GetEmbedding(emotion);
 
-            return GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
+            return GetRecommendEmoji(embedding, AppConfig.RecommendEmojiCount);
         }
 
-        public static List<(Picture emoji, double similarity)> GetRecommandEmoji(float[] embedding, int count = 3)
+        public static List<(Picture emoji, double similarity)> GetRecommendEmoji(float[] embedding, int count = 3)
         {
             if (embedding.Length == 0)
             {
