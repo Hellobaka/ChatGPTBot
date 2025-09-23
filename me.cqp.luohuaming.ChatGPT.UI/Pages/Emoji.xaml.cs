@@ -231,7 +231,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     if (embeddingFirst)
                     {
                         var embedding = Embedding.GetEmbedding(query);
-                        pictures = Picture.GetRecommandEmoji(embedding, AppConfig.RecommendEmojiCount);
+                        pictures = Picture.GetRecommendEmoji(embedding, AppConfig.RecommendEmojiCount);
                     }
                     else
                     {
