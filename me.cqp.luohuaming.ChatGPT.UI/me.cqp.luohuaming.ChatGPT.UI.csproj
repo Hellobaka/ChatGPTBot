@@ -84,7 +84,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ChatBubble.cs" />
     <Compile Include="Controls\EditableListBox_Dict_String_String.xaml.cs">
       <DependentUpon>EditableListBox_Dict_String_String.xaml</DependentUpon>
     </Compile>
