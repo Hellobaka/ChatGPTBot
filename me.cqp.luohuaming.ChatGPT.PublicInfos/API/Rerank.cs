@@ -24,7 +24,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             try
             {
-                var j = JObject.Parse(json);
                 (string document, float score)[] results = [];
                 long tokenUsage = 0;
 
@@ -37,6 +36,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         Query = text,
                         Docs = documents
                     }.ToJson(), TencentAPIAction, AppConfig.RerankTimeout);
+                    var j = JObject.Parse(json);
                     for (int i = 0; i < documents.Length; i++)
                     {
                         var document = documents[i];
@@ -63,6 +63,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                 top_n = topn,
                             }
                         }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
+                        var j = JObject.Parse(json);
                         arr = j["output"]["results"];
                         tokenUsage = j["usage"]["total_tokens"].ToObject<long>();
                     }
@@ -75,6 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             documents,
                             top_n = topn,
                         }.ToJson(), api.Key.APIKey, AppConfig.RerankTimeout);
+                        var j = JObject.Parse(json);
                         arr = j["results"];
                         tokenUsage = j["tokens"]["input_tokens"].ToObject<long>()
                             + j["tokens"]["output_tokens"].ToObject<long>();
