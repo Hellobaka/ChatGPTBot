@@ -30,7 +30,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     int index = ViewModel.APIKeys.IndexOf(apiKey);
                     if (index >= 0)
                     {
-                        ViewModel.APIKeys[index] = keyEdit.ApiKey;
+                        ViewModel.APIKeys.RemoveAt(index);
+                        ViewModel.APIKeys.Insert(index, keyEdit.ApiKey);
                         keyEdit.ApiKey.Save();
                     }
                 }

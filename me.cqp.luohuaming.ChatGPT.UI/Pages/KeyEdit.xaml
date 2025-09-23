@@ -88,14 +88,15 @@
                 Name="TestButton"
                 Margin="0,5"
                 HorizontalAlignment="Stretch"
-                Click="TestButton_Click">
+                Click="TestButton_Click"
+                ToolTip="调用此Key的第一个模型并发送一次聊天请求。Embedding与Rerank模型请不要防止在第一位">
                 <StackPanel Orientation="Horizontal">
                     <ui:ProgressRing
                         Name="TestingStatus"
                         Margin="0,0,5,0"
                         IsActive="True"
                         Visibility="Collapsed" />
-                    <TextBlock>测试</TextBlock>
+                    <TextBlock>测试 Key</TextBlock>
                 </StackPanel>
             </Button>
         </Grid>
