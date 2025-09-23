@@ -9,7 +9,6 @@ using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
-    // TODO: 改为ToolCall更新，抛弃重新请求
     public class MoodManager
     {
         public double Valence { get; set; }
@@ -21,16 +20,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public static MoodManager Instance { get; private set; }
 
         public event Action MoodChanged;
-
-        public const string Prompt = @"请根据以下对话内容，完成以下任务：
-1. 判断回复者的立场是'supportive'（支持）、'opposed'（反对）还是'neutrality'（中立）。
-2. 从'happy,angry,sad,surprised,disgusted,fearful,neutral'中选出最匹配的1个情感标签。
-3. 按照'立场-情绪'的格式输出结果，例如：'supportive-happy'。
-被回复的内容：
-{0}
-回复内容：
-{1}
-请分析回复者的立场和情感倾向，只输出结果，无需任何解释性文本，只能从我给出的几个选项中选择，不可自己使用新的选项。";
 
         public enum Mood
         {
@@ -119,6 +108,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
 
             CommonHelper.DebugLog("更新心情", $"输入获取到的心情为：{mood}");
+            if (!MoodValues.TryGetValue(mood, out var moodValue))
+            {
+                CommonHelper.DebugLog("情绪转换", $"无效的情绪转换：{mood}");
+                return;
+            }
             var (valence, arousal) = MoodValues[mood];
             Valence = Math.Max(-1, Math.Min(1, Valence + valence));
             Arousal = Math.Max(0, Math.Min(1, Arousal + arousal));
