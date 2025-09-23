@@ -28,6 +28,16 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">启用 MCP:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="EnableMCP"
+                                Width="45"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                            <TextBlock VerticalAlignment="Center">部分服务商在开启MCP后无法使用思考模型；修改配置后请重载插件</TextBlock>
+                        </StackPanel>
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">最大Token:</TextBlock>
                         <TextBox x:Name="ChatMaxTokens" Margin="0,5,0,0" />
                         <TextBlock Margin="0,5,0,0" VerticalAlignment="Center">Temperature:</TextBlock>
@@ -363,31 +373,6 @@
                                 OffContent=""
                                 OnContent="" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">使用原生视觉（不使用图片描述器）:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="EnableRawImageInput"
-                                Margin="10,0,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">限制原生视觉至触发时才启用（注意 Token 消耗）:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="EnableRawImageSingleInput"
-                                Margin="10,0,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center">允许只发送表情包（不发送文本）:</TextBlock>
-                            <ui:ToggleSwitch
-                                x:Name="EnableEmojiSingleSend"
-                                Margin="10,0,0,0"
-                                OffContent=""
-                                OnContent="" />
-                        </StackPanel>
-
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
