@@ -51,11 +51,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
         /// <returns></returns>
         public static MojiCityId[] GetCityIdByName(string cityName, int count = 5)
         {
-            MainSave.CQLog.Info("墨迹天气转换", $"参数: {cityName}");
+            MainSave.CQLog?.Info("墨迹天气转换", $"参数: {cityName}");
             if (CityList.Count == 0)
             {
                 CityList = FromCsv(File.ReadAllText(Path.Combine(MainSave.AppDirectory, "moji.csv")));
-                MainSave.CQLog.InfoSuccess("加载墨迹天气数据", $"加载了 {CityList.Count} 城市");
+                MainSave.CQLog?.InfoSuccess("加载墨迹天气数据", $"加载了 {CityList.Count} 城市");
             }
             var city = CityList.Where(c => c.Name.Equals(cityName, StringComparison.OrdinalIgnoreCase)
                 || c.NameEn.Equals(cityName, StringComparison.OrdinalIgnoreCase)
@@ -75,7 +75,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
                 || c.CountryName.Contains(cityName)
                 || c.CountryNameEn.Contains(cityName)
             )).Take(count * 2).ToArray();
-            MainSave.CQLog.Info("墨迹天气转换", $"{cityName} => {city?.Count()} 个");
+            MainSave.CQLog?.Info("墨迹天气转换", $"{cityName} => {city?.Count()} 个");
             return city;
         }
 
