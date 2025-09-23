@@ -27,14 +27,30 @@
                 <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
                 <SolidColorBrush x:Key="TextControlBorderBrush" Color="Transparent" />
                 <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="Transparent" />
+                <Style x:Key="TextControlContentHostStyle" TargetType="ScrollViewer">
+                    <Setter Property="Margin" Value="0" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
             </Style.Resources>
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="IsReadOnly" Value="True" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="FontFamily" Value="{DynamicResource ContentControlThemeFontFamily}" />
+            <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextControlForegroundDisabled}" />
+                </Trigger>
+            </Style.Triggers>
         </Style>
-
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -57,6 +73,7 @@
             HorizontalAlignment="Right"
             VerticalContentAlignment="Stretch"
             Panel.ZIndex="99"
+            Background="Transparent"
             Cursor="SizeWE"
             ResizeDirection="Columns" />
         <Grid Grid.Row="1" IsEnabled="{Binding Requesting, Converter={StaticResource BoolRevertConverter}}">
@@ -75,16 +92,17 @@
                 ItemsSource="{Binding Arguments}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ui:SimpleStackPanel Margin="0,0,0,10" Spacing="5">
-                            <ui:SimpleStackPanel Orientation="Horizontal" Spacing="5">
+                        <ui:SimpleStackPanel Margin="0,0,0,10" Spacing="1">
+                            <StackPanel Orientation="Horizontal">
                                 <TextBlock Style="{StaticResource BaseTextBlockStyle}" Text="{Binding ArgumentName}" />
                                 <TextBlock
+                                    Margin="3,0,0,0"
                                     FontWeight="Bold"
                                     Foreground="Red"
                                     Text="*"
                                     Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}" />
-                                <TextBlock Text="{Binding ArgumentType}" />
-                            </ui:SimpleStackPanel>
+                                <TextBlock Margin="5,0" Text="{Binding ArgumentType}" />
+                            </StackPanel>
                             <TextBox Style="{StaticResource SelectableTextBlock}" Text="{Binding Description}" />
                             <TextBox ui:ControlHelper.PlaceholderText="{Binding DefaultValue}" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </ui:SimpleStackPanel>

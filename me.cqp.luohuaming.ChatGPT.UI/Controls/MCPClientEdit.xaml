@@ -12,6 +12,7 @@
     d:DataContext="{d:DesignInstance Type=viewmodel:MCPClientEditViewModel}"
     d:DesignHeight="1050"
     d:DesignWidth="800"
+    IsEnabled="{Binding IsReadOnly, Converter={StaticResource BoolRevertConverter}}"
     Loaded="UserControl_Loaded"
     mc:Ignorable="d">
     <UserControl.Resources>
@@ -65,7 +66,7 @@
             <TextBlock
                 FontSize="14"
                 Style="{StaticResource CaptionTextBlockStyle}"
-                Text="当提供的工具名称不符合服务商要求时，添加映射" />
+                Text="当提供的工具名称不符合服务商要求时，可添加映射修改名称" />
             <Button
                 x:Name="AutoCreateToolNameConverterButton"
                 Margin="0,5"

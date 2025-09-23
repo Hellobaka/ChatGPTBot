@@ -92,6 +92,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var result = MCPClientEditControl.GetResult();
+            if (result == null)
+            {
+                return;
+            }
             var index = ViewModel.MCPClients.IndexOf(ViewModel.SelectedMCPItem as MCPClientModel);
             if (index >= 0)
             {
@@ -118,6 +122,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
             if (ViewModel.SelectedMCPItem != null && ViewModel.SelectedMCPItem is MCPClientModel clientModel
+                && !clientModel.MCPClientBase.IsReadOnly
                 && MainWindow.ShowConfirm($"确认要删除客户端 {clientModel.Name} 吗？"))
             {
                 MCPClientManager.Clients.Remove(clientModel.MCPClientBase);

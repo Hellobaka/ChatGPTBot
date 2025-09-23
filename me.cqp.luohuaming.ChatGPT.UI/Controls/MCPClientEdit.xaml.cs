@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
 using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -40,6 +41,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
 
         public MCPClientModel GetResult()
         {
+            if (ViewModel.IsReadOnly)
+            {
+                MainWindow.ShowInfo("内置工具无法修改保存");
+                return null;
+            }
             return ViewModel.Build();
         }
 
@@ -61,12 +67,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         private void AutoCreateToolNameConverterButton_Click(object sender, RoutedEventArgs e)
         {
             var tools = MCPClientModel.Tools;
-            ViewModel.ToolNameConverter = new();
+            var converters = new Dictionary<string, string>();
             for (int i = 0; i < tools.Count; i++)
             {
-                ViewModel.ToolNameConverter.Add(tools[i].Name, $"tool_{i + 1}");
+                converters.Add(tools[i].Name, $"tool_{i + 1}");
             }
-            ToolNameConverterEditor.ItemSource = ViewModel.ToolNameConverter;
+            ViewModel.ToolNameConverter = converters;
+            //ToolNameConverterEditor.ItemSource = ViewModel.ToolNameConverter;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using ModelContextProtocol.Client;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -16,6 +17,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public virtual MCPClientType ToolType { get; set; } = MCPClientType.STDIO;
 
         public bool Enabled { get; set; }
+
+        [JsonIgnore]
+        public bool IsReadOnly { get; set; }
 
         public string Name { get; set; } = string.Empty;
 

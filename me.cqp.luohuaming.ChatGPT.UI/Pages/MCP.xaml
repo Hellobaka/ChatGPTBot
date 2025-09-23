@@ -34,7 +34,7 @@
             HorizontalAlignment="Right"
             VerticalAlignment="Stretch"
             Panel.ZIndex="99"
-            BorderBrush="LightGray"
+            BorderBrush="Transparent"
             BorderThickness="1"
             Cursor="SizeWE" />
         <Grid Background="{StaticResource SystemControlForegroundChromeMediumBrush}">

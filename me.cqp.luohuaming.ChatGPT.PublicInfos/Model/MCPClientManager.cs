@@ -122,7 +122,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             RelationshipContext = relationship;
         }
 
-        private AIFunction[] CreateCustomTools()
+        public AIFunction[] CreateCustomTools()
         {
             List<AIFunction> custom = [];
             custom.Add(AIFunctionFactory.Create(MojiCityIdConverter.GetCityIdByName, description: "用于墨迹天气接口中，城市名称转换为 cityId。"));

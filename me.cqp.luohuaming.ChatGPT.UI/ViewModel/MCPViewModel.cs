@@ -1,6 +1,7 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.UI.Model;
 using Microsoft.Extensions.AI;
+using ModelContextProtocol.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -8,6 +9,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Media.Protection.PlayReady;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 {
@@ -33,6 +35,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
         public void LoadMCPClients()
         {
             MCPClients.Clear();
+            MCPClients.Add(MCPClientModel.BuildFromMCPClientBase(new MCPClientBase { Name = "内置工具", IsReadOnly = true },
+                                                                 new MCPClientManager(0, 0).CreateCustomTools()));
+            
             foreach (var client in MCPClientManager.Clients)
             {
                 if (!MCPClientManager.MCPTools.TryGetValue(client, out var tools))

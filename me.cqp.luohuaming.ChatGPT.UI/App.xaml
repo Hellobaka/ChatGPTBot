@@ -2,6 +2,7 @@
     x:Class="me.cqp.luohuaming.ChatGPT.UI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Converter"
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI"
     xmlns:ui="http://schemas.modernwpf.com/2019"
     StartupUri="MainWindow.xaml">
@@ -21,6 +22,7 @@
                     <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#F1707B" />
                 </Style.Resources>
             </Style>
+            <converter:BoolRevertConverter x:Key="BoolRevertConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

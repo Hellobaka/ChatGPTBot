@@ -23,6 +23,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
             Name = clientModel.MCPClientBase.Name;
             Enabled = clientModel.MCPClientBase.Enabled;
+            IsReadOnly = clientModel.MCPClientBase.IsReadOnly;
             GroupEnabled = clientModel.MCPClientBase.GroupEnabled;
             PersonEnabled = clientModel.MCPClientBase.PersonEnabled;
             IsGroupBlackList = clientModel.MCPClientBase.IsGroupBlackList;
@@ -50,6 +51,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
         public string Name { get; set; }
 
         public bool Enabled { get; set; }
+
+        public bool IsReadOnly { get; set; }
 
         public bool GroupEnabled { get; set; }
 

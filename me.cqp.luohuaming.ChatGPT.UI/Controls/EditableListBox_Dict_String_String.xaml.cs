@@ -74,13 +74,22 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         {
             if (!string.IsNullOrEmpty(AddItemKeyInput) && !string.IsNullOrEmpty(AddItemValueInput))
             {
-                if (ItemSource.ContainsKey(AddItemKeyInput))
+                bool hasDuplicate = ItemSource.ContainsKey(AddItemKeyInput);
+                if (hasDuplicate && !MainWindow.ShowConfirm("已存在相同键，是否替换？"))
                 {
-                    MainWindow.ShowError("已存在相同键");
                     return;
                 }
-                ItemSource.Add(AddItemKeyInput, AddItemValueInput);
-                ItemDisplaySource.Add(new(AddItemKeyInput, AddItemValueInput));
+                if (!hasDuplicate)
+                {
+                    ItemSource.Add(AddItemKeyInput, AddItemValueInput);
+                    ItemDisplaySource.Add(new(AddItemKeyInput, AddItemValueInput));
+                }
+                else
+                {
+                    var item = ItemDisplaySource.FirstOrDefault(x => x.Key == AddItemKeyInput);
+                    ItemSource[AddItemKeyInput] = AddItemValueInput;
+                    ItemDisplaySource[ItemDisplaySource.IndexOf(item)] = new(AddItemKeyInput, AddItemValueInput);
+                }
                 EditableListBoxKey.Clear();
                 EditableListBoxValue.Clear();
 
@@ -112,6 +121,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
                 }
             }
             OnPropertyChanged(nameof(ItemDisplaySource));
+        }
+
+        private void EditableListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (SelectedItem.Value == default || SelectedItem.Key == default)
+            {
+                return;
+            }
+            AddItemKeyInput = SelectedItem.Key;
+            AddItemValueInput = SelectedItem.Value;
         }
     }
 }
