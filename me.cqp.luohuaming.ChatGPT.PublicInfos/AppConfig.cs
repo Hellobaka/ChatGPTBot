@@ -64,9 +64,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int SplitterRandomDelayMax { get; set; }
 
-        public static bool EnableEmojiSend { get; set; }
+        /// <summary>
+        /// 允许被动发送表情包（概率）
+        /// </summary>
+        public static bool EnableEmojiPassiveSend { get; set; }
 
-        public static bool EnableEmojiSingleSend { get; set; }
+        /// <summary>
+        /// 允许通过特定模板发送表情包
+        /// </summary>
+        public static bool EnableEmojiActiveSend { get; set; }
 
         public static int EmojiSendProbability { get; set; }
 
@@ -171,7 +177,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             SplitterRegexRemovePunctuation = ConfigHelper.GetConfig("SplitterRegexRemovePunctuation", false);
             SplitterSimulateTypeSpeed = ConfigHelper.GetConfig("SplitterSimulateTypeSpeed", 100);
             EnableSplitterRandomDelay = ConfigHelper.GetConfig("EnableSplitterRandomDelay", true);
-            EnableEmojiSend = ConfigHelper.GetConfig("EnableEmojiSend", false);
+            EnableEmojiPassiveSend = ConfigHelper.GetConfig("EnableEmojiPassiveSend", false);
             SplitterRandomDelayMin = ConfigHelper.GetConfig("SplitterRandomDelayMin", 1000);
             SplitterRandomDelayMax = ConfigHelper.GetConfig("SplitterRandomDelayMax", 4500);
             SplitterMinLength = ConfigHelper.GetConfig("SplitterMinLength", 10);
@@ -210,7 +216,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             LogThinkBlock = ConfigHelper.GetConfig("LogThinkBlock", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
-            EnableEmojiSingleSend = ConfigHelper.GetConfig("EnableEmojiSingleSend", false);
+            EnableEmojiActiveSend = ConfigHelper.GetConfig("EnableEmojiActiveSend", false);
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
 
             ReloadAPIKey();

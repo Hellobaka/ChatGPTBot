@@ -16,6 +16,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private Regex LineSplitRegex { get; set; } = new Regex(@"(?<=[。？！?.!])");
 
+        private static Regex EmojiSplitRegex { get; set; } = new Regex(@"<@Emoji(.*?)>");
+
         public string[] Split()
         {
             CommonHelper.DebugLog("消息分行", $"开始进行消息分行：{Message}");
@@ -71,6 +73,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 MainSave.CQLog?.Info("消息分行", "进行拆分时，大模型返回结果错误");
                 return RegexSplit();
             }
+        }
+
+        public static (bool isEmoji, string content)[] SplitEmoji(string input)
+        {
+            (bool isEmoji, string content)[] values = [];
+            foreach(var item in input.SplitV2("<@Emoji(.*?)>"))
+            {
+                if (item.StartsWith("<@Emoji"))
+                {
+                    var emotion = EmojiSplitRegex.Match(item).Groups[1].Value;
+                    values = [.. values, (true, emotion)];
+                }
+                else
+                {
+                    values = [.. values, (false, item)];
+                }
+            }
+
+            return values;
         }
 
         private string[] RegexSplit()
