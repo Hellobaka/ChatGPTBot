@@ -34,7 +34,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 new(ChatRole.System, prompt),
                 new(ChatRole.User, Message)
-            }, Chat.Purpose.分段, jsonMode: true, timeout: AppConfig.SplitterTimeout);
+            }, Chat.Purpose.分段, jsonMode: false, timeout: AppConfig.SplitterTimeout);
             if (result != Chat.ErrorMessage)
             {
                 try
@@ -78,11 +78,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static (bool isEmoji, string content)[] SplitEmoji(string input)
         {
             (bool isEmoji, string content)[] values = [];
-            foreach(var item in input.SplitV2("<@Emoji(.*?)>"))
+            foreach(var item in input.SplitV2("<@Emoji.*?>"))
             {
                 if (item.StartsWith("<@Emoji"))
                 {
-                    var emotion = EmojiSplitRegex.Match(item).Groups[1].Value;
+                    var emotion = EmojiSplitRegex.Match(item).Groups[1].Value.Replace("{", "").Replace("}", "");
                     values = [.. values, (true, emotion)];
                 }
                 else

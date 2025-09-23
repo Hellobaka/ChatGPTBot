@@ -95,7 +95,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             [
                 new(ChatRole.System, prompt),
                 new(ChatRole.User, "请回复")
-            ], Chat.Purpose.日程获取, jsonMode: true, timeout: AppConfig.ChatTimeout);
+            ], Chat.Purpose.日程获取, jsonMode: false, timeout: AppConfig.ChatTimeout);
 
             if (json == Chat.ErrorMessage)
             {
