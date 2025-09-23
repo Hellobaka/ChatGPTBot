@@ -65,6 +65,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public static void Rebuild()
         {
+            if (!AppConfig.EnableMCP)
+            {
+                return;
+            }
             foreach (var item in MCPTools)
             {
                 foreach (McpClientTool tool in item.Value.Where(x => x is McpClientTool))
@@ -97,7 +101,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 catch (Exception e)
                 {
-                    MainSave.CQLog?.Error("加载MCP客户端", $"加载MCP客户端 {client.Name} 失败，错误信息：{e.Message}");
+                    MainSave.CQLog?.Error("加载MCP客户端", $"加载MCP客户端 {client.Name} 失败，错误信息：{e}");
                 }
             });
         }
@@ -172,7 +176,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 WriteIndented = true
             };
-            MainSave.CQLog?.Info($"调用工具：{tool.Name}，参数：{System.Text.Json.JsonSerializer.Serialize(arg, options)}");
+            MainSave.CQLog?.Info("调用 MCP 工具", $"调用工具：{tool.Name}，参数：{System.Text.Json.JsonSerializer.Serialize(arg, options)}");
         }
     }
 }

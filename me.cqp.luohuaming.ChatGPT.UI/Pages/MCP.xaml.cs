@@ -100,7 +100,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             if (index >= 0)
             {
                 ViewModel.MCPClients[index].MCPClientBase = result.MCPClientBase;
-                MCPClientManager.Clients = ViewModel.MCPClients.Select(x => x.MCPClientBase).ToList();
+                MCPClientManager.Clients = ViewModel.MCPClients
+                    .Where(x => x.MCPClientBase != null && !x.MCPClientBase.IsReadOnly)
+                    .Select(x => x.MCPClientBase).ToList();
                 MCPClientManager.Save();
                 Rebuilt = false;
                 HasChanged = true;

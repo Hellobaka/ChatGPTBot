@@ -144,6 +144,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool RecordNotExistSkipResponse { get; set; }
 
+        public static bool EnableMCP { get; set; }
+
         public static void Init()
         {
             ConfigHelper.DisableHotReload();
@@ -218,6 +220,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
             EnableEmojiActiveSend = ConfigHelper.GetConfig("EnableEmojiActiveSend", false);
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
+            EnableMCP = ConfigHelper.GetConfig("EnableMCP", true);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();

@@ -26,8 +26,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code
             {
                 MainSave.CQLog.Warning("加载配置文件", "内容格式不正确，无法加载");
             }
-            AppConfig.Init();
             SQLHelper.CreateDB();
+            AppConfig.Init();
             if (AppConfig.ChatAPIKeyId.Count == 0)
             {
                 MainSave.CQLog.Error("初始化", "关键 Chat 配置无效，插件无法使用");
@@ -92,11 +92,18 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     AppConfig.SplitterRegexFirst = true;
                 }
             }
-            MainSave.CQLog.Info("初始化", "加载 MCP 配置");
-            MCPClientManager.Load();
-            MCPClientManager.Rebuild();
-            MainSave.CQLog.Info("初始化", $"加载了 {MCPClientManager.Clients.Count} 个客户端，{MCPClientManager.MCPTools.Sum(x=>x.Value.Length)} 个工具");
-            
+            if (!AppConfig.EnableMCP)
+            {
+                MainSave.CQLog.Info("初始化", "MCP 已禁用");
+            }
+            else
+            {
+                MainSave.CQLog.Info("初始化", "加载 MCP 配置");
+                MCPClientManager.Load();
+                MCPClientManager.Rebuild();
+                MainSave.CQLog.Info("初始化", $"加载了 {MCPClientManager.Clients.Count} 个客户端，{MCPClientManager.MCPTools.Sum(x => x.Value.Length)} 个工具");
+            }
+
             _ = new MoodManager();
             _ = new SchedulerManager();
             Picture.InitCache();
