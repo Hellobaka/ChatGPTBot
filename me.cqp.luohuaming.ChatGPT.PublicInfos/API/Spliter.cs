@@ -18,6 +18,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static Regex EmojiSplitRegex { get; set; } = new Regex(@"<@Emoji(.*?)>");
 
+        private static string Prompt { get; set; } = "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要";
+
         public string[] Split()
         {
             CommonHelper.DebugLog("消息分行", $"开始进行消息分行：{Message}");
@@ -29,7 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 return RegexSplit();
             }
-            string prompt = AppConfig.SplitterPrompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
+            string prompt = Prompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
             string result = Chat.GetChatResult(AppConfig.SplitterApiKeyId, new List<ChatMessage>
             {
                 new(ChatRole.System, prompt),

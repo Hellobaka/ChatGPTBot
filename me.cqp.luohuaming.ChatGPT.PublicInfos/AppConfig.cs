@@ -48,8 +48,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableSplitter { get; set; }
 
-        public static string SplitterPrompt { get; set; }
-
         public static int SplitterMaxLines { get; set; } = 3;
 
         public static bool SplitterRegexFirst { get; set; }
@@ -173,7 +171,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
             EnableVision = ConfigHelper.GetConfig("EnableVision", true);
             EnableSplitter = ConfigHelper.GetConfig("EnableSplitter", false);
-            SplitterPrompt = ConfigHelper.GetConfig("SplitterPrompt", "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要");
             SplitterMaxLines = ConfigHelper.GetConfig("SplitterMaxLines", 3);
             SplitterRegexFirst = ConfigHelper.GetConfig("SplitterRegexFirst", false);
             SplitterRegexRemovePunctuation = ConfigHelper.GetConfig("SplitterRegexRemovePunctuation", false);
@@ -182,7 +179,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableEmojiPassiveSend = ConfigHelper.GetConfig("EnableEmojiPassiveSend", false);
             SplitterRandomDelayMin = ConfigHelper.GetConfig("SplitterRandomDelayMin", 1000);
             SplitterRandomDelayMax = ConfigHelper.GetConfig("SplitterRandomDelayMax", 4500);
-            SplitterMinLength = ConfigHelper.GetConfig("SplitterMinLength", 10);
+            SplitterMinLength = ConfigHelper.GetConfig("SplitterMinLength", 20);
             EmojiSendProbability = ConfigHelper.GetConfig("EmojiSendProbability", 10);
             ContextMaxLength = ConfigHelper.GetConfig("ContextMaxLength", 20);
 
