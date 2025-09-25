@@ -64,12 +64,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             using var db = SQLHelper.GetInstance();
             var services = db.Queryable<Usage>().Select(x => x.Endpoint).Distinct().ToList();
             var models = db.Queryable<Usage>().Select(x => x.ModelName).Distinct().ToList();
-            var puropses = db.Queryable<Usage>().Select(x => x.Purpose).Distinct().ToList();
+            var purposes = db.Queryable<Usage>().Select(x => x.Purpose).Distinct().ToList();
             services.RemoveAll(x => string.IsNullOrEmpty(x));
             models.RemoveAll(x => string.IsNullOrEmpty(x));
-            puropses.RemoveAll(x => string.IsNullOrEmpty(x));
+            purposes.RemoveAll(x => string.IsNullOrEmpty(x));
 
-            return (services.ToArray(), models.ToArray(), puropses.ToArray());
+            return (services.ToArray(), models.ToArray(), purposes.ToArray());
         }
     }
 }
