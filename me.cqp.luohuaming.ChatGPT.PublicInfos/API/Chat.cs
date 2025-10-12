@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -36,7 +37,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static IDistributedCache ChatCache { get; set; } = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
 
-        public static event Action<string, string> OnToolCall;
+        public static event Action<string, string>? OnToolCall;
 
         public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager? mcp = null, string? identity = null)
         {
@@ -63,7 +64,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             var client = c.AsIChatClient()
                             .AsBuilder()
                             .UseDistributedCache(ChatCache)
-                            .UseFunctionInvocation()
+                            .UseFunctionInvocation(configure: (client) =>
+                            {
+                                client.AllowConcurrentInvocation = true;
+                                client.IncludeDetailedErrors = true;
+                                client.FunctionInvoker = new Func<FunctionInvocationContext, System.Threading.CancellationToken, ValueTask<object?>>(async (context, token) =>
+                                {
+                                    return await LogToolCall(context, token);
+                                });
+                            })
                             .Build();
             var option = new ChatOptions
             {
@@ -159,6 +168,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     MainSave.CQLog.Info("发起对话", "思考内容：" + reasoning);
                 }
+
+                var pendingPictures = PictureContextManager.GetAndClearPictures(identity);
+                if (pendingPictures != null && pendingPictures.Count> 0)
+                {
+                    foreach (var hash in pendingPictures)
+                    {
+                        if (Picture.Cache.TryGetValue(hash, out var picture) && picture != null
+                            && File.Exists(picture.FilePath))
+                        {
+                            MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片 {hash}，路径 {picture.FilePath}");
+                            chatMessages.Add(new(ChatRole.User, [new DataContent(File.ReadAllBytes(picture.FilePath), "image/jpg")]));
+                        }
+                    }
+                    return GetChatResult(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity);
+                }
             }
             catch (Exception ex)
             {
@@ -166,6 +190,22 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 msg = ErrorMessage;
             }
             return msg;
+        }
+
+        private static async Task<object> LogToolCall(FunctionInvocationContext context, System.Threading.CancellationToken token)
+        {
+            MainSave.CQLog?.Info("FunctionInvocation", $"调用函数 {context.Function.Name}，参数 {JsonSerializer.Serialize(context.Arguments)}");
+            try
+            {
+                var result = await context.Function.InvokeAsync(context.Arguments, token);
+                MainSave.CQLog?.Info("FunctionInvocation", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(result)}");
+                return result;
+            }
+            catch (Exception e)
+            {
+                MainSave.CQLog?.Info("FunctionInvocation", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
+                return $"Exception when call tool {context.Function.Name}, {e}";
+            }
         }
 
         private static string GetReasoningContent(OpenAI.Chat.StreamingChatCompletionUpdate chatUpdate)

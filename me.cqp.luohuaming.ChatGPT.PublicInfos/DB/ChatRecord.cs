@@ -285,7 +285,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             // 已有描述
             if (picture != null && !string.IsNullOrEmpty(picture.Description))
             {
-                return $"[这是一张图片，这是它的描述：{picture.Description}]";
+                return $"[hash:{picture.Hash};这是一张图片，这是它的描述：{picture.Description}]";
             }
 
             // 生成描述
@@ -298,14 +298,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
 
             Picture.InsertImageDescription(cachePath, hash, emoji, description);
-
-            // 非表情包且只保存表情包图片
-            if (!emoji && AppConfig.OnlySaveEmojiPicture)
-            {
-                PictureDescriber.DeleteImage(cachePath);
-            }
-
-            return $"[这是一张图片，这是它的描述：{description}]";
+            return $"[hash:{picture.Hash};这是一张图片，这是它的描述：{description}]";
         }
     }
 }

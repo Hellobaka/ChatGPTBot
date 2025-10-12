@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
@@ -258,6 +259,50 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 MainSave.CQLog?.Info("表情包缓存", $"已加载 {Cache.Count} 个表情包缓存");
             }
+        }
+
+        public static void StartScheduleDeleteNonEmoji()
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    DateTime now = DateTime.Now;
+                    DateTime nextRun = now.Date.AddDays(now.Hour >= 2 ? 1 : 0).AddHours(2); // 今天2点已过，则设为明天2点
+                    TimeSpan timeToGo = nextRun - now;
+
+                    if (timeToGo <= TimeSpan.Zero)
+                    {
+                        timeToGo = TimeSpan.Zero; // 如果已过，则立即执行
+                    }
+                    await Task.Delay(timeToGo);
+                    try
+                    {
+                        DeleteNonEmoji(TimeSpan.FromDays(AppConfig.NonEmojiPictureSaveDays));
+                    }
+                    catch(Exception e)
+                    {
+                        MainSave.CQLog?.Warning("清理非表情包缓存", e.ToString());
+                    }
+                }
+            });
+        }
+
+        public static void DeleteNonEmoji(TimeSpan expire)
+        {
+            using var db = SQLHelper.GetInstance();
+            var pics = db.Queryable<Picture>().Where(x => !x.IsEmoji && !x.IsDeleted && (DateTime.Now - x.AddTime) > expire).ToList();
+            foreach (var item in pics)
+            {
+                if (Cache.ContainsKey(item.Hash))
+                {
+                    Cache.Remove(item.Hash);
+                }
+                item.IsDeleted = true;
+                item.Update();
+                PictureDescriber.DeleteImage(item.FilePath);
+            }
+            MainSave.CQLog?.Info("清理非表情包缓存", $"已删除 {pics.Count} 张图片");
         }
     }
 }

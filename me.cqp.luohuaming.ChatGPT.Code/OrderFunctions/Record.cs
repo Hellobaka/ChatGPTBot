@@ -83,8 +83,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     SetGroupBusy(e.FromGroup, true);
                     MCPSliceRecord.Add(identity, (e.FromGroup, e.FromQQ, e.Message.Id));
-                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ);
-                    mcp.UpdateRelationshipContext(relationship);
+                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity);
 
                     string reply = CreateReply(relationship, record, mcp, identity);
 
@@ -158,8 +157,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 SetGroupBusy(e.FromQQ, true);
                 MCPSliceRecord.Add(identity, (-1, e.FromQQ, e.Message.Id));
 
-                MCPClientManager mcp = new(-1, e.FromQQ);
-                mcp.UpdateRelationshipContext(relationship);
+                MCPClientManager mcp = new(-1, e.FromQQ, identity);
 
                 string reply = CreateReply(relationship, record, mcp, identity);
 

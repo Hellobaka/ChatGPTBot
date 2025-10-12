@@ -13,13 +13,11 @@ using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
-    public class MCPClientManager(long groupId, long qqId)
+    public class MCPClientManager(long groupId, long qqId, string chatIdentity)
     {
         public static List<MCPClientBase> Clients { get; set; } = [];
 
         public static Dictionary<MCPClientBase, AIFunction[]> MCPTools { get; set; } = [];
-
-        private Relationship? RelationshipContext { get; set; }
 
         public static JsonSerializerSettings JsonSerializerSettings { get; set; } = new JsonSerializerSettings
         {
@@ -82,22 +80,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 try
                 {
                     MCPTools.Add(client, []);
-                    var mcpClient = client.Create();
-                    var functions = mcpClient.ListToolsAsync().Result;
-                    foreach (var item in functions)
-                    {
-                        if (client.ToolNameConverters.TryGetValue(item.Name, out var newName))
-                        {
-                            var renamedTool = item.WithName(newName);
-                            renamedTool.BeforeToolCalled += Tool_BeforeToolCalled;
-                            MCPTools[client] = [.. MCPTools[client], renamedTool];
-                        }
-                        else
-                        {
-                            item.BeforeToolCalled += Tool_BeforeToolCalled;
-                            MCPTools[client] = [.. MCPTools[client], item];
-                        }
-                    }
+                    MCPTools[client] = [.. MCPTools[client], ..client.GetTools()];
                 }
                 catch (Exception e)
                 {
@@ -108,40 +91,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public AIFunction[] GetAIFunctions()
         {
-            AIFunction[] functions = [.. CreateCustomTools()];
+            AIFunction[] functions = [];
             foreach (var item in MCPTools)
             {
                 if (!CheckClientCanBuild(item.Key, groupId, qqId))
                 {
                     continue;
                 }
-
-                functions = [.. functions, .. item.Value];
+                if (item.Key is MCPCustomClient customClient)
+                {
+                    customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity);
+                    functions = [.. functions, .. customClient.GetTools()];
+                }
+                else
+                {
+                    functions = [.. functions, .. item.Value];
+                }
             }
             return functions;
         }
 
-        public void UpdateRelationshipContext(Relationship relationship)
-        {
-            RelationshipContext = relationship;
-        }
-
-        public AIFunction[] CreateCustomTools()
-        {
-            List<AIFunction> custom = [];
-            custom.Add(AIFunctionFactory.Create(MojiCityIdConverter.GetCityIdByName, description: "用于墨迹天气接口中，城市名称转换为 cityId。"));
-            custom.Add(AIFunctionFactory.Create(MoodManager.Instance.UpdateMood, description: "更新你发言后的心情状态，有以下枚举可选：happy，angry，sad，surprised，disgusted，fearful，neutral"));
-            if (RelationshipContext != null)
-            {
-                custom.Add(AIFunctionFactory.Create(RelationshipContext.GetType().GetMethod("UpdateFavorability"), RelationshipContext, description: "更新你对目标发言者的好感度，可用范围 [-10, 10]"));
-            }
-            // TODO: 重构记忆模块
-            // custom.Add(AIFunctionFactory.Create(InsertMemory, description: "用自然语言描述你想记住的内容，注意区分对话主体"));
-            return custom.ToArray();
-        }
-
         private bool CheckClientCanBuild(MCPClientBase client, long groupId, long personId)
         {
+            if (!client.Enabled)
+            {
+                return false;
+            }
             if (groupId > 0 && client.GroupEnabled)
             {
                 if (client.IsGroupBlackList && client.Groups.Contains(groupId))
