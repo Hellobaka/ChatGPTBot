@@ -98,6 +98,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             MoodDecreaseTimer.Start();
         }
 
+        /// <summary>
+        /// 更新当前心情
+        /// </summary>
+        /// <param name="input">新的心情，可选值：happy，angry，sad，surprised，disgusted，fearful，neutral</param>
         public void UpdateMood(string input)
         {
             Mood mood = Enum.TryParse(input.ToLower(), out Mood v) ? v : Mood.None;
@@ -107,7 +111,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 mood = Mood.neutral;
             }
 
-            MainSave.CQLog.Info("更新心情", $"输入获取到的心情为：{mood}");
+            MainSave.CQLog?.Info("更新心情", $"输入获取到的心情为：{mood}");
             if (!MoodValues.TryGetValue(mood, out var moodValue))
             {
                 CommonHelper.DebugLog("情绪转换", $"无效的情绪转换：{mood}");

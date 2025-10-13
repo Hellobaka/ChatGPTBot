@@ -18,8 +18,9 @@
         <ListBox
             x:Name="EditableListBox"
             MinHeight="70"
-            Margin="0,5,0,0" MouseDoubleClick="EditableListBox_MouseDoubleClick"
+            Margin="0,5,0,0"
             ItemsSource="{Binding ItemDisplaySource, RelativeSource={RelativeSource AncestorType=UserControl}}"
+            MouseDoubleClick="EditableListBox_MouseDoubleClick"
             SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
