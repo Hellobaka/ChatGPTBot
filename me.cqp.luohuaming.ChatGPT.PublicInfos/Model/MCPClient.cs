@@ -1,12 +1,16 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+﻿using Azure;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
@@ -129,10 +133,36 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
                 "AddDelayTask" => Context != null ? AIFunctionFactory.Create((int delaySeconds, string extraPrompt) =>
                 {
-                    // TODO
-                    MainSave.CQLog?.Info("调用 AddDelayTask", $"延时 {delaySeconds} 秒");
-                }, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到当前Prompt中，并再次发起一轮对话。") : null,
-                
+                    MainSave.CQLog?.Info("调用 AddDelayTask", $"延时 {delaySeconds} 秒，额外提示文本 {extraPrompt};");
+                    string prompt = Context.Prompt;
+                    long groupId = Context.GroupId;
+                    long qq = Context.QQ;
+                    MCPClientManager manager = Context.MCPClientManager;
+                    _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(delaySeconds * 1000);
+                        MainSave.CQLog?.Info("延时任务", "延时任务触发。");
+                        Chat.OnToolCall -= Chat_OnToolCall;
+                        Chat.OnToolCall += Chat_OnToolCall;
+                        var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
+                                new(ChatRole.System, prompt),
+                                new(ChatRole.User, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
+                            ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout, mcp: manager);
+                        MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
+                        if (response != Chat.ErrorMessage && !response.Contains(AppConfig.ChatEmptyResponse))
+                        {
+                            if (groupId > 0)
+                            {
+                                MainSave.CQApi.SendGroupMessage(groupId, response);
+                            }
+                            else
+                            {
+                                MainSave.CQApi.SendPrivateMessage(qq, response);
+                            }
+                        }
+                    });
+                }, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
+
                 #region Memory
                 "AddShortTermMemory" => Context != null ? AIFunctionFactory.Create((string description) =>
                 {
@@ -260,6 +290,24 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             AdminCache[context.GroupId] = isAdmin;
 
             return isAdmin;
+        }
+
+        private void Chat_OnToolCall(string identity, string sliceMessage)
+        {
+            if (!string.IsNullOrEmpty(identity))
+            {
+                long groupId = Context.GroupId;
+                long qq = Context.QQ;
+
+                if (groupId > 0)
+                {
+                    MainSave.CQApi.SendGroupMessage(groupId, sliceMessage);
+                }
+                else
+                {
+                    MainSave.CQApi.SendPrivateMessage(qq, sliceMessage);
+                }
+            }
         }
     }
 

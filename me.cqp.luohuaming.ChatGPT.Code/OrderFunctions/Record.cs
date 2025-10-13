@@ -101,9 +101,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     SetGroupBusy(e.FromGroup, true);
                     MCPSliceRecord.Add(identity, (e.FromGroup, e.FromQQ, e.Message.Id));
-                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity);
+                    var prompt = BuildPrompt(relationship, record);
 
-                    string reply = CreateReply(relationship, record, mcp, identity);
+                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity, prompt);
+
+                    string reply = CreateReply(relationship, record, mcp, identity, prompt);
 
                     if (reply == Chat.ErrorMessage)
                     {
@@ -170,10 +172,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 }
                 SetGroupBusy(e.FromQQ, true);
                 MCPSliceRecord.Add(identity, (-1, e.FromQQ, e.Message.Id));
+                var prompt = BuildPrompt(relationship, record);
 
-                MCPClientManager mcp = new(-1, e.FromQQ, identity);
+                MCPClientManager mcp = new(-1, e.FromQQ, identity, prompt);
 
-                string reply = CreateReply(relationship, record, mcp, identity);
+                string reply = CreateReply(relationship, record, mcp, identity, prompt);
 
                 if (reply == Chat.ErrorMessage)
                 {
@@ -225,14 +228,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp, string identity)
+        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp, string prompt, string identity)
         {
             if (relationship == null)
             {
                 return Chat.ErrorMessage;
             }
 
-            var prompt = BuildPrompt(relationship, record);
             //CommonHelper.DebugLog("Prompt", prompt);
             return Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [

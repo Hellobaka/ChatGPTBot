@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
-    public class MCPClientManager(long groupId, long qqId, string chatIdentity)
+    public class MCPClientManager(long groupId, long qqId, string chatIdentity, string prompt)
     {
         public static List<MCPClientBase> Clients { get; set; } = [];
 
@@ -94,7 +94,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 if (item.Key is MCPCustomClient customClient)
                 {
-                    customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity);
+                    customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this);
                     functions = [.. functions, .. customClient.GetTools()];
                 }
                 else
