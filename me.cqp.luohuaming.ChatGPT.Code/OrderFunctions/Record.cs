@@ -340,6 +340,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"请在每次发言之后调用`UpdateMood`工具来更新你的心情。");
             stringBuilder.AppendLine($"你拥有短期记忆的能力，请适当调用短期记忆相关的工具来增强对话体验");
             stringBuilder.AppendLine($"你拥有添加待办事项的能力，请在你认为无法在一轮对话中完成某些事项时，调用代办事项工具来增强对话体验");
+            stringBuilder.AppendLine($"你拥有记录长期记忆的能力，当你认为用户说的内容需要你持久化记忆时，请调用AddLongTermMemory工具");
+            stringBuilder.AppendLine($"你拥有自主学习新知识的能力，当出现了你不了解的概念，想要记录时，请调用AddKnowledge工具");
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
@@ -354,6 +356,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"请在每次发言之后调用`UpdateMood`工具来更新你的心情。");
             stringBuilder.AppendLine($"你拥有短期记忆的能力，请适当调用短期记忆相关的工具来增强对话体验");
             stringBuilder.AppendLine($"你拥有添加待办事项的能力，请在你认为无法在一轮对话中完成某些事项时，调用代办事项工具来增强对话体验");
+            stringBuilder.AppendLine($"你拥有记录长期记忆的能力，当你认为用户说的内容需要你持久化记忆时，请调用AddLongTermMemory工具");
+            stringBuilder.AppendLine($"你拥有自主学习新知识的能力，当上下文中出现了你不了解的概念，想要记录时，请调用AddKnowledge工具");
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
