@@ -30,6 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             日程获取,
             分段,
             表情包推荐,
+            回复意愿,
         }
 
         public const string ErrorMessage = "连接发生问题，查看日志排查问题";
