@@ -87,7 +87,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                 }
                 else
                 {
-                    Response = response.ToString();
+                    Response = response?.ToString() ?? "无返回值";
                 }
             }
             catch (Exception e)
@@ -130,9 +130,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         var argumentItem = new ToolArgumentItem
                         {
                             ArgumentName = arg.Name,
-                            ArgumentType = arg.Value.TryGetProperty("type", out var defaultValue) ? defaultValue.ToString() : string.Empty,
+                            ArgumentType = arg.Value.TryGetProperty("type", out var defaultValue) ? defaultValue.ToString() : "无指定类型",
                             DefaultValue = arg.Value.TryGetProperty("default", out defaultValue) ? defaultValue.ToString() : string.Empty,
-                            Description = arg.Value.TryGetProperty("description", out defaultValue) ? defaultValue.ToString() : string.Empty,
+                            Description = arg.Value.TryGetProperty("description", out defaultValue) ? defaultValue.ToString() : "无描述",
                         };
                         argumentItem.PropertyChanged += ArgumentItem_PropertyChanged;
                         Arguments.Add(argumentItem);

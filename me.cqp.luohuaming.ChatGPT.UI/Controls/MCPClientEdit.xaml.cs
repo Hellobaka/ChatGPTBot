@@ -19,7 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
         public MCPClientEditViewModel ViewModel
         {
             get { return DataContext as MCPClientEditViewModel; }
-            set { DataContext = value; }
+            set { DataContext = value; MCPClientTypeSelector_SelectionChanged(null, null); }
         }
 
         public MCPClientModel MCPClientModel
@@ -41,11 +41,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
 
         public MCPClientModel GetResult()
         {
-            if (ViewModel.IsReadOnly)
-            {
-                MainWindow.ShowInfo("内置工具无法修改保存");
-                return null;
-            }
             return ViewModel.Build();
         }
 
@@ -70,7 +65,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Controls
             var converters = new Dictionary<string, string>();
             for (int i = 0; i < tools.Count; i++)
             {
-                converters.Add(tools[i].Name, $"tool_{i + 1}");
+                converters.Add(tools[i].OriginalName, $"tool_{i + 1}");
             }
             ViewModel.ToolNameConverter = converters;
             //ToolNameConverterEditor.ItemSource = ViewModel.ToolNameConverter;

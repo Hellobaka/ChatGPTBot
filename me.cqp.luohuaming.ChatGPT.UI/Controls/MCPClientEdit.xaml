@@ -12,7 +12,6 @@
     d:DataContext="{d:DesignInstance Type=viewmodel:MCPClientEditViewModel}"
     d:DesignHeight="1550"
     d:DesignWidth="800"
-    IsEnabled="{Binding IsReadOnly, Converter={StaticResource BoolRevertConverter}}"
     Loaded="UserControl_Loaded"
     mc:Ignorable="d">
     <UserControl.Resources>
@@ -25,7 +24,10 @@
 
     <ui:SimpleStackPanel Spacing="5">
         <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="连接设置" />
-        <TextBox ui:ControlHelper.Header="名称" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBox
+            ui:ControlHelper.Header="名称"
+            IsEnabled="{Binding IsCustomTool, Converter={StaticResource BoolRevertConverter}}"
+            Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <CheckBox Content="启用" IsChecked="{Binding Enabled, Mode=TwoWay}" />
         <CheckBox Content="群组聊天可用" IsChecked="{Binding GroupEnabled, Mode=TwoWay}" />
         <CheckBox Content="个人聊天可用" IsChecked="{Binding PersonEnabled, Mode=TwoWay}" />
@@ -35,7 +37,8 @@
             ui:ControlHelper.Header="MCP 客户端类型"
             ItemsSource="{Binding MCPToolTypes}"
             SelectedItem="{Binding ToolType, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            SelectionChanged="MCPClientTypeSelector_SelectionChanged" />
+            SelectionChanged="MCPClientTypeSelector_SelectionChanged"
+            Visibility="{Binding IsCustomTool, Converter={StaticResource BoolToVisibilityRevertConverter}}" />
         <ui:SimpleStackPanel
             x:Name="STDIOSettings"
             Spacing="5"

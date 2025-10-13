@@ -34,7 +34,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             ViewModel.Rebuilding = true;
             await Task.Run(MCPClientManager.Rebuild);
-            ViewModel.LoadMCPClients();
+            ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
             Rebuilt = true;
         }
@@ -101,13 +101,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 ViewModel.MCPClients[index].MCPClientBase = result.MCPClientBase;
                 MCPClientManager.Clients = ViewModel.MCPClients
-                    .Where(x => x.MCPClientBase != null && !x.MCPClientBase.IsReadOnly)
+                    .Where(x => x.MCPClientBase != null)
                     .Select(x => x.MCPClientBase).ToList();
                 MCPClientManager.Save();
                 Rebuilt = false;
                 HasChanged = true;
                 MainWindow.ShowInfo("保存成功");
-                ViewModel.LoadMCPClients();
+                ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             }
             else
             {
@@ -117,20 +117,31 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
-            ViewModel.LoadMCPClients();
+            ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
         }
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ViewModel.SelectedMCPItem != null && ViewModel.SelectedMCPItem is MCPClientModel clientModel
-                && !clientModel.MCPClientBase.IsReadOnly
-                && MainWindow.ShowConfirm($"确认要删除客户端 {clientModel.Name} 吗？"))
+            if (ViewModel.SelectedMCPItem != null && ViewModel.SelectedMCPItem is MCPClientModel clientModel)
             {
-                MCPClientManager.Clients.Remove(clientModel.MCPClientBase);
-                ViewModel.MCPClients.Remove(clientModel);
-                MCPClientManager.Save();
+                if (clientModel.MCPClientBase.ToolType == MCPClientType.Custom)
+                {
+                    MainWindow.ShowError("自定义工具无法删除，请通过配置来禁用此工具");
+                    return;
+                }
+                if (MainWindow.ShowConfirm($"确认要删除客户端 {clientModel.Name} 吗？"))
+                {
+                    MCPClientManager.Clients.Remove(clientModel.MCPClientBase);
+                    ViewModel.MCPClients.Remove(clientModel);
+                    MCPClientManager.Save();
+                }
             }
+        }
+
+        private void ShowCustomTools_Checked(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
         }
     }
 }

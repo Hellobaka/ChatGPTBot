@@ -68,6 +68,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI
             {
                 MainSave.AppDirectory = AppDomain.CurrentDomain.BaseDirectory;
                 MainSave.RecordDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                MainSave.CQApi = new(new Sdk.Cqp.Model.AppInfo("", 0, 0, "", "1.0.0", 0, "", "", 1));
                 MainSave.ImageDirectory = @"D:\Code\Another-Mirai-Native2\Another-Mirai-Native\bin\x86\Debug\net8.0-windows\data\image";
                 ConfigHelper.ConfigFileName = Path.Combine(MainSave.AppDirectory, "Config.json");
                 if (ConfigHelper.Load() is false)

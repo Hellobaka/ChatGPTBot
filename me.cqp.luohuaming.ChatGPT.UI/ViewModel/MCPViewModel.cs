@@ -32,14 +32,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public MCPClientModel CreatedMCPItem { get; internal set; }
 
-        public void LoadMCPClients()
+        public void LoadMCPClients(bool showCustom)
         {
             MCPClients.Clear();
-            MCPClients.Add(MCPClientModel.BuildFromMCPClientBase(new MCPClientBase { Name = "内置工具", IsReadOnly = true },
-                                                                 new MCPClientManager(0, 0).CreateCustomTools()));
-            
+
             foreach (var client in MCPClientManager.Clients)
             {
+                if (client.ToolType == MCPClientType.Custom && !showCustom)
+                {
+                    continue;
+                }
                 if (!MCPClientManager.MCPTools.TryGetValue(client, out var tools))
                 {
                     tools = [];

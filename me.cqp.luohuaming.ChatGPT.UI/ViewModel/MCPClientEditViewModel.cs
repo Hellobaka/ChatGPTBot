@@ -23,7 +23,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
             Name = clientModel.MCPClientBase.Name;
             Enabled = clientModel.MCPClientBase.Enabled;
-            IsReadOnly = clientModel.MCPClientBase.IsReadOnly;
             GroupEnabled = clientModel.MCPClientBase.GroupEnabled;
             PersonEnabled = clientModel.MCPClientBase.PersonEnabled;
             IsGroupBlackList = clientModel.MCPClientBase.IsGroupBlackList;
@@ -52,7 +51,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public bool Enabled { get; set; }
 
-        public bool IsReadOnly { get; set; }
+        public bool IsCustomTool => MCPClientModel?.MCPClientBase?.ToolType == MCPClientType.Custom;
 
         public bool GroupEnabled { get; set; }
 
@@ -101,6 +100,25 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public MCPClientModel Build()
         {
+            if (IsCustomTool)
+            {
+                return new MCPClientModel
+                {
+                    MCPClientBase = new MCPCustomClient
+                    {
+                        Name = Name,
+                        Enabled = Enabled,
+                        GroupEnabled = GroupEnabled,
+                        PersonEnabled = PersonEnabled,
+                        IsGroupBlackList = IsGroupBlackList,
+                        Groups = Groups.ToArray(),
+                        IsPersonBlackList = IsPersonBlackList,
+                        Persons = Persons.ToArray(),
+                        ToolNameConverters = ToolNameConverter,
+                    },
+                    Tools = new ObservableCollection<MCPToolModel>(MCPClientModel.Tools)
+                };
+            }
             return new MCPClientModel
             {
                 MCPClientBase = ToolType switch
