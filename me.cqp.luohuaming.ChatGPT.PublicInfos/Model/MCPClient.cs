@@ -127,10 +127,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     MainSave.CQLog?.Info("调用 AddPictureToContext", $"将图片 {hash} 添加到上下文 {Context.ChatIdentity} 中");
                     PictureContextManager.AddPicture(Context.ChatIdentity, hash);
                 }, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
-                "AddDelayTask" => Context != null ? AIFunctionFactory.Create((CustomToolContext context, int delaySeconds, string extraPrompt) =>
+                "AddDelayTask" => Context != null ? AIFunctionFactory.Create((int delaySeconds, string extraPrompt) =>
                 {
+                    // TODO
                     MainSave.CQLog?.Info("调用 AddDelayTask", $"延时 {delaySeconds} 秒");
                 }, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到当前Prompt中，并再次发起一轮对话。") : null,
+                "AddShortTermMemory" => Context != null ? AIFunctionFactory.Create((string description) =>
+                {
+                    Memory.AddShortTermMemory(description, Context);
+                }, description: $"添加一段短期记忆。短期记忆可以维持的对话轮数：{AppConfig.ShortTermMemoryMaxUseCount}") : null,
+                "RenewShortTermMemory" => Context != null ? AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。") : null,
+                "RemoveShortTermMemory" => Context != null ? AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。") : null,
+                "RemoveShortTermMemories" => Context != null ? AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。") : null,
+                "AddToDoItem" => Context != null ? AIFunctionFactory.Create((string todo, bool isGlobal = false) =>
+                {
+                    Memory.AddToDoItem(todo, isGlobal, Context);
+                }, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
+                "CompleteToDoItem" => Context != null ? AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。") : null,
+                "RemoveToDoItem" => Context != null ? AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。") : null,
+                "RemoveToDoItems" => Context != null ? AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。") : null,
 
                 #region CQApi
                 "GetLoginQQ" => AIFunctionFactory.Create(MainSave.CQApi.GetLoginQQ,

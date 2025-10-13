@@ -145,6 +145,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static bool EnableMCP { get; set; }
 
         public static bool EnableLLMCheckShouldResponse { get; set; } = false;
+       
+        public static int ShortTermMemoryMaxUseCount { get; set; }
 
         public static void Init()
         {
@@ -221,6 +223,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
             EnableMCP = ConfigHelper.GetConfig("EnableMCP", true);
             EnableLLMCheckShouldResponse = ConfigHelper.GetConfig("EnableLLMCheckShouldResponse", false);
+            ShortTermMemoryMaxUseCount = ConfigHelper.GetConfig("ShortTermMemoryMaxUseCount", 10);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();
