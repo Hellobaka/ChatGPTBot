@@ -11,6 +11,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemeResources />
                 <ui:XamlControlsResources />
+                <ui:IntellisenseResources Source="/ModernWpf;component/DesignTime/DesignTimeResources.xaml" />
+                <ui:ColorPaletteResources />
+                <ui:ResourceDictionaryEx />
             </ResourceDictionary.MergedDictionaries>
             <Style
                 x:Key="ErrorButtonStyle"
