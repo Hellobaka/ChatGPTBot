@@ -123,6 +123,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 return false;
             }
+            if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Any(x => x == personId))
+            {
+                return false;
+            }
             if (groupId > 0 && client.GroupEnabled)
             {
                 if (client.IsGroupBlackList && client.Groups.Contains(groupId))

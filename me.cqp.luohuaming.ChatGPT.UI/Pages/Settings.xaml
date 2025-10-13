@@ -147,8 +147,11 @@
             <TabItem Header="群组设置">
                 <ScrollViewer>
                     <StackPanel x:Name="GroupContainer" Margin="16,16,22,16">
-                        <TextBlock VerticalAlignment="Center">管理员 QQ:</TextBlock>
-                        <TextBox x:Name="MasterQQ" Margin="0,5,0,0" />
+                        <TextBlock VerticalAlignment="Center">主人 QQ:</TextBlock>
+                        <controls:EditableListBox_Int
+                            x:Name="MasterQQ"
+                            MinHeight="20"
+                            Margin="0,5,0,0" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">群组使用黑名单:</TextBlock>
                             <ui:ToggleSwitch

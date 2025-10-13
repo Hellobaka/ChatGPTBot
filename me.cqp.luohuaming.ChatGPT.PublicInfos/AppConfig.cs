@@ -24,7 +24,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool StreamMode { get; set; }
 
-        public static long MasterQQ { get; set; }
+        public static List<long> MasterQQ { get; set; }
 
         public static bool IsGroupBlackList { get; set; }
 
@@ -155,7 +155,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
-            MasterQQ = ConfigHelper.GetConfig<long>("MasterQQ", 114514);
+            MasterQQ = ConfigHelper.GetConfig("MasterQQ", new List<long>());
             ChatMaxTokens = ConfigHelper.GetConfig("ChatMaxTokens", 3000);
             ChatTemperature = ConfigHelper.GetConfig("ChatTemperature", 1f);
 

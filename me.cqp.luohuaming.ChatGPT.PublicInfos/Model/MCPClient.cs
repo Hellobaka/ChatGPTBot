@@ -29,6 +29,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public bool PersonEnabled { get; set; }
 
+        public bool CanOnlyMasterCall { get; set; }
+
         public bool IsGroupBlackList { get; set; }
 
         public long[] Groups { get; set; } = [];
