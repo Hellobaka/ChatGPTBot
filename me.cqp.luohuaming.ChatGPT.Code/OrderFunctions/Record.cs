@@ -57,10 +57,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 return new();
             }
-            if (AppConfig.EnableMemory && !record.IsEmpty)
-            {
-                Memory.AddMemory(record);
-            }
             bool busy = GetGroupBusy(e.FromGroup.Id);
             if (busy)
             {
@@ -158,10 +154,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             var record = ChatRecord.Create(-1, e.FromQQ, e.Message.Text, e.Message.Id);
             ChatRecord.InsertRecord(record);
 
-            if (AppConfig.EnableMemory)
-            {
-                Memory.AddMemory(record);
-            }
             bool busy = GetGroupBusy(e.FromQQ);
             if (busy)
             {
@@ -295,17 +287,17 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 stringBuilder.AppendLine($"以下是你的短期记忆，短期记忆最大可使用轮数为:{AppConfig.ShortTermMemoryMaxUseCount}");
                 stringBuilder.AppendLine(string.Join("\n", [.. shortTermMemories.Select(x => x.ToString())]));
             }
-            if (AppConfig.EnableMemory)
+            if (AppConfig.EnableQdrant)
             {
-                var memories = Memory.GetMemories(record);
-                CommonHelper.DebugLog("获取记忆", $"回忆起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
+                var memories = Memory.GetMemories(record.Message_NoAppendInfo);
+                CommonHelper.DebugLog("被动召回", $"召回起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
                 if (memories.Length > 0)
                 {
-                    stringBuilder.AppendLine("以下是你回忆起的记忆：");
+                    stringBuilder.AppendLine("以下是可能相关的知识：");
                     stringBuilder.AppendLine("<Memory>");
                     foreach (var memory in memories)
                     {
-                        stringBuilder.AppendLine(memory.record?.ParsedMessage);
+                        stringBuilder.AppendLine(memory.record);
                     }
                     stringBuilder.AppendLine("</Memory>");
                 }

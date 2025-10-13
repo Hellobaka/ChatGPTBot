@@ -101,32 +101,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             ToDoItems.RemoveAll(x => ids.Contains(x.Id));
         }
 
-        public static void AddMemory(ChatRecord record)
+        public static void AddMemory(string memory)
         {
-            if (record.IsEmpty || record.IsImage || !AppConfig.EnableMemory || Qdrant.Instance == null)
+            if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
             {
                 return;
             }
             Task.Run(() =>
             {
-                if (Qdrant.Instance.Insert(record))
+                if (Qdrant.Instance.Insert(memory))
                 {
-                    CommonHelper.DebugLog("记忆插入", $"MessageID={record.MessageID} 插入成功");
+                    CommonHelper.DebugLog("记忆插入", $"Memory={memory} 插入成功");
                 }
                 else
                 {
-                    CommonHelper.DebugLog("记忆插入", $"MessageID={record.MessageID} 插入失败");
+                    CommonHelper.DebugLog("记忆插入", $"Memory={memory} 插入失败");
                 }
             });
         }
 
-        public static (ChatRecord record, float score)[] GetMemories(ChatRecord record)
+        public static (string id, string record, DateTime time, float score)[] GetMemories(string query)
         {
-            if (record.IsEmpty || record.IsImage || !AppConfig.EnableMemory || Qdrant.Instance == null)
+            if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
             {
                 return [];
             }
-            var memories = Qdrant.Instance.GetRelevantCollection(record).Where(x => x.record?.Id != record.Id);
+            var memories = Qdrant.Instance.GetRelevantCollection(query);
             return memories.ToArray();
         }
     }

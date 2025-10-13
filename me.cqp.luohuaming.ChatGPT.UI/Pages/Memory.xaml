@@ -60,13 +60,6 @@
                     </Button.Content>
                 </Button>
             </StackPanel>
-            <Grid Grid.Row="1" Margin="0,10,0,0">
-                <ui:ToggleSwitch
-                    x:Name="GroupSelector"
-                    OffContent="私聊"
-                    OnContent="群组"
-                    Toggled="GroupSelector_Toggled" />
-            </Grid>
             <Grid Grid.Row="2" Margin="0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

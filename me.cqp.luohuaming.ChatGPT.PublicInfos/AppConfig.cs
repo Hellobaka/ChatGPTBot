@@ -92,7 +92,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool EnableRerank { get; set; }
 
-        public static bool EnableMemory { get; set; }
+        public static bool EnableQdrant { get; set; }
 
         public static double MinMemorySimilarity { get; set; }
 
@@ -109,8 +109,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static string QdrantHost { get; set; }
 
         public static ushort QdrantPort { get; set; }
-
-        public static bool QdrantSearchOnlyPerson { get; set; }
 
         public static double ReplyWillingAmplifier { get; set; }
 
@@ -196,7 +194,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ChatEmptyResponse = ConfigHelper.GetConfig("ChatEmptyResponse", "<EMPTY>");
             RandomSendEmoji = ConfigHelper.GetConfig("RandomSendEmoji", true);
             RecommendEmojiCount = ConfigHelper.GetConfig("RecommendEmojiCount", 5);
-            EnableMemory = ConfigHelper.GetConfig("EnableMemory", true);
+            EnableQdrant = ConfigHelper.GetConfig("EnableQdrant", true);
             MinMemorySimilarity = ConfigHelper.GetConfig("MinMemorySimilarity", 0.8);
             MaxMemoryCount = ConfigHelper.GetConfig("MaxMemoryCount", 5);
             TencentSecretKey = ConfigHelper.GetConfig("TencentSecretKey", "");
@@ -204,7 +202,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             QdrantHost = ConfigHelper.GetConfig("QdrantHost", "localhost");
             QdrantPort = ConfigHelper.GetConfig("QdrantPort", (ushort)6333);
             QdrantAPIKey = ConfigHelper.GetConfig("QdrantAPIKey", "aFZsX4Xe2pzWybnX61Vi");
-            QdrantSearchOnlyPerson = ConfigHelper.GetConfig("QdrantSearchOnlyPerson", false);
             ReplyWillingAmplifier = ConfigHelper.GetConfig("ReplyWillingAmplifier", (double)1);
             Filters = ConfigHelper.GetConfig("Filter", new List<string>() { "[CQ:", "&#" });
             RelationshipUpdateTime = ConfigHelper.GetConfig("RelationshipUpdateTime", 7);

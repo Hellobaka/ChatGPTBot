@@ -55,13 +55,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 }
             }
 
-            if (AppConfig.EnableMemory)
+            if (AppConfig.EnableQdrant)
             {
                 var qdrant = new Qdrant(AppConfig.QdrantHost, AppConfig.QdrantPort);
                 if (qdrant.GetCollections() is false)
                 {
                     MainSave.CQLog.Error("初始化", "向量数据库连接失败，请检查配置，记忆模块已禁用");
-                    AppConfig.EnableMemory = false;
+                    AppConfig.EnableQdrant = false;
                 }
                 else
                 {

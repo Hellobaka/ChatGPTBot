@@ -98,6 +98,7 @@
     <Compile Include="Model\ReplyManager.cs" />
     <Compile Include="Model\SchedulerManager.cs" />
     <Compile Include="Model\ShortTermMemory.cs" />
+    <Compile Include="Model\ToDoItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

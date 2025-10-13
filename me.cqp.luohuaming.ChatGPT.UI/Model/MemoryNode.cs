@@ -10,13 +10,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
     [AddINotifyPropertyChangedInterface]
     public class MemoryNode
     {
-        public int Id { get; set; }
-
-        public int MessageId { get; set; }
-
-        public long GroupId { get; set; }
-
-        public long QQ { get; set; }
+        public string Id { get; set; }
 
         public string Message { get; set; }
 

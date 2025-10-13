@@ -67,34 +67,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                         Dispatcher.Invoke(() => MainWindow.ShowError("请输入查询内容"));
                         return;
                     }
-                    if (!long.TryParse(group, out long groupId))
-                    {
-                        groupId = -1;
-                    }
-                    if (!long.TryParse(qqText, out long qq))
-                    {
-                        qq = -1;
-                    }
-                    var record = new ChatRecord
-                    {
-                        GroupID = groupId,
-                        QQ = qq,
-                        Message_NoAppendInfo = input,
-                        Time = DateTime.Now
-                    };
-                    var result = PublicInfos.DB.Memory.GetMemories(record).OrderByDescending(x => x.score);
+                    var result = PublicInfos.DB.Memory.GetMemories(input).OrderByDescending(x => x.score);
                     Dispatcher.Invoke(() =>
                     {
                         foreach (var item in result)
                         {
                             Memories.Add(new MemoryNode
                             {
-                                Id = item.record.Id,
-                                GroupId = item.record.GroupID,
-                                Message = item.record.ParsedMessage,
-                                MessageId = item.record.MessageID,
-                                Time = item.record.Time,
-                                QQ = item.record.QQ,
+                                Id = item.id,
+                                Message = item.record,
+                                Time = item.time,
                                 Score = item.score * 100
                             });
                         }
@@ -195,29 +177,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             await Task.Run(UpdateCollectionCount);
-            GroupSelector.IsOn = true;
         }
 
         private void ReloadQdrantButton_Click(object sender, RoutedEventArgs e)
         {
             Task.Run(UpdateCollectionCount);
-        }
-
-        private void GroupSelector_Toggled(object sender, RoutedEventArgs e)
-        {
-            GroupIdTextBox.IsEnabled = GroupSelector.IsOn;
-            QqTextBox.IsEnabled = true;
-            if (GroupSelector.IsOn && !AppConfig.QdrantSearchOnlyPerson)
-            {
-                QqTextBox.IsEnabled = false;
-                ShowError = true;
-                ErrorContent = "注意：由于限制了记忆不检索个人，所以不能关联QQ进行检索";
-            }
-            else
-            {
-                ShowError = false;
-                ErrorContent = "";
-            }
         }
     }
 }

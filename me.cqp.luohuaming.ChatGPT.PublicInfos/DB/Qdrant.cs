@@ -18,7 +18,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         private List<string> Collections { get; set; } = [];
 
-        private static string CollectionName { get; set; } = "ChatMemory";
+        private static string CollectionName { get; set; } = "ChatMemory_v2";
 
         public Qdrant(string host, ushort port)
         {
@@ -104,11 +104,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool Insert(ChatRecord record)
+        public bool Insert(string memory)
         {
-            if (record.IsEmpty || record.IsEmpty || string.IsNullOrEmpty(record.Message_NoAppendInfo))
+            if (string.IsNullOrEmpty(memory))
             {
-                if (string.IsNullOrEmpty(record.Message_NoAppendInfo))
+                if (string.IsNullOrEmpty(memory))
                 {
                     MainSave.CQLog.Error("插入向量", $"由于Record传入的文本为空，无法插入");
                 }
@@ -116,7 +116,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             try
             {
-                var embedding = Embedding.GetEmbedding(record.Message_NoAppendInfo);
+                var embedding = Embedding.GetEmbedding(memory);
                 if (embedding.Length == 0)
                 {
                     MainSave.CQLog.Error("插入向量", $"由于获取Embedding失败，无法插入");
@@ -133,13 +133,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     {
                         new
                         {
-                            id = (ulong)record.Id,
+                            id = Guid.NewGuid().ToString(),
                             vector = embedding,
                             payload = new
                             {
-                                user_id = $"{record.GroupID}_{record.QQ}",
-                                timestamp = record.Time.GetTimeStamp(),
-                                text = record.Message_NoAppendInfo,
+                                timestamp = DateTime.Now.GetTimeStamp(),
+                                text = memory,
                             }
                         }
                     }
@@ -158,82 +157,35 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public (ChatRecord record, float score)[] GetRelevantCollection(ChatRecord record)
+        public (string id, string record, DateTime time, float score)[] GetRelevantCollection(string query)
         {
-            if (record.IsEmpty || record.IsEmpty || string.IsNullOrEmpty(record.Message_NoAppendInfo))
+            if (string.IsNullOrEmpty(query))
             {
                 return [];
             }
 
             try
             {
-                object filter;
-                object timeRange = new
-                {
-                    key = "timestamp",
-                    range = new
-                    {
-                        gte = record.Time.AddMonths(-3).GetTimeStamp()
-                    }
-                };
-                if (record.GroupID > 0)
-                {
-                    filter = AppConfig.QdrantSearchOnlyPerson
-                        ? (new
-                        {
-                            key = "user_id",
-                            match = new
-                            {
-                                value = $"{record.GroupID}_{record.QQ}"
-                            }
-                        })
-                        : (new
-                        {
-                            key = "user_id",
-                            match = new
-                            {
-                                text = $"{record.GroupID}_"
-                            }
-                        });
-                }
-                else
-                {
-                    filter = new
-                    {
-                        key = "user_id",
-                        match = new
-                        {
-                            value = $"{record.GroupID}_{record.QQ}"
-                        }
-                    };
-                }
                 var r = Request($"collections/{CollectionName}/points/query", new
                 {
-                    query = Embedding.GetEmbedding(record.Message_NoAppendInfo),
+                    query = Embedding.GetEmbedding(query),
                     limit = AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
-                    filter = new
-                    {
-                        must = new object[]
-                        {
-                            filter,
-                            timeRange
-                        }
-                    },
-                    with_payload = true
                 }.ToJson(), "POST");
+
                 if (r["status"].ToString() != "ok")
                 {
                     MainSave.CQLog.Error("向量查询", $"查询失败：{r}");
                     return [];
                 }
-                var searchResult = (r["result"]["points"] as JArray).Select(x => new { Id = (long)x["id"], Payload = x["payload"], Score = (float)x["score"] }).ToArray();
-                searchResult = searchResult.Where(x => x.Id != record.Id && x.Score >= AppConfig.MinMemorySimilarity).ToArray();
+                var searchResult = (r["result"]["points"] as JArray).Select(x => new { Id = x["id"], Payload = x["payload"], Score = (float)x["score"] }).ToArray();
+                searchResult = searchResult.Where(x => x.Score >= AppConfig.MinMemorySimilarity).ToArray();
+                
                 using var db = SQLHelper.GetInstance();
+                (string id, string record, DateTime time, float score)[] result = [];
                 if (AppConfig.EnableRerank)
                 {
                     var search = searchResult.Select(x => x.Payload["text"].ToString()).ToArray();
-                    var rerank = Rerank.GetRerank(record.Message_NoAppendInfo, search, AppConfig.MaxMemoryCount);
-                    (ChatRecord records, float score)[] result = [];
+                    var rerank = Rerank.GetRerank(query, search, AppConfig.MaxMemoryCount);
                     foreach (var (document, score) in rerank)
                     {
                         var point = searchResult.FirstOrDefault(x => x.Payload["text"].ToString() == document);
@@ -241,36 +193,37 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         {
                             continue;
                         }
-                        var id = (int)point.Id;
-                        result = [(ChatRecord.GetChatRecordById(db, id), score), .. result];
+                        var id = point.Id.ToString();
+                        var time = CommonHelper.TimestampToDateTime(((long)point.Payload["time"]));
+                        result = [(id, point.Payload["text"].ToString(), time, score), .. result];
                     }
                     return result;
                 }
                 else
                 {
-                    (ChatRecord records, float score)[] result = [];
                     foreach (var item in searchResult.OrderByDescending(x => x.Score).Take(AppConfig.MaxMemoryCount))
                     {
-                        var id = (int)item.Id;
-                        result = [(ChatRecord.GetChatRecordById(db, id), item.Score), .. result];
+                        var id = item.Id.ToString();
+                        var time = CommonHelper.TimestampToDateTime(((long)item.Payload["time"]));
+                        result = [(id, item.Payload["text"].ToString(), time, item.Score), .. result];
                     }
                     return result;
                 }
             }
             catch (Exception ex)
             {
-                MainSave.CQLog.Error("向量查询", $"输入: {record.Message_NoAppendInfo}，查询失败：{ex}");
+                MainSave.CQLog.Error("向量查询", $"输入: {query}，查询失败：{ex}");
                 return [];
             }
         }
 
-        public bool Delete(int id)
+        public bool Delete(string id)
         {
             try
             {
                 var r = Request($"collections/{CollectionName}/points/delete?wait=true", new
                 {
-                    points = new int[] { id },
+                    points = new string[] { id },
                 }.ToJson(), "POST");
                 bool ok = r?["status"]?.ToString() == "ok";
 

@@ -32,6 +32,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             return Convert.ToInt64(ts.TotalSeconds);
         }
 
+        public static DateTime TimestampToDateTime(long timestamp)
+        {
+            DateTime dtStart = new(1970, 1, 1, 0, 0, 0, 0);
+            TimeSpan toNow = TimeSpan.FromSeconds(timestamp);
+            return dtStart.Add(toNow);
+        }
+
         public static string GetAppImageDirectory()
         {
             var ImageDirectory = Path.Combine(Environment.CurrentDirectory, "data", "image\\");
