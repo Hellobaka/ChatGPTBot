@@ -10,6 +10,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
     public class Qdrant
     {
+        public const string KnowledgeCollectionName = "Knowledge";
+
         public static Qdrant Instance { get; set; }
 
         private string Host { get; set; }
@@ -17,8 +19,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         private ushort Port { get; set; }
 
         private List<string> Collections { get; set; } = [];
-
-        private static string CollectionName { get; set; } = "ChatMemory_v2";
 
         public Qdrant(string host, ushort port)
         {
@@ -72,15 +72,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool CreateCollection()
+        public bool CreateCollection(string collectionName = null)
         {
-            if (Collections.Contains(CollectionName))
+            if (string.IsNullOrEmpty(collectionName))
+            {
+                collectionName = KnowledgeCollectionName;
+            }
+            if (Collections.Contains(collectionName))
             {
                 return true;
             }
             try
             {
-                var r = Request($"collections/{CollectionName}", new
+                var r = Request($"collections/{collectionName}", new
                 {
                     vectors = new
                     {
@@ -94,7 +98,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     throw new Exception($"创建集合失败：{r}");
                 }
 
-                Collections.Add(CollectionName);
+                Collections.Add(collectionName);
                 return true;
             }
             catch (Exception ex)
@@ -104,14 +108,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool Insert(string memory)
+        public bool Insert(string memory, string collectionName)
         {
+            CreateCollection(collectionName);
             if (string.IsNullOrEmpty(memory))
             {
-                if (string.IsNullOrEmpty(memory))
-                {
-                    MainSave.CQLog.Error("插入向量", $"由于Record传入的文本为空，无法插入");
-                }
+                MainSave.CQLog.Error("插入向量", $"由于Record传入的文本为空，无法插入");
                 return false;
             }
             try
@@ -127,7 +129,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     MainSave.CQLog.Error("插入向量", $"由于Embedding维度数量与记忆维度不符，无法插入");
                     return false;
                 }
-                var r = Request($"collections/{CollectionName}/points", new
+                var r = Request($"collections/{collectionName}/points", new
                 {
                     points = new object[]
                     {
@@ -157,7 +159,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public (string id, string record, DateTime time, float score)[] GetRelevantCollection(string query)
+        public (string id, string record, DateTime time, float score)[] GetRelevantCollection(string query, string collectionName)
         {
             if (string.IsNullOrEmpty(query))
             {
@@ -166,7 +168,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             try
             {
-                var r = Request($"collections/{CollectionName}/points/query", new
+                var r = Request($"collections/{collectionName}/points/query", new
                 {
                     query = Embedding.GetEmbedding(query),
                     limit = AppConfig.EnableRerank ? 50 : (ulong)AppConfig.MaxMemoryCount,
@@ -217,11 +219,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool Delete(string id)
+        public bool Delete(string id, string collectionName)
         {
             try
             {
-                var r = Request($"collections/{CollectionName}/points/delete?wait=true", new
+                var r = Request($"collections/{collectionName}/points/delete?wait=true", new
                 {
                     points = new string[] { id },
                 }.ToJson(), "POST");
@@ -236,11 +238,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public bool DropCollection()
+        public bool DropCollection(string collectionName)
         {
             try
             {
-                var r = Request($"collections/{CollectionName}", null, "DELETE");
+                var r = Request($"collections/{collectionName}", null, "DELETE");
                 bool ok = r?["status"]?.ToString() == "ok";
 
                 return ok;
@@ -252,11 +254,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public int GetCollectionCount()
+        public int GetCollectionCount(string collectionName)
         {
             try
             {
-                var r = Request($"collections/{CollectionName}/points/count", new
+                var r = Request($"collections/{collectionName}/points/count", new
                 {
                     exact = true,
                 }.ToJson(), "POST");

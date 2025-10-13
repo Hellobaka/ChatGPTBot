@@ -138,52 +138,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 {
                     Memory.AddShortTermMemory(description, Context);
                 }, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
-                "RenewShortTermMemory" => Context != null ? AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。") : null,
-                "RemoveShortTermMemory" => Context != null ? AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。") : null,
-                "RemoveShortTermMemories" => Context != null ? AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。") : null,
+                "RenewShortTermMemory" => AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。"),
+                "RemoveShortTermMemory" => AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。"),
+                "RemoveShortTermMemories" => AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。"),
                 "AddToDoItem" => Context != null ? AIFunctionFactory.Create((string todo, bool isGlobal = false) =>
                 {
                     Memory.AddToDoItem(todo, isGlobal, Context);
                 }, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
-                "CompleteToDoItem" => Context != null ? AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。") : null,
-                "RemoveToDoItem" => Context != null ? AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。") : null,
-                "RemoveToDoItems" => Context != null ? AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。") : null,
-                "AddMemory" => Context != null ? AIFunctionFactory.Create(Memory.AddMemory, description:
+                "CompleteToDoItem" => AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。"),
+                "RemoveToDoItem" => AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。"),
+                "RemoveToDoItems" => AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。"),
+                "AddLongTermMemory" => AIFunctionFactory.Create(Memory.AddLongTermMemory, description:
                     """
-                    添加一段长期记忆，长期记忆会被存储到向量数据库中，并且不会过期。当你获得一条新的知识或者你认为关键的内容，请调用此工具。
-                    将一条具有长期价值的信息存入记忆库，供未来任务检索使用。仅当信息具备持久性、事实性和个性化价值时才应调用。
-                    参数说明：
-
-                    memory：一条详细描述的自然语言语句，长度建议不超过 500 个字符。
-                    
-                    调用建议：
-
-                    仅存储对后续交互有实际帮助的长期事实，避免临时、主观或通用内容。
-                    memory 必须是原子化、可独立理解的陈述句，不含指代（如“他”、“上次”）。
-                    若信息来自用户明确陈述，source 应设为 "user_statement"；若基于多次行为推断，则标记为 "inferred" 并提供合理置信度。
-                    禁止存储的内容：
-
-                    短暂上下文（如“用户刚问了航班”）。
-                    无持久价值的闲聊内容（如“今天天气不错”）。
-                    """) : null,
-                "QueryMemories" => Context != null ? AIFunctionFactory.Create(Memory.GetMemories, description:
+                    添加一段长期记忆。长期记忆是与身份（QQ号）相关联的持久化信息，可以跨会话保存。参数为一句详细描述的自然语言描述的记忆内容，例如：`用户2025-10-13中午吃了焖子。`、`用户和我详细探讨了NLP的学习路线，他表示要好好学习NLP的知识。`
+                    """),
+                "GetLongTermMemories" => AIFunctionFactory.Create(Memory.GetLongTermMemories, description:
                     """
-                    获取与当前上下文相关的长期记忆/知识，返回值为字符串数组，每条记忆为一行文本。
-                    从长期记忆库中检索相关信息。当你需要回忆用户过去明确提及或系统可靠推断出的持久性事实或者需要某条知识时，请调用此工具。
-
-                    参数说明：
-
-                    query：用一句简洁的自然语言描述你想查找的内容。例如：“用户的花生过敏情况”、“用户中午吃了什么”、“xswl是什么意思”。
-
-                    调用建议：
-
-                    仅在需要长期、个性化信息时调用，不要用于查询通用知识、当前对话上下文或临时任务状态。
-                    query 应具体、聚焦，避免模糊表述如“关于用户的信息”。
-                    工具返回的结果包含记忆内容和相关性得分（0.0 到 1.0）。仅当得分较高（例如大于 0.6）时，才应视为可信记忆。
-                    注意事项：
-
-                    如果不确定是否存在相关记忆，仍可调用此工具，但需根据返回得分谨慎使用结果。
-                    """) : null,
+                    查询与当前用户（QQ号）相关联的长期记忆列表。返回值为一个字符串数组，每个元素是一段记忆的描述。
+                    """),
+                "AddKnowledge" => AIFunctionFactory.Create(Memory.AddKnowledge, description:
+                    """
+                    向知识库中添加一条知识。知识是一句无歧义、描述准确、原子化的自然语言文本。添加时尽量保留主体以及强逻辑性，例如：`xswl是一句网络用语，是"笑死我了"的中文缩写。`、`原神是一款由米哈游开发的二次元开放世界游戏。`或者`丰川祥子是《BanG Dream!》及其衍生作品中的角色，Ave Mujica乐队的键盘手，代号Oblivionis。曾是CRYCHIC乐队的键盘手，后因性格转变退出，之后主导组建Ave Mujica并担任键盘手和作曲。`
+                    """),
+                "GetKnowledges" => AIFunctionFactory.Create(Memory.GetKnowledges, description:
+                    """
+                    查询知识库内容。返回值为一个字符串数组，每个元素是一条知识的自然语言文本。
+                    """),
 
                 #endregion
 

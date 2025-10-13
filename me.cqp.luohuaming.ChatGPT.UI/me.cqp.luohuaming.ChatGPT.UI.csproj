@@ -130,9 +130,6 @@
     <Compile Include="Pages\MCP.xaml.cs">
       <DependentUpon>MCP.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Pages\Memory.xaml.cs">
-      <DependentUpon>Memory.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Pages\Misc.xaml.cs">
       <DependentUpon>Misc.xaml</DependentUpon>
     </Compile>
@@ -217,10 +214,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\MCP.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Pages\Memory.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

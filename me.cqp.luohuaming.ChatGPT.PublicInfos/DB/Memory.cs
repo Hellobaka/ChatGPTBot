@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
+using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +36,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static ShortTermMemory[] GetShortTermMemories(long groupId, long qq)
         {
-            var memories = ShortTermMemories.Where(x => x.Context.GroupId == groupId && x.Context.QQ == qq).ToArray();
+            var memories = ShortTermMemories.Where(x => x.Context.GroupId == groupId || (x.Context.GroupId == -1 && x.Context.QQ == qq)).ToArray();
             foreach (var memory in memories)
             {
                 memory.UsedCount++;
@@ -78,7 +79,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static ToDoItem[] GetToDoItems(long groupId, long qq)
         {
-            return ToDoItems.Where(x => x.IsGlobalTodo || (x.Context.GroupId == groupId && x.Context.QQ == qq)).ToArray();
+            return ToDoItems.Where(x => x.IsGlobalTodo || x.Context.GroupId == groupId || (x.Context.GroupId == -1 && x.Context.QQ == qq)).ToArray();
         }
 
         public static void CompleteToDoItem(int id)
@@ -101,7 +102,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             ToDoItems.RemoveAll(x => ids.Contains(x.Id));
         }
 
-        public static void AddMemory(string memory)
+        public static void AddLongTermMemory(string memory, long qq)
         {
             if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
             {
@@ -109,24 +110,53 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             Task.Run(() =>
             {
-                if (Qdrant.Instance.Insert(memory))
+                if (Qdrant.Instance.Insert(memory, $"LongTermMemory_{qq}"))
                 {
-                    CommonHelper.DebugLog("记忆插入", $"Memory={memory} 插入成功");
+                    CommonHelper.DebugLog("长记忆插入", $"Memory={memory}; QQ={qq} 插入成功");
                 }
                 else
                 {
-                    CommonHelper.DebugLog("记忆插入", $"Memory={memory} 插入失败");
+                    CommonHelper.DebugLog("长记忆插入", $"Memory={memory}; QQ={qq} 插入失败");
                 }
             });
         }
 
-        public static (string id, string record, DateTime time, float score)[] GetMemories(string query)
+        public static (string id, string record, DateTime time, float score)[] GetLongTermMemories(string query, long qq)
         {
             if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
             {
                 return [];
             }
-            var memories = Qdrant.Instance.GetRelevantCollection(query);
+            var memories = Qdrant.Instance.GetRelevantCollection(query, $"LongTermMemory_{qq}");
+            return memories.ToArray();
+        }
+
+        public static void AddKnowledge(string knowledge)
+        {
+            if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
+            {
+                return;
+            }
+            Task.Run(() =>
+            {
+                if (Qdrant.Instance.Insert(knowledge, Qdrant.KnowledgeCollectionName))
+                {
+                    CommonHelper.DebugLog("知识插入", $"Knowledge={knowledge} 插入成功");
+                }
+                else
+                {
+                    CommonHelper.DebugLog("知识插入", $"Knowledge={knowledge} 插入失败");
+                }
+            });
+        }
+
+        public static (string id, string record, DateTime time, float score)[] GetKnowledges(string query)
+        {
+            if (!AppConfig.EnableQdrant || Qdrant.Instance == null)
+            {
+                return [];
+            }
+            var memories = Qdrant.Instance.GetRelevantCollection(query, Qdrant.KnowledgeCollectionName);
             return memories.ToArray();
         }
     }

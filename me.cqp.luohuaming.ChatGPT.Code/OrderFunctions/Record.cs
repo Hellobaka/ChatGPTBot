@@ -289,17 +289,25 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             if (AppConfig.EnableQdrant)
             {
-                var memories = Memory.GetMemories(record.Message_NoAppendInfo);
-                CommonHelper.DebugLog("被动召回", $"召回起 {memories.Length} 条记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
+                var memories = Memory.GetLongTermMemories(record.Message_NoAppendInfo, relationship.QQ);
+                CommonHelper.DebugLog("被动长期记忆召回", $"召回起 {memories.Length} 条长期记忆, 最大相似度为 {memories.FirstOrDefault().score}%");
                 if (memories.Length > 0)
                 {
-                    stringBuilder.AppendLine("以下是可能相关的知识：");
-                    stringBuilder.AppendLine("<Memory>");
+                    stringBuilder.AppendLine("以下是可能相关的长期记忆：");
                     foreach (var memory in memories)
                     {
                         stringBuilder.AppendLine(memory.record);
                     }
-                    stringBuilder.AppendLine("</Memory>");
+                }
+                var knowledges = Memory.GetKnowledges(record.Message_NoAppendInfo);
+                CommonHelper.DebugLog("被动知识召回", $"召回起 {knowledges.Length} 条知识, 最大相似度为 {memories.FirstOrDefault().score}%");
+                if (knowledges.Length > 0)
+                {
+                    stringBuilder.AppendLine("以下是可能相关的知识：");
+                    foreach (var knowledge in knowledges)
+                    {
+                        stringBuilder.AppendLine(knowledge.record);
+                    }
                 }
             }
             stringBuilder.AppendLine("以下是上下文记录，发送时间倒序排序：");
