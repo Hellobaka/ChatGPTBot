@@ -211,7 +211,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ImageDescriberTimeout = ConfigHelper.GetConfig("ImageDescriberTimeout", 30000);
             MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
             MinEmojiRecommendScore = ConfigHelper.GetConfig("MinEmojiRecommendScore", (double)0.5);
-            NonEmojiPictureSaveDays = ConfigHelper.GetConfig("OnlySaveEmojiPicture", 7);
+            NonEmojiPictureSaveDays = ConfigHelper.GetConfig("NonEmojiPictureSaveDays", 7);
             LogThinkBlock = ConfigHelper.GetConfig("LogThinkBlock", true);
             RemoveThinkBlock = ConfigHelper.GetConfig("RemoveThinkBlock", true);
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
