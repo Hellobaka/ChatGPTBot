@@ -120,6 +120,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return relationship;
         }
 
+        /// <summary>
+        /// 更新与用户的好感值
+        /// </summary>
+        /// <param name="value">变化值</param>
         public void UpdateFavorability(double value)
         {
             Favorability += value;

@@ -50,6 +50,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return db.Queryable<Usage>().Where(x => x.Time.Date == time.Date).ToList();
         }
 
+        /// <summary>
+        /// 获取Token消耗情况
+        /// </summary>
+        /// <param name="start">查询开始时间</param>
+        /// <param name="end">查询结束时间</param>
+        /// <returns></returns>
         public static List<Usage> GetRangeUsageDetail(DateTime start, DateTime end)
         {
             start = start.Date;

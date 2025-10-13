@@ -80,6 +80,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             chatRecord.Id = db.Insertable(chatRecord).ExecuteReturnIdentity();
         }
 
+        /// <summary>
+        /// 根据群号和QQ号获取聊天记录
+        /// </summary>
+        /// <param name="groupId">群号</param>
+        /// <param name="qq">QQ，当为0时表示不限制发言人</param>
+        /// <param name="count">最大召回数量</param>
+        /// <returns></returns>
         public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15)
         {
             using var db = SQLHelper.GetInstance();
@@ -89,12 +96,27 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return results;
         }
 
+        /// <summary>
+        /// Retrieves a list of private chat records for the specified user.
+        /// </summary>
+        /// <remarks>This method queries the database for private chat records where the group ID is -1,
+        /// indicating a private chat.</remarks>
+        /// <param name="qq">The QQ number of the user whose private chat records are to be retrieved.</param>
+        /// <param name="count">The maximum number of chat records to retrieve. The default value is 15.</param>
+        /// <returns>A list of <see cref="ChatRecord"/> objects representing the private chat records, ordered by time in
+        /// descending order. The list may be empty if no records are found.</returns>
         public static List<ChatRecord> GetPrivateChatRecord(long qq, int count = 15)
         {
             using var db = SQLHelper.GetInstance();
             return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
         }
 
+        /// <summary>
+        /// Retrieves a list of chat records that match the specified IDs.
+        /// </summary>
+        /// <param name="ids">An array of integers representing the IDs of the chat records to retrieve. Cannot be null.</param>
+        /// <returns>A list of <see cref="ChatRecord"/> objects that match the specified IDs, ordered by time in descending
+        /// order. Returns an empty list if no matching records are found.</returns>
         public static List<ChatRecord> GetChatRecordByIds(int[] ids)
         {
             using var db = SQLHelper.GetInstance();
