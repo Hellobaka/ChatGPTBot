@@ -31,9 +31,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
             {
                 foreach (var tool in tools.OrderBy(x => x.Name))
                 {
+                    var name = clientBase.ToolNameConverters.FirstOrDefault(x => x.Value == tool.Name).Key;
                     model.Tools.Add(new MCPToolModel
                     {
-                        ConvertedName = clientBase.ToolNameConverters.TryGetValue(tool?.Name, out string converted) ? converted : null,
+                        OriginalName = string.IsNullOrEmpty(name) ? tool.Name : name,
                         Tool = tool,
                         Parent = model
                     });
@@ -51,8 +52,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
 
         public MCPClientModel Parent { get; set; }
 
-        public string ConvertedName { get; set; }
+        public string OriginalName { get; set; }
 
-        public string Name => string.IsNullOrEmpty(ConvertedName) ? Tool?.Name : $"{Tool?.Name}({ConvertedName})";
+        public string Name => OriginalName.Equals(Tool?.Name) ? Tool?.Name : $"{OriginalName}({Tool?.Name})";
     }
 }
