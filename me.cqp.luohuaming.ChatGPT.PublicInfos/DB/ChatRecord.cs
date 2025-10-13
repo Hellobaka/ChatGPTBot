@@ -136,18 +136,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             StringBuilder stringBuilder = new();
 
             string info = $"[{Time:G}][MessageID={MessageID}]";
+            string nickName = "";
             if (QQ == MainSave.CurrentQQ)
             {
-                info += $"[你自己] [昵称：{AppConfig.BotName}]: ";
+                nickName = AppConfig.BotName;
             }
             else if (Relationship != null)
             {
-                info += $" [昵称：{Relationship.Card ?? Relationship.NickName}]: ";
+                nickName = Relationship.Card ?? Relationship.NickName;
             }
-            else
-            {
-                info += $" [ID：{QQ}]: ";
-            }
+
+            info += $" {nickName}[{QQ}]: ";
 
             var split = message.Replace("\n", "").SplitV2("\\[CQ:.*?\\]");
             int image = 0, text = 0;
