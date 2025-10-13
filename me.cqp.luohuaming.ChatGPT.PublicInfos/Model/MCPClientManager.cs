@@ -35,7 +35,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     var mcp = JObject.Parse(File.ReadAllText(path));
                     if (mcp != null)
                     {
-                        Clients = mcp[nameof(Clients)].ToObject<List<MCPClientBase>>(new JsonSerializer() { TypeNameHandling = TypeNameHandling.Auto});
+                        Clients = mcp[nameof(Clients)].ToObject<List<MCPClientBase>>(new JsonSerializer() { TypeNameHandling = TypeNameHandling.Auto });
+                        CreateCustomClientsIfNeeded();
                     }
                 }
             }
@@ -67,20 +68,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 return;
             }
-            foreach (var item in MCPTools)
-            {
-                foreach (McpClientTool tool in item.Value.Where(x => x is McpClientTool))
-                {
-                    tool.BeforeToolCalled -= Tool_BeforeToolCalled;
-                }
-            }
             MCPTools = [];
+            CreateCustomClientsIfNeeded();
             Parallel.ForEach(Clients, client =>
             {
                 try
                 {
-                    MCPTools.Add(client, []);
-                    MCPTools[client] = [.. MCPTools[client], ..client.GetTools()];
+                    MCPTools.Add(client, client.GetTools());
                 }
                 catch (Exception e)
                 {
@@ -109,6 +103,18 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
             }
             return functions;
+        }
+
+        private static void CreateCustomClientsIfNeeded()
+        {
+            foreach (var tool in MCPCustomClient.CustomToolNames.Where(x => !Clients.Any(o => o.Name == x)))
+            {
+                Clients.Add(new MCPCustomClient
+                {
+                    Name = tool,
+                    Enabled = false
+                });
+            }
         }
 
         private bool CheckClientCanBuild(MCPClientBase client, long groupId, long personId)
