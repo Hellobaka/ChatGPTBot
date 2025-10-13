@@ -9,6 +9,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
 
         public static void AddPicture(string identity, string hash)
         {
+            if (string.IsNullOrEmpty(identity))
+            {
+                return;
+            }
             _pendingPictures.AddOrUpdate(identity, [hash], (key, list) =>
             {
                 list.Add(hash);
@@ -18,6 +22,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
 
         public static List<string> GetAndClearPictures(string identity)
         {
+            if (string.IsNullOrEmpty(identity))
+            {
+                return [];
+            }
             if (_pendingPictures.TryRemove(identity, out var list))
             {
                 return list;

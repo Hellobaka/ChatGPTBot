@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -172,6 +173,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 var pendingPictures = PictureContextManager.GetAndClearPictures(identity);
                 if (pendingPictures != null && pendingPictures.Count> 0)
                 {
+                    bool success = false;
                     foreach (var hash in pendingPictures)
                     {
                         if (Picture.Cache.TryGetValue(hash, out var picture) && picture != null
@@ -179,9 +181,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         {
                             MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片 {hash}，路径 {picture.FilePath}");
                             chatMessages.Add(new(ChatRole.User, [new DataContent(File.ReadAllBytes(picture.FilePath), "image/jpg")]));
+                            success = true;
                         }
                     }
-                    return GetChatResult(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity);
+                    if (!success)
+                    {
+                        MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片失败，可能是由于图片不存在");
+                    }
+                    else
+                    {
+                        return GetChatResult(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity);
+                    }
                 }
             }
             catch (Exception ex)
