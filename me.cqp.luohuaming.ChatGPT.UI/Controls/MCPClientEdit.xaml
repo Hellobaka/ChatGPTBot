@@ -29,8 +29,15 @@
             IsEnabled="{Binding IsCustomTool, Converter={StaticResource BoolRevertConverter}}"
             Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <CheckBox Content="启用" IsChecked="{Binding Enabled, Mode=TwoWay}" />
-        <CheckBox Content="群组聊天可用" IsChecked="{Binding GroupEnabled, Mode=TwoWay}" />
-        <CheckBox Content="个人聊天可用" IsChecked="{Binding PersonEnabled, Mode=TwoWay}" />
+        <CheckBox
+            Content="群组聊天可用"
+            IsChecked="{Binding GroupEnabled, Mode=TwoWay}"
+            Visibility="{Binding CanOnlyMasterCall, Converter={StaticResource BoolToVisibilityRevertConverter}}" />
+        <CheckBox
+            Content="个人聊天可用"
+            IsChecked="{Binding PersonEnabled, Mode=TwoWay}"
+            Visibility="{Binding CanOnlyMasterCall, Converter={StaticResource BoolToVisibilityRevertConverter}}" />
+        <CheckBox Content="仅主人可用" IsChecked="{Binding CanOnlyMasterCall, Mode=TwoWay}" />
         <ComboBox
             x:Name="MCPClientTypeSelector"
             HorizontalAlignment="Stretch"
@@ -78,27 +85,29 @@
                 Style="{StaticResource AccentButtonStyle}" />
             <local:EditableListBox_Dict_String_String x:Name="ToolNameConverterEditor" ItemSource="{Binding ToolNameConverter}" />
         </StackPanel>
-        <ui:SimpleStackPanel Spacing="5" Visibility="{Binding GroupEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="群可见性设置" />
-            <ui:ToggleSwitch
-                IsOn="{Binding IsGroupBlackList}"
-                OffContent="群组使用黑名单"
-                OnContent="群组使用黑名单" />
-            <local:EditableListBox_Int
-                x:Name="Groups"
-                CanDuplicate="False"
-                ItemSource="{Binding Groups}" />
-        </ui:SimpleStackPanel>
-        <ui:SimpleStackPanel Spacing="5" Visibility="{Binding PersonEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="私聊可见性设置" />
-            <ui:ToggleSwitch
-                IsOn="{Binding IsPersonBlackList}"
-                OffContent="私聊使用黑名单"
-                OnContent="私聊使用黑名单" />
-            <local:EditableListBox_Int
-                x:Name="Persons"
-                CanDuplicate="False"
-                ItemSource="{Binding Persons}" />
-        </ui:SimpleStackPanel>
+        <StackPanel Visibility="{Binding CanOnlyMasterCall, Converter={StaticResource BoolToVisibilityRevertConverter}}">
+            <ui:SimpleStackPanel Spacing="5" Visibility="{Binding GroupEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="群可见性设置" />
+                <ui:ToggleSwitch
+                    IsOn="{Binding IsGroupBlackList}"
+                    OffContent="群组使用黑名单"
+                    OnContent="群组使用黑名单" />
+                <local:EditableListBox_Int
+                    x:Name="Groups"
+                    CanDuplicate="False"
+                    ItemSource="{Binding Groups}" />
+            </ui:SimpleStackPanel>
+            <ui:SimpleStackPanel Spacing="5" Visibility="{Binding PersonEnabled, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="私聊可见性设置" />
+                <ui:ToggleSwitch
+                    IsOn="{Binding IsPersonBlackList}"
+                    OffContent="私聊使用黑名单"
+                    OnContent="私聊使用黑名单" />
+                <local:EditableListBox_Int
+                    x:Name="Persons"
+                    CanDuplicate="False"
+                    ItemSource="{Binding Persons}" />
+            </ui:SimpleStackPanel>
+        </StackPanel>
     </ui:SimpleStackPanel>
 </UserControl>

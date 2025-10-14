@@ -25,6 +25,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
             Enabled = clientModel.MCPClientBase.Enabled;
             GroupEnabled = clientModel.MCPClientBase.GroupEnabled;
             PersonEnabled = clientModel.MCPClientBase.PersonEnabled;
+            CanOnlyMasterCall = clientModel.MCPClientBase.CanOnlyMasterCall;
             IsGroupBlackList = clientModel.MCPClientBase.IsGroupBlackList;
             IsPersonBlackList = clientModel.MCPClientBase.IsPersonBlackList;
             Groups = new ObservableCollection<long>(clientModel.MCPClientBase.Groups);
@@ -56,6 +57,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
         public bool GroupEnabled { get; set; }
 
         public bool PersonEnabled { get; set; }
+
+        public bool CanOnlyMasterCall { get; set; }
 
         public bool IsGroupBlackList { get; set; }
 
@@ -110,6 +113,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         Enabled = Enabled,
                         GroupEnabled = GroupEnabled,
                         PersonEnabled = PersonEnabled,
+                        CanOnlyMasterCall = CanOnlyMasterCall,
                         IsGroupBlackList = IsGroupBlackList,
                         Groups = Groups.ToArray(),
                         IsPersonBlackList = IsPersonBlackList,
@@ -129,6 +133,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         Enabled = Enabled,
                         GroupEnabled = GroupEnabled,
                         PersonEnabled = PersonEnabled,
+                        CanOnlyMasterCall = CanOnlyMasterCall,
                         IsGroupBlackList = IsGroupBlackList,
                         Groups = Groups.ToArray(),
                         IsPersonBlackList = IsPersonBlackList,
@@ -145,6 +150,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                         Enabled = Enabled,
                         GroupEnabled = GroupEnabled,
                         PersonEnabled = PersonEnabled,
+                        CanOnlyMasterCall = CanOnlyMasterCall,
                         IsGroupBlackList = IsGroupBlackList,
                         Groups = Groups.ToArray(),
                         IsPersonBlackList = IsPersonBlackList,

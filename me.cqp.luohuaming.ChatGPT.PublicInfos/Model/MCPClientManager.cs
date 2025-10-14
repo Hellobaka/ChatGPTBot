@@ -102,6 +102,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     functions = [.. functions, .. item.Value];
                 }
             }
+            CommonHelper.DebugLog("构建工具列表", $"共添加了 {functions.Length} 个工具");
             return functions;
         }
 
