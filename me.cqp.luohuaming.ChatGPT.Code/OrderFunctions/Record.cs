@@ -235,7 +235,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp, string prompt, string identity)
+        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp, string identity, string prompt)
         {
             if (relationship == null)
             {
@@ -246,7 +246,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return Chat.GetChatResult(AppConfig.ChatAPIKeyId,
             [
                 new(ChatRole.System, prompt),
-                new(ChatRole.User, "请回复")
+                new(ChatRole.User, "你需要阅读Prompt提供的上下文记录，并根据最新一条消息做出回复。")
             ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout, mcp: mcp, identity: identity);
         }
 
@@ -263,10 +263,20 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 stringBuilder.AppendLine($"当前场景：私聊场景。触发消息用户昵称与QQ：{relationship.Card ?? relationship.NickName}[{relationship.QQ}]; 你的QQ：{MainSave.CurrentQQ}");
             }
+            if (record.GroupID > 0)
+            {
+                BuildGroupPrompt(relationship, record, stringBuilder);
+            }
+            else
+            {
+                BuildPrivatePrompt(relationship, record, stringBuilder);
+            }
+
+            stringBuilder.AppendLine($"给你提供的工具非常丰富，请你要积极使用来增强/改善会话体验！");
             stringBuilder.AppendLine($"你的系统管理员/主人QQ是:{string.Join(",", AppConfig.MasterQQ)}。");
             stringBuilder.AppendLine($"今天是{DateTime.Now:G}。");
             stringBuilder.AppendLine($"你当前的心情是{MoodManager.Instance}。");
-            stringBuilder.AppendLine($"你可以通过以下模板进行消息的引用/回复：[CQ:reply,id=MessageID]，其中替换MessageID即可引用/回复消息。需要注意的是，只能引用/回复一条信息。");
+            stringBuilder.AppendLine($"你可以通过以下模板进行消息的引用/回复：[CQ:reply,id=MessageID]，其中替换MessageID即可引用/回复消息。需要注意的是，只能引用/回复一条信息，非必要情况不能使用此模板，只有在引用历史信息(20条消息以前)的情况下才能能使用，否则很扰民。");
             if (AppConfig.EnableEmojiActiveSend)
             {
                 stringBuilder.AppendLine("你拥有主动发送表情包的能力，使用`<@Emoji{想要表达的具体情绪}>`文本模板来发送表情包，框架会自动切割你的发言部分，无需额外添加换行或特殊标识。并且允许一条消息内只有表情包而没有文本。切记：不是所有的消息都需要发送表情包，你可能在以前的对话已经发送过了，在你觉得必要的时候才能发送表情包，每条消息最多只能有两个表情包。比起给对方当捧哏，说些没有营养的内容，发表情包会更合适");
@@ -325,14 +335,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                  : ChatRecord.GetGroupChatRecord(relationship.GroupID, 0, AppConfig.ContextMaxLength))
             {
                 stringBuilder.AppendLine(item.ParsedMessage);
-            }
-            if (record.GroupID > 0)
-            {
-                BuildGroupPrompt(relationship, record, stringBuilder);
-            }
-            else
-            {
-                BuildPrivatePrompt(relationship, record, stringBuilder);
             }
 
             return stringBuilder.ToString();
