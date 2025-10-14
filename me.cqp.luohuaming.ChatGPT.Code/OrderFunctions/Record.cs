@@ -84,9 +84,10 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     {
                         var records = ChatRecord.GetGroupChatRecord(e.FromGroup, 0, AppConfig.ContextMaxLength).ToList();
                         (bool shouldResponse, double confidence) = ReplyManager.CheckShouldResponseByLLM(records);
+                        CommonHelper.DebugLog("触发回复", $"大模型判断应答，应当回复 {shouldResponse}，置信度 {confidence * 100}%");
                         if (!shouldResponse)
                         {
-                            e.CQLog.Info("触发回复", "大模型拒绝了回答");
+                            e.CQLog.Info("触发回复", $"大模型拒绝了回答，原因：LLM主动判断");
                             return new();
                         }
                         if (confidence == 0)
@@ -97,7 +98,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         else
                         {
                             replyProbability = confidence;
-                            CommonHelper.DebugLog("触发回复", $"大模型判断应答，置信度 {confidence * 100}%");
                         }
                     }
                 }
@@ -120,7 +120,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     if (reply.Contains(AppConfig.ChatEmptyResponse))
                     {
-                        e.CQLog.Info("触发回复", "大模型拒绝了回答");
+                        e.CQLog.Info("触发回复", "大模型拒绝了回答，原因：包含停止回复");
                         return new();
                     }
                     SendReply(reply, e.FromGroup, e.FromQQ, e.Message.Id);
@@ -189,9 +189,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 {
                     throw new ArgumentNullException("请求结果失败");
                 }
-                if (reply == AppConfig.ChatEmptyResponse)
+                if (reply.Contains(AppConfig.ChatEmptyResponse))
                 {
-                    e.CQLog.Info("触发回复", "大模型拒绝了回答");
+                    e.CQLog.Info("触发回复", "大模型拒绝了回答，原因：包含停止回复");
                     return new();
                 }
                 SendReply(reply, -1, e.FromQQ, e.Message.Id);
