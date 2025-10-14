@@ -5,6 +5,7 @@ using ModelContextProtocol.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
     {
         public static List<MCPClientBase> Clients { get; set; } = [];
 
-        public static Dictionary<MCPClientBase, AIFunction[]> MCPTools { get; set; } = [];
+        public static ConcurrentDictionary<MCPClientBase, AIFunction[]> MCPTools { get; set; } = [];
 
         public static JsonSerializerSettings JsonSerializerSettings { get; set; } = new JsonSerializerSettings
         {
@@ -74,7 +75,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 try
                 {
-                    MCPTools.Add(client, client.GetTools());
+                    MCPTools.TryAdd(client, client.GetTools());
                 }
                 catch (Exception e)
                 {
