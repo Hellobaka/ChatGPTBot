@@ -384,7 +384,7 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">是否启用日程:</TextBlock>
                             <ui:ToggleSwitch
-                                x:Name="EnableEnableSchedules"
+                                x:Name="EnableSchedules"
                                 Margin="10,0,0,0"
                                 OffContent=""
                                 OnContent="" />
