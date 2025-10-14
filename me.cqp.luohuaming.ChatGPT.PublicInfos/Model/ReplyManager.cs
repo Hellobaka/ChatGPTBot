@@ -55,7 +55,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public static (bool shouldResponse, double confidence) CheckShouldResponseByLLM(List<ChatRecord> chatRecords)
         {
             string prompt = $$"""
-                你是一个群聊助手，需要判断当前是否应该回应最新消息。
+                你是一个群聊助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}},{{AppConfig.GroupPrompt}}，需要判断当前是否应该回应最新消息。
                 规则：
                 - 如果用户明显在和你对话（延续你之前的话题、问你问题、提到你），应回应；
                 - 如果话题已切换到与你无关的内容，不应回应；
