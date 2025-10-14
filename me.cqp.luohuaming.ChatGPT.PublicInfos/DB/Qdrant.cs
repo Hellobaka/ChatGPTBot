@@ -168,6 +168,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             try
             {
+                CreateCollection(collectionName);
                 var r = Request($"collections/{collectionName}/points/query", new
                 {
                     query = Embedding.GetEmbedding(query),
@@ -223,6 +224,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             try
             {
+                CreateCollection(collectionName);
                 var r = Request($"collections/{collectionName}/points/delete?wait=true", new
                 {
                     points = new string[] { id },
@@ -258,6 +260,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             try
             {
+                CreateCollection(collectionName);
                 var r = Request($"collections/{collectionName}/points/count", new
                 {
                     exact = true,
