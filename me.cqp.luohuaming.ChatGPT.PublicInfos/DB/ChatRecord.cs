@@ -319,7 +319,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
 
             Picture.InsertImageDescription(cachePath, hash, emoji, description);
-            return $"[hash:{picture.Hash};这是一张图片，这是它的描述：{description}]";
+            return $"[hash:{hash};这是一张图片，这是它的描述：{description}]";
         }
     }
 }
