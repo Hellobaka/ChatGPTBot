@@ -88,30 +88,29 @@
                 Content="显示内置工具"
                 IsChecked="True"
                 Unchecked="ShowCustomTools_Checked" />
-            <ScrollViewer
+            <TreeView
+                x:Name="MCPClientContainer"
                 Grid.Row="3"
                 Margin="10,0,10,10"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto">
-                <TreeView
-                    x:Name="MCPClientContainer"
-                    HorizontalAlignment="Stretch"
-                    IsEnabled="{Binding Rebuilding, Converter={StaticResource BoolRevertConverter}}"
-                    ItemsSource="{Binding MCPClients}"
-                    SelectedItemChanged="MCPClientContainer_SelectedItemChanged">
-                    <TreeView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource DefaultTreeViewItemStyle}" TargetType="{x:Type TreeViewItem}">
-                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                        </Style>
-                    </TreeView.ItemContainerStyle>
-                    <TreeView.ItemTemplate>
-                        <HierarchicalDataTemplate ItemsSource="{Binding Tools}">
-                            <TextBlock Text="{Binding Name}" />
-                        </HierarchicalDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
-            </ScrollViewer>
+                HorizontalAlignment="Stretch"
+                IsEnabled="{Binding Rebuilding, Converter={StaticResource BoolRevertConverter}}"
+                ItemsSource="{Binding MCPClients}"
+                ScrollViewer.CanContentScroll="True"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                SelectedItemChanged="MCPClientContainer_SelectedItemChanged">
+                <TreeView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource DefaultTreeViewItemStyle}" TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Tools}">
+                        <TextBlock Text="{Binding Name}" />
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
         </Grid>
         <Grid Grid.Column="1" Margin="10">
             <Grid.RowDefinitions>
