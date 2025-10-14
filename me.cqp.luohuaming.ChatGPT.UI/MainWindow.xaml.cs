@@ -105,16 +105,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                     && PageCache.TryGetValue("MCP", out var mcpPage) && mcpPage is MCP mcp
                     && mcp.HasChanged && !mcp.Rebuilt)
                 {
-                    if (ShowConfirm("MCP 配置已保存但未重建工具列表，确认保持这个状态吗？"))
-                    {
-                        mcp.HasChanged = false;
-                    }
-                    else
-                    {
-                        //selectedItemTag = "MCP";
-                        PageSelector.SelectedItem = mcpPage;
-                        return;
-                    }
+                    ShowInfo("MCP 配置已保存但未重建工具列表，请在 MCP 页重建工具列表");
+                    mcp.HasChanged = false;
                 }
                 if (PageCache.TryGetValue(selectedItemTag, out object? page))
                 {
