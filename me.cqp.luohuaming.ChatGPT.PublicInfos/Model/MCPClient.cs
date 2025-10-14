@@ -137,6 +137,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     string prompt = Context.Prompt;
                     long groupId = Context.GroupId;
                     long qq = Context.QQ;
+                    string extraIdentity = Guid.NewGuid().ToString();
+                    Context.ExtraIdentity = extraIdentity;
                     MCPClientManager manager = Context.MCPClientManager;
                     _ = Task.Run(async () =>
                     {
@@ -147,7 +149,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                         var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
                                 new(ChatRole.System, prompt),
                                 new(ChatRole.User, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
-                            ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout, mcp: manager);
+                            ], Chat.Purpose.聊天, identity: extraIdentity, timeout: AppConfig.ChatTimeout, mcp: manager);
                         MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
                         if (response != Chat.ErrorMessage && !response.Contains(AppConfig.ChatEmptyResponse))
                         {
@@ -294,7 +296,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void Chat_OnToolCall(string identity, string sliceMessage)
         {
-            if (!string.IsNullOrEmpty(identity))
+            if (!string.IsNullOrEmpty(identity) && identity == Context.ExtraIdentity)
             {
                 long groupId = Context.GroupId;
                 long qq = Context.QQ;

@@ -7,6 +7,8 @@
         public long QQ { get; } = qq;
         
         public string ChatIdentity { get; } = chatIdentity;
+        
+        public string ExtraIdentity { get; set; }
 
         public string Prompt { get; set; } = prompt;
 
