@@ -99,6 +99,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                             {
                                 msg += AppendContentToMessage(openAIUpdate.ContentUpdate);
                                 reasoning += GetReasoningContent(openAIUpdate);
+                                if (openAIUpdate.Usage != null)
+                                {
+                                    usage = new UsageDetails()
+                                    {
+                                        InputTokenCount = openAIUpdate.Usage.InputTokenCount,
+                                        OutputTokenCount = openAIUpdate.Usage.OutputTokenCount,
+                                        TotalTokenCount = openAIUpdate.Usage.TotalTokenCount,
+                                    };
+                                }
                             }
                             else
                             {
@@ -124,6 +133,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                        && AppConfig.EnableMCP)
                                 {
                                     OnToolCall?.Invoke(identity, msg);
+                                    CommonHelper.DebugLog("Tool_消息切片", msg);
                                     msg = "";
                                 }
                             }
