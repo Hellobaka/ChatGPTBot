@@ -55,19 +55,28 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public static (bool shouldResponse, double confidence) CheckShouldResponseByLLM(List<ChatRecord> chatRecords)
         {
             string prompt = $$"""
-                你是一个群聊助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}},{{AppConfig.GroupPrompt}}，需要判断当前是否应该回应最新消息。
+                你是一个群聊助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}}，需要判断当前是否应该回应最新消息。
                 规则：
                 - 如果用户明显在和你对话（延续你之前的话题、问你问题、提到你），应回应；
                 - 如果话题已切换到与你无关的内容，不应回应；
                 - 即使没被 @，只要上下文显示你在被“对话中”，就应回应；
+                - 如果有人觉得你很烦就降低置信度50%；
+                - 不要自以为很受欢迎，如果没人理你，就别理人家；
                 - 避免打扰：多人闲聊、表情包、玩笑话通常不应回应。
-                最近对话（按时间倒序）：
-                {{string.Join("\n", chatRecords.Skip(1).Select(x => x.ParsedMessage))}}
-
                 最新消息：
+                <latest_Message>
                 {{chatRecords.FirstOrDefault()?.ParsedMessage}}
+                </latest_Message>
 
-                请仅输出 JSON：{"should_respond": true/false, "confidence": 0.0~1.0}
+                最近对话（按时间倒序）：
+                <recent_Message>
+                {{string.Join("\n", chatRecords.Skip(1).Select(x => x.ParsedMessage))}}
+                </recent_Message>
+
+                请仅输出 JSON格式的文本
+                ```
+                {"should_respond": true/false, "confidence": 0.0~1.0}
+                ```
                 """;
 
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
@@ -79,7 +88,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 MainSave.CQLog?.Error("回复意愿计算", "调用接口失败");
                 return (true, 0);
             }
-            response = response.Replace("`", "");
+            response = response.ToLower().Replace("`", "").Replace("json", "").Trim();
             try
             {
                 var json = JObject.Parse(response);
