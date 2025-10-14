@@ -92,6 +92,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                     AppConfig.SplitterRegexFirst = true;
                 }
             }
+            _ = new MoodManager();
+            _ = new SchedulerManager();
+            Picture.InitCache();
+            Picture.StartScheduleDeleteNonEmoji();
+
             if (!AppConfig.EnableMCP)
             {
                 MainSave.CQLog.Info("初始化", "MCP 已禁用");
@@ -103,11 +108,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code
                 MCPClientManager.Rebuild();
                 MainSave.CQLog.Info("初始化", $"加载了 {MCPClientManager.Clients.Count} 个客户端，{MCPClientManager.MCPTools.Sum(x => x.Value.Length)} 个工具");
             }
-
-            _ = new MoodManager();
-            _ = new SchedulerManager();
-            Picture.InitCache();
-            Picture.StartScheduleDeleteNonEmoji();
             MainSave.CQLog.Info("初始化", "ChatGPT插件初始化完成");
         }
     }
