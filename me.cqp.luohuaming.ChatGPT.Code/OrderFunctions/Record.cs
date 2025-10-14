@@ -76,22 +76,29 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 // LLM 判断是否应该回复
                 if (AppConfig.EnableLLMCheckShouldResponse)
                 {
-                    var records = ChatRecord.GetGroupChatRecord(e.FromGroup, 0, AppConfig.ContextMaxLength).ToList();
-                    (bool shouldResponse, double confidence) = ReplyManager.CheckShouldResponseByLLM(records);
-                    if (!shouldResponse)
+                    if (record.IsMentioned)
                     {
-                        e.CQLog.Info("触发回复", "大模型拒绝了回答");
-                        return new();
-                    }
-                    if (confidence == 0)
-                    {
-                        // 接口调用失败，使用内置方案
-                        e.CQLog.Info("触发回复", "大模型接口返回失败，使用内置方案");
+                        replyProbability = 1;
                     }
                     else
                     {
-                        replyProbability = confidence;
-                        CommonHelper.DebugLog("触发回复", $"大模型判断应答，置信度 {confidence * 100}%");
+                        var records = ChatRecord.GetGroupChatRecord(e.FromGroup, 0, AppConfig.ContextMaxLength).ToList();
+                        (bool shouldResponse, double confidence) = ReplyManager.CheckShouldResponseByLLM(records);
+                        if (!shouldResponse)
+                        {
+                            e.CQLog.Info("触发回复", "大模型拒绝了回答");
+                            return new();
+                        }
+                        if (confidence == 0)
+                        {
+                            // 接口调用失败，使用内置方案
+                            e.CQLog.Info("触发回复", "大模型接口返回失败，使用内置方案");
+                        }
+                        else
+                        {
+                            replyProbability = confidence;
+                            CommonHelper.DebugLog("触发回复", $"大模型判断应答，置信度 {confidence * 100}%");
+                        }
                     }
                 }
 
