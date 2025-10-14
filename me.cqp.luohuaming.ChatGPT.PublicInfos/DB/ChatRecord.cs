@@ -287,7 +287,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 return null;
             }
-            bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType == "1";
+            bool emoji = cqcode.Items.TryGetValue("sub_type", out string subType) && subType != "0";
             if (!ShouldProcessImage(IsMentioned, emoji))
             {
                 return "[图片]";
