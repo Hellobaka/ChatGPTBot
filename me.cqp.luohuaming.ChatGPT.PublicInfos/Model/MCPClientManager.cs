@@ -96,7 +96,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 if (item.Key is MCPCustomClient customClient)
                 {
                     customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this);
-                    functions = [.. functions, .. customClient.GetTools()];
+                    var customFunctions = customClient.GetTools();
+                    if (customFunctions.Length > 0)
+                    {
+                        functions = [.. functions, .. customClient.GetTools()];
+                    }
                 }
                 else
                 {
