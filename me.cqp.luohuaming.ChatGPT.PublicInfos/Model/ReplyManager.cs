@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -54,19 +55,29 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public static (bool shouldResponse, double confidence) CheckShouldResponseByLLM(List<ChatRecord> chatRecords)
         {
+            if (chatRecords.Count < 2)
+            {
+                return (false, 0);
+            }
+            long groupId = chatRecords.FirstOrDefault().GroupID;
+            long qq = chatRecords.FirstOrDefault().QQ;
+
+            var shortTermMemories = Memory.GetShortTermMemories(groupId, qq);
+
             string prompt = $$"""
                 你是一个群聊助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}}，需要判断当前是否应该回应最新消息。
                 规则：
                 - 如果用户明显在和你对话（延续你之前的话题、问你问题、提到你），应回应；
+                - 消息中提到的“你”并不一定指代的是你，大概率指的是上一条或者引用消息中的用户，除非你确定指的是你，否则不应该回应；
                 - 如果话题已切换到与你无关的内容，不应回应；
                 - 即使没被 @，只要上下文显示你在被“对话中”，就应回应；
                 - 如果有人觉得你很烦就降低置信度50%；
                 - 不要自以为很受欢迎，如果没人理你，就别理人家；
-                - 消息中提到的“你”并不一定指代的是你，可能是其他人，判断清楚再回应；
                 - 避免打扰：多人闲聊、表情包、玩笑话通常不应回应。
+                - 请在每次处理信息后，即使决定不回应消息，也要适当调用短期记忆、长期记忆、知识库工具，根据当前上下文与已有短期记忆列表，调用短期记忆相关的工具来增强对话体验
                 最新消息：
                 <latest_Message>
-                {{chatRecords.FirstOrDefault()?.ParsedMessage}}
+                {{chatRecords.FirstOrDefault().ParsedMessage}}
                 </latest_Message>
 
                 最近对话（按时间倒序）：
@@ -78,12 +89,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 ```
                 {"should_respond": true/false, "confidence": 0.0~1.0}
                 ```
+
+                以下是你的短期记忆，短期记忆最大可使用轮数为:{{AppConfig.ShortTermMemoryMaxUseCount}}
+                <short-term-memories>
+                {{string.Join("\n", [.. shortTermMemories.Select(x => x.ToString())])}}
+                </short-term-memories>
+
+                <tool_prompt>
+                你拥有短期记忆的能力，请在每次处理信息后，根据当前上下文与已有短期记忆列表，调用短期记忆相关的工具来增强对话体验
+                你拥有自主学习新知识的能力，当出现了你不了解的概念，想要记录时，请调用AddKnowledge工具
+                你拥有记录长期记忆的能力，当你认为用户说的内容需要你持久化记忆时，请调用AddLongTermMemory工具
+                
+                但是敬请注意：调用工具可以，输出内容不可包含其他内容，仍旧需要保持Json输出，而且只能使用 should_respond 与 confidence 两个字段，包含其他内容将导致解析失败
+                </tool_prompt>
                 """;
 
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.回复意愿, timeout: AppConfig.SplitterTimeout);
+                ], Chat.Purpose.回复意愿, timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt));
             if (response == Chat.ErrorMessage)
             {
                 MainSave.CQLog?.Error("回复意愿计算", "调用接口失败");
