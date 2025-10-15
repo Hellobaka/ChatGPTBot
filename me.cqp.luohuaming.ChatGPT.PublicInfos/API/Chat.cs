@@ -39,6 +39,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static IDistributedCache ChatCache { get; set; } = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
 
+        private static JsonSerializerOptions DisableEscapingSerializerOptions { get; set; } = new JsonSerializerOptions()
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            WriteIndented = false,
+        };
+
         public static event Action<string, string>? OnToolCall;
 
         public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager? mcp = null, string? identity = null)
@@ -132,8 +138,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                 if (chatUpdate.FinishReason == ChatFinishReason.ToolCalls
                                        && AppConfig.EnableMCP)
                                 {
-                                    OnToolCall?.Invoke(identity, msg);
                                     CommonHelper.DebugLog("Tool_消息切片", msg);
+                                    OnToolCall?.Invoke(identity, msg);
                                     msg = "";
                                 }
                             }
@@ -215,16 +221,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         private static async Task<object> LogToolCall(FunctionInvocationContext context, System.Threading.CancellationToken token)
         {
-            MainSave.CQLog?.Info("FunctionInvocation", $"调用函数 {context.Function.Name}，参数 {JsonSerializer.Serialize(context.Arguments)}");
+            CommonHelper.DebugLog("FunctionInvocation", $"调用函数 {context.Function.Name}，参数 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
             try
             {
                 var result = await context.Function.InvokeAsync(context.Arguments, token);
-                MainSave.CQLog?.Info("FunctionInvocation", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(result)}");
+                CommonHelper.DebugLog("FunctionInvocation", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
                 return result;
             }
             catch (Exception e)
             {
-                MainSave.CQLog?.Info("FunctionInvocation", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
+                CommonHelper.DebugLog("FunctionInvocation", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
                 return $"Exception when call tool {context.Function.Name}, {e}";
             }
         }
