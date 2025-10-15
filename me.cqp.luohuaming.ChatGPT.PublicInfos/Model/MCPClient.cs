@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Policy;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 
@@ -89,6 +90,22 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             "GetRangeUsageDetail",
             "AddPictureToContext",
             "AddDelayTask",
+
+            // Memory 相关工具
+            "AddShortTermMemory",
+            "RenewShortTermMemory",
+            "RemoveShortTermMemory",
+            "RemoveShortTermMemories",
+            "AddToDoItem",
+            "CompleteToDoItem",
+            "RemoveToDoItem",
+            "RemoveToDoItems",
+            "AddLongTermMemory",
+            "GetLongTermMemories",
+            "AddKnowledge",
+            "GetKnowledges",
+
+            // CQApi 相关工具
             "GetLoginQQ",
             "GetLoginNick",
             "GetFriendList",
@@ -107,8 +124,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         ];
 
 
+
         public override AIFunction[] GetTools()
         {
+            // 注意 添加工具时请务必在 CustomToolNames 中添加名称
             var function = Name switch
             {
                 "GetCityIdByName" => AIFunctionFactory.Create(MojiCityIdConverter.GetCityIdByName,
@@ -126,57 +145,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     description: "通过消息ID列表获取对应的聊天记录。参数：ids(int[]) - 消息ID数组，不能为空；返回值：List<ChatRecord>，按时间倒序排列的匹配记录列表，若无匹配则返回空列表。"),
                 "GetRangeUsageDetail" => AIFunctionFactory.Create(Usage.GetRangeUsageDetail,
                     description: "获取指定时间范围内的Token消耗详情。参数：start(DateTime，示例输入:2025-10-13T10:56:40) - 查询开始时间；end(DateTime，示例输入:2025-10-13T10:56:40) - 查询结束时间；返回值：List<Usage>，包含时间段内各次调用的Token使用记录，按时间顺序排列。"),
-                "AddPictureToContext" => Context != null ? AIFunctionFactory.Create((string hash) =>
-                {
-                    MainSave.CQLog?.Info("调用 AddPictureToContext", $"将图片 {hash} 添加到上下文 {Context.ChatIdentity} 中");
-                    PictureContextManager.AddPicture(Context.ChatIdentity, hash);
-                }, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
-                "AddDelayTask" => Context != null ? AIFunctionFactory.Create((int delaySeconds, string extraPrompt) =>
-                {
-                    MainSave.CQLog?.Info("调用 AddDelayTask", $"延时 {delaySeconds} 秒，额外提示文本 {extraPrompt};");
-                    string prompt = Context.Prompt;
-                    long groupId = Context.GroupId;
-                    long qq = Context.QQ;
-                    string extraIdentity = Guid.NewGuid().ToString();
-                    Context.ExtraIdentity = extraIdentity;
-                    MCPClientManager manager = Context.MCPClientManager;
-                    _ = Task.Run(async () =>
-                    {
-                        await Task.Delay(delaySeconds * 1000);
-                        MainSave.CQLog?.Info("延时任务", "延时任务触发。");
-                        Chat.OnToolCall -= Chat_OnToolCall;
-                        Chat.OnToolCall += Chat_OnToolCall;
-                        var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
-                                new(ChatRole.System, prompt),
-                                new(ChatRole.User, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
-                            ], Chat.Purpose.聊天, identity: extraIdentity, timeout: AppConfig.ChatTimeout, mcp: manager);
-                        MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
-                        if (response != Chat.ErrorMessage && !response.Contains(AppConfig.ChatEmptyResponse))
-                        {
-                            if (groupId > 0)
-                            {
-                                MainSave.CQApi.SendGroupMessage(groupId, response);
-                            }
-                            else
-                            {
-                                MainSave.CQApi.SendPrivateMessage(qq, response);
-                            }
-                        }
-                    });
-                }, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
+                "AddPictureToContext" => Context != null ? AIFunctionFactory.Create(AddPictureToContext, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
+                "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
 
                 #region Memory
-                "AddShortTermMemory" => Context != null ? AIFunctionFactory.Create((string description) =>
-                {
-                    Memory.AddShortTermMemory(description, Context);
-                }, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
+                "AddShortTermMemory" => Context != null ? AIFunctionFactory.Create(AddShortTermMemory, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
                 "RenewShortTermMemory" => AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。"),
                 "RemoveShortTermMemory" => AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。"),
                 "RemoveShortTermMemories" => AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。"),
-                "AddToDoItem" => Context != null ? AIFunctionFactory.Create((string todo, bool isGlobal = false) =>
-                {
-                    Memory.AddToDoItem(todo, isGlobal, Context);
-                }, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
+                "AddToDoItem" => Context != null ? AIFunctionFactory.Create(AddToDoItem, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
                 "CompleteToDoItem" => AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。"),
                 "RemoveToDoItem" => AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。"),
                 "RemoveToDoItems" => AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。"),
@@ -311,6 +288,60 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
             }
         }
+
+        #region AIFunction
+        public void AddPictureToContext(string hash)
+        {
+            MainSave.CQLog?.Info("调用 AddPictureToContext", $"将图片 {hash} 添加到上下文 {Context.ChatIdentity} 中");
+            PictureContextManager.AddPicture(Context.ChatIdentity, hash);
+        }
+
+        public void AddDelayTask(int delaySeconds, string extraPrompt)
+        {
+            MainSave.CQLog?.Info("调用 AddDelayTask", $"延时 {delaySeconds} 秒，额外提示文本 {extraPrompt};");
+            string prompt = Context.Prompt;
+            long groupId = Context.GroupId;
+            long qq = Context.QQ;
+            string extraIdentity = Guid.NewGuid().ToString();
+            Context.ExtraIdentity = extraIdentity;
+            MCPClientManager manager = Context.MCPClientManager;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(delaySeconds * 1000);
+                MainSave.CQLog?.Info("延时任务", "延时任务触发。");
+                Chat.OnToolCall -= Chat_OnToolCall;
+                Chat.OnToolCall += Chat_OnToolCall;
+                var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
+                        new(ChatRole.System, prompt),
+                                new(ChatRole.User, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
+                    ], Chat.Purpose.聊天, identity: extraIdentity, timeout: AppConfig.ChatTimeout, mcp: manager);
+                MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
+                if (response != Chat.ErrorMessage && !response.Contains(AppConfig.ChatEmptyResponse))
+                {
+                    if (groupId > 0)
+                    {
+                        MainSave.CQApi.SendGroupMessage(groupId, response);
+                    }
+                    else
+                    {
+                        MainSave.CQApi.SendPrivateMessage(qq, response);
+                    }
+                }
+            });
+        }
+
+        public void AddShortTermMemory(string description)
+        {
+            MainSave.CQLog?.Info("添加短期记忆", description);
+            Memory.AddShortTermMemory(description, Context);
+        }
+
+        public void AddToDoItem(string todo, bool isGlobal = false)
+        {
+            MainSave.CQLog?.Info("添加待办事项", todo);
+            Memory.AddToDoItem(todo, isGlobal, Context);
+        }
+        #endregion
     }
 
     public class MCPStdioClient : MCPClientBase
