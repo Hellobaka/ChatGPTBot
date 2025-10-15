@@ -291,7 +291,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static void DeleteNonEmoji(TimeSpan expire)
         {
             using var db = SQLHelper.GetInstance();
-            var pics = db.Queryable<Picture>().Where(x => !x.IsEmoji && !x.IsDeleted && (DateTime.Now - x.AddTime) > expire).ToList();
+            var pics = db.Queryable<Picture>().Where(x => !x.IsEmoji && !x.IsDeleted).ToList().Where(x => (DateTime.Now - x.AddTime) > expire);
             foreach (var item in pics)
             {
                 if (Cache.ContainsKey(item.Hash))
@@ -302,7 +302,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 item.Update();
                 PictureDescriber.DeleteImage(item.FilePath);
             }
-            MainSave.CQLog?.Info("清理非表情包缓存", $"已删除 {pics.Count} 张图片");
+            if (pics.Count() > 0)
+            {
+                MainSave.CQLog?.Info("清理非表情包缓存", $"已删除 {pics.Count()} 张图片");
+            }
         }
     }
 }
