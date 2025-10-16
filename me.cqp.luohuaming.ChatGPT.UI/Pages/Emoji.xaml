@@ -114,7 +114,7 @@
                                                 MaxHeight="100"
                                                 MouseDown="Image_MouseDown"
                                                 RenderOptions.BitmapScalingMode="Fant"
-                                                Source="{Binding ImageAbsoultePath}" />
+                                                Source="{Binding ImageAbsolutePath}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -248,7 +248,7 @@
                                                 MaxHeight="100"
                                                 MouseDown="Image_MouseDown"
                                                 RenderOptions.BitmapScalingMode="Fant"
-                                                Source="{Binding ImageAbsoultePath}" />
+                                                Source="{Binding ImageAbsolutePath}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
