@@ -145,6 +145,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         public static bool EnableLLMCheckShouldResponse { get; set; } = false;
        
         public static int ShortTermMemoryMaxUseCount { get; set; }
+       
+        public static int MaxToolCallCountEachTurn { get; set; }
 
         public static void Init()
         {
@@ -221,6 +223,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableMCP = ConfigHelper.GetConfig("EnableMCP", true);
             EnableLLMCheckShouldResponse = ConfigHelper.GetConfig("EnableLLMCheckShouldResponse", false);
             ShortTermMemoryMaxUseCount = ConfigHelper.GetConfig("ShortTermMemoryMaxUseCount", 10);
+            MaxToolCallCountEachTurn = ConfigHelper.GetConfig("MaxToolCallCountEachTurn", 5);
 
             ReloadAPIKey();
             ConfigHelper.EnableHotReload();

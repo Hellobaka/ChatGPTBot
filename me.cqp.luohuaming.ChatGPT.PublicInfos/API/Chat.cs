@@ -45,6 +45,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             WriteIndented = false,
         };
 
+        private static Dictionary<string, int> ToolCallCount { get; set; } = [];
+
         public static event Action<string, string>? OnToolCall;
 
         public static string GetChatResult(List<APIKeyPurpose> key, List<ChatMessage> chatMessages, Purpose purpose, bool jsonMode = false, int timeout = 10000, MCPClientManager? mcp = null, string? identity = null)
@@ -78,7 +80,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                 client.IncludeDetailedErrors = true;
                                 client.FunctionInvoker = new Func<FunctionInvocationContext, System.Threading.CancellationToken, ValueTask<object?>>(async (context, token) =>
                                 {
-                                    return await LogToolCall(context, token);
+                                    string id = identity;
+                                    return await LogToolCall(context, token, identity);
                                 });
                             })
                             .Build();
@@ -94,6 +97,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             try
             {
+                if (identity != null)
+                {
+                    ToolCallCount[identity] = 0;
+                }
                 UsageDetails? usage = null;
                 if (AppConfig.StreamMode)
                 {
@@ -136,7 +143,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                     }
                                 }
                                 if (chatUpdate.FinishReason == ChatFinishReason.ToolCalls
-                                       && AppConfig.EnableMCP)
+                                       && AppConfig.EnableMCP
+                                       && !string.IsNullOrEmpty(msg))
                                 {
                                     CommonHelper.DebugLog("Tool_消息切片", msg);
                                     OnToolCall?.Invoke(identity, msg);
@@ -216,21 +224,37 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 MainSave.CQLog?.Info("OpenAI_ChatCompletions失败", ex);
                 msg = ErrorMessage;
             }
+            finally
+            {
+                if (identity != null)
+                {
+                    ToolCallCount.Remove(identity);
+                }
+            }
             return msg;
         }
 
-        private static async Task<object> LogToolCall(FunctionInvocationContext context, System.Threading.CancellationToken token)
+        private static async Task<object> LogToolCall(FunctionInvocationContext context, System.Threading.CancellationToken token, string identity)
         {
-            CommonHelper.DebugLog("FunctionInvocation", $"调用函数 {context.Function.Name}，参数 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
+            CommonHelper.DebugLog("ToolCall追踪", $"调用函数 {context.Function.Name}，参数 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
             try
             {
+                if (ToolCallCount.TryGetValue(identity, out int count))
+                {
+                    if (count > AppConfig.MaxToolCallCountEachTurn)
+                    {
+                        MainSave.CQLog?.Warning("ToolCall追踪", $"本轮对话已调用 {count} 次Tool，无法再调用");
+                        return "The maximum tool call limit for this turn has been reached.";
+                    }
+                    ToolCallCount[identity]++;
+                }
                 var result = await context.Function.InvokeAsync(context.Arguments, token);
-                CommonHelper.DebugLog("FunctionInvocation", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
+                CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
                 return result;
             }
             catch (Exception e)
             {
-                CommonHelper.DebugLog("FunctionInvocation", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
+                CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
                 return $"Exception when call tool {context.Function.Name}, {e}";
             }
         }
