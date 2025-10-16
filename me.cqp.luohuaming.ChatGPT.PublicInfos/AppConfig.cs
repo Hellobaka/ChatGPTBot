@@ -222,7 +222,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
             EnableMCP = ConfigHelper.GetConfig("EnableMCP", true);
             EnableLLMCheckShouldResponse = ConfigHelper.GetConfig("EnableLLMCheckShouldResponse", false);
-            ShortTermMemoryMaxUseCount = ConfigHelper.GetConfig("ShortTermMemoryMaxUseCount", 10);
+            ShortTermMemoryMaxUseCount = ConfigHelper.GetConfig("ShortTermMemoryMaxUseCount", 50);
             MaxToolCallCountEachTurn = ConfigHelper.GetConfig("MaxToolCallCountEachTurn", 5);
 
             ReloadAPIKey();
