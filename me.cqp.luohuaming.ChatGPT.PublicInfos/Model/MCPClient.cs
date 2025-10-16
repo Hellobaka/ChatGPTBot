@@ -76,6 +76,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
     {
         public override MCPClientType ToolType { get; set; } = MCPClientType.Custom;
 
+        [JsonIgnore]
         public CustomToolContext? Context { get; set; }
 
         public static string[] CustomToolNames { get; } =
