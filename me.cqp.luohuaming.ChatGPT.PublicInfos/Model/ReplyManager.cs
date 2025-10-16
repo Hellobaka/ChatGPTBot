@@ -149,7 +149,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
                 <final_rule>
                 此轮对话有工具调用数量限制，请合理安排。本轮最多可调用工具数量为：{{AppConfig.MaxToolCallCountEachTurn}}
-                禁止调用查询详细信息类的工具，请只根据提供的上下文进行处理
                 结果文本只输出`<EMPTY>`
                 </final_rule>
                 ---
@@ -158,7 +157,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt));
+                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt, enableCQApiFunction: false));
             CommonHelper.DebugLog("记忆提取", response);
         }
 

@@ -245,7 +245,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     if (count >= AppConfig.MaxToolCallCountEachTurn)
                     {
                         MainSave.CQLog?.Warning("ToolCall追踪", $"本轮对话已调用 {count} 次Tool，无法再调用");
-                        return "The maximum tool call limit for this turn has been reached.";
+                        return "The maximum tool call limit for this turn has been reached, you cannot do tool calls any more.";
                     }
                     ToolCallCount[identity]++;
                 }

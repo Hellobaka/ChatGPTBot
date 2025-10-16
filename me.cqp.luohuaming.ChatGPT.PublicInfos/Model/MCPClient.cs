@@ -150,91 +150,91 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
 
                 #region Memory
-                "AddShortTermMemory" => Context != null ? AIFunctionFactory.Create(AddShortTermMemory, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
-                "RenewShortTermMemory" => AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。"),
-                "RemoveShortTermMemory" => AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。"),
-                "RemoveShortTermMemories" => AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。"),
-                "AddToDoItem" => Context != null ? AIFunctionFactory.Create(AddToDoItem, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
-                "CompleteToDoItem" => AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。"),
-                "RemoveToDoItem" => AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。"),
-                "RemoveToDoItems" => AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。"),
-                "AddLongTermMemory" => AIFunctionFactory.Create(Memory.AddLongTermMemory, description:
+                "AddShortTermMemory" => Context != null && (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(AddShortTermMemory, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
+                "RenewShortTermMemory" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.RenewShortTermMemory, description: $"重置一段短期记忆的过期时间。") : null,
+                "RemoveShortTermMemory" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.RemoveShortTermMemory, description: $"删除一段短期记忆。") : null,
+                "RemoveShortTermMemories" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.RemoveShortTermMemories, description: $"批量删除删除短期记忆。") : null,
+                "AddToDoItem" => Context != null && (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(AddToDoItem, description: $"添加一个TODO，当isGlobal为 true 时，你在所有对话中都可以看到这条TODO。否则只能在当前上下文中看到") : null,
+                "CompleteToDoItem" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.CompleteToDoItem, description: $"置一个TODO为完成状态。") : null,
+                "RemoveToDoItem" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.RemoveToDoItem, description: $"删除一条TODO。") : null,
+                "RemoveToDoItems" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.RemoveToDoItems, description: $"批量删除TODO。") : null,
+                "AddLongTermMemory" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.AddLongTermMemory, description:
                     """
                     添加一段长期记忆。长期记忆是与身份（QQ号）相关联的持久化信息，可以跨会话保存。参数为一句详细描述的自然语言描述的记忆内容，例如：`用户2025-10-13中午吃了焖子。`、`用户和我详细探讨了NLP的学习路线，他表示要好好学习NLP的知识。`
-                    """),
-                "GetLongTermMemories" => AIFunctionFactory.Create(Memory.GetLongTermMemories, description:
+                    """) : null,
+                "GetLongTermMemories" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.GetLongTermMemories, description:
                     """
                     查询与当前用户（QQ号）相关联的长期记忆列表。返回值为一个字符串数组，每个元素是一段记忆的描述。
-                    """),
-                "AddKnowledge" => AIFunctionFactory.Create(Memory.AddKnowledge, description:
+                    """) : null,
+                "AddKnowledge" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.AddKnowledge, description:
                     """
                     向知识库中添加一条知识。知识是一句无歧义、描述准确、原子化的自然语言文本。添加时尽量保留主体以及强逻辑性，例如：`xswl是一句网络用语，是"笑死我了"的中文缩写。`、`原神是一款由米哈游开发的二次元开放世界游戏。`或者`丰川祥子是《BanG Dream!》及其衍生作品中的角色，Ave Mujica乐队的键盘手，代号Oblivionis。曾是CRYCHIC乐队的键盘手，后因性格转变退出，之后主导组建Ave Mujica并担任键盘手和作曲。`
-                    """),
-                "GetKnowledges" => AIFunctionFactory.Create(Memory.GetKnowledges, description:
+                    """) : null,
+                "GetKnowledges" => (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(Memory.GetKnowledges, description:
                     """
                     查询知识库内容。返回值为一个字符串数组，每个元素是一条知识的自然语言文本。
-                    """),
+                    """) : null,
 
                 #endregion
 
                 #region CQApi
-                "GetLoginQQ" => AIFunctionFactory.Create(MainSave.CQApi.GetLoginQQ,
-                    description: "获取当前登录的QQ账号对象，无参数。返回值：QQ对象，表示当前登录账号。"),
+                "GetLoginQQ" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetLoginQQ,
+                    description: "获取当前登录的QQ账号对象，无参数。返回值：QQ对象，表示当前登录账号。") : null,
 
-                "GetLoginNick" => AIFunctionFactory.Create(MainSave.CQApi.GetLoginNick,
-                    description: "获取当前登录的QQ昵称，无参数。返回值：string，当前登录账号的昵称。"),
+                "GetLoginNick" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetLoginNick,
+                    description: "获取当前登录的QQ昵称，无参数。返回值：string，当前登录账号的昵称。") : null,
 
-                "GetFriendList" => AIFunctionFactory.Create(MainSave.CQApi.GetFriendList,
-                    description: "获取当前账号的好友列表，无参数。返回值：FriendInfoCollection，好友列表集合。"),
+                "GetFriendList" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetFriendList,
+                    description: "获取当前账号的好友列表，无参数。返回值：FriendInfoCollection，好友列表集合。") : null,
 
-                "GetGroupList" => AIFunctionFactory.Create(MainSave.CQApi.GetGroupList,
-                    description: "获取当前账号的群列表，无参数。返回值：GroupInfoCollection，群列表集合。"),
+                "GetGroupList" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetGroupList,
+                    description: "获取当前账号的群列表，无参数。返回值：GroupInfoCollection，群列表集合。") : null,
 
-                "GetGroupMemberList" => AIFunctionFactory.Create(MainSave.CQApi.GetGroupMemberList,
-                    description: "获取指定群的成员列表。参数：groupId(long) - 目标群号。返回值：GroupMemberInfoCollection，群成员列表集合。"),
+                "GetGroupMemberList" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetGroupMemberList,
+                    description: "获取指定群的成员列表。参数：groupId(long) - 目标群号。返回值：GroupMemberInfoCollection，群成员列表集合。") : null,
 
-                "GetGroupMemberInfo" => AIFunctionFactory.Create(MainSave.CQApi.GetGroupMemberInfo,
-                    description: "获取指定群成员的信息。参数：groupId(long) - 群号；qqId(long) - QQ号；notCache(bool, 可选，默认 false) - 是否不使用缓存。返回值：GroupMemberInfo，群成员信息对象。"),
+                "GetGroupMemberInfo" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetGroupMemberInfo,
+                    description: "获取指定群成员的信息。参数：groupId(long) - 群号；qqId(long) - QQ号；notCache(bool, 可选，默认 false) - 是否不使用缓存。返回值：GroupMemberInfo，群成员信息对象。") : null,
 
-                "GetGroupInfo" => AIFunctionFactory.Create(MainSave.CQApi.GetGroupInfo,
-                    description: "获取指定群的群信息。参数：groupId(long) - 群号；notCache(bool, 可选，默认 false) - 是否不使用缓存。返回值：GroupInfo，群信息对象。"),
+                "GetGroupInfo" => (Context?.EnableCQApiFunction ?? false) ? AIFunctionFactory.Create(MainSave.CQApi.GetGroupInfo,
+                    description: "获取指定群的群信息。参数：groupId(long) - 群号；notCache(bool, 可选，默认 false) - 是否不使用缓存。返回值：GroupInfo，群信息对象。") : null,
 
-                "RemoveMessage" => CheckIsAdmin(Context)
+                "RemoveMessage" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(new Func<int, bool>(MainSave.CQApi.RemoveMessage),
                         description: "撤回指定消息。参数：msgId(int) - 消息ID。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "SetGroupMemberBanSpeak" => CheckIsAdmin(Context)
+                "SetGroupMemberBanSpeak" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.SetGroupMemberBanSpeak,
                         description: "设置指定群成员禁言。参数：groupId(long) - 群号；qqId(long) - QQ号；time(TimeSpan) - 禁言时长（范围：1秒 ~ 30天）。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "RemoveGroupMemberBanSpeak" => CheckIsAdmin(Context)
+                "RemoveGroupMemberBanSpeak" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.RemoveGroupMemberBanSpeak,
                         description: "解除指定群成员禁言。参数：groupId(long) - 群号；qqId(long) - QQ号。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "SetGroupBanSpeak" => CheckIsAdmin(Context)
+                "SetGroupBanSpeak" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.SetGroupBanSpeak,
                         description: "设置群全体禁言。参数：groupId(long) - 群号。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "RemoveGroupBanSpeak" => CheckIsAdmin(Context)
+                "RemoveGroupBanSpeak" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.RemoveGroupBanSpeak,
                         description: "解除群全体禁言。参数：groupId(long) - 群号。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "SetGroupMemberVisitingCard" => CheckIsAdmin(Context)
+                "SetGroupMemberVisitingCard" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.SetGroupMemberVisitingCard,
                         description: "设置群成员名片。参数：groupId(long) - 群号；qqId(long) - QQ号；newName(string) - 新名片。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "SetGroupMemberForeverExclusiveTitle" => CheckIsAdmin(Context)
+                "SetGroupMemberForeverExclusiveTitle" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.SetGroupMemberForeverExclusiveTitle,
                         description: "设置群成员永久专属头衔。参数：groupId(long) - 群号；qqId(long) - QQ号；newTitle(string) - 新头衔。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
 
-                "RemoveGroupMember" => CheckIsAdmin(Context)
+                "RemoveGroupMember" => (Context?.EnableCQApiFunction ?? false) && CheckIsAdmin(Context)
                     ? AIFunctionFactory.Create(MainSave.CQApi.RemoveGroupMember,
                         description: "移除群成员（踢人）。参数：groupId(long) - 群号；qqId(long) - QQ号；notRequest(bool, 可选，默认 false) - 是否不再接收该成员加群申请。返回值：bool，操作成功返回 true，失败返回 false。")
                     : null,
