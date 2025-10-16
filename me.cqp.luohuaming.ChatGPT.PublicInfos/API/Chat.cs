@@ -31,6 +31,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             分段,
             表情包推荐,
             回复意愿,
+            记忆提取,
         }
 
         public const string ErrorMessage = "连接发生问题，查看日志排查问题";
@@ -241,7 +242,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 if (ToolCallCount.TryGetValue(identity, out int count))
                 {
-                    if (count > AppConfig.MaxToolCallCountEachTurn)
+                    if (count >= AppConfig.MaxToolCallCountEachTurn)
                     {
                         MainSave.CQLog?.Warning("ToolCall追踪", $"本轮对话已调用 {count} 次Tool，无法再调用");
                         return "The maximum tool call limit for this turn has been reached.";
@@ -249,7 +250,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     ToolCallCount[identity]++;
                 }
                 var result = await context.Function.InvokeAsync(context.Arguments, token);
-                CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(context.Arguments, DisableEscapingSerializerOptions)}");
+                CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(result, DisableEscapingSerializerOptions)}");
                 return result;
             }
             catch (Exception e)
