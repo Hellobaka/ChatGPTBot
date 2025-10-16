@@ -270,7 +270,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 stringBuilder.AppendLine($"当前场景：群聊场景。群号：{relationship.GroupID} 触发消息用户昵称与QQ：{relationship.Card ?? relationship.NickName}[{relationship.QQ}]; 你的QQ：{MainSave.CurrentQQ}");
                 stringBuilder.AppendLine($"你正在一个群聊中。请先判断当前对话是否与你相关。如果用户正在继续与你之前的对话（即使没有@你），你应该继续参与；否则保持沉默");
-                stringBuilder.AppendLine($"消息中提到的“你”并不一定指代的是你，大概率指的是上一条或者引用消息中的用户或者图片中的内容，一定要明确人称指代，除非你确定指的是你，否则不应该回应；\r\n");
+                stringBuilder.AppendLine($"消息中提到的“你”并不一定指代的是Bot，大概率指的是上一条或者引用消息中的用户或者图片中的内容，一定要根据上下文找到明确的依据是在叫Bot，否则很有可能被骂莫名其妙插话，除非你确定指的是你，否则不应该回应；");
             }
             else
             {
