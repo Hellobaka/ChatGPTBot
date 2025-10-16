@@ -124,6 +124,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         e.CQLog.Info("触发回复", "大模型拒绝了回答，原因：包含停止回复");
                         return new();
                     }
+                    reply = reply.Replace(AppConfig.ChatEmptyResponse, string.Empty);
                     if (string.IsNullOrWhiteSpace(reply))
                     {
                         return new();
@@ -200,6 +201,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     e.CQLog.Info("触发回复", "大模型拒绝了回答，原因：包含停止回复");
                     return new();
                 }
+                reply = reply.Replace(AppConfig.ChatEmptyResponse, string.Empty);
                 if (string.IsNullOrWhiteSpace(reply))
                 {
                     return new();
@@ -268,13 +270,14 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             {
                 stringBuilder.AppendLine($"当前场景：群聊场景。群号：{relationship.GroupID} 触发消息用户昵称与QQ：{relationship.Card ?? relationship.NickName}[{relationship.QQ}]; 你的QQ：{MainSave.CurrentQQ}");
                 stringBuilder.AppendLine($"你正在一个群聊中。请先判断当前对话是否与你相关。如果用户正在继续与你之前的对话（即使没有@你），你应该继续参与；否则保持沉默");
-                stringBuilder.AppendLine($"消息中提到的“你”并不一定指代的是你，大概率指的是上一条或者引用消息中的用户，除非你确定指的是你，否则不应该回应；\r\n");
+                stringBuilder.AppendLine($"消息中提到的“你”并不一定指代的是你，大概率指的是上一条或者引用消息中的用户或者图片中的内容，一定要明确人称指代，除非你确定指的是你，否则不应该回应；\r\n");
             }
             else
             {
                 stringBuilder.AppendLine($"当前场景：私聊场景。触发消息用户昵称与QQ：{relationship.Card ?? relationship.NickName}[{relationship.QQ}]; 你的QQ：{MainSave.CurrentQQ}");
             }
             stringBuilder.AppendLine($"请在每次发言之后调用`UpdateMood`工具来更新你的心情。");
+            stringBuilder.AppendLine($"请在每次发言之后调用`UpdateFavorability`工具来更新你与对象用户的好感度。");
             stringBuilder.AppendLine($"你拥有短期记忆的能力，请在每次发言之后调用短期记忆相关的工具来增强对话体验");
             stringBuilder.AppendLine($"你拥有添加待办事项的能力，请在你认为无法在一轮对话中完成某些事项时，调用代办事项工具来增强对话体验");
             stringBuilder.AppendLine($"你拥有记录长期记忆的能力，当你认为用户说的内容需要你持久化记忆时，请调用AddLongTermMemory工具");
