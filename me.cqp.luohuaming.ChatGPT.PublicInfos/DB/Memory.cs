@@ -141,11 +141,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 if (Qdrant.Instance.Insert(knowledge, Qdrant.KnowledgeCollectionName))
                 {
-                    CommonHelper.DebugLog("知识插入", $"Knowledge={knowledge} 插入成功");
+                    MainSave.CQLog?.Info("知识插入", $"Knowledge={knowledge} 插入成功");
                 }
                 else
                 {
-                    CommonHelper.DebugLog("知识插入", $"Knowledge={knowledge} 插入失败");
+                    MainSave.CQLog?.Warning("知识插入", $"Knowledge={knowledge} 插入失败");
                 }
             });
         }
