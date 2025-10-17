@@ -10,6 +10,7 @@ using System;
 using System.ClientModel;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -47,6 +48,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         };
 
         private static Dictionary<string, int> ToolCallCount { get; set; } = [];
+
+        private static List<string> AbortIdentityList { get; set; } = [];
 
         public static event Action<string, string>? OnToolCall;
 
@@ -150,6 +153,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                                     CommonHelper.DebugLog("Tool_消息切片", msg);
                                     OnToolCall?.Invoke(identity, msg);
                                     msg = "";
+                                    if (AbortIdentityList.Contains(identity))
+                                    {
+                                        MainSave.CQLog?.Info("发起对话", $"由于 ToolCall 次数超限，会话强制终止");
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -230,6 +238,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 if (identity != null)
                 {
                     ToolCallCount.Remove(identity);
+                    AbortIdentityList.Remove(identity);
                 }
             }
             return msg;
@@ -242,12 +251,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 if (ToolCallCount.TryGetValue(identity, out int count))
                 {
-                    if (count >= AppConfig.MaxToolCallCountEachTurn)
+                    ToolCallCount[identity]++;
+                    if (count > AppConfig.AbortToolCallCountEachTurn)
+                    {
+                        MainSave.CQLog?.Warning("ToolCall追踪", $"本轮对话已调用 {count} 次Tool，本轮会话强制终止");
+                        if (!AbortIdentityList.Contains(identity))
+                        {
+                            AbortIdentityList.Add(identity);
+                        }
+                        return "The maximum tool call limit for this turn has been reached, this conversation will be aborted.";
+                    }
+                    if (count > AppConfig.MaxToolCallCountEachTurn)
                     {
                         MainSave.CQLog?.Warning("ToolCall追踪", $"本轮对话已调用 {count} 次Tool，无法再调用");
                         return "The maximum tool call limit for this turn has been reached, you cannot do tool calls any more.";
                     }
-                    ToolCallCount[identity]++;
                 }
                 var result = await context.Function.InvokeAsync(context.Arguments, token);
                 CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用完成，结果 {JsonSerializer.Serialize(result, DisableEscapingSerializerOptions)}");
