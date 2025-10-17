@@ -129,14 +129,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 - **短期记忆**：临时、上下文相关、可能在几分钟到几小时内有用的信息（如“我等下要去开会”、“密码是123456”），不要记录表情包内容。
                 - **长期记忆**：持久、个人化、反复有用的信息（如“用户A喜欢喝美式咖啡”、“用户B的生日是5月20日”），不要记录表情包内容。
                 - **知识**：客观、真实、普适的事实，不依赖特定用户。不记录主观观点（“我觉得 Python 比 Java 好”）；不记录已知常识（“地球是圆的”），不要记录表情包内容
-                - 添加短期记忆时请注意不要与 short-term-memories 内容相似或重复，若已经存在相似内容可调用 RenewShortTermMemory 来刷新短期记忆过期时间，但是不能再添加短期记忆。
+                - 添加短期记忆时请注意不要与 short-term-memories 内容相似或重复，若已经存在相似内容可调用 RenewShortTermMemory 来刷新短期记忆过期时间，而不是再调用 AddShortTermMemory。
                 - 不要记录无意义、情绪化或过于泛泛的内容（如“今天好累”、“哈哈哈”）。
-                - 所有类型的记忆只能记录**一条**
-                
-                <final_rule>
-                此轮对话有工具调用数量限制，请合理安排。本轮最多可调用工具数量为：{{AppConfig.MaxToolCallCountEachTurn}}
-                结果文本只输出`<EMPTY>`
-                </final_rule>
+                - 每次对话中所有类型的记忆只能记录**一条**
                 ---
                 以下是你的代办事项:
                 <todo>
@@ -162,7 +157,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt, enableCQApiFunction: false));
+                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt, enableCQApiFunction: false, enableRecordFunction: false, enableRelationshipFunction: false));
             CommonHelper.DebugLog("记忆提取", response);
         }
 
