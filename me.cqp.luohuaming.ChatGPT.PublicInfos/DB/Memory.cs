@@ -29,11 +29,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void AddShortTermMemory(string memory, CustomToolContext context)
         {
+            if (ShortTermMemory.NextId == int.MaxValue - 1)
+            {
+                ShortTermMemory.NextId = 1;
+            }
             ShortTermMemories.Add(new ShortTermMemory()
             {
                 Id = ShortTermMemory.NextId++,
                 Memory = memory,
-                Context = context,
+                GroupId = context.GroupId,
+                QQ = context.QQ,
                 CreateTime = DateTime.Now,
                 UsedCount = 0
             });
@@ -42,7 +47,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static ShortTermMemory[] GetShortTermMemories(long groupId, long qq)
         {
-            var memories = ShortTermMemories.Where(x => x.Context.GroupId == groupId || (x.Context.GroupId == -1 && x.Context.QQ == qq)).ToArray();
+            var memories = ShortTermMemories.Where(x => x.GroupId == groupId || (x.GroupId == -1 && x.QQ == qq)).ToArray();
             foreach (var memory in memories)
             {
                 memory.UsedCount++;
@@ -76,6 +81,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void AddToDoItem(string todo, bool isGlobalTodo, CustomToolContext context)
         {
+            if (ToDoItem.NextId == int.MaxValue - 1)
+            {
+                ToDoItem.NextId = 1;
+            }
+
             ToDoItems.Add(new ToDoItem()
             {
                 Id = ToDoItem.NextId++,
@@ -144,6 +154,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 {
                     ToDoItems = [];
                 }
+                if (ToDoItems.Count > 0)
+                {
+                    ToDoItem.NextId = ToDoItems.Last().Id;
+                }
+
                 MainSave.CQLog?.Info("加载待办事项", $"加载了 {ToDoItems.Count} 条待办事项");
             }
             catch (Exception e)
@@ -179,6 +194,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 else
                 {
                     ShortTermMemories = [];
+                }
+                if (ShortTermMemories.Count > 0)
+                {
+                    ShortTermMemory.NextId = ShortTermMemories.Last().Id;
                 }
                 MainSave.CQLog?.Info("加载短期记忆", $"加载了 {ShortTermMemories.Count} 条短期记忆");
             }

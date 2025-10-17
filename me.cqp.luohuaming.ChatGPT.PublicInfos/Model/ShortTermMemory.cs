@@ -1,5 +1,6 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
+using Newtonsoft.Json;
 using System;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -16,7 +17,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public int UsedCount { get; set; }
 
-        public CustomToolContext Context { get; set; }
+        public long GroupId { get; set; }
+
+        public long QQ { get; set; }
 
         public override string ToString()
         {

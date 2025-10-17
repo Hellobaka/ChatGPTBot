@@ -127,7 +127,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public void UpdateFavorability(double value)
         {
             Favorability += value;
-            Favorability = Math.Max(-1000, Math.Min(1000, Favorability));
+            Favorability = Math.Max(-10, Math.Min(10, Favorability));
 
             CommonHelper.DebugLog("更新用户关系", $"[{QQ}] 计算后新的关系值为：{Favorability}");
 
