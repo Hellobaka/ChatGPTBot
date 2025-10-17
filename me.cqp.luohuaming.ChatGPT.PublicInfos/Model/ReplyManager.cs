@@ -117,12 +117,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         private static void ExecuteMemoryExtraction(List<ChatRecord> chatRecords, long groupId, long qq)
         {
             var shortTermMemories = Memory.GetShortTermMemories(groupId, qq);
+            var todo = Memory.GetToDoItems(groupId, qq);
 
             string prompt = $$"""
                 你是一个群聊助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}}，负责从用户对话中提取值得记忆的信息。
                 当前群聊ID={{groupId}}，上下文中携带的用户[]中的数字为QQ
 
                 请仔细分析以下对话上下文和最新消息，判断是否需要将信息存入短期、长期记忆或者知识库：
+                ---
+                记忆规则：
+                - **短期记忆**：临时、上下文相关、可能在几分钟到几小时内有用的信息（如“我等下要去开会”、“密码是123456”），不要记录表情包内容。
+                - **长期记忆**：持久、个人化、反复有用的信息（如“用户A喜欢喝美式咖啡”、“用户B的生日是5月20日”），不要记录表情包内容。
+                - **知识**：客观、真实、普适的事实，不依赖特定用户。不记录主观观点（“我觉得 Python 比 Java 好”）；不记录已知常识（“地球是圆的”），不要记录表情包内容
+                - 添加短期记忆时请注意不要与 short-term-memories 内容相似或重复，若已经存在相似内容可调用 RenewShortTermMemory 来刷新短期记忆过期时间，但是不能再添加短期记忆。
+                - 不要记录无意义、情绪化或过于泛泛的内容（如“今天好累”、“哈哈哈”）。
+                - 所有类型的记忆只能记录**一条**
+                
+                <final_rule>
+                此轮对话有工具调用数量限制，请合理安排。本轮最多可调用工具数量为：{{AppConfig.MaxToolCallCountEachTurn}}
+                结果文本只输出`<EMPTY>`
+                </final_rule>
+                ---
+                以下是你的代办事项:
+                <todo>
+                {{string.Join("\n", [.. todo.Select(x => x.ToString())])}}
+                </todo>
+
                 以下是你的短期记忆，短期记忆最大可使用轮数为:{{AppConfig.ShortTermMemoryMaxUseCount}}
                 <short-term-memories>
                 {{string.Join("\n", [.. shortTermMemories.Select(x => x.ToString())])}}
@@ -137,21 +157,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 <recent_Message>
                 {{string.Join("\n", chatRecords.Skip(1).Select(x => x.ParsedMessage))}}
                 </recent_Message>
-                
-                ---
-
-                记忆规则：
-                - **短期记忆**：临时、上下文相关、可能在几分钟到几小时内有用的信息（如“我等下要去开会”、“密码是123456”），不要记录表情包内容。
-                - **长期记忆**：持久、个人化、反复有用的信息（如“用户A喜欢喝美式咖啡”、“用户B的生日是5月20日”），不要记录表情包内容。
-                - **知识**：客观、真实、普适的事实，不依赖特定用户。不记录主观观点（“我觉得 Python 比 Java 好”）；不记录已知常识（“地球是圆的”），不要记录表情包内容
-                - 添加短期记忆时请注意不要与 short-term-memories 内容重复，若已经存在内容可调用 RenewShortTermMemory 来刷新短期记忆过期时间。
-                - 不要记录无意义、情绪化或过于泛泛的内容（如“今天好累”、“哈哈哈”）。
-
-                <final_rule>
-                此轮对话有工具调用数量限制，请合理安排。本轮最多可调用工具数量为：{{AppConfig.MaxToolCallCountEachTurn}}
-                结果文本只输出`<EMPTY>`
-                </final_rule>
-                ---
                 """;
 
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
