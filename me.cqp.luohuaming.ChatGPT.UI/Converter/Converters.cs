@@ -1,4 +1,5 @@
-﻿using me.cqp.luohuaming.ChatGPT.UI.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
+using me.cqp.luohuaming.ChatGPT.UI.Model;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -111,6 +112,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Converter
             if (value is IList<int> intValues)
             {
                 return string.Join(" ", intValues);
+            }
+            if (value is IList<LLMModel> modelValues)
+            {
+                return string.Join(" ", modelValues.Select(x=>x.Name));
             }
             return "";
         }

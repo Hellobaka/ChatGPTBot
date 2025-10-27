@@ -74,7 +74,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Width="*" Header="APIKey">
+                <DataGridTemplateColumn Width="*" Header="模型">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock
@@ -85,6 +85,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Binding="{Binding TokenConsume}" Header="消耗的Token" />
+                <DataGridTextColumn Binding="{Binding TotalConsume}" Header="预计开销" />
                 <DataGridTemplateColumn Width="200" Header="操作">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

@@ -8,7 +8,7 @@
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ui="http://schemas.modernwpf.com/2019"
-    d:DataContext="{d:DesignInstance Type=db:APIKeys}"
+    d:DataContext="{d:DesignInstance Type=local:KeyEdit}"
     d:DesignHeight="900"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -31,7 +31,7 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <TextBlock Width="80" VerticalAlignment="Center">备注：</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding ApiKey.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
             <Grid Margin="0,5">
                 <Grid.ColumnDefinitions>
@@ -39,7 +39,7 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <TextBlock Width="80" VerticalAlignment="Center">EndPoint：</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding EndPoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding ApiKey.EndPoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
             <Grid Margin="0,5">
                 <Grid.ColumnDefinitions>
@@ -47,7 +47,7 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <TextBlock Width="80" VerticalAlignment="Center">Key：</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding APIKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding ApiKey.APIKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </Grid>
             <Grid Margin="0,5">
                 <Grid.ColumnDefinitions>
@@ -60,10 +60,11 @@
                     VerticalAlignment="Center">
                     腾讯云签名：
                 </TextBlock>
-                <CheckBox Grid.Column="1" IsChecked="{Binding UseTencentSign, Mode=TwoWay}" />
+                <CheckBox Grid.Column="1" IsChecked="{Binding ApiKey.UseTencentSign, Mode=TwoWay}" />
             </Grid>
             <Grid Margin="0,5">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
                     <RowDefinition Height="auto" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
@@ -73,10 +74,46 @@
                     VerticalAlignment="Center">
                     可用模型：
                 </TextBlock>
-                <controls:EditableListBox_String
+                <ListBox
+                    x:Name="LLMModelList"
                     Grid.Row="1"
                     MinHeight="100"
-                    ItemSource="{Binding AvailableModels}" />
+                    Margin="0,5"
+                    ItemsSource="{Binding AvailableModels}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Grid Grid.Row="2" Margin="0,0,5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Button
+                        Margin="0,0,5,0"
+                        HorizontalAlignment="Stretch"
+                        Click="AddModel_Click"
+                        Style="{StaticResource AccentButtonStyle}">
+                        添加一项
+                    </Button>
+                    <Button
+                        Grid.Column="1"
+                        Margin="5,0,5,0"
+                        HorizontalAlignment="Stretch"
+                        Click="EditModel_Click">
+                        编辑选中
+                    </Button>
+                    <Button
+                        Grid.Column="2"
+                        Margin="5,0,0,0"
+                        HorizontalAlignment="Stretch"
+                        Click="DeleteModel_Click">
+                        删除选中
+                    </Button>
+                </Grid>
             </Grid>
         </StackPanel>
         <TextBlock

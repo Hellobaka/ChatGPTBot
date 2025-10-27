@@ -37,10 +37,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string APIKey { get; set; } = string.Empty;
 
-        [Navigate(NavigateType.OneToMany, nameof(LLMModel.Id))]
+        [Navigate(NavigateType.OneToMany, nameof(LLMModel.APIKeyId))]
         public List<LLMModel> AvailableModels { get; set; } = [];
 
         public long TokenConsume { get; set; }
+
+        public decimal TotalConsume { get; set; }
 
         public bool UseTencentSign { get; set; }
 
@@ -66,6 +68,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 APIKey = this.APIKey,
                 AvailableModels = [.. this.AvailableModels],
                 TokenConsume = this.TokenConsume,
+                TotalConsume = this.TotalConsume,
                 UseTencentSign = this.UseTencentSign
             };
         }
@@ -123,13 +126,42 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public void Save()
         {
             using var db = SQLHelper.GetInstance();
+
             if (Id == 0)
             {
-                Id = db.InsertNav(this).Include(x => x.AvailableModels).ExecuteReturnEntity().Id;
+                Id = db.Insertable(this).ExecuteReturnIdentity();
+
+                // 设置所有模型的APIKeyId
+                foreach (var model in AvailableModels)
+                {
+                    model.APIKeyId = Id;
+                    if (model.Id != 0)
+                    {
+                        db.Updateable(model).ExecuteCommand();
+                    }
+                    else
+                    {
+                        model.Id = db.Insertable(model).ExecuteReturnIdentity();
+                    }
+                }
             }
             else
             {
                 db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
+
+                // 设置所有模型的APIKeyId
+                foreach (var model in AvailableModels)
+                {
+                    model.APIKeyId = Id;
+                    if (model.Id != 0)
+                    {
+                        db.Updateable(model).ExecuteCommand();
+                    }
+                    else
+                    {
+                        model.Id = db.Insertable(model).ExecuteReturnIdentity();
+                    }
+                }
             }
             if (!KeyCache.ContainsKey(Id))
             {
@@ -164,9 +196,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 using var db = SQLHelper.GetInstance();
                 TokenConsume += totalToken;
-                db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
+                var consume = model.CalcConsume(inputToken, outputToken, totalToken, cachedToken);
+                model.TotalConsume += consume;
+                TotalConsume += consume;
 
-                model.TotalConsume += model.CalcConsume(inputToken, outputToken, totalToken, cachedToken);
+                db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
                 db.Updateable(model).ExecuteCommand();
             }
         }
@@ -177,15 +211,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
         public int Id { get; set; }
 
-        public string Name { get; set; }
+        public int APIKeyId { get; set; }
 
-        public decimal OutputConsumePer1M { get; set; }
+        public string Name { get; set; } = string.Empty;
 
-        public decimal InputConsumePer1M { get; set; }
+        public decimal OutputConsumePer1M { get; set; } = decimal.Zero;
 
-        public decimal InputCachedConsumePer1M { get; set; }
+        public decimal InputConsumePer1M { get; set; } = decimal.Zero;
 
-        public decimal TotalConsume { get; set; }
+        public decimal InputCachedConsumePer1M { get; set; } = decimal.Zero;
+
+        public decimal TotalConsume { get; set; } = decimal.Zero;
 
         public decimal CalcConsume(long inputTokenCount, long outputTokenCount, long totalTokenCount, long cachedTokenCount)
         {
@@ -196,6 +232,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 + (cachedTokenCount / 1M) * InputCachedConsumePer1M;
 
             return consume;
+        }
+
+        public LLMModel Clone()
+        {
+            return new LLMModel
+            {
+                Id = Id,
+                APIKeyId = APIKeyId,
+                InputCachedConsumePer1M = InputCachedConsumePer1M,
+                InputConsumePer1M = InputConsumePer1M,
+                Name = Name,
+                OutputConsumePer1M = OutputConsumePer1M,
+                TotalConsume = TotalConsume,
+            };
         }
     }
 }

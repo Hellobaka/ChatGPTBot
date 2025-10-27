@@ -75,8 +75,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI
                 {
                     ShowError("加载配置文件, 内容格式不正确，无法加载");
                 }
-                AppConfig.Init();
                 SQLHelper.CreateDB();
+                AppConfig.Init();
                 Picture.InitCache();
                 _ = new MoodManager();
                 _ = new SchedulerManager();

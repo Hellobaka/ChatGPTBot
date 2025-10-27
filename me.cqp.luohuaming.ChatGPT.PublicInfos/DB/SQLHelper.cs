@@ -29,6 +29,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             db.CodeFirst.InitTables(typeof(Relationship));
             db.CodeFirst.InitTables(typeof(Usage));
             db.CodeFirst.InitTables(typeof(APIKeys));
+            db.CodeFirst.InitTables(typeof(LLMModel));
         }
     }
 }

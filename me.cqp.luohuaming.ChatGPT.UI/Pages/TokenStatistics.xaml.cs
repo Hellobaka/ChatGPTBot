@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void AnimateTextChange(TextBlock textBlock, long newValue)
         {
-            AnimateTextChange(textBlock, newValue);
+            AnimateTextChange(textBlock, (decimal)newValue);
         }
 
         private void AnimateTextChange(TextBlock textBlock, decimal newValue)
@@ -107,7 +107,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             var fadeOutAnimation = new DoubleAnimation(1, 0, new Duration(TimeSpan.FromSeconds(0.2)));
             fadeOutAnimation.Completed += (s, a) =>
             {
-                property.SetValue(this, newValue);
+                if (property?.PropertyType == typeof(decimal))
+                {
+                    property.SetValue(this, newValue);
+                }
+                else if (property?.PropertyType == typeof(long))
+                {
+                    property.SetValue(this, (long)newValue);
+                }
                 OnPropertyChanged(propertyName);
 
                 var fadeInAnimation = new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.2)));

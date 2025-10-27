@@ -152,6 +152,9 @@
     <Compile Include="ViewModel\MCPClientEditViewModel.cs" />
     <Compile Include="ViewModel\MCPToolTestViewModel.cs" />
     <Compile Include="ViewModel\MCPViewModel.cs" />
+    <Compile Include="Windows\LLMModelEdit.xaml.cs">
+      <DependentUpon>LLMModelEdit.xaml</DependentUpon>
+    </Compile>
     <Page Include="Controls\EditableListBox_Dict_String_String.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -238,6 +241,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Pages\TokenStatistics.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\LLMModelEdit.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
