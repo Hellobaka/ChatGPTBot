@@ -70,11 +70,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\Chat.cs" />
+    <Compile Include="API\ChatRelated\ChatService.cs" />
     <Compile Include="API\Rerank.cs" />
     <Compile Include="API\Embedding.cs" />
     <Compile Include="API\PictureDescriber.cs" />
+    <Compile Include="API\ChatRelated\ResponseProcessor.cs" />
     <Compile Include="API\Spliter.cs" />
     <Compile Include="API\TencentSign.cs" />
+    <Compile Include="API\ChatRelated\ToolCallService.cs" />
+    <Compile Include="API\ChatRelated\UsageTracker.cs" />
     <Compile Include="AppConfig.cs" />
     <Compile Include="CommonHelper.cs" />
     <Compile Include="ConfigHelper.cs" />
