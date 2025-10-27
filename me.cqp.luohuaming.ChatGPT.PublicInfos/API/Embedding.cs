@@ -23,13 +23,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     json = CommonHelper.Post_TecentSignV3(new
                     {
-                        Model = api.ModelName,
+                        Model = api.Model.Name,
                         Inputs = new string[] { text }
                     }.ToJson(), TencentAPIAction, AppConfig.EmbeddingTimeout);
 
                     var embeddings = JObject.Parse(json)["Response"]["Data"][0]["Embedding"].ToObject<float[]>();
                     var tokenUsage = JObject.Parse(json)["Response"]["Usage"]["TotalTokens"].ToObject<long>();
-                    api.Key.AddTokenConsume(tokenUsage);
+                    api.Key.AddTokenConsume(api.Model, 0, tokenUsage, tokenUsage, 0);
 
                     return embeddings;
                 }
@@ -37,12 +37,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     json = CommonHelper.Post("POST", api.Key.EndPoint, new
                     {
-                        model = api.ModelName,
+                        model = api.Model.Name,
                         input = text
                     }.ToJson(), api.Key.APIKey, AppConfig.EmbeddingTimeout);
                     var embeddings = JObject.Parse(json)["data"][0]["embedding"].ToObject<float[]>();
                     var tokenUsage = JObject.Parse(json)["usage"]["total_tokens"].ToObject<long>();
-                    api.Key.AddTokenConsume(tokenUsage);
+                    api.Key.AddTokenConsume(api.Model, 0, tokenUsage, tokenUsage, 0);
 
                     return embeddings;
                 }

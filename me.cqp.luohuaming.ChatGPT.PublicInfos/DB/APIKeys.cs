@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SqlSugar;
+using System;
 using System.Collections.Generic;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
@@ -11,7 +12,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         [JsonIgnore]
         public APIKeys Key { get; set; }
 
-        public string ModelName { get; set; } = string.Empty;
+        public LLMModel Model { get; set; }
 
         public APIKeyPurpose Clone()
         {
@@ -19,7 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             {
                 Id = this.Id,
                 Key = this.Key?.Clone(),
-                ModelName = this.ModelName
+                Model = this.Model
             };
         }
     }
@@ -36,15 +37,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string APIKey { get; set; } = string.Empty;
 
-        [SugarColumn(IsJson = true)]
-        public List<string> AvailableModels { get; set; } = [];
+        [Navigate(NavigateType.OneToMany, nameof(LLMModel.Id))]
+        public List<LLMModel> AvailableModels { get; set; } = [];
 
         public long TokenConsume { get; set; }
 
         public bool UseTencentSign { get; set; }
-
-        [SugarColumn(IsIgnore = true)]
-        public decimal Balance { get; set; }
 
         [SugarColumn(IsIgnore = true)]
         public static Dictionary<int, APIKeys> KeyCache { get; set; } = [];
@@ -68,7 +66,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 APIKey = this.APIKey,
                 AvailableModels = [.. this.AvailableModels],
                 TokenConsume = this.TokenConsume,
-                Balance = this.Balance,
                 UseTencentSign = this.UseTencentSign
             };
         }
@@ -76,7 +73,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static List<APIKeys> GetAllKeys()
         {
             using var db = SQLHelper.GetInstance();
-            var list = db.Queryable<APIKeys>().ToList();
+            var list = db.Queryable<APIKeys>().Includes(x => x.AvailableModels).ToList();
             foreach (var item in list)
             {
                 if (!KeyCache.ContainsKey(item.Id))
@@ -99,19 +96,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 return cache;
             }
             using var db = SQLHelper.GetInstance();
-            return db.Queryable<APIKeys>().First(x => x.Id == id);
+            return db.Queryable<APIKeys>().Includes(x => x.AvailableModels).First(x => x.Id == id);
         }
 
         public static APIKeys? GetKeyByAPIKey(string apiKey)
         {
             using var db = SQLHelper.GetInstance();
-            return db.Queryable<APIKeys>().First(x => x.APIKey == apiKey);
+            return db.Queryable<APIKeys>().Includes(x => x.AvailableModels).First(x => x.APIKey == apiKey);
         }
 
         public static void UpdateTokenConsume(string apiKey, long tokens)
         {
             using var db = SQLHelper.GetInstance();
-            var key = db.Queryable<APIKeys>().First(x => x.APIKey == apiKey);
+            var key = db.Queryable<APIKeys>().Includes(x => x.AvailableModels).First(x => x.APIKey == apiKey);
             if (key != null)
             {
                 key.TokenConsume += tokens;
@@ -128,11 +125,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             using var db = SQLHelper.GetInstance();
             if (Id == 0)
             {
-                Id = db.Insertable(this).ExecuteReturnIdentity();
+                Id = db.InsertNav(this).Include(x => x.AvailableModels).ExecuteReturnEntity().Id;
             }
             else
             {
-                db.Updateable(this).ExecuteCommand();
+                db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
             }
             if (!KeyCache.ContainsKey(Id))
             {
@@ -149,7 +146,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             using var db = SQLHelper.GetInstance();
             if (Id != 0)
             {
-                db.Deleteable<APIKeys>(x => x.Id == Id).ExecuteCommand();
+                db.DeleteNav<APIKeys>(x => x.Id == Id).Include(x => x.AvailableModels).ExecuteCommand();
                 if (KeyCache.ContainsKey(Id))
                 {
                     KeyCache.Remove(Id);
@@ -157,15 +154,48 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public void AddTokenConsume(long tokens)
+        public void AddTokenConsume(LLMModel model, long inputToken, long outputToken, long totalToken, long cachedToken)
         {
-            if (tokens <= 0)
+            if (totalToken <= 0)
             {
                 return;
             }
-            using var db = SQLHelper.GetInstance();
-            TokenConsume += tokens;
-            db.Updateable(this).ExecuteCommand();
+            lock (KeyCache)
+            {
+                using var db = SQLHelper.GetInstance();
+                TokenConsume += totalToken;
+                db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
+
+                model.TotalConsume += model.CalcConsume(inputToken, outputToken, totalToken, cachedToken);
+                db.Updateable(model).ExecuteCommand();
+            }
+        }
+    }
+
+    public class LLMModel
+    {
+        [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        public decimal OutputConsumePer1M { get; set; }
+
+        public decimal InputConsumePer1M { get; set; }
+
+        public decimal InputCachedConsumePer1M { get; set; }
+
+        public decimal TotalConsume { get; set; }
+
+        public decimal CalcConsume(long inputTokenCount, long outputTokenCount, long totalTokenCount, long cachedTokenCount)
+        {
+            decimal nonCachedInputToken = inputTokenCount - cachedTokenCount;
+
+            decimal consume = (nonCachedInputToken / 1M) * InputConsumePer1M
+                + (outputTokenCount / 1M) * OutputConsumePer1M
+                + (cachedTokenCount / 1M) * InputCachedConsumePer1M;
+
+            return consume;
         }
     }
 }

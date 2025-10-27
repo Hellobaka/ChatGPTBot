@@ -53,7 +53,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             string response = string.Empty;
             try
             {
-                response = await Task.Run(() => Chat.GetChatResult(new APIKeyPurpose() { Key = ApiKey, ModelName = ApiKey.AvailableModels.FirstOrDefault() }, new List<ChatMessage>
+                response = await Task.Run(() => Chat.GetChatResult(new APIKeyPurpose() { Key = ApiKey, Model = ApiKey.AvailableModels.FirstOrDefault() }, new List<ChatMessage>
                 {
                     new(ChatRole.User, "Hello")
                 }, Chat.Purpose.聊天));

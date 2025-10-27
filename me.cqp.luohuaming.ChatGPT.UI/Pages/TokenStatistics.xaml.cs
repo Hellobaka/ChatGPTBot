@@ -61,8 +61,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public long InputTokenCount { get; set; }
 
-        public long MaxRPM { get; set; }
-
         public ObservableCollection<CheckableItem> Models { get; set; } = [];
 
         public long OutputTokenCount { get; set; }
@@ -97,6 +95,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         }
 
         private void AnimateTextChange(TextBlock textBlock, long newValue)
+        {
+            AnimateTextChange(textBlock, newValue);
+        }
+
+        private void AnimateTextChange(TextBlock textBlock, decimal newValue)
         {
             var binding = textBlock.GetBindingExpression(TextBlock.TextProperty);
             var propertyName = binding?.ParentBinding?.Path?.Path;
@@ -525,7 +528,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             long inputTokenCount = 0;
             long outputTokenCount = 0;
             long totalTokenCount = 0;
-            int maxRPM = 0;
+            long cachedTokenCount = 0;
+            decimal predictConsume = 0;
 
             Dictionary<string, int> rpm = [];
             foreach (var item in FilterResult)
@@ -533,24 +537,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 callCount++;
                 inputTokenCount += item.InputToken;
                 outputTokenCount += item.OutputToken;
-                totalTokenCount = inputTokenCount + outputTokenCount;
-                string minuteKey = item.Time.ToString("yyyy-MM-dd HH:mm");
-                if (rpm.ContainsKey(minuteKey))
-                {
-                    rpm[minuteKey]++;
-                }
-                else
-                {
-                    rpm.Add(minuteKey, 1);
-                }
+                totalTokenCount = item.TotalToken;
+                cachedTokenCount = item.InputCacheToken;
+                predictConsume = item.PredictConsume;
             }
-            maxRPM = rpm.Count > 0 ? rpm.Max(x => x.Value) : 0;
 
             AnimateTextChange(CallCountDisplay, callCount);
             AnimateTextChange(InputTokenDisplay, inputTokenCount);
             AnimateTextChange(OutputTokenDisplay, outputTokenCount);
             AnimateTextChange(TotalTokenDisplay, totalTokenCount);
-            AnimateTextChange(MaxRPMDisplay, maxRPM);
+            AnimateTextChange(CachedTokenDisplay, cachedTokenCount);
+            AnimateTextChange(PredictConsumeDisplay, predictConsume);
         }
 
         private void Usage_OnUsageInserted(Usage usage)

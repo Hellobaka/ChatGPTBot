@@ -153,6 +153,7 @@
                         <ColumnDefinition />
                         <ColumnDefinition />
                         <ColumnDefinition />
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">调用次数</TextBlock>
@@ -184,6 +185,15 @@
                             TextAlignment="Center" />
                     </StackPanel>
                     <StackPanel Grid.Column="3">
+                        <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">被缓存 Token</TextBlock>
+                        <TextBlock
+                            x:Name="CachedTokenDisplay"
+                            Margin="0,10,0,0"
+                            Style="{StaticResource SubtitleTextBlockStyle}"
+                            Text="{Binding CachedTokenCount, StringFormat=N0, NotifyOnTargetUpdated=True}"
+                            TextAlignment="Center" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
                         <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">总 Token</TextBlock>
                         <TextBlock
                             x:Name="TotalTokenDisplay"
@@ -192,13 +202,13 @@
                             Text="{Binding TotalTokenCount, StringFormat=N0, NotifyOnTargetUpdated=True}"
                             TextAlignment="Center" />
                     </StackPanel>
-                    <StackPanel Grid.Column="4">
-                        <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">最大 RPM</TextBlock>
+                    <StackPanel Grid.Column="5">
+                        <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">预估消费</TextBlock>
                         <TextBlock
-                            x:Name="MaxRPMDisplay"
+                            x:Name="PredictConsumeDisplay"
                             Margin="0,10,0,0"
                             Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="{Binding MaxRPM, StringFormat=N0, NotifyOnTargetUpdated=True}"
+                            Text="{Binding PredictConsume, StringFormat=N0, NotifyOnTargetUpdated=True}"
                             TextAlignment="Center" />
                     </StackPanel>
                 </Grid>

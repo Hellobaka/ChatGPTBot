@@ -32,7 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 {
                     json = CommonHelper.Post_TecentSignV3(new
                     {
-                        Model = api.ModelName,
+                        Model = api.Model.Name,
                         Query = text,
                         Docs = documents
                     }.ToJson(), TencentAPIAction, AppConfig.RerankTimeout);
@@ -52,7 +52,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         // 阿里百炼
                         json = CommonHelper.Post("POST", api.Key.EndPoint, new
                         {
-                            model = api.ModelName,
+                            model = api.Model.Name,
                             input = new
                             {
                                 query = text,
@@ -71,7 +71,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     {
                         json = CommonHelper.Post("POST", api.Key.EndPoint, new
                         {
-                            model = api.ModelName,
+                            model = api.Model.Name,
                             query = text,
                             documents,
                             top_n = topn,
@@ -93,7 +93,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     }
                 }
 
-                api.Key.AddTokenConsume(tokenUsage);
+                api.Key.AddTokenConsume(api.Model, 0, tokenUsage, tokenUsage, 0);
                 return results.OrderByDescending(x => x.score).Take(topn).ToArray();
             }
             catch (Exception ex)

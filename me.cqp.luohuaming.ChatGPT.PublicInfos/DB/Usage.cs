@@ -16,6 +16,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public long OutputToken { get; set; }
 
+        public long InputCacheToken { get; set; }
+
+        public long TotalToken { get; set; }
+
+        public decimal PredictConsume { get; set; }
+
         public string Endpoint { get; set; }
 
         public string ModelName { get; set; }
@@ -26,7 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static event Action<Usage> OnUsageInserted;
 
-        public static void Insert(string endpoint, string modelName, string purpose, long inputToken, long outputToken)
+        public static void Insert(string endpoint, string modelName, string purpose, long inputToken, long outputToken, long totalToken, long cachedInputToken, decimal predictConsume)
         {
             using var db = SQLHelper.GetInstance();
             var u = new Usage()
@@ -34,9 +40,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 Endpoint = endpoint,
                 InputToken = inputToken,
                 OutputToken = outputToken,
+                InputCacheToken = cachedInputToken,
+                TotalToken = totalToken,
                 ModelName = modelName,
                 Purpose = purpose,
                 Time = DateTime.Now,
+                PredictConsume = predictConsume
             };
 
             db.Insertable(u).ExecuteCommand();
