@@ -114,6 +114,8 @@
     <Compile Include="Cqp\Interface\IStatusUpdate.cs" />
     <Compile Include="Cqp\Interface\IToSendString.cs" />
     <Compile Include="Cqp\Model\AppInfo.cs" />
+    <Compile Include="Cqp\Model\ChatHistory.cs" />
+    <Compile Include="Cqp\Model\ChatHistoryCollection.cs" />
     <Compile Include="Cqp\Model\CQCode.cs" />
     <Compile Include="Cqp\Model\CQFloatWindow.cs" />
     <Compile Include="Cqp\Model\BasisModel.cs" />

@@ -59,14 +59,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return record;
         }
 
-        public static ChatRecord Create(long groupID, long qq, string message, int messageID)
+        public static ChatRecord Create(long groupID, long qq, string message, int messageID, DateTime? time = null)
         {
             var record = new ChatRecord
             {
                 GroupID = groupID,
                 QQ = qq,
                 RawMessage = message,
-                Time = DateTime.Now,
+                Time = time ?? DateTime.Now,
                 MessageID = messageID,
                 IsMentioned = CheckAt(message, false)
             };
@@ -228,10 +228,36 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return info + stringBuilder.ToString();
         }
 
-        public static ChatRecord GetRecordByMessageId(int id)
+        public static ChatRecord GetRecordByMessageId(int id, ChatRecord referRecord = null)
         {
             using var db = SQLHelper.GetInstance();
-            return db.Queryable<ChatRecord>().First(x => x.MessageID == id);
+            var record = db.Queryable<ChatRecord>().First(x => x.MessageID == id);
+            if(record == null)
+            {
+                if (AppConfig.CanCallFrameIfRecordNotExist && referRecord != null)
+                {
+                    bool isGroup = referRecord.GroupID > 0;
+                    long parentId = isGroup ? referRecord.GroupID : referRecord.QQ;
+                    MainSave.CQLog?.Info("取消息记录", $"尝试从框架取消息记录 ParentId={parentId} IsGroup={isGroup} MessageId={id}");
+                    var r = MainSave.CQApi.GetChatHistoryById(parentId, isGroup, id);
+                    if (r != null)
+                    {
+                        MainSave.CQLog?.Info("取消息记录", $"成功获取一条聊天记录 Time={r.Time:G}");
+                        var newRecord = Create(isGroup ? r.ParentID : 0, r.SenderID, r.Message, r.MsgId, r.Time);
+                        InsertRecord(newRecord);
+                        return newRecord;
+                    }
+                    else
+                    {
+                        MainSave.CQLog?.Info("取消息记录", $"获取聊天记录失败");
+                    }
+                }
+                return null;
+            }
+            else
+            {
+                return record;
+            }
         }
 
         public static bool CheckAt(string input, bool forceBegin)
@@ -247,7 +273,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             var replyCode = cqcodes.FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
             if (replyCode != null && int.TryParse(replyCode.Items["id"], out int id))
             {
-                var msg = ChatRecord.GetRecordByMessageId(id);
+                var msg = GetRecordByMessageId(id);
                 if (msg != null && msg.QQ == MainSave.CurrentQQ)
                 {
                     return true;

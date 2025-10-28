@@ -140,6 +140,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static bool RecordNotExistSkipResponse { get; set; }
 
+        public static bool CanCallFrameIfRecordNotExist { get; set; }
+
         public static bool EnableMCP { get; set; }
 
         public static bool EnableLLMCheckShouldResponse { get; set; } = false;
@@ -224,6 +226,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EnableVisionWhenMentioned = ConfigHelper.GetConfig("EnableVisionWhenMentioned", true);
             EnableEmojiActiveSend = ConfigHelper.GetConfig("EnableEmojiActiveSend", false);
             RecordNotExistSkipResponse = ConfigHelper.GetConfig("RecordNotExistSkipResponse", true);
+            CanCallFrameIfRecordNotExist = ConfigHelper.GetConfig("CanCallFrameIfRecordNotExist", true);
             EnableMCP = ConfigHelper.GetConfig("EnableMCP", true);
             EnableLLMCheckShouldResponse = ConfigHelper.GetConfig("EnableLLMCheckShouldResponse", false);
             ShortTermMemoryMaxUseCount = ConfigHelper.GetConfig("ShortTermMemoryMaxUseCount", 30);

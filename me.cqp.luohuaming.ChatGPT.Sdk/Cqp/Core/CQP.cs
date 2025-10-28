@@ -150,6 +150,12 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Core
 
 		[DllImport (DllName, EntryPoint = "CQ_getFriendList")]
 		public static extern IntPtr CQ_getFriendList (int authCode, bool reserved);
+
+		[DllImport (DllName, EntryPoint = "CQ_getChatHistory")]
+		public static extern IntPtr CQ_getChatHistory(int authCode, long groupId, long qq, int count);
+
+		[DllImport (DllName, EntryPoint = "CQ_getChatHistoryById")]
+		public static extern IntPtr CQ_getChatHistoryById(int authCode, long parentId, bool isGroup, int messageId);
 		#endregion
 	}
 }

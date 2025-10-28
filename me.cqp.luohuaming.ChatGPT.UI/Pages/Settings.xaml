@@ -238,6 +238,14 @@
                                 OnContent="" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center">未找到对应引用消息时支持从框架获取:</TextBlock>
+                            <ui:ToggleSwitch
+                                x:Name="CanCallFrameIfRecordNotExist"
+                                Margin="10,0,0,0"
+                                OffContent=""
+                                OnContent="" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">使用LLM(分段API)判断是否应当回复:</TextBlock>
                             <ui:ToggleSwitch
                                 x:Name="EnableLLMCheckShouldResponse"
