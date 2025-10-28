@@ -288,6 +288,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                     return;
                 }
             }
+            MemoryExtractionCount[id] = 0;
             var shortTermMemories = GetShortTermMemories(groupId, qq);
             var todo = GetToDoItems(groupId, qq);
             bool isGroup = groupId > 0;
