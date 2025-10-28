@@ -1,6 +1,8 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
 using me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model;
+using Microsoft.Extensions.AI;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,6 +25,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public static List<ShortTermMemory> ShortTermMemories { get; set; } = [];
 
         public static List<ToDoItem> ToDoItems { get; set; } = [];
+
+        private static Dictionary<long, int> MemoryExtractionCount { get; set; } = [];
 
         private static object _todoSaveLock = new();
         private static object _shortMemorySaveLock = new();
@@ -263,6 +267,65 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             var memories = Qdrant.Instance.GetRelevantCollection(query, Qdrant.KnowledgeCollectionName);
             return memories.ToArray();
+        }
+
+        public static void RecordMemoryExtractionCount(long id)
+        {
+            if (!MemoryExtractionCount.ContainsKey(id))
+            {
+                MemoryExtractionCount.Add(id, 0);
+            }
+            MemoryExtractionCount[id]++;
+        }
+
+        public static void ExecuteMemoryExtraction(List<ChatRecord> chatRecords, long groupId, long qq)
+        {
+            long id = groupId > 0 ? groupId : qq;
+            if (MemoryExtractionCount.TryGetValue(id, out var count))
+            {
+                if (count < AppConfig.MemoryExtractionCount)
+                {
+                    return;
+                }
+            }
+            var shortTermMemories = GetShortTermMemories(groupId, qq);
+            var todo = GetToDoItems(groupId, qq);
+            bool isGroup = groupId > 0;
+            string prompt = $$"""
+                你是一个聊天助手，你的昵称是:{{AppConfig.BotName}}，或者这些非常用称呼: {{string.Join(",", AppConfig.BotNicknames)}}，负责从用户对话中提取值得记忆的信息。
+                当前{{(isGroup ? $"为群聊场景。groupId={groupId}" : $"为私聊场景。对方qq={qq}")}}，上下文中携带的用户[]中的数字为QQ
+
+                请仔细分析以下对话上下文和最新消息，判断是否需要将信息存入短期、长期记忆或者知识库：
+                ---
+                记忆规则：
+                - **短期记忆**：临时、上下文相关、可能在几分钟到几小时内有用的信息（如“我等下要去开会”、“密码是123456”），不要记录表情包内容。
+                - **长期记忆**：持久、个人化、反复有用的信息（如“用户A喜欢喝美式咖啡”、“用户B的生日是5月20日”），不要记录表情包内容。
+                - **知识**：客观、真实、普适的事实，不依赖特定用户。不记录主观观点（“我觉得 Python 比 Java 好”）；不记录已知常识（“地球是圆的”）；不记录无时效的实时新闻；不要记录表情包内容
+                - 添加短期记忆前请检查 short-term-memories 是否已经有相似或重复的内容，若已经存在相似或重复内容应当调用 RenewShortTermMemory 来刷新短期记忆过期时间，而不是再调用 AddShortTermMemory。
+                - 不要记录无意义、情绪化或过于泛泛的内容（如“今天好累”、“哈哈哈”）。
+                - 每次对话中所有类型的记忆只能记录**一条**
+                ---
+                以下是你的代办事项:
+                <todo>
+                {{string.Join("\n", [.. todo.Select(x => x.ToString())])}}
+                </todo>
+
+                以下是你的短期记忆，短期记忆最大可使用轮数为:{{AppConfig.ShortTermMemoryMaxUseCount}}
+                <short-term-memories>
+                {{string.Join("\n", [.. shortTermMemories.Select(x => x.ToString())])}}
+                </short-term-memories>
+                
+                最近对话（按时间倒序）：
+                <recent_Message>
+                {{string.Join("\n", chatRecords.Select(x => x.ParsedMessage))}}
+                </recent_Message>
+                """;
+
+            var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
+                    new(ChatRole.System, prompt),
+                    new(ChatRole.User, "请回复")
+                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt, enableCQApiFunction: false, enableRecordFunction: false, enableRelationshipFunction: false));
+            CommonHelper.DebugLog("记忆提取", response);
         }
     }
 }

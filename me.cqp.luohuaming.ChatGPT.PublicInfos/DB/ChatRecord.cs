@@ -78,6 +78,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             using var db = SQLHelper.GetInstance();
             chatRecord.Id = db.Insertable(chatRecord).ExecuteReturnIdentity();
+            Memory.RecordMemoryExtractionCount(chatRecord.GroupID > 0 ? chatRecord.GroupID : chatRecord.QQ);
         }
 
         /// <summary>

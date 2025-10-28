@@ -119,7 +119,7 @@
                                     Header="Key名称" />
                                 <DataGridTextColumn
                                     Width="*"
-                                    Binding="{Binding ModelName}"
+                                    Binding="{Binding Model.Name}"
                                     Header="模型名称" />
                                 <DataGridTemplateColumn Width="200" Header="操作">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -408,6 +408,8 @@
                     <StackPanel x:Name="MemoryContainer" Margin="16,16,22,16">
                         <TextBlock VerticalAlignment="Center">短期记忆可使用的对话轮数:</TextBlock>
                         <TextBox x:Name="ShortTermMemoryMaxUseCount" Margin="0,5,0,0" />
+                        <TextBlock VerticalAlignment="Center">每进行多少条对话就提取一次记忆:</TextBlock>
+                        <TextBox x:Name="MemoryExtractionCount" Margin="0,5,0,0" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center">是否启用知识库(Qdrant)功能:</TextBlock>
                             <ui:ToggleSwitch

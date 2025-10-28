@@ -23,7 +23,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             InitializeComponent();
             DataContext = this;
             ApiKey = apiKey;
-            AvailableModels = new ObservableCollection<LLMModel>(apiKey.AvailableModels);
+            AvailableModels = new ObservableCollection<LLMModel>(apiKey.AvailableModels ?? []);
             OnPropertyChanged(nameof(ApiKey));
         }
 

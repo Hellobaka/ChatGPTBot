@@ -125,7 +125,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public void Save()
         {
             using var db = SQLHelper.GetInstance();
-
+            AvailableModels ??= [];
             if (Id == 0)
             {
                 Id = db.InsertNav(this).Include(x => x.AvailableModels).ExecuteReturnEntity().Id;

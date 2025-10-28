@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
@@ -74,6 +75,9 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 }
                 double replyProbability = replyManager.ChangeReplyWilling(record.IsImage, record.IsMentioned, AppConfig.BotNicknames.Any(e.Message.Text.Contains), e.FromQQ);
                 SetGroupBusy(e.FromGroup, true);
+                var records = ChatRecord.GetGroupChatRecord(e.FromGroup, 0, AppConfig.ContextMaxLength);
+                _ = Task.Run(() => Memory.ExecuteMemoryExtraction(records, e.FromGroup, e.FromQQ));
+                
                 // LLM 判断是否应该回复
                 if (AppConfig.EnableLLMCheckShouldResponse)
                 {
@@ -83,7 +87,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     }
                     else
                     {
-                        var records = ChatRecord.GetGroupChatRecord(e.FromGroup, 0, AppConfig.ContextMaxLength).ToList();
                         (bool shouldResponse, double confidence) = ReplyManager.CheckShouldResponseByLLM(records);
                         CommonHelper.DebugLog("触发回复", $"大模型判断应答，应当回复 {shouldResponse}，置信度 {confidence * 100}%");
                         if (!shouldResponse)
@@ -108,11 +111,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 if (random < replyProbability)
                 {
                     MCPSliceRecord.Add(identity, (e.FromGroup, e.FromQQ, e.Message.Id, false));
-                    var prompt = BuildPrompt(relationship, record);
+                    var prompt = BuildPrompt(relationship, record, records);
 
                     MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity, prompt);
 
-                    string reply = CreateReply(relationship, record, mcp, identity, prompt);
+                    string reply = CreateReply(relationship, mcp, identity, prompt);
 
                     if (reply == Chat.ErrorMessage)
                     {
@@ -185,11 +188,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 }
                 SetGroupBusy(e.FromQQ, true);
                 MCPSliceRecord.Add(identity, (-1, e.FromQQ, e.Message.Id, false));
-                var prompt = BuildPrompt(relationship, record);
+                var records = ChatRecord.GetGroupChatRecord(0, e.FromQQ, AppConfig.ContextMaxLength);
+                _ = Task.Run(() => Memory.ExecuteMemoryExtraction(records, 0, e.FromQQ));
+                var prompt = BuildPrompt(relationship, record, records);
 
                 MCPClientManager mcp = new(-1, e.FromQQ, identity, prompt);
 
-                string reply = CreateReply(relationship, record, mcp, identity, prompt);
+                string reply = CreateReply(relationship, mcp, identity, prompt);
 
                 if (reply == Chat.ErrorMessage)
                 {
@@ -247,7 +252,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
         }
 
-        private string CreateReply(Relationship relationship, ChatRecord record, MCPClientManager mcp, string identity, string prompt)
+        private string CreateReply(Relationship relationship, MCPClientManager mcp, string identity, string prompt)
         {
             if (relationship == null)
             {
@@ -262,7 +267,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             ], Chat.Purpose.聊天, timeout: AppConfig.ChatTimeout, mcp: mcp, identity: identity);
         }
 
-        public static string BuildPrompt(Relationship relationship, ChatRecord record)
+        public static string BuildPrompt(Relationship relationship, ChatRecord record, List<ChatRecord> records)
         {
             List<ChatMessageContentPart> parts = [];
             StringBuilder stringBuilder = new();
@@ -294,11 +299,11 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             if (record.GroupID > 0)
             {
-                BuildGroupPrompt(relationship, record, stringBuilder);
+                BuildGroupPrompt(stringBuilder);
             }
             else
             {
-                BuildPrivatePrompt(relationship, record, stringBuilder);
+                BuildPrivatePrompt(stringBuilder);
             }
             if (AppConfig.EnableSchedules)
             {
@@ -358,9 +363,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             }
             stringBuilder.AppendLine("以下是上下文记录，发送时间倒序排序：");
             stringBuilder.AppendLine($"<chat-history>");
-            foreach (var item in relationship.GroupID == -1
-                 ? ChatRecord.GetPrivateChatRecord(relationship.QQ, AppConfig.ContextMaxLength)
-                 : ChatRecord.GetGroupChatRecord(relationship.GroupID, 0, AppConfig.ContextMaxLength))
+            foreach (var item in records)
             {
                 stringBuilder.AppendLine(item.ParsedMessage);
             }
@@ -369,7 +372,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             return stringBuilder.ToString();
         }
 
-        private static void BuildPrivatePrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
+        private static void BuildPrivatePrompt(StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"`<MainRule>`");
             stringBuilder.AppendLine($"你的昵称是:{AppConfig.BotName}，或者这些非常用称呼: {string.Join(",", AppConfig.BotNicknames)},{AppConfig.PrivatePrompt}");
@@ -380,7 +383,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"`</MainRule>`");
         }
 
-        private static void BuildGroupPrompt(Relationship relationship, ChatRecord record, StringBuilder stringBuilder)
+        private static void BuildGroupPrompt(StringBuilder stringBuilder)
         {
             stringBuilder.AppendLine($"`<MainRule>`");
             stringBuilder.AppendLine($"你的昵称是:{AppConfig.BotName}，或者这些非常用称呼: {string.Join(",", AppConfig.BotNicknames)},{AppConfig.GroupPrompt}");
