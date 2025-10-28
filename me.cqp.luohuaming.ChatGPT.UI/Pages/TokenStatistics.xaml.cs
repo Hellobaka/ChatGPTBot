@@ -534,9 +534,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             OnPropertyChanged(nameof(Pie_ServiceCollection));
         }
 
-        private void LoadChartPerference()
+        private void LoadChartPreference()
         {
-            Pie_ModelChecked = ConfigHelper.GetConfig("Pie_ModelChekced", false);
+            Pie_ModelChecked = ConfigHelper.GetConfig("Pie_ModelChecked", false);
             Pie_PurposeChecked = ConfigHelper.GetConfig("Pie_PurposeChecked", false);
             Pie_ServiceChecked = ConfigHelper.GetConfig("Pie_ServiceChecked", false);
             Bar_ModelChecked = ConfigHelper.GetConfig("Bar_ModelChecked", false);
@@ -580,7 +580,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private async Task LoadFilterGroup(bool newChecked)
         {
-            var (services, models, puropses) = await Task.Run(Usage.GetGroups);
+            var (services, models, purposes) = await Task.Run(Usage.GetGroups);
             var notContain = Services.Where(x => !services.Any(o => o == x.Name)).ToList();
             foreach (var item in notContain)
             {
@@ -591,7 +591,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             {
                 Models.Remove(item);
             }
-            notContain = Purposes.Where(x => !puropses.Any(o => o == x.Name)).ToList();
+            notContain = Purposes.Where(x => !purposes.Any(o => o == x.Name)).ToList();
             foreach (var item in notContain)
             {
                 Purposes.Remove(item);
@@ -616,7 +616,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     }
                 };
             }
-            foreach (var group in puropses)
+            foreach (var group in purposes)
             {
                 if (Purposes.Any(x => x.Name == group))
                 {
@@ -676,7 +676,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Usage.OnUsageInserted += Usage_OnUsageInserted;
 
             await LoadFilterGroup(true);
-            LoadChartPerference();
+            LoadChartPreference();
             UpdateGridLayout();
             DoFilter();
 
