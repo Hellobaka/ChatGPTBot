@@ -68,7 +68,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 RawMessage = message,
                 Time = time ?? DateTime.Now,
                 MessageID = messageID,
-                IsMentioned = CheckAt(message, false)
+                IsMentioned = CheckAt(message, false, groupID, qq)
             };
             record.ParsedMessage = record.ParseMessage();
             return record;
@@ -171,7 +171,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                         case CQFunction.Reply:
                             if (int.TryParse(cqcode.Items["id"], out int id))
                             {
-                                var msg = GetRecordByMessageId(id);
+                                var msg = GetRecordByMessageId(id, GroupID, QQ);
                                 if (msg != null)
                                 {
                                     var img = CQCode.Parse(msg.RawMessage).FirstOrDefault(x => x.IsImageCQCode);
@@ -228,16 +228,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return info + stringBuilder.ToString();
         }
 
-        public static ChatRecord GetRecordByMessageId(int id, ChatRecord referRecord = null)
+        public static ChatRecord GetRecordByMessageId(int id, long? referGroupId = null, long? referQQ = null)
         {
             using var db = SQLHelper.GetInstance();
             var record = db.Queryable<ChatRecord>().First(x => x.MessageID == id);
-            if(record == null)
+            if (record == null)
             {
-                if (AppConfig.CanCallFrameIfRecordNotExist && referRecord != null)
+                if (AppConfig.CanCallFrameIfRecordNotExist && referGroupId != null && referGroupId != null)
                 {
-                    bool isGroup = referRecord.GroupID > 0;
-                    long parentId = isGroup ? referRecord.GroupID : referRecord.QQ;
+                    bool isGroup = referGroupId.Value > 0;
+                    long parentId = isGroup ? referGroupId.Value : referQQ.Value;
                     MainSave.CQLog?.Info("取消息记录", $"尝试从框架取消息记录 ParentId={parentId} IsGroup={isGroup} MessageId={id}");
                     var r = MainSave.CQApi.GetChatHistoryById(parentId, isGroup, id);
                     if (r != null)
@@ -260,7 +260,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
         }
 
-        public static bool CheckAt(string input, bool forceBegin)
+        public static bool CheckAt(string input, bool forceBegin, long? groupId = null, long? qq = null)
         {
             // 要求CQ码必须在开头, 所以只检查原始文本开头是否为At CQ码即可
             if (forceBegin && input.StartsWith("[CQ:at"))
@@ -273,7 +273,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             var replyCode = cqcodes.FirstOrDefault(x => x.Function == Sdk.Cqp.Enum.CQFunction.Reply);
             if (replyCode != null && int.TryParse(replyCode.Items["id"], out int id))
             {
-                var msg = GetRecordByMessageId(id);
+                var msg = GetRecordByMessageId(id, groupId, qq);
                 if (msg != null && msg.QQ == MainSave.CurrentQQ)
                 {
                     return true;
