@@ -7,7 +7,9 @@
     xmlns:local="clr-namespace:me.cqp.luohuaming.ChatGPT.UI"
     xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:pages="clr-namespace:me.cqp.luohuaming.ChatGPT.UI.Pages"
     xmlns:ui="http://schemas.modernwpf.com/2019"
+    d:DataContext="{d:DesignInstance Type=pages:TokenStatistics}"
     d:DesignHeight="850"
     d:DesignWidth="800"
     Loaded="Page_Loaded"
@@ -185,7 +187,7 @@
                             TextAlignment="Center" />
                     </StackPanel>
                     <StackPanel Grid.Column="3">
-                        <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">被缓存 Token</TextBlock>
+                        <TextBlock Style="{StaticResource BaseTextBlockStyle}" TextAlignment="Center">缓存 Token</TextBlock>
                         <TextBlock
                             x:Name="CachedTokenDisplay"
                             Margin="0,10,0,0"
@@ -208,7 +210,7 @@
                             x:Name="PredictConsumeDisplay"
                             Margin="0,10,0,0"
                             Style="{StaticResource SubtitleTextBlockStyle}"
-                            Text="{Binding PredictConsume, StringFormat=N0, NotifyOnTargetUpdated=True}"
+                            Text="{Binding PredictConsume, StringFormat=N2, NotifyOnTargetUpdated=True}"
                             TextAlignment="Center" />
                     </StackPanel>
                 </Grid>
@@ -239,6 +241,11 @@
                                 Content="次数"
                                 IsChecked="{Binding UnitCountChecked}"
                                 Unchecked="RadioButton_Checked" />
+                            <RadioButton
+                                Checked="RadioButton_Checked"
+                                Content="开销"
+                                IsChecked="{Binding UnitConsumeChecked}"
+                                Unchecked="RadioButton_Checked" />
                         </WrapPanel>
                     </GroupBox>
                     <GroupBox Grid.Row="1" Header="饼图">
@@ -264,41 +271,70 @@
                         </WrapPanel>
                     </GroupBox>
                     <GroupBox
-                        Grid.Row="1"
+                        Grid.Row="0"
+                        Grid.RowSpan="2"
                         Grid.Column="1"
                         Header="柱状图">
-                        <WrapPanel>
-                            <RadioButton
-                                Checked="RadioButton_Checked"
-                                IsChecked="{Binding Bar_OverviewChecked}"
-                                Unchecked="RadioButton_Checked">
-                                总览
-                            </RadioButton>
-                            <RadioButton
-                                Checked="RadioButton_Checked"
-                                IsChecked="{Binding Bar_ModelChecked}"
-                                Unchecked="RadioButton_Checked">
-                                模型
-                            </RadioButton>
-                            <RadioButton
-                                Checked="RadioButton_Checked"
-                                IsChecked="{Binding Bar_PurposeChecked}"
-                                Unchecked="RadioButton_Checked">
-                                用途
-                            </RadioButton>
-                            <RadioButton
-                                Checked="RadioButton_Checked"
-                                IsChecked="{Binding Bar_ServiceChecked}"
-                                Unchecked="RadioButton_Checked">
-                                服务商
-                            </RadioButton>
-                            <RadioButton
-                                x:Name="BarChartVisible"
-                                Checked="BarChartVisible_Checked"
-                                Unchecked="BarChartVisible_Unchecked">
-                                无
-                            </RadioButton>
-                        </WrapPanel>
+                        <ui:SimpleStackPanel Spacing="5">
+                            <CheckBox
+                                Checked="CheckBox_Checked"
+                                IsChecked="{Binding Bar_ShowLegend}"
+                                Unchecked="CheckBox_Checked">
+                                显示图例
+                            </CheckBox>
+                            <WrapPanel>
+                                <RadioButton
+                                    Checked="RadioButton_Checked"
+                                    IsChecked="{Binding Bar_OverviewChecked}"
+                                    Unchecked="RadioButton_Checked">
+                                    总览
+                                </RadioButton>
+                                <RadioButton
+                                    Checked="RadioButton_Checked"
+                                    IsChecked="{Binding Bar_ModelChecked}"
+                                    Unchecked="RadioButton_Checked">
+                                    模型
+                                </RadioButton>
+                                <RadioButton
+                                    Checked="RadioButton_Checked"
+                                    IsChecked="{Binding Bar_PurposeChecked}"
+                                    Unchecked="RadioButton_Checked">
+                                    用途
+                                </RadioButton>
+                                <RadioButton
+                                    Checked="RadioButton_Checked"
+                                    IsChecked="{Binding Bar_ServiceChecked}"
+                                    Unchecked="RadioButton_Checked">
+                                    服务商
+                                </RadioButton>
+                                <RadioButton
+                                    x:Name="BarChartVisible"
+                                    Checked="BarChartVisible_Checked"
+                                    Unchecked="BarChartVisible_Unchecked">
+                                    无
+                                </RadioButton>
+                            </WrapPanel>
+                            <WrapPanel IsEnabled="{Binding UnitTokenChecked}">
+                                <CheckBox
+                                    Checked="CheckBox_Checked"
+                                    IsChecked="{Binding Bar_InputTokenChecked}"
+                                    Unchecked="CheckBox_Checked">
+                                    输入
+                                </CheckBox>
+                                <CheckBox
+                                    Checked="CheckBox_Checked"
+                                    IsChecked="{Binding Bar_InputCachedTokenChecked}"
+                                    Unchecked="CheckBox_Checked">
+                                    输入缓存
+                                </CheckBox>
+                                <CheckBox
+                                    Checked="CheckBox_Checked"
+                                    IsChecked="{Binding Bar_OutputTokenChecked}"
+                                    Unchecked="CheckBox_Checked">
+                                    输出
+                                </CheckBox>
+                            </WrapPanel>
+                        </ui:SimpleStackPanel>
                     </GroupBox>
                 </Grid>
             </Expander>
@@ -362,7 +398,7 @@
                         x:Name="TimeDetailChart"
                         MinHeight="200"
                         FontFamily="微软雅黑"
-                        LegendPosition="Right"
+                        LegendPosition="{Binding Bar_LegendPosition}"
                         Series="{Binding BarCollection}"
                         ZoomMode="X" />
                 </GroupBox>

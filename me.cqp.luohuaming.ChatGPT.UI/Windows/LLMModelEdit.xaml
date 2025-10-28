@@ -38,7 +38,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center">输入开销 (每 1M) :</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding InputConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding InputConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
             </Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -46,7 +46,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center">缓存输入开销 (每 1M) :</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding InputCachedConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding InputCachedConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
             </Grid>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -54,7 +54,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <TextBlock VerticalAlignment="Center">输出开销 (每 1M) :</TextBlock>
-                <TextBox Grid.Column="1" Text="{Binding OutputConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1" Text="{Binding OutputConsumePer1M, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
             </Grid>
         </ui:SimpleStackPanel>
         <Grid Grid.Row="1" Margin="5">

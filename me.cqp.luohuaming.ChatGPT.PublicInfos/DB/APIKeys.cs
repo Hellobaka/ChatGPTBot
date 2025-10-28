@@ -38,7 +38,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         public string APIKey { get; set; } = string.Empty;
 
         [Navigate(NavigateType.OneToMany, nameof(LLMModel.APIKeyId))]
-        public List<LLMModel> AvailableModels { get; set; } = [];
+        public List<LLMModel> AvailableModels { get; set; }
 
         public long TokenConsume { get; set; }
 
@@ -108,14 +108,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             return db.Queryable<APIKeys>().Includes(x => x.AvailableModels).First(x => x.APIKey == apiKey);
         }
 
-        public static void UpdateTokenConsume(string apiKey, long tokens)
+        public static void UpdateTokenConsume(string apiKey, LLMModel model, long inputTokenCount, long outputTokenCount, long cachedTokenCount, long totalTokenCount)
         {
             using var db = SQLHelper.GetInstance();
             var key = db.Queryable<APIKeys>().Includes(x => x.AvailableModels).First(x => x.APIKey == apiKey);
             if (key != null)
             {
-                key.TokenConsume += tokens;
-                db.Updateable(key).ExecuteCommand();
+                key.AddTokenConsume(model, inputTokenCount, outputTokenCount, totalTokenCount, cachedTokenCount);
                 if (KeyCache.ContainsKey(key.Id))
                 {
                     KeyCache[key.Id] = key;
@@ -129,20 +128,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
             if (Id == 0)
             {
-                Id = db.Insertable(this).ExecuteReturnIdentity();
+                Id = db.InsertNav(this).Include(x => x.AvailableModels).ExecuteReturnEntity().Id;
 
                 // 设置所有模型的APIKeyId
                 foreach (var model in AvailableModels)
                 {
                     model.APIKeyId = Id;
-                    if (model.Id != 0)
-                    {
-                        db.Updateable(model).ExecuteCommand();
-                    }
-                    else
-                    {
-                        model.Id = db.Insertable(model).ExecuteReturnIdentity();
-                    }
                 }
             }
             else
@@ -153,14 +144,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 foreach (var model in AvailableModels)
                 {
                     model.APIKeyId = Id;
-                    if (model.Id != 0)
-                    {
-                        db.Updateable(model).ExecuteCommand();
-                    }
-                    else
-                    {
-                        model.Id = db.Insertable(model).ExecuteReturnIdentity();
-                    }
                 }
             }
             if (!KeyCache.ContainsKey(Id))
@@ -194,18 +177,20 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             lock (KeyCache)
             {
+                var consume = model.CalcConsume(inputToken, outputToken, totalToken, cachedToken);
+
                 using var db = SQLHelper.GetInstance();
                 TokenConsume += totalToken;
-                var consume = model.CalcConsume(inputToken, outputToken, totalToken, cachedToken);
-                model.TotalConsume += consume;
                 TotalConsume += consume;
+                model.TotalConsume += consume;
 
                 db.UpdateNav(this).Include(x => x.AvailableModels).ExecuteCommand();
-                db.Updateable(model).ExecuteCommand();
+                //db.Updateable(model).ExecuteCommand();
             }
         }
     }
 
+    [SugarTable]
     public class LLMModel
     {
         [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
@@ -227,9 +212,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         {
             decimal nonCachedInputToken = inputTokenCount - cachedTokenCount;
 
-            decimal consume = (nonCachedInputToken / 1M) * InputConsumePer1M
-                + (outputTokenCount / 1M) * OutputConsumePer1M
-                + (cachedTokenCount / 1M) * InputCachedConsumePer1M;
+            decimal consume = (nonCachedInputToken / 1000000) * InputConsumePer1M
+                + (outputTokenCount / 1000000) * OutputConsumePer1M
+                + (cachedTokenCount / 1000000) * InputCachedConsumePer1M;
 
             return consume;
         }

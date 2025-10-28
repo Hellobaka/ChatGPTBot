@@ -11,6 +11,7 @@ using System.ClientModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -49,26 +50,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 MainSave.CQLog?.Info("GetChatResult", "Key 为 null");
                 return Chat.ErrorMessage;
             }
-            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.Model.Name, chatMessages, purpose, jsonMode, timeout, mcp, identity);
+            return GetChatResult(key.Key.EndPoint, key.Key.APIKey, key.Model, chatMessages, purpose, jsonMode, timeout, mcp, identity);
         }
 
         public string GetChatResult(string baseUrl,
                                    string apiKey,
-                                   string modelName,
+                                   LLMModel model,
                                    List<ChatMessage> chatMessages,
                                    Chat.Purpose purpose,
                                    bool jsonMode = false,
                                    int timeout = 10000,
                                    MCPClientManager mcp = null,
-                                   string? identity = null,
-                                   LLMModel? model = null)
+                                   string? identity = null)
         {
             baseUrl = baseUrl.Replace("/chat/completions", "");
             string msg = "";
 
             try
             {
-                var client = CreateChatClient(baseUrl, apiKey, modelName, timeout, mcp, identity);
+                var client = CreateChatClient(baseUrl, apiKey, model.Name, timeout, mcp, identity);
                 var option = CreateChatOptions(jsonMode, mcp);
 
                 _toolCallService.ResetToolCallState(identity);
@@ -85,14 +85,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
                 if (usage != null)
                 {
-                    _usageTracker.TrackUsage(baseUrl, modelName, purpose.ToString(), usage, model, apiKey);
+                    _usageTracker.TrackUsage(baseUrl, model, purpose.ToString(), usage, apiKey);
                 }
 
                 chatMessages.Add(new(ChatRole.Assistant, msg));
 
                 msg = _responseProcessor.ProcessResponse(msg, identity);
 
-                return HandlePendingPictures(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity, msg);
+                return HandlePendingPictures(baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout, mcp, identity, msg);
             }
             catch (Exception ex)
             {
@@ -227,7 +227,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             return (msg, usage);
         }
 
-        private string HandlePendingPictures(string baseUrl, string apiKey, string modelName, List<ChatMessage> chatMessages, Chat.Purpose purpose, bool jsonMode, int timeout, MCPClientManager mcp, string identity, string currentMsg)
+        private string HandlePendingPictures(string baseUrl, string apiKey, LLMModel model, List<ChatMessage> chatMessages, Chat.Purpose purpose, bool jsonMode, int timeout, MCPClientManager mcp, string identity, string currentMsg)
         {
             var pendingPictures = PictureContextManager.GetAndClearPictures(identity);
             if (pendingPictures != null && pendingPictures.Count > 0)
@@ -264,7 +264,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 }
                 else
                 {
-                    return GetChatResult(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity);
+                    return GetChatResult(baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout, mcp, identity);
                 }
             }
             return currentMsg;

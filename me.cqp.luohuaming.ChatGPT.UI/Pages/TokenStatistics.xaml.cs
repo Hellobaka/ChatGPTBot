@@ -1,17 +1,21 @@
 ﻿using LiveChartsCore;
 using LiveChartsCore.Defaults;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using me.cqp.luohuaming.ChatGPT.PublicInfos;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.UI.Model;
+using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
 using ModernWpf;
+using PropertyChanged;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -43,9 +47,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public bool Bar_ServiceChecked { get; set; }
 
-        public IEnumerable<ISeries> BarCollection { get; set; } = [];
+        public bool Bar_InputTokenChecked { get; set; }
 
-        public long CallCount { get; set; }
+        public bool Bar_InputCachedTokenChecked { get; set; }
+
+        public bool Bar_OutputTokenChecked { get; set; }
+
+        public IEnumerable<ISeries> BarCollection { get; set; } = [];
 
         public int CheckedModelCount => Models.Count(item => item.Checked);
 
@@ -59,11 +67,17 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         public DateTime FilterStartDate { get; set; }
 
+        public long CallCount { get; set; }
+
         public long InputTokenCount { get; set; }
 
-        public ObservableCollection<CheckableItem> Models { get; set; } = [];
+        public long CachedTokenCount { get; set; }
 
         public long OutputTokenCount { get; set; }
+
+        public decimal PredictConsume { get; set; }
+
+        public ObservableCollection<CheckableItem> Models { get; set; } = [];
 
         public bool PageLoaded { get; set; }
 
@@ -88,6 +102,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         public bool UnitCountChecked { get; set; }
 
         public bool UnitTokenChecked { get; set; }
+
+        public bool UnitConsumeChecked { get; set; }
+
+        [AlsoNotifyFor(nameof(Bar_LegendPosition))]
+        public bool Bar_ShowLegend { get; set; }
+
+        public LegendPosition Bar_LegendPosition => Bar_ShowLegend ? LegendPosition.Right : LegendPosition.Hidden;
 
         protected void OnPropertyChanged(string propertyName)
         {
@@ -181,6 +202,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             OnPropertyChanged(propertyName);
             UpdateGridLayout();
             ConfigHelper.SetConfig(propertyName, (bool)GetType().GetProperty(propertyName).GetValue(this));
+            if (propertyName.StartsWith("Unit") || propertyName.StartsWith("Bar_"))
+            {
+                DoFilter();
+            }
         }
 
         private async void DoFilter()
@@ -205,39 +230,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Dictionary<string, List<DateTimePoint>> purpose = [];
             Dictionary<string, List<DateTimePoint>> service = [];
             string format = dayMode ? "yyyy-MM-dd HH:00" : "yyyy-MM-dd";
-            foreach (var item in FilterResult.GroupBy(x => x.Time.ToString(format))
-                .Select(x => new { Name = x.Key, Group = x, Count = x.Count(), TotalToken = x.Sum(x => x.InputToken + x.OutputToken) }))
-            {
-                DateTime pointDate = DateTime.TryParseExact(item.Name, format, null, System.Globalization.DateTimeStyles.None, out DateTime d) ? d : new();
-                overview.Add(new() { DateTime = pointDate, Value = UnitCountChecked ? item.Count : item.TotalToken });
-
-                item.Group.GroupBy(x => x.ModelName).ToList().ForEach(x =>
-                {
-                    if (!model.ContainsKey(x.Key))
+            var rawData = FilterResult.GroupBy(x => x.Time.ToString(format))
+                .Select(x =>
+                    new TimeGroupData
                     {
-                        model.Add(x.Key, []);
-                    }
-                    model[x.Key].Add(new() { DateTime = pointDate, Value = UnitCountChecked ? x.Count() : x.Sum(x => x.InputToken + x.OutputToken) });
-                });
-
-                item.Group.GroupBy(x => x.Purpose).ToList().ForEach(x =>
-                {
-                    if (!purpose.ContainsKey(x.Key))
-                    {
-                        purpose.Add(x.Key, []);
-                    }
-                    purpose[x.Key].Add(new() { DateTime = pointDate, Value = UnitCountChecked ? x.Count() : x.Sum(x => x.InputToken + x.OutputToken) });
-                });
-
-                item.Group.GroupBy(x => x.Endpoint).ToList().ForEach(x =>
-                {
-                    if (!service.ContainsKey(x.Key))
-                    {
-                        service.Add(x.Key, []);
-                    }
-                    service[x.Key].Add(new() { DateTime = pointDate, Value = UnitCountChecked ? x.Count() : x.Sum(x => x.InputToken + x.OutputToken) });
-                });
-            }
+                        GroupName = x.Key,
+                        Group = x,
+                        Format = format,
+                    });
 
             if (dayMode)
             {
@@ -248,7 +248,64 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 TimeDetailChart.XAxes = [new DateTimeAxis(TimeSpan.FromDays(1), date => date.ToString("yyyy-MM-dd"))];
             }
             BarCollection = [];
+            if (UnitCountChecked)
+            {
+                BuildSimpleColumns(rawData, x => x.Group.Count());
+            }
+            else if (UnitTokenChecked)
+            {
+                BuildTokenColumns(rawData);
+            }
+            else
+            {
+                BuildSimpleColumns(rawData, x => (double)x.Group.Sum(x => x.PredictConsume));
+            }
 
+            OnPropertyChanged(nameof(BarCollection));
+            ChangeBarChartColor();
+        }
+
+        private void BuildSimpleColumns(IEnumerable<TimeGroupData> rawData, Func<TimeGroupData, double> func)
+        {
+            List<DateTimePoint> overview = [];
+            Dictionary<string, List<DateTimePoint>> model = [];
+            Dictionary<string, List<DateTimePoint>> purpose = [];
+            Dictionary<string, List<DateTimePoint>> service = [];
+            foreach (var item in rawData)
+            {
+                DateTime pointDate = DateTime.TryParseExact(item.GroupName, item.Format, null, DateTimeStyles.None, out DateTime d) ? d : new();
+                overview.Add(new() { DateTime = pointDate, Value = func(item) });
+
+                foreach (var g in item.Group.GroupBy(x => x.ModelName))
+                {
+                    if (!model.ContainsKey(g.Key))
+                    {
+                        model.Add(g.Key, []);
+                    }
+                    model[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                }
+                ;
+
+                foreach (var g in item.Group.GroupBy(x => x.Purpose))
+                {
+                    if (!purpose.ContainsKey(g.Key))
+                    {
+                        purpose.Add(g.Key, []);
+                    }
+                    purpose[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                }
+                ;
+
+                foreach (var g in item.Group.GroupBy(x => x.Endpoint))
+                {
+                    if (!service.ContainsKey(g.Key))
+                    {
+                        service.Add(g.Key, []);
+                    }
+                    service[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                }
+                ;
+            }
             if (Bar_OverviewChecked)
             {
                 BarCollection = [new ColumnSeries<DateTimePoint>
@@ -290,60 +347,184 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     }, .. BarCollection];
                 }
             }
+        }
 
-            OnPropertyChanged(nameof(BarCollection));
-            ChangeBarChartColor();
+        private void BuildTokenColumns(IEnumerable<TimeGroupData> rawData)
+        {
+            void AddDataToBarCollection(string[] keys,
+                                        Dictionary<string, List<DateTimePoint>> input,
+                                        Dictionary<string, List<DateTimePoint>> inputCached,
+                                        Dictionary<string, List<DateTimePoint>> output)
+            {
+                foreach (var item in keys)
+                {
+                    if (Bar_InputTokenChecked)
+                    {
+                        BarCollection = [new StackedColumnSeries<DateTimePoint>
+                        {
+                            Values = input[item],
+                            Name = item + " - 输入",
+                        }, ..BarCollection];
+                    }
+                    if (Bar_InputCachedTokenChecked)
+                    {
+                        BarCollection = [new StackedColumnSeries<DateTimePoint>
+                        {
+                            Values = inputCached[item],
+                            Name = item + " - 输入缓存",
+                        }, ..BarCollection];
+                    }
+                    if (Bar_OutputTokenChecked)
+                    {
+                        BarCollection = [new StackedColumnSeries<DateTimePoint>
+                        {
+                            Values = output[item],
+                            Name = item + " - 输出",
+                        }, ..BarCollection];
+                    }
+                }
+            }
+            List<DateTimePoint> overview_Input = [];
+            List<DateTimePoint> overview_InputCache = [];
+            List<DateTimePoint> overview_Output = [];
+            Dictionary<string, List<DateTimePoint>> model_Input = [];
+            Dictionary<string, List<DateTimePoint>> purpose_Input = [];
+            Dictionary<string, List<DateTimePoint>> service_Input = [];
+            Dictionary<string, List<DateTimePoint>> model_InputCache = [];
+            Dictionary<string, List<DateTimePoint>> purpose_InputCache = [];
+            Dictionary<string, List<DateTimePoint>> service_InputCache = [];
+            Dictionary<string, List<DateTimePoint>> model_Output = [];
+            Dictionary<string, List<DateTimePoint>> purpose_Output = [];
+            Dictionary<string, List<DateTimePoint>> service_Output = [];
+            foreach (var item in rawData)
+            {
+                DateTime pointDate = DateTime.TryParseExact(item.GroupName, item.Format, null, DateTimeStyles.None, out DateTime d) ? d : new();
+                overview_Input.Add(new() { DateTime = pointDate, Value = item.Group.Sum(x => x.InputToken) });
+                overview_InputCache.Add(new() { DateTime = pointDate, Value = item.Group.Sum(x => x.InputCacheToken) });
+                overview_Output.Add(new() { DateTime = pointDate, Value = item.Group.Sum(x => x.OutputToken) });
+
+                foreach (var g in item.Group.GroupBy(x => x.ModelName))
+                {
+                    if (!model_Input.ContainsKey(g.Key))
+                    {
+                        model_Input.Add(g.Key, []);
+                        model_InputCache.Add(g.Key, []);
+                        model_Output.Add(g.Key, []);
+                    }
+                    model_Input[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputToken) });
+                    model_InputCache[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputCacheToken) });
+                    model_Output[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.OutputToken) });
+                }
+                ;
+
+                foreach (var g in item.Group.GroupBy(x => x.Purpose))
+                {
+                    if (!purpose_Input.ContainsKey(g.Key))
+                    {
+                        purpose_Input.Add(g.Key, []);
+                        purpose_InputCache.Add(g.Key, []);
+                        purpose_Output.Add(g.Key, []);
+                    }
+                    purpose_Input[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputToken) });
+                    purpose_InputCache[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputCacheToken) });
+                    purpose_Output[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.OutputToken) });
+                }
+                ;
+
+                foreach (var g in item.Group.GroupBy(x => x.Endpoint))
+                {
+                    if (!service_Input.ContainsKey(g.Key))
+                    {
+                        service_Input.Add(g.Key, []);
+                        service_InputCache.Add(g.Key, []);
+                        service_Output.Add(g.Key, []);
+                    }
+                    service_Input[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputToken) });
+                    service_InputCache[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.InputCacheToken) });
+                    service_Output[g.Key].Add(new() { DateTime = pointDate, Value = g.Sum(x => x.OutputToken) });
+                }
+                ;
+            }
+
+            if (Bar_OverviewChecked)
+            {
+                AddDataToBarCollection(["总览"], new() { { "总览", overview_Input } }, new() { { "总览", overview_InputCache } }, new() { { "总览", overview_Output } });
+            }
+            else if (Bar_PurposeChecked)
+            {
+                AddDataToBarCollection(purpose_Input.Keys.ToArray(), purpose_Input, purpose_InputCache, purpose_Output);
+            }
+            else if (Bar_ModelChecked)
+            {
+                AddDataToBarCollection(model_Input.Keys.ToArray(), model_Input, model_InputCache, model_Output);
+            }
+            else if (Bar_ServiceChecked)
+            {
+                AddDataToBarCollection(service_Input.Keys.ToArray(), service_Input, service_InputCache, service_Output);
+            }
         }
 
         private void DrawPieChart()
         {
+            decimal[] GetPieChartValue(TimeGroupData data)
+            {
+                if (UnitCountChecked)
+                {
+                    return [data.Group.Count()];
+                }
+                if (UnitTokenChecked)
+                {
+                    return [data.Group.Sum(x => x.TotalToken)];
+                }
+                return [data.Group.Sum(x => x.PredictConsume)];
+            }
             SKColor color = ThemeManager.Current.ActualApplicationTheme == ApplicationTheme.Dark ? SKColors.White : SKColors.Black;
             var paint = new SolidColorPaint { Color = color, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") }; ;
 
             Pie_ModelCollection = [];
-            foreach (var model in FilterResult.GroupBy(x => x.ModelName).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
+            foreach (var model in FilterResult.GroupBy(x => x.ModelName).Select(x => new TimeGroupData { GroupName = x.Key, Group = x, }))
             {
-                var series = new PieSeries<long>
+                var series = new PieSeries<decimal>
                 {
-                    Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
-                    Name = model.Name,
+                    Values = GetPieChartValue(model),
+                    Name = model.GroupName,
                     Stroke = null,
                     DataLabelsSize = 14,
                     DataLabelsPaint = paint,
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
-                    DataLabelsFormatter = o => model.Name,
+                    DataLabelsPosition = PolarLabelsPosition.Middle,
+                    DataLabelsFormatter = o => model.GroupName,
                 };
                 Pie_ModelCollection = [series, .. Pie_ModelCollection];
             }
 
             Pie_PurposeCollection = [];
-            foreach (var model in FilterResult.GroupBy(x => x.Purpose).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
+            foreach (var model in FilterResult.GroupBy(x => x.Purpose).Select(x => new TimeGroupData { GroupName = x.Key, Group = x, }))
             {
-                var series = new PieSeries<long>
+                var series = new PieSeries<decimal>
                 {
-                    Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
-                    Name = model.Name,
+                    Values = GetPieChartValue(model),
+                    Name = model.GroupName,
                     Stroke = null,
                     DataLabelsSize = 14,
                     DataLabelsPaint = paint,
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
-                    DataLabelsFormatter = o => model.Name,
+                    DataLabelsPosition = PolarLabelsPosition.Middle,
+                    DataLabelsFormatter = o => model.GroupName,
                 };
                 Pie_PurposeCollection = [series, .. Pie_PurposeCollection];
             }
 
             Pie_ServiceCollection = [];
-            foreach (var model in FilterResult.GroupBy(x => x.Endpoint).Select(x => new { Name = x.Key, Group = x, Count = x.Count() }))
+            foreach (var model in FilterResult.GroupBy(x => x.Endpoint).Select(x => new TimeGroupData { GroupName = x.Key, Group = x }))
             {
-                var series = new PieSeries<long>
+                var series = new PieSeries<decimal>
                 {
-                    Values = [UnitCountChecked ? model.Count : model.Group.Sum(x => x.InputToken + x.OutputToken)],
-                    Name = model.Name,
+                    Values = GetPieChartValue(model),
+                    Name = model.GroupName,
                     Stroke = null,
                     DataLabelsSize = 14,
                     DataLabelsPaint = paint,
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
-                    DataLabelsFormatter = o => model.Name,
+                    DataLabelsPosition = PolarLabelsPosition.Middle,
+                    DataLabelsFormatter = o => model.GroupName,
                 };
                 Pie_ServiceCollection = [series, .. Pie_ServiceCollection];
             }
@@ -364,8 +545,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             Bar_ServiceChecked = ConfigHelper.GetConfig("Bar_ServiceChecked", false);
             UnitCountChecked = ConfigHelper.GetConfig("UnitCountChecked", false);
             UnitTokenChecked = ConfigHelper.GetConfig("UnitTokenChecked", false);
+            UnitConsumeChecked = ConfigHelper.GetConfig("UnitConsumeChecked", false);
+            Bar_ShowLegend = ConfigHelper.GetConfig("Bar_ShowLegend", true);
+            Bar_InputTokenChecked = ConfigHelper.GetConfig("Bar_InputTokenChecked", true);
+            Bar_InputCachedTokenChecked = ConfigHelper.GetConfig("Bar_InputCachedTokenChecked", true);
+            Bar_OutputTokenChecked = ConfigHelper.GetConfig("Bar_OutputTokenChecked", true);
 
-            if (!UnitTokenChecked && !UnitCountChecked)
+            if (!UnitTokenChecked && !UnitCountChecked && !UnitConsumeChecked)
             {
                 UnitCountChecked = true;
             }
@@ -376,6 +562,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 && !Bar_ServiceChecked)
             {
                 Bar_OverviewChecked = true;
+            }
+
+            if (!Bar_InputTokenChecked
+                && !Bar_InputCachedTokenChecked
+                && !Bar_OutputTokenChecked)
+            {
+                Bar_InputTokenChecked = true;
+                Bar_OutputTokenChecked = true;
             }
             TimeDetailChart.TooltipTextPaint = new SolidColorPaint { Color = SKColors.Black, SKTypeface = SKTypeface.FromFamilyName("微软雅黑") };
 
@@ -518,8 +712,13 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             OnPropertyChanged(nameof(Bar_OverviewChecked));
             OnPropertyChanged(nameof(Bar_PurposeChecked));
             OnPropertyChanged(nameof(Bar_ServiceChecked));
+            OnPropertyChanged(nameof(Bar_LegendPosition));
+            OnPropertyChanged(nameof(Bar_InputCachedTokenChecked));
+            OnPropertyChanged(nameof(Bar_InputTokenChecked));
+            OnPropertyChanged(nameof(Bar_OutputTokenChecked));
             OnPropertyChanged(nameof(UnitCountChecked));
             OnPropertyChanged(nameof(UnitTokenChecked));
+            OnPropertyChanged(nameof(UnitConsumeChecked));
         }
 
         private void UpdateGridLayout()
@@ -544,9 +743,9 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 callCount++;
                 inputTokenCount += item.InputToken;
                 outputTokenCount += item.OutputToken;
-                totalTokenCount = item.TotalToken;
-                cachedTokenCount = item.InputCacheToken;
-                predictConsume = item.PredictConsume;
+                totalTokenCount += item.TotalToken == 0 ? item.InputToken + item.OutputToken : item.TotalToken;
+                cachedTokenCount += item.InputCacheToken;
+                predictConsume += item.PredictConsume;
             }
 
             AnimateTextChange(CallCountDisplay, callCount);

@@ -1,10 +1,8 @@
 ﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
-using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
 using Microsoft.Extensions.AI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 {
@@ -40,20 +38,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
         public static void TriggerOnToolCall(string identity, string msg)
         {
             OnToolCall?.Invoke(identity, msg);
-        }
-
-        public static string GetChatResult(string baseUrl,
-                                           string apiKey,
-                                           string modelName,
-                                           List<ChatMessage> chatMessages,
-                                           Purpose purpose,
-                                           bool jsonMode = false,
-                                           int timeout = 10000,
-                                           MCPClientManager mcp = null,
-                                           string? identity = null,
-                                           LLMModel? model = null)
-        {
-            return _chatService.Value.GetChatResult(baseUrl, apiKey, modelName, chatMessages, purpose, jsonMode, timeout, mcp, identity, model);
         }
     }
 }

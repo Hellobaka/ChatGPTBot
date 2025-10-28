@@ -108,6 +108,7 @@
     <Compile Include="Model\Items.cs" />
     <Compile Include="Model\MCPClientModel.cs" />
     <Compile Include="Model\MemoryNode.cs" />
+    <Compile Include="Model\TimeGroupData.cs" />
     <Compile Include="Model\ToolArgumentItem.cs" />
     <Compile Include="Pages\Emoji.xaml.cs">
       <DependentUpon>Emoji.xaml</DependentUpon>

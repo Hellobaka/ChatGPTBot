@@ -122,7 +122,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     }
                     int index = AvailableModels.IndexOf(modelToRemove);
                     AvailableModels.RemoveAt(index);
-                    AvailableModels.Insert(index, model);
+                    AvailableModels.Insert(index, edit.LLMModel);
                 }
             }
             else
