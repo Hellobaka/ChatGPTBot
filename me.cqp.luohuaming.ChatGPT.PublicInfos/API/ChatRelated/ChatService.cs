@@ -235,26 +235,35 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 bool success = false;
                 foreach (var hash in pendingPictures)
                 {
-                    if (Picture.Cache.TryGetValue(hash, out var picture) && picture != null
-                        && File.Exists(picture.FilePath))
+                    if (Picture.Cache.TryGetValue(hash, out var picture) && picture != null)
                     {
-                        try
+                        bool absolute = File.Exists(picture.FilePath);
+                        bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, picture.FilePath));
+                        if (absolute || relative)
                         {
-                            MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片 {hash}，路径 {picture.FilePath}");
-                            var imageData = File.ReadAllBytes(picture.FilePath);
-                            if (imageData.Length > 0)
+                            MainSave.CQLog.Info("获取表情包", $"表情包获取成功，为 {picture.FilePath}");
+                            try
                             {
-                                chatMessages.Add(new(ChatRole.User, [new DataContent(imageData, "image/jpg")]));
-                                success = true;
+                                MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片 {hash}，路径 {picture.FilePath}");
+                                var imageData = File.ReadAllBytes(absolute ? CommonHelper.GetRelativePath(picture.FilePath, MainSave.ImageDirectory) : picture.FilePath);
+                                if (imageData.Length > 0)
+                                {
+                                    chatMessages.Add(new(ChatRole.User, [new DataContent(imageData, "image/jpg")]));
+                                    success = true;
+                                }
+                                else
+                                {
+                                    MainSave.CQLog?.Warning("附加图片", $"图片文件为空: {picture.FilePath}");
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                MainSave.CQLog?.Warning("附加图片", $"图片文件为空: {picture.FilePath}");
+                                MainSave.CQLog?.Warning("附加图片", $"读取图片失败: {ex.Message}");
                             }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            MainSave.CQLog?.Warning("附加图片", $"读取图片失败: {ex.Message}");
+                            MainSave.CQLog?.Warning("附加图片", $"未能找到图片路径: {picture.FilePath}");
                         }
                     }
                 }
