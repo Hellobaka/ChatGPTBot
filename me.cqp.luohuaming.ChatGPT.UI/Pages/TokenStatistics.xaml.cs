@@ -250,7 +250,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             BarCollection = [];
             if (UnitCountChecked)
             {
-                BuildSimpleColumns(rawData, x => x.Group.Count());
+                BuildSimpleColumns(rawData, x => x.Count());
             }
             else if (UnitTokenChecked)
             {
@@ -258,14 +258,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
             else
             {
-                BuildSimpleColumns(rawData, x => (double)x.Group.Sum(x => x.PredictConsume));
+                BuildSimpleColumns(rawData, x => (double)x.Sum(x => x.PredictConsume));
             }
 
             OnPropertyChanged(nameof(BarCollection));
             ChangeBarChartColor();
         }
 
-        private void BuildSimpleColumns(IEnumerable<TimeGroupData> rawData, Func<TimeGroupData, double> func)
+        private void BuildSimpleColumns(IEnumerable<TimeGroupData> rawData, Func<IGrouping<string, Usage>, double> func)
         {
             List<DateTimePoint> overview = [];
             Dictionary<string, List<DateTimePoint>> model = [];
@@ -274,7 +274,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             foreach (var item in rawData)
             {
                 DateTime pointDate = DateTime.TryParseExact(item.GroupName, item.Format, null, DateTimeStyles.None, out DateTime d) ? d : new();
-                overview.Add(new() { DateTime = pointDate, Value = func(item) });
+                overview.Add(new() { DateTime = pointDate, Value = func(item.Group) });
 
                 foreach (var g in item.Group.GroupBy(x => x.ModelName))
                 {
@@ -282,9 +282,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     {
                         model.Add(g.Key, []);
                     }
-                    model[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                    model[g.Key].Add(new() { DateTime = pointDate, Value = func(g) });
                 }
-                ;
 
                 foreach (var g in item.Group.GroupBy(x => x.Purpose))
                 {
@@ -292,9 +291,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     {
                         purpose.Add(g.Key, []);
                     }
-                    purpose[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                    purpose[g.Key].Add(new() { DateTime = pointDate, Value = func(g) });
                 }
-                ;
 
                 foreach (var g in item.Group.GroupBy(x => x.Endpoint))
                 {
@@ -302,9 +300,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     {
                         service.Add(g.Key, []);
                     }
-                    service[g.Key].Add(new() { DateTime = pointDate, Value = func(item) });
+                    service[g.Key].Add(new() { DateTime = pointDate, Value = func(g) });
                 }
-                ;
             }
             if (Bar_OverviewChecked)
             {
