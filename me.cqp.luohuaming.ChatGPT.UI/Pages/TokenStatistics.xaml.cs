@@ -786,10 +786,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 }
                 using FileStream fileStream = new(dialog.FileName, FileMode.Create, FileAccess.Write, FileShare.Write);
                 using StreamWriter writer = new(fileStream, Encoding.UTF8);
-                writer.WriteLine("服务商,模型,用途,输入Token,输出Token,总计Token,时间");
+                writer.WriteLine("时间,服务商,模型,用途,输入Token,缓存输入Token,输出Token,总计Token,开销");
                 foreach (var item in FilterResult)
                 {
-                    writer.WriteLine($"{item.Endpoint},{item.ModelName},{item.Purpose},{item.InputToken},{item.OutputToken},{item.InputToken + item.OutputToken},{item.Time:G}");
+                    writer.WriteLine($"{item.Time:G},{item.Endpoint},{item.ModelName},{item.Purpose},{item.InputToken},{item.InputCacheToken},{item.OutputToken},{item.TotalToken},{item.PredictConsume}");
                 }
 
                 MainWindow.ShowInfo($"导出了 {FilterResult.Count} 条数据");
