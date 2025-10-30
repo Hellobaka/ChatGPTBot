@@ -988,7 +988,12 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp
 
             try
             {
-                return new ChatHistory(this, data);
+                var history = new ChatHistory(this, data);
+                if (history.MsgId == 0)
+                {
+                    return null;
+                }
+                return history;
             }
             catch
             {

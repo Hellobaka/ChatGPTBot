@@ -47,8 +47,11 @@ namespace me.cqp.luohuaming.ChatGPT.Sdk.Cqp.Model
                 {
                     throw new EndOfStreamException("无法读取数据, 因为已经读取到数据流末尾");
                 }
-
-                this._list.Add(new ChatHistory(this.CQApi, reader.ReadToken_Ex()));
+                var history = new ChatHistory(this.CQApi, reader.ReadToken_Ex());
+                if (history != null && history.MsgId != 0)
+                {
+                    this._list.Add(history);
+                }
             }
         }
 
