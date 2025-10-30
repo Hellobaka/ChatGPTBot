@@ -210,7 +210,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public decimal CalcConsume(long inputTokenCount, long outputTokenCount, long totalTokenCount, long cachedTokenCount)
         {
-            decimal nonCachedInputToken = inputTokenCount - cachedTokenCount;
+            decimal nonCachedInputToken = inputTokenCount;
 
             decimal consume = (nonCachedInputToken / 1000000) * InputConsumePer1M
                 + (outputTokenCount / 1000000) * OutputConsumePer1M
