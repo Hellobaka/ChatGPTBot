@@ -304,7 +304,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 - **知识**：客观、真实、普适的事实，不依赖特定用户。不记录主观观点（“我觉得 Python 比 Java 好”）；不记录已知常识（“地球是圆的”）；不记录无时效的实时新闻；不要记录表情包内容
                 - 添加短期记忆前请检查 short-term-memories 是否已经有相似或重复的内容，若已经存在相似或重复内容应当调用 RenewShortTermMemory 来刷新短期记忆过期时间，而不是再调用 AddShortTermMemory。
                 - 不要记录无意义、情绪化或过于泛泛的内容（如“今天好累”、“哈哈哈”）。
-                - 每次对话中所有类型的记忆只能记录**一条**
+                - 每次对话中最多可以记录的记忆总条目数量为 {{AppConfig.MaxToolCallCountEachTurn}} 条
                 ---
                 以下是你的代办事项:
                 <todo>
