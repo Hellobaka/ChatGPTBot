@@ -9,6 +9,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     /// </summary>
     public partial class Misc : Page
     {
+        // TODO: 因初始化时配置中断加载时，进入此页面时会崩溃
         public Misc()
         {
             InitializeComponent();

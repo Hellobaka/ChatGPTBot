@@ -14,6 +14,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     /// </summary>
     public partial class MCP : Page
     {
+        // TODO: 通过对话框新建的无法保存
+        // TODO: 不勾选显示内置工具保存时，内置工具会丢失设置
+        // TODO: 内置工具提供一套默认启用
+
         public MCP()
         {
             InitializeComponent();
