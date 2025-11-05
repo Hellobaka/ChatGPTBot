@@ -124,8 +124,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             "RemoveGroupMember"
         ];
 
-
-
         public override AIFunction[] GetTools()
         {
             // 注意 添加工具时请务必在 CustomToolNames 中添加名称

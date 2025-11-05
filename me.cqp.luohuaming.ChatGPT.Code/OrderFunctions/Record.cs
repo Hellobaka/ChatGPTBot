@@ -29,6 +29,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public int Priority { get; set; } = 1;
 
+        // TODO: 修改为队列
         private Dictionary<long, bool> InProgress { get; set; } = [];
 
         private Dictionary<string, (long groupId, long qqId, int msgId, bool toolSent)> MCPSliceRecord { get; set; } = [];
