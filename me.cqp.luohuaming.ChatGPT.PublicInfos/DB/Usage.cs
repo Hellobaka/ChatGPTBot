@@ -3,6 +3,7 @@ using OpenAI.Chat;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 {
@@ -72,6 +73,46 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             using var db = SQLHelper.GetInstance();
 
             return db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList();
+        }
+
+        /// <summary>
+        /// 获取Token消耗情况
+        /// </summary>
+        /// <param name="start">查询开始时间</param>
+        /// <param name="end">查询结束时间</param>
+        /// <returns></returns>
+        public static object GetRangeUsageDetailForMCP(DateTime start, DateTime end)
+        {
+            using var db = SQLHelper.GetInstance();
+
+            var r = db.Queryable<Usage>().Where(x => x.Time >= start && x.Time <= end).ToList();
+            return new
+            {
+                TotalInputToken = r.Sum(x => x.InputToken),
+                TotalInputCachedToken = r.Sum(x => x.InputCacheToken),
+                TotalOutPutToken = r.Sum(x => x.OutputToken),
+                TotalConsume = r.Sum(x => x.PredictConsume),
+                TotalCount = r.Count,
+                Usage = new
+                {
+                    ByModel = r.GroupBy(x => x.ModelName).ToDictionary(g => g.Key, g => new
+                    {
+                        InputToken = g.Sum(x => x.InputToken),
+                        InputCachedToken = g.Sum(x => x.InputCacheToken),
+                        OutPutToken = g.Sum(x => x.OutputToken),
+                        Consume = g.Sum(x => x.PredictConsume),
+                        UseCount = g.Count(),
+                    }),
+                    ByPurpose = r.GroupBy(x => x.Purpose).ToDictionary(g => g.Key, g => new
+                    {
+                        InputToken = g.Sum(x => x.InputToken),
+                        InputCachedToken = g.Sum(x => x.InputCacheToken),
+                        OutPutToken = g.Sum(x => x.OutputToken),
+                        Consume = g.Sum(x => x.PredictConsume),
+                        UseCount = g.Count(),
+                    }),
+                }
+            };
         }
 
         public static (string[] services, string[] models, string[] puropses) GetGroups()

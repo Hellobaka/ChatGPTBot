@@ -142,7 +142,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     description: "获取与指定用户的私聊聊天记录，支持限制数量与根据时间区间查询。参数：qq(long) - 对方QQ号；count(int, 可选，默认 15) - 最大返回消息数量；startTime(DateTime, 可选，默认 null，示例输入:2025-10-13T10:56:40) - 聊天记录的开始时间，必须与endTime同时传递时才可生效；endTime(DateTime, 可选，默认 null，示例输入:2025-10-13T10:56:40) - 聊天记录的结束时间。返回值：List<ChatRecord>，按时间倒序排列的私聊记录列表，若无记录则返回空列表。") : null,
                 "GetChatHistoryByIds" => (Context?.EnableRecordFunction ?? false) ? AIFunctionFactory.Create(ChatRecord.GetChatRecordByIds,
                     description: "通过消息ID列表获取对应的聊天记录。参数：ids(int[]) - 消息ID数组，不能为空；返回值：List<ChatRecord>，按时间倒序排列的匹配记录列表，若无匹配则返回空列表。") : null,
-                "GetRangeUsageDetail" => AIFunctionFactory.Create(Usage.GetRangeUsageDetail,
+                "GetRangeUsageDetail" => AIFunctionFactory.Create(Usage.GetRangeUsageDetailForMCP,
                     description: "获取指定时间范围内的Token消耗详情。参数：start(DateTime，示例输入:2025-10-13T10:56:40) - 查询开始时间；end(DateTime，示例输入:2025-10-13T10:56:40) - 查询结束时间；返回值：List<Usage>，包含时间段内各次调用的Token使用记录，按时间顺序排列。"),
                 "AddPictureToContext" => Context != null ? AIFunctionFactory.Create(AddPictureToContext, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
                 "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
