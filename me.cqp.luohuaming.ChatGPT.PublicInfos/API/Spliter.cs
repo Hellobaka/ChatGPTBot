@@ -14,11 +14,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public string Message { get; private set; }
 
-        private Regex LineSplitRegex { get; set; } = new Regex(@"(?<=[。？！?.!])");
+        private Regex LineSplitRegex { get; set; } = new Regex(@"(?<=[。？！?!]|\.(?!\d))");
 
         private static Regex EmojiSplitRegex { get; set; } = new Regex(@"<@Emoji(.*?)>");
 
-        private static string Prompt { get; set; } = "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：['语句1', '语句2']。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号，逗号句号都不要";
+        private static string Prompt { get; set; } = "请将后续输入的一段话，按符合正常人节奏与习惯，最大分段不能超过$MaxLines$段。分段拆分成Json数组，示例格式：[\"语句1\", \"语句2\"]。注意一定不要有影响到json格式的其他内容输出。上下文相关性很强的内容，一定要单独占一段，不得分开。不得精简我提供的内容，一定不得更改我的输入文本。每个分段结尾只能有问号、叹号或者省略号或者没有标点符号，逗号句号都不要";
 
         public string[] Split()
         {
@@ -41,9 +41,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 try
                 {
-                    result = result.Trim().TrimStart('\n').TrimEnd('\n');
+                    result = ExtractJsonArray(result);
+                    
                     var arr = JArray.Parse(result);
-                    List<string> lines = new();
+                    List<string> lines = [];
                     foreach (var line in arr)
                     {
                         var str = line.ToString();
@@ -124,6 +125,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             limitedArray[AppConfig.SplitterMaxLines - 1] = overflow;
 
             return limitedArray;
+        }
+
+        private static string ExtractJsonArray(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
+            int startIndex = input.IndexOf('[');
+            int endIndex = input.LastIndexOf(']');
+
+            return (startIndex != -1 && endIndex != -1 && startIndex < endIndex)
+                   ? input.Substring(startIndex, endIndex - startIndex + 1)
+                   : input;
         }
     }
 }
