@@ -219,14 +219,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             }
             Task.Run(() =>
             {
-                // TODO: 添加日志；检查其他是否有需要记录日志的MCP
                 if (Qdrant.Instance.Insert(memory, $"LongTermMemory_{qq}"))
                 {
-                    CommonHelper.DebugLog("长记忆插入", $"Memory={memory}; QQ={qq} 插入成功");
+                    MainSave.CQLog?.Info("长记忆插入", $"Memory={memory}; QQ={qq} 插入成功");
                 }
                 else
                 {
-                    CommonHelper.DebugLog("长记忆插入", $"Memory={memory}; QQ={qq} 插入失败");
+                    MainSave.CQLog?.Info("长记忆插入", $"Memory={memory}; QQ={qq} 插入失败");
                 }
             });
         }

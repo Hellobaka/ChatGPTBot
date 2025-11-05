@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
     public class MCPClientManager(long groupId, long qqId, string chatIdentity, string prompt
+        , Action<string, long, long, int>? sendReply = null
+        , int messageId = 0
         , bool enableMemoryFunction = true, bool enableCQApiFunction = true
         , bool enableRelationshipFunction = true, bool enableRecordFunction = true)
     {
@@ -97,7 +99,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 if (item.Key is MCPCustomClient customClient)
                 {
-                    customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this, enableMemoryFunction, enableCQApiFunction, enableRelationshipFunction, enableRecordFunction);
+                    customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this, messageId, sendReply, enableMemoryFunction, enableCQApiFunction, enableRelationshipFunction, enableRecordFunction);
                     var customFunctions = customClient.GetTools();
                     if (customFunctions.Length > 0)
                     {

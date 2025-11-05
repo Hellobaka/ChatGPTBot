@@ -117,7 +117,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                     MCPSliceRecord.Add(identity, (e.FromGroup, e.FromQQ, e.Message.Id, false));
                     var prompt = BuildPrompt(relationship, record, records);
 
-                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity, prompt);
+                    MCPClientManager mcp = new(e.FromGroup, e.FromQQ, identity, prompt, SendReply, e.Message.Id);
 
                     string reply = CreateReply(relationship, mcp, identity, prompt);
 
@@ -197,7 +197,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                 _ = Task.Run(() => Memory.ExecuteMemoryExtraction(records, 0, e.FromQQ));
                 var prompt = BuildPrompt(relationship, record, records);
 
-                MCPClientManager mcp = new(-1, e.FromQQ, identity, prompt);
+                MCPClientManager mcp = new(-1, e.FromQQ, identity, prompt, SendReply, e.Message.Id);
 
                 string reply = CreateReply(relationship, mcp, identity, prompt);
                 reply = CQReplyCorrect.Replace(reply, "[CQ:reply,id=$1]");
@@ -469,7 +469,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                                 int randomSleep = CommonHelper.Next(AppConfig.SplitterRandomDelayMin, AppConfig.SplitterRandomDelayMax);
                                 System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(typeTime + randomSleep));
                             }
-                            if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply)
+                            if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply && msgId != 0)
                             {
                                 r = $"[CQ:reply,id={msgId}]" + r;
                             }
@@ -494,7 +494,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
                         {
                             continue;
                         }
-                        if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply)
+                        if (firstSend && fromGroup > 0 && AppConfig.EnableGroupReply && msgId != 0)
                         {
                             r = $"[CQ:reply,id={msgId}]" + r;
                         }

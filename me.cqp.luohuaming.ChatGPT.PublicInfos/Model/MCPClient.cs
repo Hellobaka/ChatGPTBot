@@ -145,7 +145,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 "GetRangeUsageDetail" => AIFunctionFactory.Create(Usage.GetRangeUsageDetailForMCP,
                     description: "获取指定时间范围内的Token消耗详情。参数：start(DateTime，示例输入:2025-10-13T10:56:40) - 查询开始时间；end(DateTime，示例输入:2025-10-13T10:56:40) - 查询结束时间；返回值：List<Usage>，包含时间段内各次调用的Token使用记录，按时间顺序排列。"),
                 "AddPictureToContext" => Context != null ? AIFunctionFactory.Create(AddPictureToContext, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
-                "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当你认为需要等待一段时间后才能进行某项任务时，可以调用此函数。将在延时某些秒数之后，将你的言论附加到下一次对话的User消息中，并再次发起一轮对话。你的言论需要能够正确指示你的下一轮对话，长度不限制但是描述一定要准确") : null,
+                "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当用户明确提出需要在**未来某个时间点**执行某项提醒或任务时（例如‘X分钟后/小时后提醒我……’、‘到XX时间告诉我……’、“提醒”“记得”“别忘了”配合时间词（分钟/小时/点）），调用此函数。将在延时某些秒数之后，框架会将你的言论附加到下一次对话的上下文中，并再次发起一轮对话。你的言论需要在没有额外提示词的情况下，让下一轮的LLM能够正确理解你的意图并执行动作；如果与某个用户相关，可以考虑通过At来进行强提醒，模板是`[CQ:at,qq=某个用户的QQ]`") : null,
 
                 #region Memory
                 "AddShortTermMemory" => Context != null && (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(AddShortTermMemory, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
@@ -312,20 +312,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 Chat.OnToolCall += Chat_OnToolCall;
                 var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
                         new(ChatRole.System, prompt),
-                                new(ChatRole.User, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
+                        new(ChatRole.Assistant, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
                     ], Chat.Purpose.聊天, identity: extraIdentity, timeout: AppConfig.ChatTimeout, mcp: manager);
                 MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
-                if (response != Chat.ErrorMessage && !response.Contains(AppConfig.ChatEmptyResponse))
-                {
-                    if (groupId > 0)
-                    {
-                        MainSave.CQApi.SendGroupMessage(groupId, response);
-                    }
-                    else
-                    {
-                        MainSave.CQApi.SendPrivateMessage(qq, response);
-                    }
-                }
+
+                Context.SendReply?.Invoke(response, Context.GroupId, Context.QQ, Context.MessageId);
             });
         }
 
