@@ -17,7 +17,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     /// </summary>
     public partial class Settings : Page
     {
-        // TODO: 缺少 MinEmojiRecommendScore
         public Settings()
         {
             InitializeComponent();

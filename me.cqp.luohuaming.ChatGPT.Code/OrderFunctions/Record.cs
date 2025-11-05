@@ -277,6 +277,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             // TODO: 添加一个辅助判断代称的函数
             List<ChatMessageContentPart> parts = [];
             StringBuilder stringBuilder = new();
+            stringBuilder.AppendLine($"今天是{DateTime.Now:G}。");
+            stringBuilder.AppendLine($"你当前的心情是{MoodManager.Instance}。");
             if (relationship.GroupID > 0)
             {
                 stringBuilder.AppendLine($"当前场景：群聊场景。群号：{relationship.GroupID} 触发消息用户昵称与QQ：{relationship.Card ?? relationship.NickName}[{relationship.QQ}]; ");
@@ -299,8 +301,6 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"调用工具时禁止输出与最终发言结果无关的文本。");
 
             stringBuilder.AppendLine($"你的系统管理员/主人QQ是:{string.Join(",", AppConfig.MasterQQ)}。");
-            stringBuilder.AppendLine($"今天是{DateTime.Now:G}。");
-            stringBuilder.AppendLine($"你当前的心情是{MoodManager.Instance}。");
             stringBuilder.AppendLine($"你可以通过以下模板进行消息的引用/回复：[CQ:reply,id=MessageID]，注意括号类型，是[]而不是<>。其中替换MessageID即可引用/回复消息。需要注意的是，只能引用/回复一条信息，非必要情况不能使用此模板，只有在引用历史信息(20条消息以前)的情况下才能能使用，否则很扰民。");
             if (AppConfig.EnableEmojiActiveSend)
             {

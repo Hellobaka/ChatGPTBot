@@ -279,5 +279,33 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
             return collection;
         }
+
+        public static string RemoveFirstLineFast(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
+
+            int firstNewLineIndex = input.IndexOfAny(['\r', '\n']);
+
+            if (firstNewLineIndex == -1)
+            {
+                return string.Empty;
+            }
+
+            if (input[firstNewLineIndex] == '\r' &&
+                firstNewLineIndex + 1 < input.Length &&
+                input[firstNewLineIndex + 1] == '\n')
+            {
+                // 跳过 \r\n 两个字符
+                return input.Substring(firstNewLineIndex + 2);
+            }
+            else
+            {
+                // 跳过 \n 或 \r 单个字符
+                return input.Substring(firstNewLineIndex + 1);
+            }
+        }
     }
 }

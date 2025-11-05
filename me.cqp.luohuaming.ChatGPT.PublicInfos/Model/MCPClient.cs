@@ -126,11 +126,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public override AIFunction[] GetTools()
         {
-            if (Context.DisabledTool?.Contains(Name) ?? false)
+            if (Context?.DisabledTool?.Contains(Name) ?? false)
             {
                 return [];
             }
             // 注意 添加工具时请务必在 CustomToolNames 中添加名称
+            // TODO: 支持corn定时表达式，需要支持限制频率
             var function = Name switch
             {
                 "GetCityIdByName" => AIFunctionFactory.Create(MojiCityIdConverter.GetCityIdByName,
@@ -149,7 +150,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 "GetRangeUsageDetail" => AIFunctionFactory.Create(Usage.GetRangeUsageDetailForMCP,
                     description: "获取指定时间范围内的Token消耗详情。参数：start(DateTime，示例输入:2025-10-13T10:56:40) - 查询开始时间；end(DateTime，示例输入:2025-10-13T10:56:40) - 查询结束时间；返回值：List<Usage>，包含时间段内各次调用的Token使用记录，按时间顺序排列。"),
                 "AddPictureToContext" => Context != null ? AIFunctionFactory.Create(AddPictureToContext, description: "用于将图片原生插入上下文中，当你想从目标图片获取更详细更原生更完备的信息时可以调用这个。参数为上下文提供的图片Hash") : null,
-                "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当用户明确提出需要在**未来某个时间点**执行某项提醒或任务时（例如‘X分钟后/小时后提醒我……’、‘到XX时间告诉我……’、“提醒”“记得”“别忘了”配合时间词（分钟/小时/点）），调用此函数。将在延时某些秒数之后，框架会将你的言论附加到下一次对话的上下文中，并再次发起一轮对话。你的言论需要在没有额外提示词的情况下，让下一轮的LLM能够正确理解你的意图并执行动作；如果与某个用户相关，可以考虑通过At来进行强提醒，模板是`[CQ:at,qq=某个用户的QQ]`") : null,
+                "AddDelayTask" => Context != null ? AIFunctionFactory.Create(AddDelayTask, description: "当用户明确提出需要在**未来某个时间点**执行某项提醒或任务时（例如‘X分钟后/小时后提醒我……’、‘到XX时间告诉我……’、“提醒”“记得”“别忘了”配合时间词（分钟/小时/点）），调用此函数。将在延时某些秒数之后，框架会将你的言论附加到下一次对话的上下文中，并再次发起一轮对话。你的言论需要在没有额外提示词的情况下，让下一轮的LLM能够正确理解你的意图并执行动作；如果与某个用户相关，可以考虑通过At来进行强提醒，模板是`[CQ:at,qq=某个用户的QQ]`，并且在言论中明确指出需要使用At") : null,
 
                 #region Memory
                 "AddShortTermMemory" => Context != null && (Context?.EnableMemoryFunction ?? false) ? AIFunctionFactory.Create(AddShortTermMemory, description: $"添加一段短期记忆，使用自然语言描述，描述你认为本次对话中需要记忆的点。") : null,
@@ -276,19 +277,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private void Chat_OnToolCall(string identity, string sliceMessage)
         {
-            if (!string.IsNullOrEmpty(identity) && identity == Context.ExtraIdentity)
+            if (!string.IsNullOrEmpty(identity) && identity.Equals(Context.ChatIdentity) && sliceMessage != Chat.ErrorMessage)
             {
-                long groupId = Context.GroupId;
-                long qq = Context.QQ;
-
-                if (groupId > 0)
-                {
-                    MainSave.CQApi.SendGroupMessage(groupId, sliceMessage);
-                }
-                else
-                {
-                    MainSave.CQApi.SendPrivateMessage(qq, sliceMessage);
-                }
+                Context.SendReply?.Invoke(sliceMessage, Context.GroupId, Context.QQ, Context.MessageId);
             }
         }
 
@@ -306,21 +297,29 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             long groupId = Context.GroupId;
             long qq = Context.QQ;
             string extraIdentity = Guid.NewGuid().ToString();
-            Context.ExtraIdentity = extraIdentity;
-            MCPClientManager manager = Context.MCPClientManager;
+            MCPClientManager manager = new(Context.GroupId, Context.QQ, extraIdentity
+                , Context.Prompt, Context.SendReply, Context.MessageId
+                , Context.EnableMemoryFunction, Context.EnableCQApiFunction
+                , Context.EnableRelationshipFunction, Context.EnableRecordFunction
+                , ["AddDelayTask", ..(Context.DisabledTool ?? [])]);
             _ = Task.Run(async () =>
             {
+                DateTime taskAddTime = DateTime.Now;
                 await Task.Delay(delaySeconds * 1000);
-                MainSave.CQLog?.Info("延时任务", "延时任务触发。");
+                MainSave.CQLog?.Info("延时任务", "延时任务触发");
                 Chat.OnToolCall -= Chat_OnToolCall;
                 Chat.OnToolCall += Chat_OnToolCall;
+                prompt = $"当前时间是: {DateTime.Now:G}\n" + CommonHelper.RemoveFirstLineFast(Context.Prompt);
                 var response = Chat.GetChatResult(AppConfig.ChatAPIKeyId, [
                         new(ChatRole.System, prompt),
-                        new(ChatRole.Assistant, $"此消息为延时后发起的对话，你在上一轮的留言是：{extraPrompt}")
+                        new(ChatRole.User, $"此消息为 {taskAddTime:G} 延时 {delaySeconds} 秒后发起的对话。如果与某个用户相关，可以考虑通过At来进行强提醒，模板是`[CQ:at,qq=某个用户的QQ]`，你给你自己的动作指示是：{extraPrompt}")
                     ], Chat.Purpose.聊天, identity: extraIdentity, timeout: AppConfig.ChatTimeout, mcp: manager);
-                MainSave.CQLog?.Info("延时任务", $"延时任务的回复为{response}");
+                MainSave.CQLog?.Info("延时任务", $"延时任务的回复为: {response}");
 
-                Context.SendReply?.Invoke(response, Context.GroupId, Context.QQ, Context.MessageId);
+                if (response != Chat.ErrorMessage)
+                {
+                    Context.SendReply?.Invoke(response, Context.GroupId, Context.QQ, Context.MessageId);
+                }
             });
         }
 

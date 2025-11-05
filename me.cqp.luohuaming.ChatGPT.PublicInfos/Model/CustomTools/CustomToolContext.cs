@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
 {
@@ -17,13 +18,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
         public long QQ { get; } = qq;
         
         public string ChatIdentity { get; } = chatIdentity;
-        
-        public string ExtraIdentity { get; set; }
 
         public string Prompt { get; set; } = prompt;
 
-        public MCPClientManager MCPClientManager { get; set; } = mcpClientManager;
-
+        [JsonIgnore]
         public Action<string, long, long, int> SendReply { get; set; } = sendReply;
 
         public int MessageId { get; } = messageId;
