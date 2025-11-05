@@ -200,12 +200,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public string Name { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public decimal OutputConsumePer1M { get; set; } = decimal.Zero;
 
+        [JsonIgnore]
         public decimal InputConsumePer1M { get; set; } = decimal.Zero;
 
+        [JsonIgnore]
         public decimal InputCachedConsumePer1M { get; set; } = decimal.Zero;
 
+        [JsonIgnore]
         public decimal TotalConsume { get; set; } = decimal.Zero;
 
         public decimal CalcConsume(long inputTokenCount, long outputTokenCount, long totalTokenCount, long cachedTokenCount)

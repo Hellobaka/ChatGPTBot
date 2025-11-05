@@ -273,6 +273,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 
         public static string BuildPrompt(Relationship relationship, ChatRecord record, List<ChatRecord> records)
         {
+            // TODO: 添加一个辅助判断代称的函数
             List<ChatMessageContentPart> parts = [];
             StringBuilder stringBuilder = new();
             if (relationship.GroupID > 0)
