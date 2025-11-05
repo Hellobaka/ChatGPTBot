@@ -307,5 +307,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 MainSave.CQLog?.Info("清理非表情包缓存", $"已删除 {pics.Count()} 张图片");
             }
         }
+
+        public static bool TryGetImageByHash(string hash, out Picture picture)
+        {
+            if (Cache.TryGetValue(hash, out picture))
+            {
+                return true;
+            }
+            else
+            {
+                using var db = SQLHelper.GetInstance();
+                picture = db.Queryable<Picture>().First(x => x.Hash == hash && !x.IsDeleted);
+                return picture != null;
+            }
+        }
     }
 }

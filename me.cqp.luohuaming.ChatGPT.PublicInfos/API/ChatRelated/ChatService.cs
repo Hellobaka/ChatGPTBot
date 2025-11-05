@@ -235,18 +235,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 bool success = false;
                 foreach (var hash in pendingPictures)
                 {
-                    if (Picture.Cache.TryGetValue(hash, out var picture) && picture != null)
+                    if (Picture.TryGetImageByHash(hash, out var picture))
                     {
                         bool absolute = File.Exists(picture.FilePath);
                         bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, picture.FilePath));
                         if (absolute || relative)
                         {
-                            // TODO: 调查为什么失败
                             MainSave.CQLog.Info("获取表情包", $"表情包获取成功，为 {picture.FilePath}");
                             try
                             {
                                 MainSave.CQLog?.Info("附加图片", $"向对话 {identity} 附加图片 {hash}，路径 {picture.FilePath}");
-                                var imageData = File.ReadAllBytes(absolute ? CommonHelper.GetRelativePath(picture.FilePath, MainSave.ImageDirectory) : picture.FilePath);
+                                var imageData = File.ReadAllBytes(relative ? Path.Combine(MainSave.ImageDirectory, picture.FilePath) : picture.FilePath);
                                 if (imageData.Length > 0)
                                 {
                                     chatMessages.Add(new(ChatRole.User, [new DataContent(imageData, "image/jpg")]));
