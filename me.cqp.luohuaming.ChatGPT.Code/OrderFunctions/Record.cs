@@ -299,12 +299,13 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
             stringBuilder.AppendLine($"你拥有自主学习新知识的能力，当出现了你不了解的概念，想要记录时，请调用AddKnowledge工具");
             stringBuilder.AppendLine($"给你提供的工具非常丰富，请你要积极使用来增强/改善会话体验！");
             stringBuilder.AppendLine($"调用工具时禁止输出与最终发言结果无关的文本。");
+            stringBuilder.AppendLine($"注意：当出现你不确定的概念时，优先按照 知识库 => 长期记忆 => 联网搜索的顺序检索。若未获取到明确解释，谨慎进行回复。");
 
             stringBuilder.AppendLine($"你的系统管理员/主人QQ是:{string.Join(",", AppConfig.MasterQQ)}。");
             stringBuilder.AppendLine($"你可以通过以下模板进行消息的引用/回复：[CQ:reply,id=MessageID]，注意括号类型，是[]而不是<>。其中替换MessageID即可引用/回复消息。需要注意的是，只能引用/回复一条信息，非必要情况不能使用此模板，只有在引用历史信息(20条消息以前)的情况下才能能使用，否则很扰民。");
             if (AppConfig.EnableEmojiActiveSend)
             {
-                stringBuilder.AppendLine("你拥有主动发送表情包的能力，使用`<@Emoji{想要表达的具体情绪/详细描述你想要发送的文本}>`文本模板来发送表情包，框架会自动切割你的发言部分，无需额外添加换行或特殊标识。并且允许一条消息内只有表情包而没有文本。切记：不是所有的消息都需要发送表情包，你可能在以前的对话已经发送过了，在你觉得必要的时候才能发送表情包，每条消息最多只能有两个表情包。允许只发表情包，不发文本。比起给对方当捧哏，说些没有营养的内容，发表情包会更合适");
+                stringBuilder.AppendLine("你拥有主动发送表情包的能力，使用`<@Emoji{想要表达的具体情绪/详细描述你想要发送的文本}>`文本模板来发送表情包，框架会自动切割你的发言部分，无需额外添加换行或特殊标识，每一个Emoji块都是一个表情包，可以多次使用。并且允许一条消息内只有表情包而没有文本。切记：不是所有的消息都需要发送表情包，你可能在以前的对话已经发送过了，在你觉得必要的时候才能发送表情包，每条消息最多只能有两个表情包。允许只发表情包，不发文本。比起给对方当捧哏，说些没有营养的内容，发表情包会更合适");
             }
             if (AppConfig.EnableSchedules)
             {
