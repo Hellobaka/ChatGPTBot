@@ -80,7 +80,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 try
                 {
+                    client.Stop();
                     MCPTools.TryAdd(client, client.GetTools());
+                    client.StartAction();
                 }
                 catch (Exception e)
                 {
@@ -163,16 +165,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 return true;
             }
             return false;
-        }
-
-        private static void Tool_BeforeToolCalled(McpClientTool tool, IReadOnlyDictionary<string, object?>? arg)
-        {
-            var options = new System.Text.Json.JsonSerializerOptions
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                WriteIndented = true
-            };
-            MainSave.CQLog?.Info("调用 MCP 工具", $"调用工具：{tool.Name}，参数：{System.Text.Json.JsonSerializer.Serialize(arg, options)}");
         }
     }
 }

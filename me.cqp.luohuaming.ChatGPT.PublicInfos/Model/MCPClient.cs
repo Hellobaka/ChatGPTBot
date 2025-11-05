@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Policy;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
@@ -49,6 +50,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public virtual AIFunction[] GetTools()
         {
             throw new NotImplementedException();
+        }
+
+        public virtual void StartAction()
+        {
+        }
+
+        public virtual void Stop()
+        {
         }
 
         protected AIFunction[] ListToolsFromMCPClient(IMcpClient client)
@@ -375,9 +384,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
+        private IMcpClient? MCPClient { get; set; }
+
+        private CancellationTokenSource? CancellationToken { get; set; }
+
+        private Task? PingTask { get; set; }
+
+        private object PingTaskLock { get; set; } = new();
+
         public override AIFunction[] GetTools()
         {
-            var client = McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
+            MCPClient = McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
             {
                 Name = Name,
                 Endpoint = new Uri(Endpoint),
@@ -385,7 +402,61 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 TransportMode = TransportType,
                 ConnectionTimeout = ConnectionTimeout
             })).Result;
-            return ListToolsFromMCPClient(client);
+            return ListToolsFromMCPClient(MCPClient);
+        }
+
+        public override void StartAction()
+        {
+            lock (PingTaskLock)
+            {
+                if (PingTask != null && !PingTask.IsCompleted)
+                {
+                    CancellationToken?.Cancel();
+                }
+
+                CancellationToken = new CancellationTokenSource();
+                var cancellationToken = CancellationToken.Token;
+
+                PingTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        while (!cancellationToken.IsCancellationRequested)
+                        {
+                            try
+                            {
+                                await MCPClient.PingAsync(cancellationToken);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                MainSave.CQLog?.Warning("MCP 客户端心跳", $"MCP 客户端 {Name} 心跳失败，错误信息：{ex.Message}");
+                            }
+
+                            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                        }
+                    }
+                    catch { }
+                }, cancellationToken);
+            }
+        }
+
+        public override void Stop()
+        {
+            lock (PingTaskLock)
+            {
+                if (CancellationToken != null)
+                {
+                    CancellationToken.Cancel();
+                    CancellationToken.Dispose();
+                    CancellationToken = null;
+                }
+
+                PingTask = null;
+            }
         }
     }
 }
