@@ -126,6 +126,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public override AIFunction[] GetTools()
         {
+            if (Context.DisabledTool?.Contains(Name) ?? false)
+            {
+                return [];
+            }
             // 注意 添加工具时请务必在 CustomToolNames 中添加名称
             var function = Name switch
             {

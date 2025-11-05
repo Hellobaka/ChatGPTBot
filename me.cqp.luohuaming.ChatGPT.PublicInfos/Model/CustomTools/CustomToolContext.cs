@@ -9,7 +9,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
         , bool enableMemoryFunction = true
         , bool enableCQApiFunction = true
         , bool enableRelationshipFunction = true
-        , bool enableRecordFunction = true)
+        , bool enableRecordFunction = true
+        , string[]? disabledTool = null)
     {
         public long GroupId { get; } = groupId;
        
@@ -34,5 +35,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools
         public bool EnableRelationshipFunction { get; set; } = enableRelationshipFunction;
         
         public bool EnableRecordFunction { get; set; } = enableRecordFunction;
+        
+        public string[]? DisabledTool { get; set; } = disabledTool;
     }
 }

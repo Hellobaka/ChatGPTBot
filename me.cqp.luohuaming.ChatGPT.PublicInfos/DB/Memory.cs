@@ -325,7 +325,12 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
             var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout, mcp: new MCPClientManager(groupId, qq, string.Empty, prompt, enableCQApiFunction: false, enableRecordFunction: false, enableRelationshipFunction: false));
+                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout
+                    , mcp: new MCPClientManager(groupId, qq, string.Empty, prompt
+                        , enableCQApiFunction: false
+                        , enableRecordFunction: false
+                        , enableRelationshipFunction: false
+                        , disabledTool: ["UpdateMood", "UpdateFavorability", "GetRangeUsageDetail", "AddPictureToContext", "AddDelayTask"]));
             CommonHelper.DebugLog("记忆提取", response);
         }
     }
