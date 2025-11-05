@@ -159,6 +159,19 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                     {
                         msg += _responseProcessor.AppendContentToMessage(openAIUpdate.ContentUpdate);
                         reasoning += _responseProcessor.GetReasoningContent(openAIUpdate);
+                        if (openAIUpdate.Usage != null && usageDetails != null)
+                        {
+                            usage = new UsageDetails()
+                            {
+                                InputTokenCount = openAIUpdate.Usage.InputTokenCount,
+                                OutputTokenCount = openAIUpdate.Usage.OutputTokenCount,
+                                TotalTokenCount = openAIUpdate.Usage.TotalTokenCount,
+                                AdditionalCounts = new AdditionalPropertiesDictionary<long>
+                                {
+                                    { "InputTokenDetails.CachedTokenCount", openAIUpdate.Usage.InputTokenDetails.CachedTokenCount }
+                                }
+                            };
+                        }
                     }
                     else
                     {
