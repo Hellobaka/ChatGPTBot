@@ -78,7 +78,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             }
             catch (Exception e)
             {
-                CommonHelper.DebugLog("ToolCall追踪", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
+                MainSave.CQLog?.Warning("ToolCall追踪", $"函数 {context.Function.Name} 调用失败，错误信息 {e.Message}");
                 return $"Exception when call tool {context.Function.Name}, {e}";
             }
         }
