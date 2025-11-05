@@ -241,6 +241,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                         bool relative = File.Exists(Path.Combine(MainSave.ImageDirectory, picture.FilePath));
                         if (absolute || relative)
                         {
+                            // TODO: 调查为什么失败
                             MainSave.CQLog.Info("获取表情包", $"表情包获取成功，为 {picture.FilePath}");
                             try
                             {
