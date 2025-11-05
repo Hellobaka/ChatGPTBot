@@ -88,13 +88,34 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         /// <param name="qq">QQ，当为0时表示不限制发言人</param>
         /// <param name="count">最大召回数量</param>
         /// <returns></returns>
-        public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15)
+        public static List<ChatRecord> GetGroupChatRecord(long groupId, long qq = 0, int count = 15, DateTime? startTime = null, DateTime? endTime = null)
         {
             using var db = SQLHelper.GetInstance();
-            List<ChatRecord> results = qq > 0
-                ? db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList()
-                : db.Queryable<ChatRecord>().Where(x => x.GroupID == groupId).OrderByDescending(x => x.Time).Take(count).ToList();
-            return results;
+            var queryable = db.Queryable<ChatRecord>();
+            if (startTime != null && endTime != null)
+            {
+                if (qq > 0)
+                {
+                    queryable = queryable.Where(x => x.GroupID == groupId && x.QQ == qq && x.Time >= startTime && x.Time <= endTime);
+                }
+                else
+                {
+                    queryable = queryable.Where(x => x.GroupID == groupId && x.Time >= startTime && x.Time <= endTime);
+                }
+            }
+            else
+            {
+                if (qq > 0)
+                {
+                    queryable = queryable.Where(x => x.GroupID == groupId && x.QQ == qq);
+                }
+                else
+                {
+                    queryable = queryable.Where(x => x.GroupID == groupId);
+                }
+            }
+
+            return queryable.OrderByDescending(x => x.Time).Take(count).ToList();
         }
 
         /// <summary>
@@ -106,10 +127,21 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
         /// <param name="count">The maximum number of chat records to retrieve. The default value is 15.</param>
         /// <returns>A list of <see cref="ChatRecord"/> objects representing the private chat records, ordered by time in
         /// descending order. The list may be empty if no records are found.</returns>
-        public static List<ChatRecord> GetPrivateChatRecord(long qq, int count = 15)
+        public static List<ChatRecord> GetPrivateChatRecord(long qq, int count = 15, DateTime? startTime = null, DateTime? endTime = null)
         {
             using var db = SQLHelper.GetInstance();
-            return db.Queryable<ChatRecord>().Where(x => x.GroupID == -1 && x.QQ == qq).OrderByDescending(x => x.Time).Take(count).ToList();
+            var queryable = db.Queryable<ChatRecord>();
+            if (startTime != null && endTime != null)
+            {
+                queryable = queryable.Where(x => x.GroupID == -1 && x.QQ == qq && x.Time >= startTime && x.Time <= endTime);
+            }
+            else
+            {
+                queryable = queryable.Where(x => x.GroupID == -1 && x.QQ == qq);
+            }
+
+            return queryable .OrderByDescending(x => x.Time)
+                .Take(count).ToList();
         }
 
         /// <summary>
