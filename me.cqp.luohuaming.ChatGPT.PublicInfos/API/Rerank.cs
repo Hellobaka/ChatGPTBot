@@ -30,7 +30,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
                 // 针对腾讯云、阿里百炼进行特殊处理
                 if (api.Key.UseTencentSign)
                 {
-                    json = CommonHelper.Post_TecentSignV3(new
+                    json = CommonHelper.Post_TencentSignV3(new
                     {
                         Model = api.Model.Name,
                         Query = text,

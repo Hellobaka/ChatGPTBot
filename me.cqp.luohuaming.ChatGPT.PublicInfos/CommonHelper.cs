@@ -218,7 +218,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             }
         }
 
-        public static string Post_TecentSignV3(string payload, string action, int timeout = 10000)
+        public static string Post_TencentSignV3(string payload, string action, int timeout = 10000)
         {
             string result = "";
             try
