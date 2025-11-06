@@ -17,6 +17,17 @@
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
+        <Grid
+            x:Name="DisableSchduler"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Panel.ZIndex="99">
+            <Grid.Background>
+                <SolidColorBrush Opacity="0.6" Color="{Binding Source={StaticResource SystemControlBackgroundAltHighBrush}, Path=Color}" />
+            </Grid.Background>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">日程功能未启用</TextBlock>
+        </Grid>
         <GroupBox Header="今日日程">
             <Grid>
                 <Grid.RowDefinitions>

@@ -29,6 +29,17 @@
             <ColumnDefinition Width="3*" />
             <ColumnDefinition x:Name="ContentColumn" Width="7*" />
         </Grid.ColumnDefinitions>
+        <Grid
+            x:Name="DisableMCP"
+            Grid.ColumnSpan="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Panel.ZIndex="99">
+            <Grid.Background>
+                <SolidColorBrush Opacity="0.6" Color="{Binding Source={StaticResource SystemControlBackgroundAltHighBrush}, Path=Color}" />
+            </Grid.Background>
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">MCP 功能未启用</TextBlock>
+        </Grid>
         <GridSplitter
             Margin="2,0"
             HorizontalAlignment="Right"

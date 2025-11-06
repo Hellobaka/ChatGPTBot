@@ -162,6 +162,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            DisableSchduler.Visibility = AppConfig.EnableSchedules ? Visibility.Collapsed : Visibility.Visible;
+            if (!AppConfig.EnableSchedules)
+            {
+                return;
+            }
+
             if (SchedulerManager.Instance.Schedules.Count > 0)
             {
                 Schedules.Clear();

@@ -1,4 +1,5 @@
-﻿using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
+﻿using me.cqp.luohuaming.ChatGPT.PublicInfos;
+using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.UI.Controls;
 using me.cqp.luohuaming.ChatGPT.UI.Model;
 using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
@@ -33,6 +34,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         public bool Rebuilt { get; set; }
 
         public bool HasChanged { get; set; }
+
+        public bool FormLoaded { get; set; }
 
         private async void RebuildMCPButton_Click(object sender, RoutedEventArgs e)
         {
@@ -121,6 +124,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
+            DisableMCP.Visibility = AppConfig.EnableMCP ? Visibility.Collapsed : Visibility.Visible;
+            if (FormLoaded || !AppConfig.EnableMCP)
+            {
+                return;
+            }
+            FormLoaded = true;
             ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
         }
