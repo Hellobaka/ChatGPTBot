@@ -14,7 +14,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
 
         public string Message { get; private set; }
 
-        private Regex LineSplitRegex { get; set; } = new Regex(@"(?<=[。？！?!]|\.(?!\d))");
+        private Regex LineSplitRegex { get; set; } = new Regex(@"(?<=[。？！?!]|\.(?!\d|\.))");
 
         private static Regex EmojiSplitRegex { get; set; } = new Regex(@"<@Emoji(.*?)>");
 
@@ -133,6 +133,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.API
             {
                 return input;
             }
+            input = input.Replace("\">]", ">\"]");
 
             int startIndex = input.IndexOf('[');
             int endIndex = input.LastIndexOf(']');
