@@ -280,6 +280,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void ExecuteMemoryExtraction(List<ChatRecord> chatRecords, long groupId, long qq)
         {
+            chatRecords = chatRecords.Where(x => x.QQ != MainSave.CurrentQQ).ToList();
             long id = groupId > 0 ? groupId : qq;
             if (MemoryExtractionCount.TryGetValue(id, out var count))
             {
