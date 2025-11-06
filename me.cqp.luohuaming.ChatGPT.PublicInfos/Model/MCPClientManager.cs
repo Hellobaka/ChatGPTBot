@@ -80,6 +80,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 try
                 {
+                    // TODO: 寻找定时重建的方式
                     client.Stop();
                     MCPTools.TryAdd(client, client.GetTools());
                     client.StartAction();
