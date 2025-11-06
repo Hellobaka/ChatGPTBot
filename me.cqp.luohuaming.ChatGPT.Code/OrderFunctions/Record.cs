@@ -19,6 +19,7 @@ namespace me.cqp.luohuaming.ChatGPT.Code.OrderFunctions
 {
     public class Record : IOrderModel
     {
+        // TODO: 支持新发言打断旧回复
         public Record()
         {
             Chat.OnToolCall -= Chat_OnToolCall;
