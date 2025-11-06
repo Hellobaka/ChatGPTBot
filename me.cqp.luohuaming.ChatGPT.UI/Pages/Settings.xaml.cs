@@ -17,7 +17,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     /// </summary>
     public partial class Settings : Page
     {
-        // TODO: 更详细的用途管理
         public Settings()
         {
             InitializeComponent();
@@ -26,6 +25,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private ObservableCollection<APIKeyPurpose> KeyPurposes { get; set; } = new();
 
         private ObservableCollection<APIKeyPurpose> ChatPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> ReplyPurposes { get; set; } = new();
+
+        private ObservableCollection<APIKeyPurpose> MemoryPurposes { get; set; } = new();
 
         private ObservableCollection<APIKeyPurpose> ImageDescriptionPurposes { get; set; } = new();
 
@@ -277,16 +280,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                             listBox_Int.ItemSource = new ObservableCollection<long>(longs);
                         }
                     }
-                    else if (item is ComboBox combobox)
+                    else if (item is ComboBox comboBox)
                     {
-                        var property = properties.FirstOrDefault(x => x.Name == combobox.Name);
+                        var property = properties.FirstOrDefault(x => x.Name == comboBox.Name);
                         if (property == null)
                         {
                             Debugger.Break();
                             continue;
                         }
                         var v = property?.GetValue(null, null);
-                        combobox.SelectedIndex = (int)v;
+                        comboBox.SelectedIndex = (int)v;
                     }
                 }
             }
@@ -361,6 +364,14 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                     KeyPurposes = ChatPurposes;
                     break;
 
+                case "Reply":
+                    KeyPurposes = ReplyPurposes;
+                    break;
+
+                case "Memory":
+                    KeyPurposes = MemoryPurposes;
+                    break;
+
                 case "Splitter":
                     KeyPurposes = SplitterPurposes;
                     break;
@@ -389,6 +400,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             string tag = (KeyPurposeTabControl.SelectedItem as TabItem).Tag.ToString();
             ChatTimeout.Visibility = tag == "Chat" ? Visibility.Visible : Visibility.Collapsed;
+            ReplyTimeout.Visibility = tag == "Reply" ? Visibility.Visible : Visibility.Collapsed;
+            MemoryTimeout.Visibility = tag == "Memory" ? Visibility.Visible : Visibility.Collapsed;
             RerankTimeout.Visibility = tag == "Rerank" ? Visibility.Visible : Visibility.Collapsed;
             EmbeddingTimeout.Visibility = tag == "Embedding" ? Visibility.Visible : Visibility.Collapsed;
             SplitterTimeout.Visibility = tag == "Splitter" ? Visibility.Visible : Visibility.Collapsed;
@@ -417,6 +430,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void ReloadPurpose()
         {
             ChatPurposes = AppConfig.ChatAPIKeyId.ToObservableCollection();
+            ReplyPurposes = AppConfig.ReplyAPIKeyId.ToObservableCollection();
+            MemoryPurposes = AppConfig.MemoryAPIKeyId.ToObservableCollection();
             SplitterPurposes = AppConfig.SplitterApiKeyId.ToObservableCollection();
             ImageDescriptionPurposes = AppConfig.ImageDescriberApiKeyId.ToObservableCollection();
             EmbeddingPurposes = AppConfig.EmbeddingApiKeyId.ToObservableCollection();
@@ -427,12 +442,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         private void SavePurpose()
         {
             AppConfig.ChatAPIKeyId = ChatPurposes.ToList();
+            AppConfig.ReplyAPIKeyId = ReplyPurposes.ToList();
+            AppConfig.MemoryAPIKeyId = MemoryPurposes.ToList();
             AppConfig.SplitterApiKeyId = SplitterPurposes.ToList();
             AppConfig.ImageDescriberApiKeyId = ImageDescriptionPurposes.ToList();
             AppConfig.EmbeddingApiKeyId = EmbeddingPurposes.ToList();
             AppConfig.RerankApiKeyId = RerankPurposes.ToList();
 
             ConfigHelper.SetConfig("ChatAPIKeyId", AppConfig.ChatAPIKeyId);
+            ConfigHelper.SetConfig("ReplyAPIKeyId", AppConfig.ReplyAPIKeyId);
+            ConfigHelper.SetConfig("MemoryAPIKeyId", AppConfig.MemoryAPIKeyId);
             ConfigHelper.SetConfig("SplitterApiKeyId", AppConfig.SplitterApiKeyId);
             ConfigHelper.SetConfig("ImageDescriberApiKeyId", AppConfig.ImageDescriberApiKeyId);
             ConfigHelper.SetConfig("EmbeddingApiKeyId", AppConfig.EmbeddingApiKeyId);

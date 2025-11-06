@@ -280,6 +280,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
 
         public static void ExecuteMemoryExtraction(List<ChatRecord> chatRecords, long groupId, long qq)
         {
+            if (!AppConfig.EnableQdrant && AppConfig.MemoryAPIKeyId.Count == 0)
+            {
+                return;
+            }
             chatRecords = chatRecords.Where(x => x.QQ != MainSave.CurrentQQ).ToList();
             long id = groupId > 0 ? groupId : qq;
             if (MemoryExtractionCount.TryGetValue(id, out var count))
@@ -323,10 +327,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
                 </recent_Message>
                 """;
 
-            var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
+            var response = Chat.GetChatResult(AppConfig.MemoryAPIKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.SplitterTimeout
+                ], Chat.Purpose.记忆提取, identity: Guid.NewGuid().ToString(), timeout: AppConfig.MemoryTimeout
                     , mcp: new MCPClientManager(groupId, qq, string.Empty, prompt
                         , enableCQApiFunction: false
                         , enableRecordFunction: false

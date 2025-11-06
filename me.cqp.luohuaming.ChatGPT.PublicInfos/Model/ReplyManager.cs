@@ -71,7 +71,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 -消息中提到的“你”并不一定指代的是Bot，在没有明确使用Bot昵称或AtBot的情况下，此处代指的是上一条甚至未发送的下一条或者引用消息中的用户或者图片中的内容，否则不应该回应
                 - 如果话题已切换到与你无关的内容，不应回应；
                 - 即使没被 @，只要上下文显示你在被“对话中”，就应回应；
-                - 如果有人觉得你很烦就降低置信度50%；
+                - 如果有人觉得你很烦或者说你话很多就降低置信度50%；
                 - 不要自以为很受欢迎，如果没人理你，就别理人家；
                 - 避免打扰：多人闲聊、表情包、玩笑话通常不应回应。
 
@@ -91,10 +91,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 ```
                 """;
 
-            var response = Chat.GetChatResult(AppConfig.SplitterApiKeyId, [
+            var response = Chat.GetChatResult(AppConfig.ReplyAPIKeyId, [
                     new(ChatRole.System, prompt),
                     new(ChatRole.User, "请回复")
-                ], Chat.Purpose.回复意愿, timeout: AppConfig.SplitterTimeout);
+                ], Chat.Purpose.回复意愿, timeout: AppConfig.ReplyTimeout);
             if (response == Chat.ErrorMessage)
             {
                 MainSave.CQLog?.Error("回复意愿计算", "调用接口失败");

@@ -8,6 +8,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
     {
         public static List<APIKeyPurpose> ChatAPIKeyId { get; set; } = [];
 
+        public static List<APIKeyPurpose> ReplyAPIKeyId { get; set; } = [];
+
+        public static List<APIKeyPurpose> MemoryAPIKeyId { get; set; } = [];
+
         public static List<APIKeyPurpose> SplitterApiKeyId { get; set; } = [];
 
         public static List<APIKeyPurpose> ImageDescriberApiKeyId { get; set; } = [];
@@ -122,6 +126,10 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
 
         public static int ChatTimeout { get; set; } = 30000;
 
+        public static int ReplyTimeout { get; set; } = 5000;
+
+        public static int MemoryTimeout { get; set; } = 30000;
+
         public static int SplitterTimeout { get; set; } = 30000;
 
         public static int ImageDescriberTimeout { get; set; } = 30000;
@@ -162,6 +170,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             ImageDescriberApiKeyId = ConfigHelper.GetConfig("ImageDescriberApiKeyId", new List<APIKeyPurpose>());
             EmbeddingApiKeyId = ConfigHelper.GetConfig("EmbeddingApiKeyId", new List<APIKeyPurpose>());
             RerankApiKeyId = ConfigHelper.GetConfig("RerankApiKeyId", new List<APIKeyPurpose>());
+            ReplyAPIKeyId = ConfigHelper.GetConfig("ReplyAPIKeyId", new List<APIKeyPurpose>());
+            MemoryAPIKeyId = ConfigHelper.GetConfig("MemoryAPIKeyId", new List<APIKeyPurpose>());
 
             EnableGroupReply = ConfigHelper.GetConfig("EnableGroupReply", false);
             StreamMode = ConfigHelper.GetConfig("StreamMode", true);
@@ -216,6 +226,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
             EmbeddingTimeout = ConfigHelper.GetConfig("EmbeddingTimeout", 3000);
             RerankTimeout = ConfigHelper.GetConfig("RerankTimeout", 3000);
             ChatTimeout = ConfigHelper.GetConfig("ChatTimeout", 30000);
+            ReplyTimeout = ConfigHelper.GetConfig("ReplyTimeout", 5000);
+            MemoryTimeout = ConfigHelper.GetConfig("MemoryTimeout", 30000);
             SplitterTimeout = ConfigHelper.GetConfig("SplitterTimeout", 30000);
             ImageDescriberTimeout = ConfigHelper.GetConfig("ImageDescriberTimeout", 30000);
             MemoryDimensions = ConfigHelper.GetConfig("MemoryDimensions", 1024);
@@ -242,6 +254,8 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
         {
             APIKeys.GetAllKeys();
             foreach (var item in ChatAPIKeyId
+                .Concat(ReplyAPIKeyId)
+                .Concat(MemoryAPIKeyId)
                 .Concat(SplitterApiKeyId)
                 .Concat(ImageDescriberApiKeyId)
                 .Concat(EmbeddingApiKeyId)
