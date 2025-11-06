@@ -25,11 +25,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public SchedulerManager()
         {
             Instance = this;
-            EnableTimer();
-            Task.Run(UpdateScheduler);
         }
 
-        private void EnableTimer()
+        public void EnableTimer()
         {
             UpdateSchedulerTimer = new()
             {
@@ -37,6 +35,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             };
             UpdateSchedulerTimer.Elapsed += UpdateSchedulerTimer_Elapsed;
             UpdateSchedulerTimer.Start();
+            Task.Run(UpdateScheduler);
         }
 
         private void UpdateSchedulerTimer_Elapsed(object sender, ElapsedEventArgs e)
