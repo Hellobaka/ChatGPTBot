@@ -17,6 +17,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     /// </summary>
     public partial class Settings : Page
     {
+        // TODO: 更详细的用途管理
         public Settings()
         {
             InitializeComponent();
