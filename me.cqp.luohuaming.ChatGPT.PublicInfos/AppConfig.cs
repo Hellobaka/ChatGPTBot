@@ -262,6 +262,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos
                 .Concat(RerankApiKeyId))
             {
                 item.Key = APIKeys.GetKeyById(item.Id);
+                item.Model = item.Key?.AvailableModels.FirstOrDefault(x => x.Name == item.Model?.Name);
+                if (item.Model == null)
+                {
+                    MainSave.CQLog?.Warning("API 无效", $"Id = {item.Id} 的 Key 中不包括 API 中的模型，请重新配置");
+                }
             }
         }
     }
