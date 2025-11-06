@@ -62,22 +62,32 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         protected AIFunction[] ListToolsFromMCPClient(IMcpClient client)
         {
-            var functions = client.ListToolsAsync().Result;
-            AIFunction[] result = [];
-            foreach (var item in functions)
+            int retryMaxCount = 3;
+            for (int i = 0; i < retryMaxCount; i++)
             {
-                if (ToolNameConverters.TryGetValue(item.Name, out var newName))
+                try
                 {
-                    var renamedTool = item.WithName(newName);
-                    result = [.. result, renamedTool];
-                }
-                else
-                {
-                    result = [.. result, item];
-                }
-            }
+                    var functions = client.ListToolsAsync().Result;
+                    AIFunction[] result = [];
+                    foreach (var item in functions)
+                    {
+                        if (ToolNameConverters.TryGetValue(item.Name, out var newName))
+                        {
+                            var renamedTool = item.WithName(newName);
+                            result = [.. result, renamedTool];
+                        }
+                        else
+                        {
+                            result = [.. result, item];
+                        }
+                    }
 
-            return result;
+                    return result;
+                }
+                catch { }
+            }
+            MainSave.CQLog?.Error("MCP 客户端工具列表", $"加载 MCP 客户端 {Name} 失败，超时。");
+            return [];
         }
     }
 
@@ -423,9 +433,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     {
                         while (!cancellationToken.IsCancellationRequested)
                         {
+                            await Task.Delay(TimeSpan.FromMinutes(3), cancellationToken);
+
                             try
                             {
-                                await MCPClient.PingAsync(cancellationToken);
+                                await MCPClient.ListToolsAsync(cancellationToken: cancellationToken);
                             }
                             catch (OperationCanceledException)
                             {
@@ -435,8 +447,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                             {
                                 MainSave.CQLog?.Warning("MCP 客户端心跳", $"MCP 客户端 {Name} 心跳失败，错误信息：{ex.Message}");
                             }
-
-                            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
                         }
                     }
                     catch { }
