@@ -86,7 +86,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 catch { }
             }
-            MainSave.CQLog?.Error("MCP 客户端工具列表", $"加载 MCP 客户端 {Name} 失败，超时。");
+            MainSave.CQLog?.Error("MCP 客户端工具列表", $"加载 MCP 客户端 {Name} 工具列表失败，超时。");
             return [];
         }
     }
@@ -404,15 +404,25 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public override AIFunction[] GetTools()
         {
-            MCPClient = McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
+            int retryMaxCount = 3;
+            for (int i = 0; i < retryMaxCount; i++)
             {
-                Name = Name,
-                Endpoint = new Uri(Endpoint),
-                AdditionalHeaders = Headers,
-                TransportMode = TransportType,
-                ConnectionTimeout = ConnectionTimeout
-            })).Result;
-            return ListToolsFromMCPClient(MCPClient);
+                try
+                {
+                    MCPClient = McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
+                    {
+                        Name = Name,
+                        Endpoint = new Uri(Endpoint),
+                        AdditionalHeaders = Headers,
+                        TransportMode = TransportType,
+                        ConnectionTimeout = ConnectionTimeout
+                    })).Result;
+                    return ListToolsFromMCPClient(MCPClient);
+                }
+                catch { }
+            }
+            MainSave.CQLog?.Error("MCP 客户端工具列表", $"创建 MCP 客户端 {Name} 失败，超时。");
+            return [];
         }
 
         public override void StartAction()
@@ -438,6 +448,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                             try
                             {
                                 await MCPClient.ListToolsAsync(cancellationToken: cancellationToken);
+                                MainSave.CQLog?.Info("MCP 客户端心跳", $"MCP 客户端 {Name} 心跳成功。");
                             }
                             catch (OperationCanceledException)
                             {
