@@ -41,7 +41,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
         {
             ViewModel.Rebuilding = true;
             await Task.Run(MCPClientManager.Rebuild);
-            ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+            await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
             Rebuilt = true;
         }
@@ -96,7 +96,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             MCPClientEditControl.Cancel();
         }
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var result = MCPClientEditControl.GetResult();
             if (result == null)
@@ -114,7 +114,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 Rebuilt = false;
                 HasChanged = true;
                 MainWindow.ShowInfo("保存成功");
-                ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+                await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             }
             else
             {
@@ -122,7 +122,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
+        private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             DisableMCP.Visibility = AppConfig.EnableMCP ? Visibility.Collapsed : Visibility.Visible;
             if (FormLoaded || !AppConfig.EnableMCP)
@@ -130,7 +130,12 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 return;
             }
             FormLoaded = true;
-            ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+            ViewModel.Rebuilding = true;
+            if (MCPClientManager.Clients.Count == 0)
+            {
+                await Task.Run(MCPClientManager.Rebuild);
+            }
+            await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
         }
 

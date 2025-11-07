@@ -32,7 +32,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
         public MCPClientModel CreatedMCPItem { get; internal set; }
 
-        public void LoadMCPClients(bool showCustom)
+        public async Task LoadMCPClients(bool showCustom)
         {
             MCPClients.Clear();
 
@@ -42,7 +42,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                 {
                     continue;
                 }
-                var model = MCPClientModel.BuildFromMCPClientBase(client, client.GetTools());
+                var model = MCPClientModel.BuildFromMCPClientBase(client, await client.GetTools());
                 MCPClients.Add(model);
             }
         }

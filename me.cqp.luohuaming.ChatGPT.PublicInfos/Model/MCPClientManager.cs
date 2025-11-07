@@ -100,15 +100,15 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 if (item is MCPCustomClient customClient)
                 {
                     customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this, messageId, sendReply, enableMemoryFunction, enableCQApiFunction, enableRelationshipFunction, enableRecordFunction, disabledTool);
-                    var customFunctions = customClient.GetTools();
+                    var customFunctions = customClient.GetTools().Result;
                     if (customFunctions.Length > 0)
                     {
-                        functions = [.. functions, .. customClient.GetTools()];
+                        functions = [.. functions, .. customClient.GetTools().Result];
                     }
                 }
                 else
                 {
-                    functions = [.. functions, .. item.GetTools()];
+                    functions = [.. functions, .. item.GetTools().Result];
                 }
             }
             CommonHelper.DebugLog("构建工具列表", $"共添加了 {functions.Length} 个工具");

@@ -3,12 +3,14 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.API;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.DB;
 using me.cqp.luohuaming.ChatGPT.PublicInfos.Model.CustomTools;
 using Microsoft.Extensions.AI;
+using ModelContextProtocol;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Security.Policy;
 using System.Text.Encodings.Web;
 using System.Threading;
@@ -47,7 +49,9 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public Dictionary<string, string> ToolNameConverters { get; set; } = [];
 
-        public virtual AIFunction[] GetTools()
+        protected static Type McpClientToolType { get; } = typeof(McpClientTool);
+
+        public virtual async Task<AIFunction[]> GetTools()
         {
             throw new NotImplementedException();
         }
@@ -60,14 +64,16 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         {
         }
 
-        protected async Task<AIFunction[]> ListToolsFromMCPClient(IMcpClient client)
+        protected async Task<AIFunction[]> ListToolsFromMCPClient(McpClient client)
         {
             int retryMaxCount = 3;
             for (int i = 0; i < retryMaxCount; i++)
             {
                 try
                 {
-                    var functions = await client.ListToolsAsync();
+                    // TODO: 当SDK支持时使用原生方法
+                    // var functions = await client.ListToolsAsync();
+                    var functions = await ListToolInternal(client);
                     AIFunction[] result = [];
                     foreach (var item in functions)
                     {
@@ -88,6 +94,42 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             }
             MainSave.CQLog?.Error("MCP 客户端工具列表", $"加载 MCP 客户端 {Name} 工具列表失败，超时。");
             return [];
+        }
+
+        private async Task<IEnumerable<McpClientTool>> ListToolInternal(McpClient client)
+        {
+            var serializerOptions = McpJsonUtilities.DefaultOptions;
+            serializerOptions.MakeReadOnly();
+
+            List<McpClientTool>? tools = null;
+            string? cursor = null;
+            do
+            {
+                var toolResults = await client.SendRequestAsync<object, ListToolsResult>(
+                    RequestMethods.ToolsList,
+                    parameters: new { Cursor = cursor }).ConfigureAwait(false);
+
+                tools ??= new List<McpClientTool>(toolResults.Tools.Count);
+                foreach (var tool in toolResults.Tools)
+                {
+                    tools.Add(CreateMcpClientTool(client, tool));
+                }
+
+                cursor = toolResults.NextCursor;
+            }
+            while (!string.IsNullOrEmpty(cursor));
+
+            return tools;
+        }
+
+        protected static McpClientTool CreateMcpClientTool(McpClient client, Tool tool)
+        {
+            return (McpClientTool)Activator.CreateInstance(
+                typeof(McpClientTool),
+                BindingFlags.NonPublic | BindingFlags.CreateInstance | BindingFlags.Instance,
+                null,
+                [client, tool, McpJsonUtilities.DefaultOptions, null, null, null],
+                null);
         }
     }
 
@@ -142,7 +184,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             "RemoveGroupMember"
         ];
 
-        public override AIFunction[] GetTools()
+        public override async Task<AIFunction[]> GetTools()
         {
             if (Context?.DisabledTool?.Contains(Name) ?? false)
             {
@@ -365,17 +407,17 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public string WorkingDirectory { get; set; } = string.Empty;
 
-        public override AIFunction[] GetTools()
+        public override async Task<AIFunction[]> GetTools()
         {
-            var client = McpClientFactory.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
+            var client = await McpClient.CreateAsync(new StdioClientTransport(new StdioClientTransportOptions
             {
                 Command = Command,
                 Arguments = Arguments.ToArray(),
                 EnvironmentVariables = EnvironmentVariables,
                 WorkingDirectory = string.IsNullOrWhiteSpace(WorkingDirectory) ? null : WorkingDirectory,
                 Name = Name
-            })).Result;
-            return ListToolsFromMCPClient(client).Result;
+            }));
+            return await ListToolsFromMCPClient(client);
         }
     }
 
@@ -391,7 +433,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
-        private IMcpClient? MCPClient { get; set; }
+        private McpClient? MCPClient { get; set; }
 
         private CancellationTokenSource? CancellationToken { get; set; }
 
@@ -401,11 +443,11 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private AIFunction[] Tools { get; set; } = [];
 
-        public override AIFunction[] GetTools()
+        public override async Task<AIFunction[]> GetTools()
         {
             if (MCPClient == null)
             {
-                CreateClientAndGetTools(System.Threading.CancellationToken.None).Wait();
+                await CreateClientAndGetTools(System.Threading.CancellationToken.None);
             }
             return Tools;
         }
@@ -434,14 +476,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                     {
                         return;
                     }
-                    MCPClient = await McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
+                    MCPClient = McpClient.CreateAsync(new HttpClientTransport(new HttpClientTransportOptions
                     {
                         Name = Name,
                         Endpoint = new Uri(Endpoint),
                         AdditionalHeaders = Headers,
                         TransportMode = TransportType,
                         ConnectionTimeout = ConnectionTimeout
-                    }), cancellationToken: cancellationToken);
+                    }), cancellationToken: cancellationToken).Result;
                     Tools = await ListToolsFromMCPClient(MCPClient);
                     return;
                 }
