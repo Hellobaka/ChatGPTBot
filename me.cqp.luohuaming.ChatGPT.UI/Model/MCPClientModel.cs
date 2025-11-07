@@ -19,6 +19,8 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Model
 
         public bool IsExpanded { get; set; }
 
+        public bool IsHide { get; set; }
+
         public ObservableCollection<MCPToolModel> Tools { get; set; } = [];
 
         public static MCPClientModel BuildFromMCPClientBase(MCPClientBase clientBase, IEnumerable<AIFunction> tools)

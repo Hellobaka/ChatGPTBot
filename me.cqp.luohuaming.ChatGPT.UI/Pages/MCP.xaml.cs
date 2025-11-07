@@ -3,10 +3,12 @@ using me.cqp.luohuaming.ChatGPT.PublicInfos.Model;
 using me.cqp.luohuaming.ChatGPT.UI.Controls;
 using me.cqp.luohuaming.ChatGPT.UI.Model;
 using me.cqp.luohuaming.ChatGPT.UI.ViewModel;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 
 namespace me.cqp.luohuaming.ChatGPT.UI.Pages
 {
@@ -16,7 +18,6 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
     public partial class MCP : Page
     {
         // TODO: 通过对话框新建的无法保存
-        // TODO: 不勾选显示内置工具保存时，内置工具会丢失设置
         // TODO: 内置工具提供一套默认启用
 
         public MCP()
@@ -113,12 +114,42 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 MCPClientManager.Save();
                 Rebuilt = false;
                 HasChanged = true;
+
                 MainWindow.ShowInfo("保存成功");
+
+                var selectedClientName = result.MCPClientBase.Name;
                 await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+
+                var newSelectedItem = ViewModel.MCPClients.FirstOrDefault(x => x.MCPClientBase?.Name == selectedClientName);
+                SelectTreeView(newSelectedItem);
             }
             else
             {
                 MainWindow.ShowError("未找到选中项对应的元素，无法保存");
+            }
+        }
+
+        private void SelectTreeView(MCPClientModel newSelectedItem)
+        {
+            if (newSelectedItem != null && !newSelectedItem.IsHide)
+            {
+                newSelectedItem.IsSelected = true;
+                MCPClientContainer_SelectedItemChanged(this, new RoutedPropertyChangedEventArgs<object>(null, newSelectedItem));
+
+                _ = Dispatcher.BeginInvoke(() =>
+                {
+                    // 等待UI完全渲染后再设置选中状态
+                    foreach (var item in MCPClientContainer.Items)
+                    {
+                        if (MCPClientContainer.ItemContainerGenerator.ContainerFromItem(item)
+                            is TreeViewItem treeViewItem && item == newSelectedItem)
+                        {
+                            treeViewItem.IsSelected = true;
+                            treeViewItem.BringIntoView();
+                            break;
+                        }
+                    }
+                }, DispatcherPriority.ContextIdle);
             }
         }
 
@@ -130,14 +161,10 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
                 return;
             }
             FormLoaded = true;
-            ViewModel.Rebuilding = true;
-            if (MCPClientManager.Clients.Count == 0)
-            {
-                await Task.Run(MCPClientManager.Rebuild);
-            }
             await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
             ViewModel.Rebuilding = false;
         }
+
 
         private void DeleteButton_Click(object sender, RoutedEventArgs e)
         {
@@ -157,9 +184,16 @@ namespace me.cqp.luohuaming.ChatGPT.UI.Pages
             }
         }
 
-        private void ShowCustomTools_Checked(object sender, RoutedEventArgs e)
+        private async void ShowCustomTools_Checked(object sender, RoutedEventArgs e)
         {
-            ViewModel?.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+            if (ViewModel == null)
+            {
+                return;
+            }
+            var name = ViewModel.SelectedMCPItem is MCPClientModel client ? client.Name : null;
+            await ViewModel.LoadMCPClients(ShowCustomTools.IsChecked ?? false);
+
+            SelectTreeView(ViewModel.MCPClients.FirstOrDefault(x => x.MCPClientBase?.Name == name));
         }
     }
 }

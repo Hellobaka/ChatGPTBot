@@ -38,11 +38,11 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
 
             foreach (var client in MCPClientManager.Clients)
             {
+                var model = MCPClientModel.BuildFromMCPClientBase(client, await client.GetTools());
                 if (client.ToolType == MCPClientType.Custom && !showCustom)
                 {
-                    continue;
+                    model.IsHide = true;
                 }
-                var model = MCPClientModel.BuildFromMCPClientBase(client, await client.GetTools());
                 MCPClients.Add(model);
             }
         }
