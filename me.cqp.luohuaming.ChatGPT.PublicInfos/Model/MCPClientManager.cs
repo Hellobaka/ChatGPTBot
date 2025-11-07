@@ -23,8 +23,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
     {
         public static List<MCPClientBase> Clients { get; set; } = [];
 
-        public static ConcurrentDictionary<MCPClientBase, AIFunction[]> MCPTools { get; set; } = [];
-
         public static JsonSerializerSettings JsonSerializerSettings { get; set; } = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.Auto,
@@ -74,15 +72,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             {
                 return;
             }
-            MCPTools = [];
             CreateCustomClientsIfNeeded();
             Parallel.ForEach(Clients, client =>
             {
                 try
                 {
-                    // TODO: 寻找定时重建的方式
                     client.Stop();
-                    MCPTools.TryAdd(client, client.GetTools());
+                    client.GetTools();
                     client.StartAction();
                 }
                 catch (Exception e)
@@ -95,13 +91,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         public AIFunction[] GetAIFunctions()
         {
             AIFunction[] functions = [];
-            foreach (var item in MCPTools)
+            foreach (var item in Clients)
             {
-                if (!CheckClientCanBuild(item.Key, groupId, qqId))
+                if (!CheckClientCanBuild(item, groupId, qqId))
                 {
                     continue;
                 }
-                if (item.Key is MCPCustomClient customClient)
+                if (item is MCPCustomClient customClient)
                 {
                     customClient.Context = new CustomToolContext(groupId, qqId, chatIdentity, prompt, this, messageId, sendReply, enableMemoryFunction, enableCQApiFunction, enableRelationshipFunction, enableRecordFunction, disabledTool);
                     var customFunctions = customClient.GetTools();
@@ -112,7 +108,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 }
                 else
                 {
-                    functions = [.. functions, .. item.Value];
+                    functions = [.. functions, .. item.GetTools()];
                 }
             }
             CommonHelper.DebugLog("构建工具列表", $"共添加了 {functions.Length} 个工具");

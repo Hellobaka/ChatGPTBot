@@ -42,11 +42,7 @@ namespace me.cqp.luohuaming.ChatGPT.UI.ViewModel
                 {
                     continue;
                 }
-                if (!MCPClientManager.MCPTools.TryGetValue(client, out var tools))
-                {
-                    tools = [];
-                }
-                var model = MCPClientModel.BuildFromMCPClientBase(client, tools);
+                var model = MCPClientModel.BuildFromMCPClientBase(client, client.GetTools());
                 MCPClients.Add(model);
             }
         }

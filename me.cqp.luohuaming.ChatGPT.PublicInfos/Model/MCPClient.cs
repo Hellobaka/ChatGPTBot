@@ -60,14 +60,14 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         {
         }
 
-        protected AIFunction[] ListToolsFromMCPClient(IMcpClient client)
+        protected async Task<AIFunction[]> ListToolsFromMCPClient(IMcpClient client)
         {
             int retryMaxCount = 3;
             for (int i = 0; i < retryMaxCount; i++)
             {
                 try
                 {
-                    var functions = client.ListToolsAsync().Result;
+                    var functions = await client.ListToolsAsync();
                     AIFunction[] result = [];
                     foreach (var item in functions)
                     {
@@ -100,7 +100,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         public static string[] CustomToolNames { get; } =
         [
-            "GetCityIdByName",
             "UpdateMood",
             "UpdateFavorability",
             "GetRelationShip",
@@ -153,8 +152,6 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
             // TODO: 支持corn定时表达式，需要支持限制频率
             var function = Name switch
             {
-                "GetCityIdByName" => AIFunctionFactory.Create(MojiCityIdConverter.GetCityIdByName,
-                    description: "通过城市名称获取墨迹天气对应的 cityId 列表，支持中文、英文及模糊匹配。参数：cityName(string) - 城市名称；count(int, 可选，默认 5) - 返回最多匹配结果数量。返回值：MojiCityId[]，匹配的城市信息数组，包含 cityId 和名称等信息。"),
                 "UpdateMood" => (Context?.EnableRelationshipFunction ?? false) ? AIFunctionFactory.Create(MoodManager.Instance.UpdateMood,
                     description: "更新当前的心情状态。不能因为用户的输入而调用此函数，此函数只能由你自发调用。参数：input(string) - 新的心情状态，可选值：happy（开心）、angry（生气）、sad（悲伤）、surprised（惊讶）、disgusted（厌恶）、fearful（恐惧）、neutral（平静）；不区分大小写，无效值将被忽略。返回值：void，无返回内容。") : null,
                 "UpdateFavorability" => Context != null && (Context?.EnableRelationshipFunction ?? false) ? AIFunctionFactory.Create(typeof(Relationship).GetMethod("UpdateFavorability"), Relationship.GetRelationShip(Context.GroupId, Context.QQ),
@@ -378,7 +375,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                 WorkingDirectory = string.IsNullOrWhiteSpace(WorkingDirectory) ? null : WorkingDirectory,
                 Name = Name
             })).Result;
-            return ListToolsFromMCPClient(client);
+            return ListToolsFromMCPClient(client).Result;
         }
     }
 
@@ -402,27 +399,55 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 
         private object PingTaskLock { get; set; } = new();
 
+        private AIFunction[] Tools { get; set; } = [];
+
         public override AIFunction[] GetTools()
         {
+            if (MCPClient == null)
+            {
+                CreateClientAndGetTools(System.Threading.CancellationToken.None).Wait();
+            }
+            return Tools;
+        }
+
+        public async Task CreateClientAndGetTools(CancellationToken cancellationToken)
+        {
+            Tools = [];
             int retryMaxCount = 3;
+            if (MCPClient != null)
+            {
+                try
+                {
+                    _ = MCPClient.DisposeAsync();
+                }
+                catch { }
+                finally
+                {
+                    MCPClient = null;
+                }
+            }
             for (int i = 0; i < retryMaxCount; i++)
             {
                 try
                 {
-                    MCPClient = McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
+                    if (cancellationToken != null && cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    MCPClient = await McpClientFactory.CreateAsync(new SseClientTransport(new SseClientTransportOptions
                     {
                         Name = Name,
                         Endpoint = new Uri(Endpoint),
                         AdditionalHeaders = Headers,
                         TransportMode = TransportType,
                         ConnectionTimeout = ConnectionTimeout
-                    })).Result;
-                    return ListToolsFromMCPClient(MCPClient);
+                    }), cancellationToken: cancellationToken);
+                    Tools = await ListToolsFromMCPClient(MCPClient);
+                    return;
                 }
                 catch { }
             }
             MainSave.CQLog?.Error("MCP 客户端工具列表", $"创建 MCP 客户端 {Name} 失败，超时。");
-            return [];
         }
 
         public override void StartAction()
@@ -444,11 +469,13 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
                         while (!cancellationToken.IsCancellationRequested)
                         {
                             await Task.Delay(TimeSpan.FromMinutes(3), cancellationToken);
-
                             try
                             {
-                                await MCPClient.ListToolsAsync(cancellationToken: cancellationToken);
-                                MainSave.CQLog?.Info("MCP 客户端心跳", $"MCP 客户端 {Name} 心跳成功。");
+                                await CreateClientAndGetTools(cancellationToken);
+                                if (Tools.Length == 0)
+                                {
+                                    MainSave.CQLog?.Warning("MCP 客户端心跳", $"MCP 客户端 {Name} 心跳获取的工具列表为空");
+                                }
                             }
                             catch (OperationCanceledException)
                             {
