@@ -13,6 +13,8 @@ namespace me.cqp.luohuaming.ChatGPT.Code
 {
     public class Event_StartUp : ICQStartup
     {
+        // TODO: 监听其他事件，当事件触发时触发一次对话
+        // TODO: 支持群成员申请事件处理
         public void CQStartup(object sender, CQStartupEventArgs e)
         {
             MainSave.AppDirectory = e.CQApi.AppDirectory;
