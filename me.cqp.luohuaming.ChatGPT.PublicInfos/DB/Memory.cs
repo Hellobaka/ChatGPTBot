@@ -20,6 +20,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.DB
     /// 记忆均由LLM自动生成、自动插入
     /// 记忆的内容均由自然语言构成
     /// </summary>
+    // TODO: 短期记忆添加过期时间
     public static class Memory
     {
         public static List<ShortTermMemory> ShortTermMemories { get; set; } = [];

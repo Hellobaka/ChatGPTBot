@@ -12,6 +12,8 @@ using System.Timers;
 
 namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
 {
+    // TODO: 整合逻辑到这个文件
+    // TODO: 支持分群使用不同的回复意愿模式
     public class ReplyManager
     {
         public static Dictionary<long, ReplyManager> ReplyManagers { get; set; } = [];

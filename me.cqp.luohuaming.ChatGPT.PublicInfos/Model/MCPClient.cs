@@ -140,6 +140,7 @@ namespace me.cqp.luohuaming.ChatGPT.PublicInfos.Model
         [JsonIgnore]
         public CustomToolContext? Context { get; set; }
 
+        // TODO: 添加 silence 函数，调用时清空本群的短期记忆并阻止回复30（或者自定义）轮对话
         public static string[] CustomToolNames { get; } =
         [
             "UpdateMood",
