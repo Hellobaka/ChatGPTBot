@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ChatGPTv3.Core</RootNamespace>
+    <AssemblyName>ChatGPTv3.Core</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.2" />
+    <PackageReference Include="SqlSugarCore" Version="5.1.4.214" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+    <PackageReference Include="HarfBuzzSharp" Version="8.3.1.1" />
+    <PackageReference Include="ModelContextProtocol" Version="1.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChatGPTv3.HttpSse\ChatGPTv3.HttpSse.csproj" />
+  </ItemGroup>
+
+</Project>

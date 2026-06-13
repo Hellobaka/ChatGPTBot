@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ChatGPTv3.Core/ChatGPTv3.Core.csproj" />
+  <Project Path="ChatGPTv3.HttpSse/ChatGPTv3.HttpSse.csproj" />
+</Solution>
