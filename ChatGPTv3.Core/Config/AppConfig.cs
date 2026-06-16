@@ -65,6 +65,7 @@ public static class AppConfig
 
     // ── Splitting ─────────────────────────────────────────
     public static bool EnableSplitter { get; set; }
+    public static bool EnableSplitterRemoveMarkdown { get; set; }
     public static int SplitterMaxLines { get; set; } = 3;
     public static bool SplitterRegexFirst { get; set; }
     public static bool SplitterRegexRemovePunctuation { get; set; }
@@ -196,6 +197,7 @@ public static class AppConfig
 
         // Splitting
         EnableSplitter = ConfigManager.GetConfig("EnableSplitter", false);
+        EnableSplitterRemoveMarkdown = ConfigManager.GetConfig("EnableSplitterRemoveMarkdown", true);
         SplitterMaxLines = ConfigManager.GetConfig("SplitterMaxLines", 3);
         SplitterRegexFirst = ConfigManager.GetConfig("SplitterRegexFirst", false);
         SplitterRegexRemovePunctuation = ConfigManager.GetConfig("SplitterRegexRemovePunctuation", false);
