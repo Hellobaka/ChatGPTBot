@@ -5,8 +5,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>ChatGPTv3.HttpSse</RootNamespace>
-    <AssemblyName>ChatGPTv3.HttpSse</AssemblyName>
+    <RootNamespace>ChatGPTv3.OpenAIClient</RootNamespace>
+    <AssemblyName>ChatGPTv3.OpenAIClient</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

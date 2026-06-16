@@ -1,4 +1,4 @@
-namespace ChatGPTv3.HttpSse;
+namespace ChatGPTv3.OpenAIClient;
 
 /// <summary>
 /// Exception thrown when the OpenAI-compatible API returns an error response.

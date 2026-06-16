@@ -1,4 +1,4 @@
-namespace ChatGPTv3.HttpSse;
+namespace ChatGPTv3.OpenAIClient;
 
 /// <summary>
 /// Configuration options for the OpenAiChatClient.

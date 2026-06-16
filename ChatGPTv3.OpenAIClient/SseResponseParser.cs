@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
-namespace ChatGPTv3.HttpSse;
+namespace ChatGPTv3.OpenAIClient;
 
 /// <summary>
 /// Parses Server-Sent Events (SSE) streams from OpenAI-compatible APIs.

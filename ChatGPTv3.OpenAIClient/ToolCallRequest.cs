@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ChatGPTv3.HttpSse;
+namespace ChatGPTv3.OpenAIClient;
 
 /// <summary>
 /// Represents a tool call request from the assistant (in streaming or non-streaming responses).

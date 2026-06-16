@@ -1,5 +1,5 @@
 using ChatGPTv3.Core.DB;
-using ChatGPTv3.HttpSse;
+using ChatGPTv3.OpenAIClient;
 
 namespace ChatGPTv3.Core.Api;
 

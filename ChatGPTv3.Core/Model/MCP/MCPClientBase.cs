@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using ChatGPTv3.HttpSse;
+using ChatGPTv3.OpenAIClient;
 
 namespace ChatGPTv3.Core.Model.MCP;
 

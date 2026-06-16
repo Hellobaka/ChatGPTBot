@@ -7,7 +7,7 @@ using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Model;
 using ChatGPTv3.Core.Utilities;
-using ChatGPTv3.HttpSse;
+using ChatGPTv3.OpenAIClient;
 
 namespace ChatGPTv3.Core.Commands;
 

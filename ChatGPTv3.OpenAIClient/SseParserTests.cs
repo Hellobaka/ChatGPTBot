@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace ChatGPTv3.HttpSse;
+namespace ChatGPTv3.OpenAIClient;
 
 /// <summary>
 /// Validation tests for the SSE parser using real-world OpenAI streaming data.
