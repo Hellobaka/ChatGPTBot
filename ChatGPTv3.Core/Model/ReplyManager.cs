@@ -146,30 +146,49 @@ public class ReplyManager
         List<string> botNicknames, List<string> recentMessages)
     {
         var nickStr = string.Join(",", botNicknames);
-        var prompt = "你是一个群聊助手，昵称:" + botName +
-            "，非常用称呼: " + nickStr + "，需要判断当前是否应该回应最新消息。\n" +
-            "规则：明显对话或提问应回应；话题切换无关不应回应；未被@且无人理你则不应回应。\n" +
-            "最新消息:<latest_Message>" + (recentMessages.FirstOrDefault() ?? "") + "</latest_Message>\n" +
-            "最近对话:<recent_Message>" + string.Join("\n", recentMessages.Skip(1)) + "</recent_Message>\n" +
-            "请仅输出JSON: {\"should_respond\": true/false, \"confidence\": 0.0~1.0}";
+        var prompt = @"你是一个群聊消息分析器，职责是判断“最新消息”是否在呼叫群聊助手“{BotName}”。你的代称还有“{BotNicknames}”。
+呼叫助手的方式包括：直接叫名字、@助手、或在对话中指代助手。
 
-        var messages = new List<ChatMessage> {
-            ChatMessage.System(prompt),
-            ChatMessage.User("请回复")
-        };
+判断时请严格遵循两步分析流程：
+第一步：找出最新消息中所有的“你/您”以及助手的名称/别名。
+第二步：检查上下文，确定这些代词的指代对象。
+   - 如果“你”指代助手，则 should_respond=true。
+   - 如果“你”指代其他群成员（如“你昨天说的电影”），或用于泛指（“你们怎么看”），则 should_respond=false。
+   - 如果没有第二人称也没有助手称呼，但消息本身是接续助手刚才的话题，也应判断为 true。
+
+规则补充：
+- 仅当上下文显示用户正在期待助手回应时才应回复。
+- 闲聊、表情包、多人对话中的无明确指向性消息 → false。
+- 如果用户表现出对助手的不满（如“你话好多”），confidence 降低50%。
+- 如果不确定，一律选择 false（安全优先）。
+
+我会提供最近的消息记录和最新消息，请直接分析并输出 JSON：
+{""should_respond"": true/false, ""confidence"": 0.0~1.0}
+请不要输出任何其他文字。";
 
         try
         {
+
+            var messages = new List<ChatMessage> {
+                ChatMessage.System(prompt.Replace("{BotName}", botName).Replace("{BotNicknames}", nickStr)),
+                ChatMessage.User(string.Join("\n", recentMessages.Skip(1))),
+                ChatMessage.Assistant("好的，我会分析是否需要回复，请提供最新消息。"),
+                ChatMessage.User(recentMessages.First()),
+            };
             var chatService = new ChatService();
             var result = await chatService.GetChatResultAsync(
                 AppConfig.ReplyAPIKeyId, messages,
-                ChatService.Purpose.回复意愿, jsonMode: true,
+                ChatService.Purpose.回复意愿, jsonMode: false,
                 timeout: AppConfig.ReplyTimeout);
 
             if (result == ChatService.ErrorMessage)
                 return (true, 0);
 
             result = result.ToLower().Replace("`", "").Replace("json", "").Trim();
+            int start = result.IndexOf('{');
+            int end = result.LastIndexOf('}');
+            if (start >= 0 && end > start)
+                result = result[start..(end + 1)]; 
             using var doc = System.Text.Json.JsonDocument.Parse(result);
             var shouldRespond = doc.RootElement.GetProperty("should_respond").GetBoolean();
             var confidence = doc.RootElement.GetProperty("confidence").GetDouble();
