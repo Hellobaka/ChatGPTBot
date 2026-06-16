@@ -2,6 +2,13 @@ using SqlSugar;
 
 namespace ChatGPTv3.Core.DB;
 
+public enum SenderType
+{
+    User = 0,
+    Assistant = 1,
+    Tool = 2,
+}
+
 /// <summary>
 /// Chat message record stored in SQLite. Aligned with v2 schema.
 /// </summary>
@@ -12,12 +19,14 @@ public class ChatRecord
     public int Id { get; set; }
     public long GroupID { get; set; }
     public long QQ { get; set; }
+    public SenderType SenderType { get; set; }
     public string NickName { get; set; } = string.Empty;
+
     [SugarColumn(ColumnName = "RawMessage")]
     public string Message { get; set; } = string.Empty;
+    
     [SugarColumn(ColumnDataType = "varchar(255)")]
     public string ParsedMessage { get; set; } = string.Empty;
-    public string Message_NoAppendInfo { get; set; } = string.Empty;
     public long MessageID { get; set; }
     public bool IsMentioned { get; set; }
     public bool IsImage { get; set; }
@@ -34,27 +43,25 @@ public class ChatRecord
     }
 
     /// <summary>
-    /// Get recent group chat history, newest first.
+    /// Get recent group chat history.
     /// </summary>
     public static List<ChatRecord> GetGroupHistory(long groupId, int count = 20)
     {
         using var db = SQLiteManager.GetInstance();
         return db.Queryable<ChatRecord>()
             .Where(r => r.GroupID == groupId)
-            .OrderByDescending(r => r.Time)
             .Take(count)
             .ToList();
     }
 
     /// <summary>
-    /// Get recent private chat history, newest first.
+    /// Get recent private chat history.
     /// </summary>
     public static List<ChatRecord> GetPrivateHistory(long qq, int count = 20)
     {
         using var db = SQLiteManager.GetInstance();
         return db.Queryable<ChatRecord>()
             .Where(r => r.QQ == qq || r.QQ == 0)
-            .OrderByDescending(r => r.Time)
             .Take(count)
             .ToList();
     }

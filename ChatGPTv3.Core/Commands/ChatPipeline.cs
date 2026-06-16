@@ -160,8 +160,12 @@ public static class ChatPipeline
         if (keys.Count == 0) return EventHandleResult.Pass;
 
         var botQQ = PromptBuilder.CurrentBotQQ;
-        var systemPrompt = PromptBuilder.BuildSystemPrompt(groupId, qq, botQQ);
-        systemPrompt = PromptBuilder.FinalizePrompt(systemPrompt);
+        var systemPrompt = PromptBuilder.BuildSystemPrompt(AppConfig.BotName,
+                                                           string.Join(",", AppConfig.BotNicknames),
+                                                           qq,
+                                                           AppConfig.ChatEmptyResponse,
+                                                           string.Join(",", AppConfig.MasterQQ),
+                                                           AppConfig.GroupPrompt);
 
         // ── Load chat history ──
         var history = isGroup
@@ -183,15 +187,14 @@ public static class ChatPipeline
             $"短期={shortTerm.Length} 长期={longTerm.Length} 知识={knowledge.Length} 待办={todos.Length}");
 
         // ── Build dynamic user content ──
+        // TODO: Phase 7 — LLM-based memory selection and summarization
+        // TODO: Mood and schedule integration
         var dynamicContent = PromptBuilder.BuildDynamicUserContent(
             null, null, todoLines, shortTermLines, longTermLines, knowledgeLines, character);
-        dynamicContent = dynamicContent.Replace("{CHAT_HISTORY}", historyText);
+        var last = history.Last();
+        dynamicContent += $"[{last.Time:HH:mm}]{last.NickName}[{last.QQ}]: {last.ParsedMessage}";
 
-        var messages = new List<ChatMessage>
-        {
-            ChatMessage.System(systemPrompt),
-            ChatMessage.User(dynamicContent)
-        };
+        var messages = PromptBuilder.BuildRequestBody(systemPrompt, history.Take(history.Count - 1).ToList(), dynamicContent);
 
         var chatService = new ChatService();
         var response = await chatService.GetChatResultAsync(
@@ -243,8 +246,9 @@ public static class ChatPipeline
             var record = new ChatRecord
             {
                 GroupID = groupId, QQ = qq, NickName = nick,
-                Message = rawText, ParsedMessage = parsedText,
-                Message_NoAppendInfo = parsedText,
+                Message = rawText, 
+                ParsedMessage = parsedText,
+                SenderType = SenderType.User,
                 MessageID = msg.Id, Time = DateTime.Now,
                 IsMentioned = CheckAtBot(msg),
                 IsImage = HasImage(msg) && string.IsNullOrWhiteSpace(parsedText),
@@ -273,7 +277,7 @@ public static class ChatPipeline
                 NickName = AppConfig.BotName,
                 Message = message,
                 ParsedMessage = message,
-                Message_NoAppendInfo = message,
+                SenderType = SenderType.Assistant,
                 Time = DateTime.Now
             });
             ChatRecord.Cleanup(groupId, keepCount: 1000);

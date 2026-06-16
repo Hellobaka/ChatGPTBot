@@ -168,7 +168,6 @@ public class ReplyManager
 
         try
         {
-
             var messages = new List<ChatMessage> {
                 ChatMessage.System(prompt.Replace("{BotName}", botName).Replace("{BotNicknames}", nickStr)),
                 ChatMessage.User(string.Join("\n", recentMessages.Skip(1))),
@@ -178,7 +177,7 @@ public class ReplyManager
             var chatService = new ChatService();
             var result = await chatService.GetChatResultAsync(
                 AppConfig.ReplyAPIKeyId, messages,
-                ChatService.Purpose.回复意愿, jsonMode: false,
+                ChatService.Purpose.回复意愿,
                 timeout: AppConfig.ReplyTimeout);
 
             if (result == ChatService.ErrorMessage)

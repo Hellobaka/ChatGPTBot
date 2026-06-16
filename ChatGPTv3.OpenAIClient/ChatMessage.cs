@@ -57,6 +57,7 @@ public class ChatMessage
     public static ChatMessage System(string content) => new() { Role = "system", Content = content };
     public static ChatMessage User(string content) => new() { Role = "user", Content = content };
     public static ChatMessage Assistant(string content) => new() { Role = "assistant", Content = content };
+    public static ChatMessage Tool(string content) => new() { Role = "tool", Content = content };
     public static ChatMessage Tool(string toolCallId, string content) => new() { Role = "tool", ToolCallId = toolCallId, Content = content };
 
     /// <summary>
