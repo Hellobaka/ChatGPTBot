@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0-windows</TargetFramework>
@@ -11,11 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.2" />
+    <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.3" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.214" />
-    <PackageReference Include="SkiaSharp" Version="3.116.1" />
-    <PackageReference Include="HarfBuzzSharp" Version="8.3.1.1" />
-    <PackageReference Include="ModelContextProtocol" Version="1.4.0" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup>

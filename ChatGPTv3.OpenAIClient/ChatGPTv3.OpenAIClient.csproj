@@ -9,8 +9,4 @@
     <AssemblyName>ChatGPTv3.OpenAIClient</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="SqlSugarCore" Version="5.1.4.214" />
-  </ItemGroup>
-
 </Project>
