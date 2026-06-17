@@ -35,7 +35,6 @@ public class Entry : PluginBase
 
         // ── Capture bot identity ──
         PromptBuilder.CurrentBotQQ = API.AppApi.GetLoginQQ();
-        API.Logger.Info("ChatGPTv3", $"当前Bot QQ: {PromptBuilder.CurrentBotQQ}");
 
         // ── Initialize config ──
         string appDir = API.AppApi.GetAppDirectory();
@@ -157,11 +156,5 @@ public class Entry : PluginBase
             .Build();
 
         API.Logger.Info("ChatGPTv3", "插件启动完成");
-    }
-
-    public override async Task OnDisableAsync(CancellationToken ct)
-    {
-        API.Logger.Info("ChatGPTv3", "插件正在关闭...");
-        API.Logger.Info("ChatGPTv3", "插件已关闭");
     }
 }
