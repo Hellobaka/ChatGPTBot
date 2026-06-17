@@ -179,6 +179,11 @@ public static class AppConfig
     // ── Relationship ──────────────────────────────────────
     public static int RelationshipUpdateTime { get; set; } = 7;
 
+    // ── Debounce ──────────────────────────────────────────
+    /// <summary>Milliseconds to buffer before processing. If a new message from
+    /// the same source arrives during this window, the old one is discarded.</summary>
+    public static int MessageDebounceMs { get; set; } = 3000;
+
     // ── Content Filter Fallback ───────────────────────────
     /// <summary>Whether to use LLM to generate a content-filter deflection (vs random from list).</summary>
     public static bool UseLLMContentFilterFallback { get; set; }
@@ -343,6 +348,9 @@ public static class AppConfig
 
         // Relationship
         RelationshipUpdateTime = ConfigManager.GetConfig("RelationshipUpdateTime", 7);
+
+        // Debounce
+        MessageDebounceMs = ConfigManager.GetConfig("MessageDebounceMs", 3000);
 
         // Content filter fallback
         UseLLMContentFilterFallback = ConfigManager.GetConfig("UseLLMContentFilterFallback", false);

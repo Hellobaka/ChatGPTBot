@@ -40,7 +40,8 @@ public class ChatService
         bool jsonMode = false,
         int timeout = 30000,
         ToolExecutor? toolExecutor = null,
-        string? identity = null)
+        string? identity = null,
+        CancellationToken cancellationToken = default)
     {
         // Randomly select a key if multiple available
         var key = keyList?.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
@@ -232,7 +233,8 @@ public class ChatService
     private async Task<(string msg, TokenUsageInfo? usage)> ProcessStreamingAsync(
         OpenAiChatClient client,
         ChatCompletionRequest request,
-        string? identity)
+        string? identity,
+        CancellationToken ct = default)
     {
         var msg = new StringBuilder();
         TokenUsageInfo? usage = null;
