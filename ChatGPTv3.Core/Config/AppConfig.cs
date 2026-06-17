@@ -17,6 +17,7 @@ public static class AppConfig
     public static List<APIKeyPurpose> ImageDescriberApiKeyId { get; set; } = [];
     public static List<APIKeyPurpose> EmbeddingApiKeyId { get; set; } = [];
     public static List<APIKeyPurpose> RerankApiKeyId { get; set; } = [];
+    public static List<APIKeyPurpose> SummarizerApiKeyId { get; set; } = [];
 
     // ── Chat Configuration ────────────────────────────────
     public static int ChatMaxTokens { get; set; } = 3000;
@@ -178,6 +179,16 @@ public static class AppConfig
     // ── Relationship ──────────────────────────────────────
     public static int RelationshipUpdateTime { get; set; } = 7;
 
+    // ── Content Filter Fallback ───────────────────────────
+    /// <summary>Whether to use LLM to generate a content-filter deflection (vs random from list).</summary>
+    public static bool UseLLMContentFilterFallback { get; set; }
+    /// <summary>Custom replies used when UseLLMContentFilterFallback is false.</summary>
+    public static List<string> ContentFilterFallbacks { get; set; } = [
+        "啊这个...换个话题吧！",
+        "唔，这个我不太擅长回答...",
+        "诶嘿，跳过这个话题～"
+    ];
+
     // ── Debug ─────────────────────────────────────────────
     public static bool DebugMode { get; set; }
 
@@ -196,6 +207,7 @@ public static class AppConfig
         SplitterApiKeyId = ConfigManager.GetConfig("SplitterApiKeyId", new List<APIKeyPurpose>());
         ImageDescriberApiKeyId = ConfigManager.GetConfig("ImageDescriberApiKeyId", new List<APIKeyPurpose>());
         EmbeddingApiKeyId = ConfigManager.GetConfig("EmbeddingApiKeyId", new List<APIKeyPurpose>());
+        SummarizerApiKeyId = ConfigManager.GetConfig("SummarizerApiKeyId", new List<APIKeyPurpose>());
         RerankApiKeyId = ConfigManager.GetConfig("RerankApiKeyId", new List<APIKeyPurpose>());
 
         // Chat config
@@ -332,6 +344,11 @@ public static class AppConfig
         // Relationship
         RelationshipUpdateTime = ConfigManager.GetConfig("RelationshipUpdateTime", 7);
 
+        // Content filter fallback
+        UseLLMContentFilterFallback = ConfigManager.GetConfig("UseLLMContentFilterFallback", false);
+        ContentFilterFallbacks = ConfigManager.GetConfig("ContentFilterFallbacks",
+            new List<string> { "啊这个...换个话题吧！", "唔，这个我不太擅长回答...", "诶嘿，跳过这个话题～" });
+
         // Debug
         DebugMode = ConfigManager.GetConfig("DebugMode", false);
 
@@ -352,7 +369,8 @@ public static class AppConfig
             .ToList();
 
         foreach (var keyList in new[] { ChatAPIKeyId, ReplyAPIKeyId, MemoryAPIKeyId,
-                       SplitterApiKeyId, ImageDescriberApiKeyId, EmbeddingApiKeyId, RerankApiKeyId })
+                       SplitterApiKeyId, ImageDescriberApiKeyId, EmbeddingApiKeyId, RerankApiKeyId,
+                       SummarizerApiKeyId })
         {
             foreach (var item in keyList)
             {

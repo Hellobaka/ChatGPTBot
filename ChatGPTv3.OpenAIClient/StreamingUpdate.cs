@@ -87,6 +87,15 @@ public class StreamingUpdate
     }
 
     /// <summary>
+    /// Whether the response was blocked by the provider's content filter.
+    /// finish_reason = "content_filter"
+    /// </summary>
+    public bool IsContentFiltered()
+    {
+        return GetFinishReason() == "content_filter";
+    }
+
+    /// <summary>
     /// Whether this update signals the end of tool call accumulation.
     /// </summary>
     public bool IsToolCallFinish()

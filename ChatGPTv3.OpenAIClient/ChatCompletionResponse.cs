@@ -36,6 +36,10 @@ public class ChatCompletionResponse
     [JsonPropertyName("usage")]
     public TokenUsageInfo? Usage { get; set; }
 
+    /// <summary>True when blocked by provider content filter.</summary>
+    public bool IsContentFiltered() =>
+        Choices.FirstOrDefault()?.FinishReason == "content_filter";
+
     /// <summary>
     /// Extracts the text content from the first choice, if any.
     /// </summary>

@@ -82,7 +82,7 @@ public static class ChatPipeline
                 }
 
                 // ── LLM call ──
-                var result = await DoChatAsync(e, groupId, qq, ct);
+                var result = await DoChatAsync(e, groupId, qq, isMentioned, messageText, ct);
 
                 if (result == EventHandleResult.Block)
                     replyManager.AfterSend();
@@ -131,13 +131,14 @@ public static class ChatPipeline
     // ── Chat ────────────────────────────────────────────
 
     private static async Task<EventHandleResult> DoChatAsync(
-        GroupMessageContext e, long groupId, long qq, CancellationToken ct)
+        GroupMessageContext e, long groupId, long qq, bool isMentioned,
+        string messageText, CancellationToken ct)
     {
         // Record incoming message
         RecordMessage(e.Message, groupId, qq, qq.ToString());
 
-        return await SendChatResponse(groupId, qq, true, AppConfig.GroupPrompt,
-            e.Message.Text, async msg => {
+        return await SendChatResponse(groupId, qq, isMentioned, true,
+            AppConfig.GroupPrompt, messageText, async msg => {
                 await e.SendMessageAsync(msg);
                 RecordBotMessage(groupId, msg);
             }, ct);
@@ -149,7 +150,7 @@ public static class ChatPipeline
         var qq = e.FromQQ.Id;
         RecordMessage(e.Message, 0, qq, qq.ToString());
 
-        return await SendChatResponse(0, qq, false, AppConfig.PrivatePrompt,
+        return await SendChatResponse(0, qq, true, false, AppConfig.PrivatePrompt,
             e.Message.Text, async msg => {
                 await e.SendMessageAsync(msg);
                 RecordBotMessage(0, msg);
@@ -157,24 +158,40 @@ public static class ChatPipeline
     }
 
     private static async Task<EventHandleResult> SendChatResponse(
-        long groupId, long qq, bool isGroup, string character,
-        string messageText, Func<string, Task> sendFunc, CancellationToken ct)
+        long groupId, long qq, bool isMentioned, bool isGroup,
+        string character, string messageText, Func<string, Task> sendFunc,
+        CancellationToken ct)
     {
         var keys = AppConfig.ChatAPIKeyId;
         if (keys.Count == 0) return EventHandleResult.Pass;
 
         var botQQ = PromptBuilder.CurrentBotQQ;
+
+        // Apply per-group config overrides
+        var groupCfg = isGroup ? GroupConfig.Get(groupId) : null;
+        var effectivePrompt = groupCfg?.CustomPrompt ?? character;
+        var effectiveNicknames = groupCfg?.CustomNicknames != null
+            ? groupCfg.CustomNicknames
+            : string.Join(",", AppConfig.BotNicknames);
+
         var systemPrompt = PromptBuilder.BuildSystemPrompt(AppConfig.BotName,
-                                                           string.Join(",", AppConfig.BotNicknames),
+                                                           effectiveNicknames,
                                                            qq,
                                                            AppConfig.ChatEmptyResponse,
                                                            string.Join(",", AppConfig.MasterQQ),
-                                                           AppConfig.GroupPrompt);
+                                                           effectivePrompt);
 
         // ── Load chat history ──
-        var history = isGroup
-            ? ChatRecord.GetGroupHistory(groupId, AppConfig.ContextMaxLength)
-            : ChatRecord.GetPrivateHistory(qq, AppConfig.ContextMaxLength);
+        var maxHistory = AppConfig.ContextMaxLength * 3; // load extra for compression
+        var allHistory = isGroup
+            ? ChatRecord.GetGroupHistory(groupId, maxHistory)
+            : ChatRecord.GetPrivateHistory(qq, maxHistory);
+
+        // Compress old history if too many messages
+        var history = allHistory.Count > AppConfig.ContextMaxLength
+            ? ContextCompressor.Compress(allHistory, AppConfig.ContextMaxLength)
+            : allHistory;
+
         var historyText = string.Join("\n",
             history.Select(r => $"[{r.Time:HH:mm}]{r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
 
@@ -207,7 +224,50 @@ public static class ChatPipeline
         var response = await chatService.GetChatResultAsync(
             keys, messages, ChatService.Purpose.聊天, timeout: AppConfig.ChatTimeout);
 
-        if (response == ChatService.ErrorMessage) return EventHandleResult.Pass;
+        // ── Abnormal finish fallback ──
+        var abnormalReason = chatService.LastAbnormalFinishReason;
+        if (isMentioned && (response == ChatService.ErrorMessage
+            || (!string.IsNullOrWhiteSpace(abnormalReason) && string.IsNullOrWhiteSpace(response))))
+        {
+            if (AppConfig.UseLLMContentFilterFallback)
+            {
+                // LLM-generated deflection — tell the LLM what happened, let it handle it
+                var hint = abnormalReason switch
+                {
+                    "content_filter" => "因内容过滤被拦截",
+                    "length" => "因输出达到长度限制被截断",
+                    "insufficient_system_resource" => "因系统资源不足被中断",
+                    _ => $"因未知原因({abnormalReason})被中断"
+                };
+                var deflectionMessages = new List<ChatMessage>
+                {
+                    ChatMessage.System(systemPrompt + $"\n\n[系统] 你的上一条回复{hint}，请自然地继续对话。"),
+                    ChatMessage.User(messageText)
+                };
+                var deflectionService = new ChatService();
+                var deflection = await deflectionService.GetChatResultAsync(
+                    keys, deflectionMessages,
+                    ChatService.Purpose.聊天,
+                    timeout: AppConfig.ChatTimeout);
+                if (deflection != ChatService.ErrorMessage
+                    && !string.IsNullOrWhiteSpace(deflection))
+                {
+                    await sendFunc(deflection);
+                    return EventHandleResult.Block;
+                }
+            }
+            else if (AppConfig.ContentFilterFallbacks.Count > 0)
+            {
+                // Random from custom fallback list
+                var fallback = AppConfig.ContentFilterFallbacks[
+                    CommonHelper.Next(0, AppConfig.ContentFilterFallbacks.Count)];
+                await sendFunc(fallback);
+                return EventHandleResult.Block;
+            }
+        }
+
+        if (response == ChatService.ErrorMessage)
+            return EventHandleResult.Pass;
         if (response.Contains(AppConfig.ChatEmptyResponse))
         {
             response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
@@ -223,6 +283,44 @@ public static class ChatPipeline
 
         if (!string.IsNullOrWhiteSpace(response))
             await sendFunc(response);
+
+        // ── Record tool call chain to DB ──
+        if (chatService.ToolCallLog.Count > 0)
+        {
+            // Assistant(tool_calls) marker
+            ChatRecord.Insert(new ChatRecord
+            {
+                GroupID = groupId,
+                QQ = PromptBuilder.CurrentBotQQ,
+                NickName = AppConfig.BotName,
+                SenderType = SenderType.Assistant,
+                ParsedMessage = string.Empty,
+                HasToolCalls = true,
+                Time = DateTime.Now
+            });
+
+            // Tool placeholders — one per tool call, ParsedMessage will be upserted by summarizer
+            var placeholderIds = new List<int>();
+            foreach (var tc in chatService.ToolCallLog)
+            {
+                var id = ChatRecord.Insert(new ChatRecord
+                {
+                    GroupID = groupId, QQ = qq,
+                    SenderType = SenderType.Tool,
+                    ParsedMessage = $"[{tc.name}]...",
+                    ToolName = tc.name,
+                    IsToolSuccess = tc.success,
+                    Time = DateTime.Now
+                });
+                placeholderIds.Add(id);
+            }
+
+            // Fire-and-forget: LLM summarizes, then UPDATEs the placeholder records
+            ToolResultSummarizer.SummarizeAsync(
+                groupId, messageText,
+                chatService.ToolCallLog,
+                response, placeholderIds);
+        }
 
         return EventHandleResult.Block;
     }
