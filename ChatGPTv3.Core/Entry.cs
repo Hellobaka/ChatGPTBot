@@ -1,6 +1,7 @@
 using Another_Mirai_Native.Abstractions;
 using Another_Mirai_Native.Abstractions.Attributes;
 using ChatGPTv3.Core.Api;
+using ChatGPTv3.Core.Commands;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Model;
@@ -19,6 +20,7 @@ namespace ChatGPTv3.Core;
 public class Entry : PluginBase
 {
     private SchedulerManager? _schedulerManager;
+    private ScheduledTaskRunner? _taskRunner;
 
     public override async Task OnEnableAsync(CancellationToken ct)
     {
@@ -68,6 +70,11 @@ public class Entry : PluginBase
                 if (AppConfig.EnableSchedules)
                     _schedulerManager.EnableTimer();
                 API.Logger.Info("ChatGPTv3", "日程管理器已初始化");
+
+                // Scheduled task runner
+                _taskRunner = new ScheduledTaskRunner();
+                _taskRunner.Start();
+                API.Logger.Info("ChatGPTv3", "定时任务运行器已启动");
 
                 // Validate API keys for sub-purposes
                 if (AppConfig.ReplyAPIKeyId.Count == 0 && AppConfig.EnableLLMCheckShouldResponse)
@@ -132,6 +139,22 @@ public class Entry : PluginBase
             API.Logger.Info("ChatGPTv3", "配置热重载完成");
             AppConfig.Init();
         };
+
+        // ── Build chat pipelines ──
+        ChatCommands.GroupPipeline = new ChatPipelineBuilder()
+            .UseAccessControl()
+            .UseMessageFilter()
+            .UseConcurrencyGate()
+            .UseReplyDecision()
+            .UseChatHandler()
+            .Build();
+
+        ChatCommands.PrivatePipeline = new ChatPipelineBuilder()
+            .UsePrivateAccessControl()
+            .UseMessageFilter()
+            .UsePrivateReplyDecision()
+            .UseChatHandler()
+            .Build();
 
         API.Logger.Info("ChatGPTv3", "插件启动完成");
     }

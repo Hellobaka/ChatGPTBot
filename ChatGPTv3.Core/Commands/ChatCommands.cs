@@ -8,20 +8,42 @@ namespace ChatGPTv3.Core.Commands;
 
 /// <summary>
 /// Sole message handler — AMN2 only dispatches to ONE handler per interface type.
-/// Explicit [Command] methods matched first; non-matching messages fall through
-/// to OnNoMatchAsync which runs the full ChatPipeline.
+/// Group messages → middleware pipeline   Private messages → private pipeline
 /// </summary>
 [EventPriority(PluginEventType.GroupMsg, 100)]
 [EventPriority(PluginEventType.PrivateMsg, 100)]
 public class ChatCommands : CommandHandlerBase
 {
-    // TODO: [Command] methods for admin commands
+    public static Func<ChatContext, Task>? GroupPipeline { get; set; }
+    public static Func<ChatContext, Task>? PrivatePipeline { get; set; }
 
     protected override async Task<EventHandleResult> OnNoMatchAsync(
         GroupMessageContext e, CancellationToken ct)
-        => await ChatPipeline.ProcessGroupAsync(e, ct);
+    {
+        if (GroupPipeline == null) return EventHandleResult.Pass;
+        var ctx = new ChatContext
+        {
+            GroupCtx = e,
+            MessageText = e.Message.Text ?? string.Empty,
+            CancellationToken = ct,
+            SendFunc = async msg => await e.SendMessageAsync(msg)
+        };
+        await GroupPipeline(ctx);
+        return ctx.Result;
+    }
 
     protected override async Task<EventHandleResult> OnNoMatchAsync(
         PrivateMessageContext e, CancellationToken ct)
-        => await ChatPipeline.ProcessPrivateAsync(e, ct);
+    {
+        if (PrivatePipeline == null) return EventHandleResult.Pass;
+        var ctx = new ChatContext
+        {
+            PrivateCtx = e,
+            MessageText = e.Message.Text ?? string.Empty,
+            CancellationToken = ct,
+            SendFunc = async msg => await e.SendMessageAsync(msg)
+        };
+        await PrivatePipeline(ctx);
+        return ctx.Result;
+    }
 }
