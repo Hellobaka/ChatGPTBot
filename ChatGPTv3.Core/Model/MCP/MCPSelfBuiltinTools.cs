@@ -24,6 +24,7 @@ public static class MCPSelfBuiltinTools
         "GetGroupChatHistory", "GetPrivateChatHistory", "GetChatHistoryByIds",
         "GetRangeUsageDetail", "AddPictureToContext",
         "UpdateSchedule", "GetCurrentSchedule",
+        "CreateSchedule", "ListSchedules", "DeleteSchedule",
         "GetLoginQQ", "GetLoginNick", "GetFriendList",
         "GetGroupList", "GetGroupMemberList", "GetGroupMemberInfo", "GetGroupInfo",
         "RemoveMessage", "SetGroupMemberBanSpeak",
@@ -108,6 +109,21 @@ public static class MCPSelfBuiltinTools
 
             "GetCurrentSchedule" => [MakeTool("GetCurrentSchedule", "获取你当前时间段的日程安排。",
                 Schema(new() {}, []))],
+
+            "CreateSchedule" => [MakeTool("CreateSchedule", "创建一个定时任务。指定cron表达式和任务描述。",
+                Schema(new() {
+                    ["name"] = ("string", "任务名称，如'提醒吃药'"),
+                    ["cronExpr"] = ("string", "cron表达式，如'0 8 * * *'表示每天8点"),
+                    ["prompt"] = ("string", "任务描述/给LLM的指令，如'提醒小王吃降压药，语气温和'")
+                }, ["name", "cronExpr", "prompt"]))],
+
+            "ListSchedules" => [MakeTool("ListSchedules", "列出所有定时任务。",
+                Schema(new() {}, []))],
+
+            "DeleteSchedule" => [MakeTool("DeleteSchedule", "删除一个定时任务。",
+                Schema(new() {
+                    ["id"] = ("integer", "任务ID")
+                }, ["id"]))],
             "GetLoginQQ" => [MakeTool("GetLoginQQ", "获取当前登录的Bot QQ号",
                 Schema(new() {}, []))],
             "GetLoginNick" => [MakeTool("GetLoginNick", "获取当前登录的Bot昵称",
@@ -165,6 +181,9 @@ public static class MCPSelfBuiltinTools
                 "GetRangeUsageDetail" => GetRangeUsageDetail(args),
                 "UpdateSchedule"     => UpdateSchedule(args),
                 "GetCurrentSchedule" => GetCurrentSchedule(),
+                "CreateSchedule"     => CreateScheduledTask(args, ctx),
+                "ListSchedules"      => ListScheduledTasks(),
+                "DeleteSchedule"     => DeleteScheduledTask(args),
 
                 // Admin CQ API
                 "GetLoginQQ"   => $"{PromptBuilder.CurrentBotQQ}",
@@ -478,6 +497,66 @@ public static class MCPSelfBuiltinTools
     {
         if (SchedulerManager.Instance == null) return "日程系统未初始化";
         return SchedulerManager.Instance.GetCurrentSchedule(DateTime.Now);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Scheduled Task CRUD
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 创建一个定时任务。
+    /// </summary>
+    /// <param name="args">name (string) — 任务名; cronExpr (string); prompt (string) — LLM指令</param>
+    /// <param name="ctx">工具上下文</param>
+    /// <returns>确认消息，含任务ID</returns>
+    private static string CreateScheduledTask(JsonDocument args, MCPToolContext ctx)
+    {
+        var name = args.RootElement.GetProperty("name").GetString()!;
+        var cronExpr = args.RootElement.GetProperty("cronExpr").GetString()!;
+        var prompt = args.RootElement.GetProperty("prompt").GetString()!;
+
+        var next = CronHelper.GetNextFireTime(cronExpr, DateTime.Now);
+        if (!next.HasValue) return "cron表达式无效，请使用5字段格式: 分 时 日 月 周";
+
+        var task = new ScheduledTask
+        {
+            TaskName = name,
+            CronExpr = cronExpr,
+            NextFireAt = next.Value,
+            TargetType = ctx.GroupId > 0 ? 0 : 1,
+            TargetId = ctx.GroupId > 0 ? ctx.GroupId : ctx.QQ,
+            ExtraPrompt = prompt,
+            CreatedBy = ctx.QQ,
+            CreatedById = ctx.GroupId > 0 ? ctx.GroupId : ctx.QQ,
+            CreatedAt = DateTime.Now
+        };
+
+        ScheduledTask.Insert(task);
+        return $"定时任务已创建: {name} (ID={task.Id}, 下次触发: {task.NextFireAt:yyyy-MM-dd HH:mm})";
+    }
+
+    /// <summary>
+    /// 列出所有已创建的定时任务。
+    /// </summary>
+    /// <returns>格式化的任务列表</returns>
+    private static string ListScheduledTasks()
+    {
+        var tasks = ScheduledTask.GetAll();
+        if (tasks.Count == 0) return "暂无定时任务";
+        return string.Join("\n", tasks.Select(t =>
+            $"- [{t.Id}] {t.TaskName} | {t.CronExpr} | 下次: {t.NextFireAt:yyyy-MM-dd HH:mm} | {(t.IsEnabled ? "启用" : "禁用")}"));
+    }
+
+    /// <summary>
+    /// 删除指定ID的定时任务。
+    /// </summary>
+    /// <param name="args">id (int) — 任务ID</param>
+    /// <returns>确认消息</returns>
+    private static string DeleteScheduledTask(JsonDocument args)
+    {
+        var id = args.RootElement.GetProperty("id").GetInt32();
+        ScheduledTask.Delete(id);
+        return $"定时任务 {id} 已删除";
     }
 
     // ═══════════════════════════════════════════════════════════

@@ -1,0 +1,70 @@
+namespace ChatGPTv3.Core.Model;
+
+/// <summary>
+/// Minimal cron expression evaluator.
+/// Supports: *, */N, N, N-M (ranges), N,M (lists) for 5-field cron.
+/// </summary>
+public static class CronHelper
+{
+    public static DateTime? GetNextFireTime(string cronExpr, DateTime from)
+    {
+        var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 5) return null;
+
+        try
+        {
+            var mins = ParseField(parts[0], 0, 59);
+            var hours = ParseField(parts[1], 0, 23);
+            var days = ParseField(parts[2], 1, 31);
+            var months = ParseField(parts[3], 1, 12);
+            var dow = ParseField(parts[4], 0, 6);
+
+            var candidate = new DateTime(from.Year, from.Month, from.Day, from.Hour, from.Minute, 0).AddMinutes(1);
+
+            for (int i = 0; i < 525600; i++) // search up to 1 year ahead
+            {
+                if (months.Contains(candidate.Month)
+                    && days.Contains(candidate.Day)
+                    && dow.Contains((int)candidate.DayOfWeek)
+                    && hours.Contains(candidate.Hour)
+                    && mins.Contains(candidate.Minute))
+                    return candidate;
+
+                candidate = candidate.AddMinutes(1);
+            }
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static HashSet<int> ParseField(string field, int min, int max)
+    {
+        var result = new HashSet<int>();
+        if (field == "*")
+        {
+            for (int i = min; i <= max; i++) result.Add(i);
+            return result;
+        }
+        foreach (var part in field.Split(','))
+        {
+            if (part.StartsWith("*/"))
+            {
+                int step = int.Parse(part[2..]);
+                for (int i = min; i <= max; i += step) result.Add(i);
+            }
+            else if (part.Contains('-'))
+            {
+                var range = part.Split('-');
+                for (int i = int.Parse(range[0]); i <= int.Parse(range[1]); i++) result.Add(i);
+            }
+            else
+            {
+                result.Add(int.Parse(part));
+            }
+        }
+        return result;
+    }
+}
