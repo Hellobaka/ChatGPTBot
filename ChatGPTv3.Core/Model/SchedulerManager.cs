@@ -125,6 +125,26 @@ public class SchedulerManager
     }
 
     /// <summary>
+    /// Updates or inserts a schedule entry at the given time.
+    /// Called by the UpdateSchedule MCP tool.
+    /// </summary>
+    /// <param name="timeStr">Time string like "14:00" or "14:00:00".</param>
+    /// <param name="newAction">New action description.</param>
+    public void UpdateSchedule(string timeStr, string newAction)
+    {
+        if (!TimeSpan.TryParse(timeStr, out var ts)) return;
+
+        var existing = _schedules.FindIndex(s => s.time.TimeOfDay == ts);
+        if (existing >= 0)
+            _schedules[existing] = (_schedules[existing].time.Date + ts, newAction);
+        else
+            _schedules.Add((DateTime.Today + ts, newAction));
+
+        _schedules = _schedules.OrderBy(s => s.time.TimeOfDay).ToList();
+        CacheToFile();
+    }
+
+    /// <summary>
     /// Gets the current schedule action for the given time.
     /// </summary>
     public string GetCurrentSchedule(DateTime time)

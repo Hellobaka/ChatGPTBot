@@ -23,6 +23,7 @@ public static class MCPSelfBuiltinTools
         "UpdateMood", "UpdateFavorability", "GetRelationship",
         "GetGroupChatHistory", "GetPrivateChatHistory", "GetChatHistoryByIds",
         "GetRangeUsageDetail", "AddPictureToContext",
+        "UpdateSchedule", "GetCurrentSchedule",
         "GetLoginQQ", "GetLoginNick", "GetFriendList",
         "GetGroupList", "GetGroupMemberList", "GetGroupMemberInfo", "GetGroupInfo",
         "RemoveMessage", "SetGroupMemberBanSpeak",
@@ -98,6 +99,15 @@ public static class MCPSelfBuiltinTools
                 Schema(new() {
                     ["hash"] = ("string", "图片的MD5哈希值")
                 }, ["hash"]))],
+
+            "UpdateSchedule" => [MakeTool("UpdateSchedule", "更新或添加日程安排。当你的当前活动因对话而改变时调用。",
+                Schema(new() {
+                    ["time"] = ("string", "时间，如 14:00"),
+                    ["action"] = ("string", "新的活动描述，如'在帮小张查资料（原计划打游戏）'")
+                }, ["time", "action"]))],
+
+            "GetCurrentSchedule" => [MakeTool("GetCurrentSchedule", "获取你当前时间段的日程安排。",
+                Schema(new() {}, []))],
             "GetLoginQQ" => [MakeTool("GetLoginQQ", "获取当前登录的Bot QQ号",
                 Schema(new() {}, []))],
             "GetLoginNick" => [MakeTool("GetLoginNick", "获取当前登录的Bot昵称",
@@ -153,7 +163,8 @@ public static class MCPSelfBuiltinTools
 
                 // Misc
                 "GetRangeUsageDetail" => GetRangeUsageDetail(args),
-                "AddPictureToContext" => "工具暂未实现",
+                "UpdateSchedule"     => UpdateSchedule(args),
+                "GetCurrentSchedule" => GetCurrentSchedule(),
 
                 // Admin CQ API
                 "GetLoginQQ"   => $"{PromptBuilder.CurrentBotQQ}",
@@ -440,6 +451,33 @@ public static class MCPSelfBuiltinTools
         if (records.Count == 0) return "该时间段内无使用记录";
         return string.Join("\n", records.Select(r =>
             $"- {r.Time:yyyy-MM-dd HH:mm} | {r.Purpose} | {r.Model} | in:{r.PromptTokens} out:{r.CompletionTokens}"));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Schedule Tools
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 更新或添加日程安排。当你的当前活动因对话而改变时调用。
+    /// </summary>
+    /// <param name="args">time (string) — 时间如"14:00"; action (string) — 新活动描述</param>
+    /// <returns>确认消息</returns>
+    private static string UpdateSchedule(JsonDocument args)
+    {
+        var time = args.RootElement.GetProperty("time").GetString()!;
+        var action = args.RootElement.GetProperty("action").GetString()!;
+        SchedulerManager.Instance?.UpdateSchedule(time, action);
+        return $"日程已更新: {time} → {action}";
+    }
+
+    /// <summary>
+    /// 获取当前时间段的日程安排。
+    /// </summary>
+    /// <returns>当前活动描述文本</returns>
+    private static string GetCurrentSchedule()
+    {
+        if (SchedulerManager.Instance == null) return "日程系统未初始化";
+        return SchedulerManager.Instance.GetCurrentSchedule(DateTime.Now);
     }
 
     // ═══════════════════════════════════════════════════════════
