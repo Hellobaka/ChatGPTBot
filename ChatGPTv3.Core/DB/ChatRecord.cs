@@ -24,14 +24,31 @@ public class ChatRecord
 
     [SugarColumn(ColumnName = "RawMessage")]
     public string Message { get; set; } = string.Empty;
-    
-    [SugarColumn(ColumnDataType = "varchar(255)")]
+
+    /// <summary>
+    /// Parsed/human-readable message text. For Tool records: LLM summary of the tool result.
+    /// For User records: extracted text from message chain. For Assistant: final reply text.
+    /// </summary>
+    [SugarColumn(ColumnDataType = "text")]
     public string ParsedMessage { get; set; } = string.Empty;
     public long MessageID { get; set; }
     public bool IsMentioned { get; set; }
     public bool IsImage { get; set; }
     public bool IsEmpty { get; set; }
     public bool IsInvalidReply { get; set; }
+
+    /// <summary>Whether this assistant message includes tool_calls (for grouping).</summary>
+    public bool HasToolCalls { get; set; }
+
+    /// <summary>OpenAI tool call ID — links Tool records to Assistant tool_calls.</summary>
+    public string? ToolCallId { get; set; }
+
+    /// <summary>Name of the tool that was called (for statistics/debugging).</summary>
+    public string? ToolName { get; set; }
+
+    /// <summary>Whether the tool call succeeded.</summary>
+    public bool IsToolSuccess { get; set; } = true;
+
     public DateTime Time { get; set; } = DateTime.Now;
 
     // ── CRUD ─────────────────────────────────────────────

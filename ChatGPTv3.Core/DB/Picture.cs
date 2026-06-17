@@ -43,6 +43,21 @@ public class Picture
     public string Url { get; set; } = string.Empty;
 
     /// <summary>
+    /// Number of times this emoji was recommended/used.
+    /// </summary>
+    public int UseCount { get; set; }
+
+    /// <summary>
+    /// Soft-delete flag.
+    /// </summary>
+    public bool IsDeleted { get; set; }
+
+    /// <summary>
+    /// Last time this emoji was used/recommended (for cleanup policy).
+    /// </summary>
+    public DateTime? LastUsedAt { get; set; }
+
+    /// <summary>
     /// Creation/insertion time.
     /// </summary>
     public DateTime Time { get; set; } = DateTime.Now;

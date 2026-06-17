@@ -37,7 +37,9 @@ public static class SQLiteManager
             typeof(Relationship),
             typeof(TokenUsage),
             typeof(APIKey),
-            typeof(LLMModelConfig)
+            typeof(LLMModelConfig),
+            typeof(ScheduledTask),
+            typeof(GroupConfig)
         );
     }
 }

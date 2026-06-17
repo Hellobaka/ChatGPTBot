@@ -26,6 +26,12 @@ public class APIKey
     [SugarColumn(ColumnName = "TokenConsume")]
     public long TotalTokens { get; set; }
 
+    /// <summary>Cumulative cost in RMB (calculated from token usage × pricing).</summary>
+    public decimal TotalConsume { get; set; }
+
+    /// <summary>Whether to use Tencent Cloud TC3-HMAC-SHA256 signing for this endpoint.</summary>
+    public bool UseTencentSign { get; set; }
+
     /// <summary>Available models for this endpoint.</summary>
     [Navigate(NavigateType.OneToMany, nameof(LLMModelConfig.APIKeyId))]
     public List<LLMModelConfig>? AvailableModels { get; set; }
@@ -48,6 +54,15 @@ public class LLMModelConfig
 
     /// <summary>Whether this model is enabled.</summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>Input price per 1M tokens (RMB).</summary>
+    public decimal InputPricePer1M { get; set; }
+
+    /// <summary>Output price per 1M tokens (RMB).</summary>
+    public decimal OutputPricePer1M { get; set; }
+
+    /// <summary>Cache-hit price per 1M tokens (RMB) — for prompt caching discounts.</summary>
+    public decimal CachePricePer1M { get; set; }
 }
 
 /// <summary>
