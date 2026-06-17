@@ -53,10 +53,19 @@ public class ChatRecord
 
     // ── CRUD ─────────────────────────────────────────────
 
-    public static void Insert(ChatRecord record)
+    public static int Insert(ChatRecord record)
     {
         using var db = SQLiteManager.GetInstance();
-        db.Insertable(record).ExecuteCommand();
+        return db.Insertable(record).ExecuteReturnIdentity();
+    }
+
+    public static void UpdateParsedMessage(int id, string parsedMessage)
+    {
+        using var db = SQLiteManager.GetInstance();
+        db.Updateable<ChatRecord>()
+            .SetColumns(r => r.ParsedMessage == parsedMessage)
+            .Where(r => r.Id == id)
+            .ExecuteCommand();
     }
 
     /// <summary>

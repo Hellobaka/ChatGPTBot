@@ -14,10 +14,12 @@ public class ChatService
 {
     public enum Purpose
     {
-        聊天, 图片描述, 日程获取, 分段, 表情包推荐, 回复意愿, 记忆提取
+        聊天, 图片描述, 日程获取, 分段, 表情包推荐, 回复意愿, 记忆提取, 工具总结
     }
 
     public const string ErrorMessage = "连接发生问题，查看日志排查问题";
+    /// <summary>Non-null when the LLM response ended with a non-"stop" finish_reason.</summary>
+    public string? LastAbnormalFinishReason { get; private set; }
 
     private readonly ToolCallService _toolCallService = new();
 
@@ -25,6 +27,8 @@ public class ChatService
     public static event Action<string, byte[], string?>? OnAudioChunk;
     /// <summary>Fires when an inline image is received (generated image output).</summary>
     public static event Action<string, string>? OnImageChunk;
+    /// <summary>Collects tool call data for post-turn summarization.</summary>
+    public List<(string name, string args, string result, bool success)> ToolCallLog { get; } = [];
 
     /// <summary>
     /// Main chat completion entry point.
@@ -156,6 +160,14 @@ public class ChatService
                         identity ?? string.Empty,
                         CancellationToken.None);
 
+                    // Log for post-turn summarization
+                    ToolCallLog.Add((
+                        tc.Function.Name,
+                        tc.Function.Arguments ?? "",
+                        trackResult?.Result ?? result?.ToString() ?? "",
+                        trackResult?.IsSuccess ?? false
+                    ));
+
                     if (trackResult != null)
                     {
                         toolResults.Add(trackResult);
@@ -265,6 +277,15 @@ public class ChatService
                 }
             }
 
+            // ── Check for abnormal finish_reason ──
+            var reason = update.GetFinishReason();
+            if (reason != null && reason != "stop"
+                && reason != "tool_calls" && reason != "function_call")
+            {
+                LastAbnormalFinishReason = reason;
+                CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {reason}");
+            }
+
             // ── Check for completed tool calls ──
             if (update.IsToolCallFinish())
             {
@@ -287,6 +308,14 @@ public class ChatService
         ChatCompletionRequest request)
     {
         var response = await client.CompleteAsync(request);
+
+        var finishReason = response.Choices.FirstOrDefault()?.FinishReason;
+        if (finishReason != null && finishReason != "stop"
+            && finishReason != "tool_calls" && finishReason != "function_call")
+        {
+            LastAbnormalFinishReason = finishReason;
+            CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {finishReason}");
+        }
 
         var msg = response.GetFirstChoiceText() ?? string.Empty;
         var toolCalls = response.GetFirstChoiceToolCalls();
