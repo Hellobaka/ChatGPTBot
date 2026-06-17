@@ -46,6 +46,9 @@ public static class ChatPipeline
             if (!TrySetBusy(groupId)) return EventHandleResult.Pass;
             try
             {
+                // ── Resolve cross-turn references ──
+                messageText = ResolveReferences(e.Message, groupId, messageText);
+
                 // ── Parse triggers ──
                 bool isMentioned = CheckAtBot(e.Message);
                 bool containsNickname = CheckNickname(messageText);
@@ -231,6 +234,35 @@ public static class ChatPipeline
         if (msg.MessageChain == null) return false;
         var botQQ = PromptBuilder.CurrentBotQQ;
         return msg.MessageChain.OfType<At>().Any(a => a.Target == botQQ || a.AllTarget);
+    }
+
+    /// <summary>
+    /// Resolves cross-turn references: when a user quotes an old bot message
+    /// via Reply, looks up the message from DB and prepends it to the current
+    /// message so the LLM has the full context.
+    /// </summary>
+    private static string ResolveReferences(Message msg, long groupId, string currentText)
+    {
+        if (msg.MessageChain == null) return currentText;
+        var replyItems = msg.MessageChain.OfType<Reply>().ToList();
+        if (replyItems.Count == 0) return currentText;
+
+        var botQQ = PromptBuilder.CurrentBotQQ;
+        foreach (var reply in replyItems)
+        {
+            var records = ChatRecord.GetByIds([reply.Id], groupId);
+            var quoted = records.FirstOrDefault();
+            if (quoted == null) continue;
+
+            // Only resolve when quoting the bot's own messages
+            if (quoted.QQ == botQQ)
+            {
+                currentText = $"[用户引用了你之前说过的话]\n" +
+                              $"你: {quoted.ParsedMessage}\n" +
+                              $"[用户现在说]\n{currentText}";
+            }
+        }
+        return currentText;
     }
 
     private static bool CheckReplyToBot(Message msg, long groupId)
