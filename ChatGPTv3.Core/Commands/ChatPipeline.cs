@@ -50,14 +50,15 @@ public static class ChatPipeline
                 bool isMentioned = CheckAtBot(e.Message);
                 bool containsNickname = CheckNickname(messageText);
                 bool isImageOnly = HasImage(e.Message) && string.IsNullOrWhiteSpace(messageText);
+                bool isReplyToBot = CheckReplyToBot(e.Message, groupId);
+                bool hasQuestion = messageText.Contains('?') || messageText.Contains('？');
 
                 // ── Reply probability ──
                 var replyManager = ReplyManager.Get(groupId);
+                bool fromSamePerson = qq == replyManager.LastReplyQQ;
                 double replyProbability = replyManager.UpdateWillingness(
-                    isImageOnly, isMentioned, containsNickname, qq);
-
-                CommonHelper.DebugLog("Reply", $"prob={replyProbability:F3} " +
-                    $"@={isMentioned} nick={containsNickname} img={isImageOnly}");
+                    isMentioned, isReplyToBot, containsNickname,
+                    hasQuestion, fromSamePerson, isImageOnly, qq);
 
                 // ── LLM-based check (optional) ──
                 if (AppConfig.EnableLLMCheckShouldResponse)
@@ -188,9 +189,12 @@ public static class ChatPipeline
 
         // ── Build dynamic user content ──
         // TODO: Phase 7 — LLM-based memory selection and summarization
-        // TODO: Mood and schedule integration
+        var moodText = isGroup ? MoodState.GetMood(groupId) : MoodState.GetMood(qq);
+        var scheduleText = AppConfig.EnableSchedules
+            ? SchedulerManager.Instance?.GetCurrentSchedule(DateTime.Now)
+            : null;
         var dynamicContent = PromptBuilder.BuildDynamicUserContent(
-            null, null, todoLines, shortTermLines, longTermLines, knowledgeLines, character);
+            moodText, scheduleText, todoLines, shortTermLines, longTermLines, knowledgeLines, character);
         var last = history.Last();
         dynamicContent += $"[{last.Time:HH:mm}]{last.NickName}[{last.QQ}]: {last.ParsedMessage}";
 
@@ -206,6 +210,14 @@ public static class ChatPipeline
             response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
             if (string.IsNullOrWhiteSpace(response)) return EventHandleResult.Pass;
         }
+
+        // ── Dedup check ──
+        if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, groupId))
+        {
+            CommonHelper.DebugLog("Dedup", "跳过重复回复");
+            return EventHandleResult.Pass;
+        }
+
         if (!string.IsNullOrWhiteSpace(response))
             await sendFunc(response);
 
@@ -219,6 +231,22 @@ public static class ChatPipeline
         if (msg.MessageChain == null) return false;
         var botQQ = PromptBuilder.CurrentBotQQ;
         return msg.MessageChain.OfType<At>().Any(a => a.Target == botQQ || a.AllTarget);
+    }
+
+    private static bool CheckReplyToBot(Message msg, long groupId)
+    {
+        if (msg.MessageChain == null) return false;
+        var replyItems = msg.MessageChain.OfType<Reply>().ToList();
+        if (replyItems.Count == 0) return false;
+
+        var botQQ = PromptBuilder.CurrentBotQQ;
+        foreach (var reply in replyItems)
+        {
+            var records = ChatRecord.GetByIds([reply.Id], groupId);
+            if (records.Any(r => r.QQ == botQQ))
+                return true;
+        }
+        return false;
     }
 
     private static bool CheckNickname(string text)
@@ -283,6 +311,75 @@ public static class ChatPipeline
             ChatRecord.Cleanup(groupId, keepCount: 1000);
         }
         catch (Exception ex) { CommonHelper.LogError?.Invoke("RecordBot", ex.Message); }
+    }
+
+    // ── Dedup ───────────────────────────────────────────
+
+    /// <summary>
+    /// Checks if a candidate response is too similar to the bot's recent messages.
+    /// Uses normalized Levenshtein distance — fast, no LLM needed.
+    /// </summary>
+    private static bool IsNearDuplicate(string candidate, long groupId)
+    {
+        var recentBotMessages = ChatRecord.GetGroupHistory(groupId, 5)
+            .Where(r => r.SenderType == SenderType.Assistant)
+            .Select(r => r.ParsedMessage)
+            .ToList();
+
+        if (recentBotMessages.Count == 0) return false;
+        if (candidate.Length < 6) return false; // too short to meaningfully compare
+
+        foreach (var recent in recentBotMessages)
+        {
+            if (recent.Length < 6) continue;
+            double similarity = LevenshteinSimilarity(candidate, recent);
+            if (similarity >= 0.85)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Normalized Levenshtein similarity [0,1] where 1 = identical.
+    /// </summary>
+    private static double LevenshteinSimilarity(string a, string b)
+    {
+        int maxLen = Math.Max(a.Length, b.Length);
+        if (maxLen == 0) return 1.0;
+        int distance = LevenshteinDistance(a, b);
+        return 1.0 - (double)distance / maxLen;
+    }
+
+    /// <summary>
+    /// Levenshtein (edit) distance between two strings.
+    /// </summary>
+    private static int LevenshteinDistance(string a, string b)
+    {
+        if (a.Length == 0) return b.Length;
+        if (b.Length == 0) return a.Length;
+
+        // Use the shorter string as the row for O(min(n,m)) space
+        if (a.Length < b.Length) (a, b) = (b, a);
+
+        var prev = new int[b.Length + 1];
+        var curr = new int[b.Length + 1];
+
+        for (int j = 0; j <= b.Length; j++) prev[j] = j;
+
+        for (int i = 1; i <= a.Length; i++)
+        {
+            curr[0] = i;
+            for (int j = 1; j <= b.Length; j++)
+            {
+                int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                curr[j] = Math.Min(
+                    Math.Min(prev[j] + 1, curr[j - 1] + 1),
+                    prev[j - 1] + cost);
+            }
+            (prev, curr) = (curr, prev);
+        }
+
+        return prev[b.Length];
     }
 
     // ── Busy lock ───────────────────────────────────────

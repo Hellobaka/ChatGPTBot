@@ -18,7 +18,6 @@ namespace ChatGPTv3.Core;
 )]
 public class Entry : PluginBase
 {
-    private MoodManager? _moodManager;
     private SchedulerManager? _schedulerManager;
 
     public override async Task OnEnableAsync(CancellationToken ct)
@@ -60,10 +59,9 @@ public class Entry : PluginBase
         {
             try
             {
-                // Mood manager
-                _moodManager = new MoodManager();
-                MCPSelfBuiltinTools.MoodManager = _moodManager;
-                API.Logger.Info("ChatGPTv3", "心情管理器已初始化");
+                // Mood state (natural language, replaces old MoodManager)
+                MoodState.Initialize(appDir);
+                API.Logger.Info("ChatGPTv3", "心情状态已初始化");
 
                 // Scheduler
                 _schedulerManager = new SchedulerManager(appDir);
@@ -141,8 +139,6 @@ public class Entry : PluginBase
     public override async Task OnDisableAsync(CancellationToken ct)
     {
         API.Logger.Info("ChatGPTv3", "插件正在关闭...");
-
-        _moodManager?.Dispose();
         API.Logger.Info("ChatGPTv3", "插件已关闭");
     }
 }
