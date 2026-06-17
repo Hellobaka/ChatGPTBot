@@ -95,7 +95,45 @@ public static class AppConfig
     public static int ShortTermMemoryMaxUseCount { get; set; } = 30;
     public static int MemoryExtractionCount { get; set; } = 30;
 
-    // ── Reply Willingness ─────────────────────────────────
+    // ── Reply Willingness — Attention ──────────────────────
+    /// <summary>Base attention for any message.</summary>
+    public static double BaseAttention { get; set; } = 0.1;
+    /// <summary>Attention when @mentioned.</summary>
+    public static double AttnMention { get; set; } = 1.0;
+    /// <summary>Attention when message is a reply to bot.</summary>
+    public static double AttnReplyToBot { get; set; } = 0.9;
+    /// <summary>Attention when bot nickname appears in text.</summary>
+    public static double AttnNickname { get; set; } = 0.8;
+    /// <summary>Attention when message contains a question mark.</summary>
+    public static double AttnQuestion { get; set; } = 0.5;
+    /// <summary>Attention when continuing a conversation with same user.</summary>
+    public static double AttnContinuity { get; set; } = 0.4;
+    /// <summary>Multiplier for image-only messages.</summary>
+    public static double AttnImageFactor { get; set; } = 0.1;
+
+    // ── Reply Willingness — Timing curve ───────────────────
+    /// <summary>Timing multiplier: just sent (0 msgs since last bot msg).</summary>
+    public static double TimingJustSent { get; set; } = 0.1;
+    /// <summary>Timing multiplier: brief pause (1-3 msgs).</summary>
+    public static double TimingBriefPause { get; set; } = 0.3;
+    /// <summary>Timing multiplier: optimal window (4-10 msgs).</summary>
+    public static double TimingOptimal { get; set; } = 1.0;
+    /// <summary>Timing multiplier: getting stale (11-20 msgs).</summary>
+    public static double TimingStale { get; set; } = 0.6;
+    /// <summary>Timing multiplier: too late (21+ msgs).</summary>
+    public static double TimingVeryStale { get; set; } = 0.3;
+
+    // ── Reply Willingness — Activity throttle ──────────────
+    /// <summary>Activity multiplier: no recent sends.</summary>
+    public static double ActivityFirst { get; set; } = 1.0;
+    /// <summary>Activity multiplier: 1 recent send.</summary>
+    public static double ActivitySecond { get; set; } = 0.5;
+    /// <summary>Activity multiplier: 2 recent sends.</summary>
+    public static double ActivityThird { get; set; } = 0.2;
+    /// <summary>Throttle window in seconds.</summary>
+    public static int ActivityThrottleSeconds { get; set; } = 60;
+
+    // ── Reply Willingness — General ────────────────────────
     public static double ReplyWillingAmplifier { get; set; } = 1.0;
     public static bool EnableLLMCheckShouldResponse { get; set; }
 
@@ -227,7 +265,29 @@ public static class AppConfig
         ShortTermMemoryMaxUseCount = ConfigManager.GetConfig("ShortTermMemoryMaxUseCount", 30);
         MemoryExtractionCount = ConfigManager.GetConfig("MemoryExtractionCount", 30);
 
-        // Reply willingness
+        // Reply willingness — Attention
+        BaseAttention = ConfigManager.GetConfig("BaseAttention", 0.1);
+        AttnMention = ConfigManager.GetConfig("AttnMention", 1.0);
+        AttnReplyToBot = ConfigManager.GetConfig("AttnReplyToBot", 0.9);
+        AttnNickname = ConfigManager.GetConfig("AttnNickname", 0.8);
+        AttnQuestion = ConfigManager.GetConfig("AttnQuestion", 0.5);
+        AttnContinuity = ConfigManager.GetConfig("AttnContinuity", 0.4);
+        AttnImageFactor = ConfigManager.GetConfig("AttnImageFactor", 0.1);
+
+        // Reply willingness — Timing curve
+        TimingJustSent = ConfigManager.GetConfig("TimingJustSent", 0.1);
+        TimingBriefPause = ConfigManager.GetConfig("TimingBriefPause", 0.3);
+        TimingOptimal = ConfigManager.GetConfig("TimingOptimal", 1.0);
+        TimingStale = ConfigManager.GetConfig("TimingStale", 0.6);
+        TimingVeryStale = ConfigManager.GetConfig("TimingVeryStale", 0.3);
+
+        // Reply willingness — Activity throttle
+        ActivityFirst = ConfigManager.GetConfig("ActivityFirst", 1.0);
+        ActivitySecond = ConfigManager.GetConfig("ActivitySecond", 0.5);
+        ActivityThird = ConfigManager.GetConfig("ActivityThird", 0.2);
+        ActivityThrottleSeconds = ConfigManager.GetConfig("ActivityThrottleSeconds", 60);
+
+        // Reply willingness — General
         ReplyWillingAmplifier = ConfigManager.GetConfig("ReplyWillingAmplifier", 1.0);
         EnableLLMCheckShouldResponse = ConfigManager.GetConfig("EnableLLMCheckShouldResponse", false);
 

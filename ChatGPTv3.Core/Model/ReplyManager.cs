@@ -6,165 +6,182 @@ using ChatGPTv3.OpenAIClient;
 namespace ChatGPTv3.Core.Model;
 
 /// <summary>
-/// Per-group reply willingness state machine.
-/// Two modes: High (talkative) and Low (quiet).
-/// Driven by a 5-second timer that decays willingness and switches modes.
+/// Per-group reply willingness calculator.
+///
+/// WILLINGNESS = ATTENTION × TIMING × ACTIVITY
+///
+/// Attention — how much this message concerns the bot (mention, nickname, question...)
+/// Timing    — how many messages since the bot last spoke (too soon or too late = lower)
+/// Activity  — how many times the bot has spoken recently (throttle against spam)
+///
+/// No timers, no decay formulas, no mode switching.
+/// State only changes on message arrival — fully predictable and debuggable.
 /// </summary>
 public class ReplyManager
 {
-    public static Dictionary<long, ReplyManager> Managers { get; } = [];
+    private static readonly Dictionary<long, ReplyManager> _managers = [];
 
-    public bool HighReplyWilling { get; set; }
-    public int MessageHoldCount { get; set; }
-    public DateTime WillingLastChangeTime { get; set; } = DateTime.Now;
-    public DateTime LastReplyTime { get; set; } = DateTime.MinValue;
-    public long LastReplyQQ { get; set; }
-    public bool ContextMode { get; set; }
-    public double ReplyWilling { get; set; }
-    public TimeSpan CurrentModeKeepInterval { get; set; }
+    // ── Per-group state ────────────────────────────────────
 
-    private Timer? _timer;
-    private int _timerCount;
+    private int _silentMessageCount;
+    private readonly List<DateTime> _recentSendTimes = [];
+    private DateTime _lastReplyTime = DateTime.MinValue;
+    private long _lastReplyQQ;
 
-    public ReplyManager(long id)
-    {
-        Managers[id] = this;
-        StartTimer();
-    }
+    public long LastReplyQQ => _lastReplyQQ;
+
+    // ── Factory ────────────────────────────────────────────
 
     public static ReplyManager Get(long id)
     {
-        if (Managers.TryGetValue(id, out var manager))
-            return manager;
-        return new ReplyManager(id);
+        if (_managers.TryGetValue(id, out var mgr))
+            return mgr;
+        return _managers[id] = new ReplyManager();
     }
 
-    private void StartTimer()
-    {
-        _timer = new Timer(_ => OnTimerTick(), null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
-    }
-
-    private void OnTimerTick()
-    {
-        _timerCount++;
-        if (HighReplyWilling)
-            ReplyWilling = Math.Max(0.5, ReplyWilling * 0.95);
-        else
-            ReplyWilling = Math.Max(0, ReplyWilling * 0.8);
-
-        if (DateTime.Now - WillingLastChangeTime > CurrentModeKeepInterval
-            || (!HighReplyWilling && CommonHelper.NextDouble() < 0.1))
-        {
-            if (HighReplyWilling)
-            {
-                HighReplyWilling = false;
-                ReplyWilling = 0.01;
-                CurrentModeKeepInterval = TimeSpan.FromMinutes(CommonHelper.Next(10, 20));
-            }
-            else
-            {
-                HighReplyWilling = true;
-                ReplyWilling = 1;
-                CurrentModeKeepInterval = TimeSpan.FromMinutes(CommonHelper.Next(3, 5));
-            }
-            WillingLastChangeTime = DateTime.Now;
-            MessageHoldCount = 0;
-        }
-
-        if ((DateTime.Now - LastReplyTime).TotalMinutes >= 5)
-            ContextMode = false;
-    }
+    // ═══════════════════════════════════════════════════════════
+    //  Core Calculation
+    // ═══════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Updates reply willingness based on incoming message characteristics.
-    /// Returns the final reply probability.
+    /// Call on every incoming message. Returns the probability [0,1] that
+    /// the bot should respond.
     /// </summary>
-    public double UpdateWillingness(bool isImage, bool isMentioned, bool containsNickname, long qq)
+    public double UpdateWillingness(
+        bool isMentioned,
+        bool isReplyToBot,
+        bool containsNickname,
+        bool hasQuestion,
+        bool fromSamePerson,
+        bool isImageOnly,
+        long qq)
     {
-        MessageHoldCount++;
+        _silentMessageCount++;
 
-        // Conversation continuity
-        if (qq == LastReplyQQ && (DateTime.Now - LastReplyTime).TotalMinutes < 2 && MessageHoldCount <= 5)
-        {
-            ContextMode = true;
-            ReplyWilling += 0.3;
-        }
+        // ── Attention: is this message about me? ──
+        double attention = AppConfig.BaseAttention;
 
-        // Mentioned: always reply
         if (isMentioned)
         {
-            ContextMode = true;
-            LastReplyQQ = qq;
-            return 1;
+            attention = AppConfig.AttnMention;
         }
-
-        // Contains nickname
-        if (containsNickname)
-        {
-            ContextMode = true;
-            ReplyWilling += 0.8;
-        }
-
-        // Image-only: low willingness
-        if (isImage)
-            ReplyWilling *= 0.1;
-
-        // Calculate base probability
-        double baseProb;
-        if (ContextMode)
-            baseProb = HighReplyWilling ? 0.5 : 0.25;
-        else if (HighReplyWilling)
-            baseProb = MessageHoldCount is >= 4 and <= 8 ? 0.5 : 0.2;
         else
-            baseProb = MessageHoldCount > 15 ? 0.3 : 0.03 * Math.Min(MessageHoldCount, 10);
+        {
+            if (isReplyToBot)     attention = Math.Max(attention, AppConfig.AttnReplyToBot);
+            if (containsNickname) attention = Math.Max(attention, AppConfig.AttnNickname);
+            if (hasQuestion)      attention = Math.Max(attention, AppConfig.AttnQuestion);
+            if (fromSamePerson)   attention = Math.Max(attention, AppConfig.AttnContinuity);
+        }
 
-        ReplyWilling = Math.Clamp(ReplyWilling, 0, 3);
-        LastReplyQQ = qq;
+        if (isImageOnly && !isMentioned)
+            attention *= AppConfig.AttnImageFactor;
 
-        return ReplyWilling * baseProb * AppConfig.ReplyWillingAmplifier;
+        // ── Timing: how long have I been silent? ──
+        double timing = EvaluateTiming();
+
+        // ── Activity: have I been talking too much? ──
+        CleanRecentSendTimes();
+        double activity = EvaluateActivity();
+
+        // ── Combine ──
+        double willingness = attention * timing * activity * AppConfig.ReplyWillingAmplifier;
+
+        _lastReplyQQ = qq;
+
+        CommonHelper.DebugLog("Reply",
+            $"attn={attention:F3} time={timing:F3} act={activity:F3} " +
+            $"silent={_silentMessageCount} sends={_recentSendTimes.Count} → {willingness:F3}");
+
+        return Math.Clamp(willingness, 0, 1);
     }
 
+    // ── Timing curve ───────────────────────────────────────
+
+    private double EvaluateTiming()
+    {
+        return _silentMessageCount switch
+        {
+            0    => AppConfig.TimingJustSent,
+            <= 3 => AppConfig.TimingBriefPause,
+            <= 10 => AppConfig.TimingOptimal,
+            <= 20 => AppConfig.TimingStale,
+            _    => AppConfig.TimingVeryStale,
+        };
+    }
+
+    // ── Activity throttle ──────────────────────────────────
+
+    private double EvaluateActivity()
+    {
+        return _recentSendTimes.Count switch
+        {
+            0 => AppConfig.ActivityFirst,
+            1 => AppConfig.ActivitySecond,
+            2 => AppConfig.ActivityThird,
+            _ => 0,  // 3+ sends in the window → don't send
+        };
+    }
+
+    private void CleanRecentSendTimes()
+    {
+        var cutoff = DateTime.Now - TimeSpan.FromSeconds(AppConfig.ActivityThrottleSeconds);
+        _recentSendTimes.RemoveAll(t => t < cutoff);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Post-action
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>Call after the bot sends a reply.</summary>
     public void AfterSend()
     {
-        ReplyWilling -= 0.6;
-        ContextMode = true;
-        ReplyWilling = Math.Clamp(ReplyWilling, 0, 3);
-        LastReplyTime = DateTime.Now;
-        MessageHoldCount = 0;
+        _recentSendTimes.Add(DateTime.Now);
+        _lastReplyTime = DateTime.Now;
+        _silentMessageCount = 0;
     }
 
+    /// <summary>Call after the bot decides NOT to reply.</summary>
     public void AfterSkip()
     {
-        ReplyWilling += ContextMode ? 0.15 : HighReplyWilling ? 0.1 : CommonHelper.NextDouble(0.05, 0.1);
-        ReplyWilling = Math.Clamp(ReplyWilling, 0, 3);
+        // Willingness naturally builds via silentMessageCount accumulation.
+        // No explicit increment needed.
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  LLM-based Check (kept for borderline cases)
+    // ═══════════════════════════════════════════════════════════
+
     /// <summary>
-    /// LLM-based reply check (alternative to built-in state machine).
+    /// LLM-based reply check. Returns (shouldRespond, confidence).
+    /// Used as an alternative or supplement to the built-in calculation.
     /// </summary>
-    public static async Task<(bool shouldRespond, double confidence)> CheckByLLM(string botName,
-        List<string> botNicknames, List<string> recentMessages)
+    public static async Task<(bool shouldRespond, double confidence)> CheckByLLM(
+        string botName,
+        List<string> botNicknames,
+        List<string> recentMessages)
     {
         var nickStr = string.Join(",", botNicknames);
-        var prompt = @"你是一个群聊消息分析器，职责是判断“最新消息”是否在呼叫群聊助手“{BotName}”。你的代称还有“{BotNicknames}”。
+        var prompt = """
+你是一个群聊消息分析器，职责是判断"最新消息"是否在呼叫群聊助手"{BotName}"。你的代称还有"{BotNicknames}"。
 呼叫助手的方式包括：直接叫名字、@助手、或在对话中指代助手。
 
 判断时请严格遵循两步分析流程：
-第一步：找出最新消息中所有的“你/您”以及助手的名称/别名。
+第一步：找出最新消息中所有的"你/您"以及助手的名称/别名。
 第二步：检查上下文，确定这些代词的指代对象。
-   - 如果“你”指代助手，则 should_respond=true。
-   - 如果“你”指代其他群成员（如“你昨天说的电影”），或用于泛指（“你们怎么看”），则 should_respond=false。
+   - 如果"你"指代助手，则 should_respond=true。
+   - 如果"你"指代其他群成员（如"你昨天说的电影"），或用于泛指("你们怎么看")，则 should_respond=false。
    - 如果没有第二人称也没有助手称呼，但消息本身是接续助手刚才的话题，也应判断为 true。
 
 规则补充：
 - 仅当上下文显示用户正在期待助手回应时才应回复。
-- 闲聊、表情包、多人对话中的无明确指向性消息 → false。
-- 如果用户表现出对助手的不满（如“你话好多”），confidence 降低50%。
-- 如果不确定，一律选择 false（安全优先）。
+- 闲聊、表情包、多人对话中的无明确指向性消息 -> false。
+- 如果用户表现出对助手的不满(如"你话好多")，confidence 降低50%。
+- 如果不确定，一律选择 false(安全优先)。
 
 我会提供最近的消息记录和最新消息，请直接分析并输出 JSON：
-{""should_respond"": true/false, ""confidence"": 0.0~1.0}
-请不要输出任何其他文字。";
+{"should_respond": true/false, "confidence": 0.0~1.0}
+请不要输出任何其他文字。
+""";
 
         try
         {
@@ -187,7 +204,7 @@ public class ReplyManager
             int start = result.IndexOf('{');
             int end = result.LastIndexOf('}');
             if (start >= 0 && end > start)
-                result = result[start..(end + 1)]; 
+                result = result[start..(end + 1)];
             using var doc = System.Text.Json.JsonDocument.Parse(result);
             var shouldRespond = doc.RootElement.GetProperty("should_respond").GetBoolean();
             var confidence = doc.RootElement.GetProperty("confidence").GetDouble();
