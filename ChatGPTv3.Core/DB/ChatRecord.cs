@@ -15,6 +15,7 @@ public enum SenderType
 [SugarTable("ChatRecord")]
 public class ChatRecord
 {
+    // 检查使用什么索引
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public int Id { get; set; }
     public long GroupID { get; set; }
@@ -41,7 +42,7 @@ public class ChatRecord
     public bool HasToolCalls { get; set; }
 
     /// <summary>OpenAI tool call ID — links Tool records to Assistant tool_calls.</summary>
-    public string? ToolCallId { get; set; }
+    public string? ToolCallId { get; set; }// TODO: 检查何时使用
 
     /// <summary>Name of the tool that was called (for statistics/debugging).</summary>
     public string? ToolName { get; set; }

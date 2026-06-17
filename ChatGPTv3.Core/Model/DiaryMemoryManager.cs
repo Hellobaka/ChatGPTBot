@@ -22,6 +22,7 @@ namespace ChatGPTv3.Core.Model;
 /// </summary>
 public static class DiaryMemoryManager
 {
+    // TODO: 验证日记是否起到了压缩上下文的功能
     private static readonly Dictionary<long, int> _msgCounts = [];
     private static readonly Dictionary<long, DateTime> _lastDiaryTimes = [];
     private static readonly object _lock = new();

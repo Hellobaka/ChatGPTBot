@@ -16,8 +16,6 @@ namespace ChatGPTv3.Core.Api;
 /// </summary>
 public static class PromptBuilder
 {
-    private const string DateTimePlaceholder = "{CURRENT_DATETIME}";
-
     /// <summary>Set by Entry during startup from API.AppApi.GetLoginQQ().</summary>
     public static long CurrentBotQQ { get; set; }
 

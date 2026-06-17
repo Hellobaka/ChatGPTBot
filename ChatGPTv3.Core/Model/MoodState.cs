@@ -43,7 +43,7 @@ public static class MoodState
                 return $"你当前的心情：{entry.mood}";
             if (age.TotalHours < 24)
                 return $"你今天的心情：{entry.mood}";
-            return $"你之前在这个群里的心情：{entry.mood}（已经过去了）";
+            return $"你之前在这个群里的心情：{entry.mood}（已经过去了一天以上）";
         }
     }
 

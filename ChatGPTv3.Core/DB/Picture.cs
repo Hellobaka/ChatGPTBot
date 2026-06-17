@@ -8,6 +8,7 @@ namespace ChatGPTv3.Core.DB;
 [SugarTable("Picture")]
 public class Picture
 {
+    // TODO: 图片刮削
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public int Id { get; set; }
 

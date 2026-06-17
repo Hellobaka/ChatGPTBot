@@ -8,6 +8,7 @@ namespace ChatGPTv3.Core.DB;
 [SugarTable("Relationship")]
 public class Relationship
 {
+    // TODO: 实现
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public int Id { get; set; }
 

@@ -6,6 +6,7 @@ namespace ChatGPTv3.Core.Api;
 
 public static class EmbeddingService
 {
+    // TODO: 添加图片Embedding获取支持
     public static async Task<float[]?> GetEmbeddingsAsync(
         string text, CancellationToken ct = default)
     {
