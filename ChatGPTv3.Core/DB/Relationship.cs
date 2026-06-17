@@ -45,4 +45,24 @@ public class Relationship
     /// When the relationship info was last updated from QQ API.
     /// </summary>
     public DateTime LastUpdateTime { get; set; } = DateTime.Now;
+
+    // ── CRUD ─────────────────────────────────────────────
+
+    public static Relationship GetOrCreate(long groupId, long qq)
+    {
+        using var db = SQLiteManager.GetInstance();
+        var existing = db.Queryable<Relationship>()
+            .First(r => r.GroupID == groupId && r.QQ == qq);
+        if (existing != null) return existing;
+
+        var rel = new Relationship { GroupID = groupId, QQ = qq };
+        db.Insertable(rel).ExecuteCommand();
+        return rel;
+    }
+
+    public static void Update(Relationship rel)
+    {
+        using var db = SQLiteManager.GetInstance();
+        db.Updateable(rel).ExecuteCommand();
+    }
 }

@@ -55,4 +55,22 @@ public class TokenUsage
     /// Timestamp of the API call.
     /// </summary>
     public DateTime Time { get; set; } = DateTime.Now;
+
+    // ── CRUD ─────────────────────────────────────────────
+
+    public static void Insert(TokenUsage usage)
+    {
+        using var db = SQLiteManager.GetInstance();
+        db.Insertable(usage).ExecuteCommand();
+    }
+
+    public static List<TokenUsage> GetRange(DateTime start, DateTime end)
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<TokenUsage>()
+            .Where(u => u.Time >= start && u.Time <= end)
+            .OrderByDescending(u => u.Time)
+            .Take(100)
+            .ToList();
+    }
 }
