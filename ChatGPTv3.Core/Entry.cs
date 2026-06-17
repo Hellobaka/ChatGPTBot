@@ -82,9 +82,6 @@ public class Entry : PluginBase
                     AppConfig.EnableLLMCheckShouldResponse = false;
                 }
 
-                if (AppConfig.EnableQdrant && AppConfig.MemoryAPIKeyId.Count == 0)
-                    API.Logger.Warn("ChatGPTv3", "记忆提取 API 无效，相关功能无法使用");
-
                 if (AppConfig.EnableVision && AppConfig.ImageDescriberApiKeyId.Count == 0)
                 {
                     API.Logger.Warn("ChatGPTv3", "图像描述 API 无效，已禁用");
@@ -108,6 +105,10 @@ public class Entry : PluginBase
                 MemoryManager.Initialize(appDir);
                 API.Logger.Info("ChatGPTv3", "记忆管理器已初始化");
 
+                // Diary memory (push-mode, dual trigger: message count + time interval)
+                DiaryMemoryManager.Initialize(appDir);
+                API.Logger.Info("ChatGPTv3", "日记记忆已初始化");
+
                 // Initialize MCP
                 if (AppConfig.EnableMCP)
                 {
@@ -119,10 +120,6 @@ public class Entry : PluginBase
                 {
                     API.Logger.Info("ChatGPTv3", "MCP 已禁用");
                 }
-
-                // TODO: Phase 7 completion
-                // - Qdrant connection and memory loading
-                // - Memory.LoadShortTermMemories() + LoadToDoItems()
 
                 API.Logger.Info("ChatGPTv3", "所有子系统初始化完成");
             }
@@ -156,5 +153,12 @@ public class Entry : PluginBase
             .Build();
 
         API.Logger.Info("ChatGPTv3", "插件启动完成");
+    }
+
+    public override async Task OnDisableAsync(CancellationToken ct)
+    {
+        API.Logger.Info("ChatGPTv3", "插件正在关闭...");
+        DiaryMemoryManager.Shutdown();
+        API.Logger.Info("ChatGPTv3", "插件已关闭");
     }
 }

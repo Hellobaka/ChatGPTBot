@@ -14,7 +14,7 @@ public class ChatService
 {
     public enum Purpose
     {
-        聊天, 图片描述, 日程获取, 分段, 表情包推荐, 回复意愿, 记忆提取, 工具总结
+        聊天, 图片描述, 日程获取, 分段, 表情包推荐, 回复意愿, 记忆提取, 工具总结, 日记
     }
 
     public const string ErrorMessage = "连接发生问题，查看日志排查问题";

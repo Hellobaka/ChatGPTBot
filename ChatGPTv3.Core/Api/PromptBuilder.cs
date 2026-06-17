@@ -66,10 +66,8 @@ public static class PromptBuilder
     public static string BuildDynamicUserContent(
         string? moodStatus,
         string? currentSchedule,
-        List<string>? todoItems,
-        List<string>? shortTermMemories,
-        List<string>? longTermMemories,
         List<string>? knowledgeItems,
+        string? diaryContext,
         string characterPrompt)
     {
         var sb = new StringBuilder();
@@ -93,32 +91,6 @@ public static class PromptBuilder
             sb.AppendLine("</schedule>");
         }
 
-        // ── ToDo ──
-        if (todoItems != null && todoItems.Count > 0)
-        {
-            sb.AppendLine("<todo>");
-            foreach (var item in todoItems) sb.AppendLine(item);
-            sb.AppendLine("</todo>");
-        }
-
-        // ── Short-term memories ──
-        if (shortTermMemories != null && shortTermMemories.Count > 0)
-        {
-            sb.AppendLine($"你拥有短期记忆的能力，以下是你的短期记忆（最大可使用轮数:{AppConfig.ShortTermMemoryMaxUseCount}）：");
-            sb.AppendLine("<short-term-memories>");
-            foreach (var item in shortTermMemories) sb.AppendLine(item);
-            sb.AppendLine("</short-term-memories>");
-        }
-
-        // ── Long-term memories ──
-        if (longTermMemories != null && longTermMemories.Count > 0)
-        {
-            sb.AppendLine("以下是可能相关的长期记忆：");
-            sb.AppendLine("<long-term-memories>");
-            foreach (var item in longTermMemories) sb.AppendLine(item);
-            sb.AppendLine("</long-term-memories>");
-        }
-
         // ── Knowledge ──
         if (knowledgeItems != null && knowledgeItems.Count > 0)
         {
@@ -126,6 +98,14 @@ public static class PromptBuilder
             sb.AppendLine("<knowledge>");
             foreach (var item in knowledgeItems) sb.AppendLine(item);
             sb.AppendLine("</knowledge>");
+        }
+
+        // ── Diary ──
+        if (!string.IsNullOrEmpty(diaryContext))
+        {
+            sb.AppendLine("<diary>");
+            sb.AppendLine(diaryContext);
+            sb.AppendLine("</diary>");
         }
         sb.AppendLine("</system_dynamic_data>");
 

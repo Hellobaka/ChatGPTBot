@@ -198,6 +198,9 @@ public static class PipelineMiddlewareExtensions
             ctx.MessageText = ResolveReferences(ctx);
             RecordMessage(ctx);
 
+            // Increment diary message counter (async fire-and-forget)
+            DiaryMemoryManager.OnMessageProcessed(ctx.GroupId);
+
             var result = await DoChatAsync(ctx);
             ctx.Result = result;
         });
@@ -306,22 +309,18 @@ public static class PipelineMiddlewareExtensions
             ? ContextCompressor.Compress(allHistory, AppConfig.ContextMaxLength)
             : allHistory;
 
-        var shortTerm = MemoryManager.GetShortTerm(ctx.GroupId, ctx.QQ);
-        var longTerm = MemoryManager.GetLongTerm(ctx.MessageText, ctx.QQ);
         var knowledge = MemoryManager.GetKnowledge(ctx.MessageText);
-        var todos = MemoryManager.GetToDos(ctx.GroupId, ctx.QQ);
 
         var moodText = MoodState.GetMood(ctx.GroupId);
         var scheduleText = AppConfig.EnableSchedules
             ? SchedulerManager.Instance?.GetCurrentSchedule(DateTime.Now)
             : null;
+        var diaryText = DiaryMemoryManager.GetDiaryContext(ctx.GroupId);
 
         var dynamicContent = PromptBuilder.BuildDynamicUserContent(
             moodText, scheduleText,
-            todos.Select(t => t.ToString()).ToList(),
-            shortTerm.Select(m => m.ToString()).ToList(),
-            longTerm.Select(m => m.text).ToList(),
             knowledge.Select(k => k.text).ToList(),
+            diaryText,
             effectivePrompt);
 
         var last = history.Last();

@@ -15,10 +15,6 @@ public static class MCPSelfBuiltinTools
 {
     public static string[] GetBuiltinToolNames() => new[]
     {
-        "AddShortTermMemory", "RenewShortTermMemory", "RemoveShortTermMemory",
-        "RemoveShortTermMemories", "AddToDoItem", "CompleteToDoItem",
-        "RemoveToDoItem", "RemoveToDoItems",
-        "AddLongTermMemory", "GetLongTermMemories",
         "AddKnowledge", "GetKnowledges",
         "UpdateMood", "UpdateFavorability", "GetRelationship",
         "GetGroupChatHistory", "GetPrivateChatHistory", "GetChatHistoryByIds",
@@ -37,37 +33,6 @@ public static class MCPSelfBuiltinTools
     {
         return clientName switch
         {
-            "AddShortTermMemory" => [MakeTool("AddShortTermMemory", "添加新的短期记忆", Schema(new() {
-                ["memory"] = ("string", "需要记录的记忆内容")
-            }, ["memory"]))],
-            "RenewShortTermMemory" => [MakeTool("RenewShortTermMemory", "刷新短期记忆的过期时间", Schema(new() {
-                ["id"] = ("integer", "需要刷新的记忆ID")
-            }, ["id"]))],
-            "RemoveShortTermMemory" => [MakeTool("RemoveShortTermMemory", "删除指定的短期记忆", Schema(new() {
-                ["id"] = ("integer", "需要删除的记忆ID")
-            }, ["id"]))],
-            "RemoveShortTermMemories" => [MakeTool("RemoveShortTermMemories", "批量删除短期记忆", Schema(new() {
-                ["ids"] = ("array", "需要删除的记忆ID数组")
-            }, ["ids"]))],
-            "AddToDoItem" => [MakeTool("AddToDoItem", "添加待办事项", Schema(new() {
-                ["todo"] = ("string", "待办事项内容"),
-                ["isGlobalTodo"] = ("boolean", "是否为全局待办，默认false")
-            }, ["todo"]))],
-            "CompleteToDoItem" => [MakeTool("CompleteToDoItem", "标记待办事项为已完成", Schema(new() {
-                ["id"] = ("integer", "待办事项ID")
-            }, ["id"]))],
-            "RemoveToDoItem" => [MakeTool("RemoveToDoItem", "删除待办事项", Schema(new() {
-                ["id"] = ("integer", "待办事项ID")
-            }, ["id"]))],
-            "RemoveToDoItems" => [MakeTool("RemoveToDoItems", "批量删除待办事项", Schema(new() {
-                ["ids"] = ("array", "待办事项ID数组")
-            }, ["ids"]))],
-            "AddLongTermMemory" => [MakeTool("AddLongTermMemory", "添加长期记忆（与QQ号关联的持久信息）", Schema(new() {
-                ["memory"] = ("string", "需要长期记忆的内容，如'用户小王5月20日生日'")
-            }, ["memory"]))],
-            "GetLongTermMemories" => [MakeTool("GetLongTermMemories", "查询当前用户的长期记忆", Schema(new() {
-                ["query"] = ("string", "搜索查询文本")
-            }, ["query"]))],
             "AddKnowledge" => [MakeTool("AddKnowledge", "添加知识到知识库", Schema(new() {
                 ["knowledge"] = ("string", "知识内容，客观事实")
             }, ["knowledge"]))],
@@ -153,19 +118,9 @@ public static class MCPSelfBuiltinTools
         {
             return Task.FromResult<object?>(name switch
             {
-                // Memory
-                "AddShortTermMemory"      => Mem(AddShortTermMemory, args, ctx),
-                "RenewShortTermMemory"    => Mem(RenewShortTermMemory, args),
-                "RemoveShortTermMemory"   => Mem(RemoveShortTermMemory, args),
-                "RemoveShortTermMemories" => Mem(RemoveShortTermMemories, args),
-                "AddToDoItem"             => Mem(AddToDoItem, args, ctx),
-                "CompleteToDoItem"        => Mem(CompleteToDoItem, args),
-                "RemoveToDoItem"          => Mem(RemoveToDoItem, args),
-                "RemoveToDoItems"         => Mem(RemoveToDoItems, args),
-                "AddLongTermMemory"       => Mem(AddLongTermMemory, args, ctx),
-                "GetLongTermMemories"     => Mem(GetLongTermMemories, args, ctx),
-                "AddKnowledge"            => Mem(AddKnowledge, args),
-                "GetKnowledges"           => Mem(GetKnowledges, args),
+                // Knowledge
+                "AddKnowledge"  => Mem(AddKnowledge, args),
+                "GetKnowledges" => Mem(GetKnowledges, args),
 
                 // Relationship
                 "UpdateMood"       => UpdateMood(args, ctx),
@@ -198,142 +153,12 @@ public static class MCPSelfBuiltinTools
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  Memory Tools
+    //  Knowledge Tools
     // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// 添加一条短期记忆。短期记忆有使用次数上限，超限后自动过期。
-    /// </summary>
-    /// <param name="args">memory (string) — 需要记录的自然语言描述</param>
-    /// <param name="ctx">工具上下文，提供 GroupID 和 QQ</param>
-    /// <returns>确认消息，含添加的记忆内容</returns>
-    private static string AddShortTermMemory(JsonDocument args, MCPToolContext ctx)
-    {
-        var memory = args.RootElement.GetProperty("memory").GetString()!;
-        MemoryManager.AddShortTerm(memory, ctx.GroupId, ctx.QQ);
-        return $"短期记忆已添加: {memory}";
-    }
-
-    /// <summary>
-    /// 重置一条短期记忆的过期计数器，使其重新生效。
-    /// </summary>
-    /// <param name="args">id (int) — 记忆 ID</param>
-    /// <returns>确认消息</returns>
-    private static string RenewShortTermMemory(JsonDocument args)
-    {
-        var id = args.RootElement.GetProperty("id").GetInt32();
-        MemoryManager.RenewShortTerm(id);
-        return $"短期记忆 {id} 已刷新";
-    }
-
-    /// <summary>
-    /// 删除指定 ID 的短期记忆。
-    /// </summary>
-    /// <param name="args">id (int) — 记忆 ID</param>
-    /// <returns>确认消息</returns>
-    private static string RemoveShortTermMemory(JsonDocument args)
-    {
-        var id = args.RootElement.GetProperty("id").GetInt32();
-        MemoryManager.RemoveShortTerm(id);
-        return $"短期记忆 {id} 已删除";
-    }
-
-    /// <summary>
-    /// 批量删除短期记忆。
-    /// </summary>
-    /// <param name="args">ids (int[]) — 记忆 ID 数组</param>
-    /// <returns>确认消息，含删除数量</returns>
-    private static string RemoveShortTermMemories(JsonDocument args)
-    {
-        var ids = args.RootElement.GetProperty("ids").EnumerateArray()
-            .Select(e => e.GetInt32()).ToArray();
-        foreach (var id in ids) MemoryManager.RemoveShortTerm(id);
-        return $"已批量删除 {ids.Length} 条短期记忆";
-    }
-
-    /// <summary>
-    /// 添加一条待办事项。可设为全局（所有群可见）或本群可见。
-    /// </summary>
-    /// <param name="args">todo (string) — 待办内容; isGlobalTodo (bool, 可选) — 是否全局待办</param>
-    /// <param name="ctx">工具上下文</param>
-    /// <returns>确认消息</returns>
-    private static string AddToDoItem(JsonDocument args, MCPToolContext ctx)
-    {
-        var todo = args.RootElement.GetProperty("todo").GetString()!;
-        bool isGlobal = args.RootElement.TryGetProperty("isGlobalTodo", out var g) && g.GetBoolean();
-        MemoryManager.AddToDo(todo, isGlobal, ctx.GroupId, ctx.QQ);
-        return $"待办已添加: {todo}";
-    }
-
-    /// <summary>
-    /// 将待办事项标记为已完成。
-    /// </summary>
-    /// <param name="args">id (int) — 待办 ID</param>
-    /// <returns>确认消息</returns>
-    private static string CompleteToDoItem(JsonDocument args)
-    {
-        var id = args.RootElement.GetProperty("id").GetInt32();
-        MemoryManager.CompleteToDo(id);
-        return $"待办 {id} 已标记完成";
-    }
-
-    /// <summary>
-    /// 删除指定 ID 的待办事项。
-    /// </summary>
-    /// <param name="args">id (int) — 待办 ID</param>
-    /// <returns>确认消息</returns>
-    private static string RemoveToDoItem(JsonDocument args)
-    {
-        var id = args.RootElement.GetProperty("id").GetInt32();
-        MemoryManager.RemoveToDo(id);
-        return $"待办 {id} 已删除";
-    }
-
-    /// <summary>
-    /// 批量删除待办事项。
-    /// </summary>
-    /// <param name="args">ids (int[]) — 待办 ID 数组</param>
-    /// <returns>确认消息，含删除数量</returns>
-    private static string RemoveToDoItems(JsonDocument args)
-    {
-        var ids = args.RootElement.GetProperty("ids").EnumerateArray()
-            .Select(e => e.GetInt32()).ToArray();
-        foreach (var id in ids) MemoryManager.RemoveToDo(id);
-        return $"已批量删除 {ids.Length} 条待办";
-    }
-
-    /// <summary>
-    /// 添加一条长期记忆，与当前用户 QQ 关联，跨会话持久保存（存入 Qdrant 向量数据库）。
-    /// </summary>
-    /// <param name="args">memory (string) — 需要长期记住的自然语言描述</param>
-    /// <param name="ctx">工具上下文</param>
-    /// <returns>确认消息</returns>
-    private static string AddLongTermMemory(JsonDocument args, MCPToolContext ctx)
-    {
-        var memory = args.RootElement.GetProperty("memory").GetString()!;
-        MemoryManager.AddLongTerm(memory, ctx.QQ);
-        return $"长期记忆已添加: {memory}";
-    }
-
-    /// <summary>
-    /// 通过语义搜索查询当前用户的长期记忆（Qdrant 向量检索）。
-    /// </summary>
-    /// <param name="args">query (string) — 搜索查询文本</param>
-    /// <param name="ctx">工具上下文，提供 QQ 用于过滤结果</param>
-    /// <returns>匹配的记忆列表（含相似度分数），或"未找到"</returns>
-    private static string GetLongTermMemories(JsonDocument args, MCPToolContext ctx)
-    {
-        var query = args.RootElement.GetProperty("query").GetString()!;
-        var results = MemoryManager.GetLongTerm(query, ctx.QQ);
-        if (results.Length == 0) return "未找到相关长期记忆";
-        return string.Join("\n", results.Select(r => $"- {r.text} (score: {r.score:F2})"));
-    }
 
     /// <summary>
     /// 添加一条客观知识到知识库（全局共享，不关联特定用户，存入 Qdrant）。
     /// </summary>
-    /// <param name="args">knowledge (string) — 知识内容</param>
-    /// <returns>确认消息</returns>
     private static string AddKnowledge(JsonDocument args)
     {
         var knowledge = args.RootElement.GetProperty("knowledge").GetString()!;
@@ -344,8 +169,6 @@ public static class MCPSelfBuiltinTools
     /// <summary>
     /// 通过语义搜索查询知识库（Qdrant 向量检索）。
     /// </summary>
-    /// <param name="args">query (string) — 搜索查询文本</param>
-    /// <returns>匹配的知识列表（含相似度分数），或"未找到"</returns>
     private static string GetKnowledges(JsonDocument args)
     {
         var query = args.RootElement.GetProperty("query").GetString()!;
@@ -577,14 +400,7 @@ public static class MCPSelfBuiltinTools
             $"[{r.Time:HH:mm}] {r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
     }
 
-    /// <summary>Null-safe wrapper for memory tools that need context.</summary>
-    private static string Mem(Func<JsonDocument, MCPToolContext, string> fn, JsonDocument? args, MCPToolContext ctx)
-    {
-        if (args == null) return "参数错误";
-        return fn(args, ctx);
-    }
-
-    /// <summary>Null-safe wrapper for memory tools without context.</summary>
+    /// <summary>Null-safe wrapper for tools.</summary>
     private static string Mem(Func<JsonDocument, string> fn, JsonDocument? args)
     {
         if (args == null) return "参数错误";

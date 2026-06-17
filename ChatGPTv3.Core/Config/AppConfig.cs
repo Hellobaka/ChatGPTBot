@@ -12,7 +12,6 @@ public static class AppConfig
     // ── API Key Purpose Lists ────────────────────────────
     public static List<APIKeyPurpose> ChatAPIKeyId { get; set; } = [];
     public static List<APIKeyPurpose> ReplyAPIKeyId { get; set; } = [];
-    public static List<APIKeyPurpose> MemoryAPIKeyId { get; set; } = [];
     public static List<APIKeyPurpose> SplitterApiKeyId { get; set; } = [];
     public static List<APIKeyPurpose> ImageDescriberApiKeyId { get; set; } = [];
     public static List<APIKeyPurpose> EmbeddingApiKeyId { get; set; } = [];
@@ -24,7 +23,6 @@ public static class AppConfig
     public static float ChatTemperature { get; set; } = 1f;
     public static int ChatTimeout { get; set; } = 30000;
     public static int ReplyTimeout { get; set; } = 5000;
-    public static int MemoryTimeout { get; set; } = 30000;
     public static int SplitterTimeout { get; set; } = 30000;
     public static int ImageDescriberTimeout { get; set; } = 30000;
     public static int EmbeddingTimeout { get; set; } = 3000;
@@ -89,12 +87,9 @@ public static class AppConfig
     // ── Context & Memory ──────────────────────────────────
     public static int ContextMaxLength { get; set; } = 20;
     public static bool EnableQdrant { get; set; } = true;
-    public static bool QdrantSearchOnlyPerson { get; set; }
     public static double MinMemorySimilarity { get; set; } = 0.8;
     public static int MaxMemoryCount { get; set; } = 5;
     public static int MemoryDimensions { get; set; } = 1024;
-    public static int ShortTermMemoryMaxUseCount { get; set; } = 30;
-    public static int MemoryExtractionCount { get; set; } = 30;
 
     // ── Reply Willingness — Attention ──────────────────────
     /// <summary>Base attention for any message.</summary>
@@ -194,6 +189,22 @@ public static class AppConfig
         "诶嘿，跳过这个话题～"
     ];
 
+    // ── Diary ─────────────────────────────────────────────
+    /// <summary>Master switch for diary memory system.</summary>
+    public static bool EnableDiary { get; set; } = true;
+    /// <summary>API keys for diary generation (falls back to ChatAPIKeyId if empty).</summary>
+    public static List<APIKeyPurpose> DiaryAPIKeyId { get; set; } = [];
+    /// <summary>Trigger diary after N messages in a group.</summary>
+    public static int DiaryMessageThreshold { get; set; } = 50;
+    /// <summary>Trigger diary if at least this many minutes have passed since last diary, when there are new messages.</summary>
+    public static int DiaryIntervalMinutes { get; set; } = 120;
+    /// <summary>How many hours of chat history to review for each diary entry.</summary>
+    public static int DiaryReviewHours { get; set; } = 24;
+    /// <summary>Keep last N diary entries per group.</summary>
+    public static int DiaryMaxKeep { get; set; } = 7;
+    /// <summary>LLM timeout for diary generation (ms).</summary>
+    public static int DiaryTimeout { get; set; } = 60000;
+
     // ── Debug ─────────────────────────────────────────────
     public static bool DebugMode { get; set; }
 
@@ -208,7 +219,6 @@ public static class AppConfig
         // API key purpose lists
         ChatAPIKeyId = ConfigManager.GetConfig("ChatAPIKeyId", new List<APIKeyPurpose>());
         ReplyAPIKeyId = ConfigManager.GetConfig("ReplyAPIKeyId", new List<APIKeyPurpose>());
-        MemoryAPIKeyId = ConfigManager.GetConfig("MemoryAPIKeyId", new List<APIKeyPurpose>());
         SplitterApiKeyId = ConfigManager.GetConfig("SplitterApiKeyId", new List<APIKeyPurpose>());
         ImageDescriberApiKeyId = ConfigManager.GetConfig("ImageDescriberApiKeyId", new List<APIKeyPurpose>());
         EmbeddingApiKeyId = ConfigManager.GetConfig("EmbeddingApiKeyId", new List<APIKeyPurpose>());
@@ -220,7 +230,6 @@ public static class AppConfig
         ChatTemperature = ConfigManager.GetConfig("ChatTemperature", 1f);
         ChatTimeout = ConfigManager.GetConfig("ChatTimeout", 30000);
         ReplyTimeout = ConfigManager.GetConfig("ReplyTimeout", 5000);
-        MemoryTimeout = ConfigManager.GetConfig("MemoryTimeout", 30000);
         SplitterTimeout = ConfigManager.GetConfig("SplitterTimeout", 30000);
         ImageDescriberTimeout = ConfigManager.GetConfig("ImageDescriberTimeout", 30000);
         EmbeddingTimeout = ConfigManager.GetConfig("EmbeddingTimeout", 3000);
@@ -275,13 +284,9 @@ public static class AppConfig
         // Context & memory
         ContextMaxLength = ConfigManager.GetConfig("ContextMaxLength", 20);
         EnableQdrant = ConfigManager.GetConfig("EnableQdrant", true);
-        QdrantSearchOnlyPerson = ConfigManager.GetConfig("QdrantSearchOnlyPerson", false);
         MinMemorySimilarity = ConfigManager.GetConfig("MinMemorySimilarity", 0.8);
         MaxMemoryCount = ConfigManager.GetConfig("MaxMemoryCount", 5);
         MemoryDimensions = ConfigManager.GetConfig("MemoryDimensions", 1024);
-        ShortTermMemoryMaxUseCount = ConfigManager.GetConfig("ShortTermMemoryMaxUseCount", 30);
-        MemoryExtractionCount = ConfigManager.GetConfig("MemoryExtractionCount", 30);
-
         // Reply willingness — Attention
         BaseAttention = ConfigManager.GetConfig("BaseAttention", 0.1);
         AttnMention = ConfigManager.GetConfig("AttnMention", 1.0);
@@ -357,6 +362,15 @@ public static class AppConfig
         ContentFilterFallbacks = ConfigManager.GetConfig("ContentFilterFallbacks",
             new List<string> { "啊这个...换个话题吧！", "唔，这个我不太擅长回答...", "诶嘿，跳过这个话题～" });
 
+        // Diary
+        EnableDiary = ConfigManager.GetConfig("EnableDiary", true);
+        DiaryAPIKeyId = ConfigManager.GetConfig("DiaryAPIKeyId", new List<APIKeyPurpose>());
+        DiaryMessageThreshold = ConfigManager.GetConfig("DiaryMessageThreshold", 50);
+        DiaryIntervalMinutes = ConfigManager.GetConfig("DiaryIntervalMinutes", 120);
+        DiaryReviewHours = ConfigManager.GetConfig("DiaryReviewHours", 24);
+        DiaryMaxKeep = ConfigManager.GetConfig("DiaryMaxKeep", 7);
+        DiaryTimeout = ConfigManager.GetConfig("DiaryTimeout", 60000);
+
         // Debug
         DebugMode = ConfigManager.GetConfig("DebugMode", false);
 
@@ -376,9 +390,9 @@ public static class AppConfig
             .Includes(k => k.AvailableModels)
             .ToList();
 
-        foreach (var keyList in new[] { ChatAPIKeyId, ReplyAPIKeyId, MemoryAPIKeyId,
+        foreach (var keyList in new[] { ChatAPIKeyId, ReplyAPIKeyId,
                        SplitterApiKeyId, ImageDescriberApiKeyId, EmbeddingApiKeyId, RerankApiKeyId,
-                       SummarizerApiKeyId })
+                       SummarizerApiKeyId, DiaryAPIKeyId })
         {
             foreach (var item in keyList)
             {

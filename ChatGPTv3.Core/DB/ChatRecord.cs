@@ -93,6 +93,29 @@ public class ChatRecord
     }
 
     /// <summary>
+    /// Get group chat history within a time range (for diary, etc.).
+    /// </summary>
+    public static List<ChatRecord> GetGroupHistoryByTime(long groupId, DateTime since, int maxCount = 500)
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<ChatRecord>()
+            .Where(r => r.GroupID == groupId && r.Time > since)
+            .OrderBy(r => r.Time)
+            .Take(maxCount)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Count messages for a group since a given time.
+    /// </summary>
+    public static int CountSince(long groupId, DateTime since)
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<ChatRecord>()
+            .Where(r => r.GroupID == groupId && r.Time > since)
+            .Count();
+    }
+    /// <summary>
     /// Get messages by their QQ message IDs.
     /// </summary>
     public static List<ChatRecord> GetByIds(long[] messageIds, long groupId)
