@@ -41,12 +41,12 @@ public static class ToolResultSummarizer
     /// <param name="groupId">Group ID (context for DB insertion).</param>
     /// <param name="qq">User QQ.</param>
     /// <param name="userMessage">The user's message that triggered this turn.</param>
-    /// <param name="toolCalls">All tool calls in this turn (name, args, result, success).</param>
+    /// <param name="toolCalls">All tool calls in this turn (callId, name, args, result, success).</param>
     /// <param name="finalResponse">The bot's final response text.</param>
     public static void SummarizeAsync(
         long groupId,
         string userMessage,
-        List<(string name, string args, string result, bool success)> toolCalls,
+        List<(string callId, string name, string args, string result, bool success)> toolCalls,
         string finalResponse,
         List<int> placeholderIds)
     {
@@ -79,7 +79,7 @@ public static class ToolResultSummarizer
     /// so the LLM sees the conversation in its natural format.
     /// </summary>
     private static async Task<string> SummarizeGroup(
-        List<(string name, string args, string result, bool success)> toolCalls,
+        List<(string callId, string name, string args, string result, bool success)> toolCalls,
         string userMessage,
         string finalResponse)
     {
@@ -97,11 +97,11 @@ public static class ToolResultSummarizer
                 ChatMessage.User(userMessage)
             };
 
-            // Assistant with tool_calls
+            // Assistant with tool_calls — use real call IDs so tool results link correctly
             var toolCallList = toolCalls.Select(tc =>
                 new ToolCallRequest
                 {
-                    Id = $"call_{Guid.NewGuid():N}"[..8],
+                    Id = string.IsNullOrEmpty(tc.callId) ? $"call_{Guid.NewGuid():N}"[..8] : tc.callId,
                     Type = "function",
                     Function = new FunctionCall
                     {
@@ -117,10 +117,10 @@ public static class ToolResultSummarizer
                 ToolCalls = toolCallList
             });
 
-            // Tool results
-            foreach (var tc in toolCalls)
+            // Tool results — link each to its call ID
+            for (int i = 0; i < toolCalls.Count; i++)
             {
-                messages.Add(ChatMessage.Tool(Truncate(tc.result, 3000)));
+                messages.Add(ChatMessage.Tool(toolCallList[i].Id, Truncate(toolCalls[i].result, 3000)));
             }
 
             // Final assistant response
@@ -143,7 +143,7 @@ public static class ToolResultSummarizer
         }
     }
 
-    private static string FallbackText(List<(string name, string args, string result, bool success)> toolCalls)
+    private static string FallbackText(List<(string callId, string name, string args, string result, bool success)> toolCalls)
         => toolCalls.Count == 1
             ? Truncate(toolCalls[0].result, 200)
             : $"[{toolCalls.Count} 次工具调用: {string.Join(", ", toolCalls.Select(t => t.name))}]";

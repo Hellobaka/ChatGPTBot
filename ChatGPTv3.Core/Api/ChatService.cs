@@ -28,7 +28,7 @@ public class ChatService
     /// <summary>Fires when an inline image is received (generated image output).</summary>
     public static event Action<string, string>? OnImageChunk;
     /// <summary>Collects tool call data for post-turn summarization.</summary>
-    public List<(string name, string args, string result, bool success)> ToolCallLog { get; } = [];
+    public List<(string callId, string name, string args, string result, bool success)> ToolCallLog { get; } = [];
 
     /// <summary>
     /// Main chat completion entry point.
@@ -163,6 +163,7 @@ public class ChatService
 
                     // Log for post-turn summarization
                     ToolCallLog.Add((
+                        tc.Id ?? "",
                         tc.Function.Name,
                         tc.Function.Arguments ?? "",
                         trackResult?.Result ?? result?.ToString() ?? "",
