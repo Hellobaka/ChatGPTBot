@@ -205,6 +205,16 @@ public static class AppConfig
     /// <summary>LLM timeout for diary generation (ms).</summary>
     public static int DiaryTimeout { get; set; } = 60000;
 
+    // ── Context Compression ───────────────────────────────
+    /// <summary>Enable time-based compression trigger (every N minutes).</summary>
+    public static bool EnableCompressByTime { get; set; } = true;
+    /// <summary>Enable count-based compression trigger (every N new droppable messages).</summary>
+    public static bool EnableCompressByCount { get; set; } = true;
+    /// <summary>Minimum minutes between LLM compressions per group.</summary>
+    public static int CompressIntervalMinutes { get; set; } = 60;
+    /// <summary>Minimum new droppable messages since last LLM compression to trigger again.</summary>
+    public static int CompressMessageThreshold { get; set; } = 20;
+
     // ── Debug ─────────────────────────────────────────────
     public static bool DebugMode { get; set; }
 
@@ -370,6 +380,12 @@ public static class AppConfig
         DiaryReviewHours = ConfigManager.GetConfig("DiaryReviewHours", 24);
         DiaryMaxKeep = ConfigManager.GetConfig("DiaryMaxKeep", 7);
         DiaryTimeout = ConfigManager.GetConfig("DiaryTimeout", 60000);
+
+        // Context compression
+        EnableCompressByTime = ConfigManager.GetConfig("EnableCompressByTime", true);
+        EnableCompressByCount = ConfigManager.GetConfig("EnableCompressByCount", true);
+        CompressIntervalMinutes = ConfigManager.GetConfig("CompressIntervalMinutes", 60);
+        CompressMessageThreshold = ConfigManager.GetConfig("CompressMessageThreshold", 20);
 
         // Debug
         DebugMode = ConfigManager.GetConfig("DebugMode", false);

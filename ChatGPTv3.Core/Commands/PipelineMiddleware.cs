@@ -78,7 +78,8 @@ public static class PipelineMiddlewareExtensions
 
         return builder.Use(async (ctx, next) =>
         {
-            var key = ctx.GroupId; // TODO: use QQ for private chats
+            // Per-context key: group id for group chats, QQ for private chats
+            var key = ctx.IsGroup ? ctx.GroupId : ctx.QQ;
 
             CancellationTokenSource cts;
             int myVersion;
@@ -198,8 +199,9 @@ public static class PipelineMiddlewareExtensions
             ctx.MessageText = ResolveReferences(ctx);
             RecordMessage(ctx);
 
-            // Increment diary message counter (async fire-and-forget)
+            // Increment background counters (diary + compression)
             DiaryMemoryManager.OnMessageProcessed(ctx.GroupId);
+            ContextCompressor.OnMessageProcessed(ctx.GroupId);
 
             var result = await DoChatAsync(ctx);
             ctx.Result = result;
@@ -303,11 +305,7 @@ public static class PipelineMiddlewareExtensions
             AppConfig.BotName, effectiveNicknames, ctx.QQ,
             AppConfig.ChatEmptyResponse, string.Join(",", AppConfig.MasterQQ), effectivePrompt);
 
-        var maxHistory = AppConfig.ContextMaxLength * 3;
-        var allHistory = ChatRecord.GetGroupHistory(ctx.GroupId, maxHistory);
-        var history = allHistory.Count > AppConfig.ContextMaxLength
-            ? ContextCompressor.Compress(allHistory, AppConfig.ContextMaxLength)
-            : allHistory;
+        var history = ChatRecord.GetGroupHistory(ctx.GroupId, AppConfig.ContextMaxLength);
 
         var knowledge = MemoryManager.GetKnowledge(ctx.MessageText);
 
@@ -383,7 +381,8 @@ public static class PipelineMiddlewareExtensions
                     GroupID = ctx.GroupId, QQ = ctx.QQ,
                     SenderType = SenderType.Tool,
                     ParsedMessage = $"[{tc.name}]...",
-                    ToolName = tc.name, IsToolSuccess = tc.success, Time = DateTime.Now
+                    ToolCallId = tc.callId, ToolName = tc.name,
+                    IsToolSuccess = tc.success, Time = DateTime.Now
                 });
                 placeholderIds.Add(id);
             }

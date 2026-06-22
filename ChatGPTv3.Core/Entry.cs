@@ -109,6 +109,10 @@ public class Entry : PluginBase
                 DiaryMemoryManager.Initialize(appDir);
                 API.Logger.Info("ChatGPTv3", "日记记忆已初始化");
 
+                // Context compression (background LLM summarization)
+                ContextCompressor.Initialize();
+                API.Logger.Info("ChatGPTv3", "上下文压缩已启动");
+
                 // Initialize MCP
                 if (AppConfig.EnableMCP)
                 {
@@ -159,6 +163,7 @@ public class Entry : PluginBase
     {
         API.Logger.Info("ChatGPTv3", "插件正在关闭...");
         DiaryMemoryManager.Shutdown();
+        ContextCompressor.Shutdown();
         API.Logger.Info("ChatGPTv3", "插件已关闭");
     }
 }
