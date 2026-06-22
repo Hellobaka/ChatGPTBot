@@ -108,7 +108,7 @@ public static class PromptBuilder
         sb.AppendLine("</system_dynamic_data>");
 
         // ── Chat history marker ──
-        sb.AppendLine("以下是最新一条聊天记录：");
+        sb.AppendLine("以下是按时间顺序的聊天记录：");
 
         return sb.ToString();
     }

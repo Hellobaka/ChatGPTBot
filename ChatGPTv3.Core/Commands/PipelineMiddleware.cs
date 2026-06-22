@@ -49,12 +49,12 @@ public static class PipelineMiddlewareExtensions
             if (AppConfig.IsGroupBlackList)
             {
                 if (AppConfig.GroupList.Contains(ctx.GroupId))
-                { ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass; return; }
+                { ctx.Result = EventHandleResult.Pass; return; }
             }
             else
             {
                 if (!AppConfig.GroupList.Contains(ctx.GroupId))
-                { ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass; return; }
+                { ctx.Result = EventHandleResult.Pass; return; }
             }
             await next();
         });
@@ -65,7 +65,7 @@ public static class PipelineMiddlewareExtensions
         return builder.Use(async (ctx, next) =>
         {
             if (string.IsNullOrWhiteSpace(ctx.MessageText) && !HasImage(ctx))
-            { ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass; return; }
+            { ctx.Result = EventHandleResult.Pass; return; }
             await next();
         });
     }
@@ -112,7 +112,7 @@ public static class PipelineMiddlewareExtensions
                     {
                         // Newer message arrived during debounce — discard this one
                         CommonHelper.DebugLog("Pipeline", $"防抖取消 {key}");
-                        ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+                        ctx.Result = EventHandleResult.Pass;
                         return;
                     }
                 }
@@ -126,7 +126,7 @@ public static class PipelineMiddlewareExtensions
                 }
                 if (!iAmLatest)
                 {
-                    ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+                    ctx.Result = EventHandleResult.Pass;
                     return;
                 }
 
@@ -136,7 +136,7 @@ public static class PipelineMiddlewareExtensions
             catch (OperationCanceledException)
             {
                 CommonHelper.DebugLog("Pipeline", $"已打断 {key}");
-                ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+                ctx.Result = EventHandleResult.Pass;
             }
             finally
             {
@@ -179,13 +179,13 @@ public static class PipelineMiddlewareExtensions
             if (CommonHelper.NextDouble() >= ctx.ReplyProbability)
             {
                 replyManager.AfterSkip();
-                ctx.Result = Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+                ctx.Result = EventHandleResult.Pass;
                 return;
             }
 
             await next();
 
-            if (ctx.Result == Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Block)
+            if (ctx.Result == EventHandleResult.Block)
                 replyManager.AfterSend();
             else
                 replyManager.AfterSkip();
@@ -291,10 +291,10 @@ public static class PipelineMiddlewareExtensions
         { CommonHelper.LogError?.Invoke("Record", ex.Message); }
     }
 
-    private static async Task<Another_Mirai_Native.Abstractions.Enums.EventHandleResult> DoChatAsync(ChatContext ctx)
+    private static async Task<EventHandleResult> DoChatAsync(ChatContext ctx)
     {
         var keys = AppConfig.ChatAPIKeyId;
-        if (keys.Count == 0) return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+        if (keys.Count == 0) return EventHandleResult.Pass;
 
         var botQQ = PromptBuilder.CurrentBotQQ;
         var groupCfg = GroupConfig.Get(ctx.GroupId);
@@ -321,11 +321,10 @@ public static class PipelineMiddlewareExtensions
             diaryText,
             effectivePrompt);
 
-        var last = history.Last();
-        dynamicContent += $"[{last.Time:HH:mm}]{last.NickName}[{last.QQ}]: {last.ParsedMessage}";
-
         var historyText = string.Join("\n",
-            history.Take(history.Count - 1).Select(r => $"[{r.Time:HH:mm}]{r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
+            history.Select(r => $"[{r.Time:HH:mm}]{r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
+        dynamicContent += historyText;
+
         var messages = PromptBuilder.BuildRequestBody(systemPrompt,
             history.Take(history.Count - 1).ToList(), dynamicContent);
 
@@ -337,25 +336,25 @@ public static class PipelineMiddlewareExtensions
         if (response == ChatService.ErrorMessage)
         {
             if (ctx.IsMentioned) await HandleFallback(ctx, systemPrompt, keys, chatService, response);
-            return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+            return EventHandleResult.Pass;
         }
 
         var abnormalReason = chatService.LastAbnormalFinishReason;
         if (ctx.IsMentioned && !string.IsNullOrWhiteSpace(abnormalReason) && string.IsNullOrWhiteSpace(response))
         {
             await HandleFallback(ctx, systemPrompt, keys, chatService, response);
-            return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Block;
+            return EventHandleResult.Block;
         }
 
         if (response.Contains(AppConfig.ChatEmptyResponse))
         {
             response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
             if (string.IsNullOrWhiteSpace(response))
-                return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+                return EventHandleResult.Pass;
         }
 
         if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, ctx.GroupId))
-            return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Pass;
+            return EventHandleResult.Pass;
 
         if (!string.IsNullOrWhiteSpace(response))
         {
@@ -392,7 +391,7 @@ public static class PipelineMiddlewareExtensions
                 chatService.ToolCallLog, response, placeholderIds);
         }
 
-        return Another_Mirai_Native.Abstractions.Enums.EventHandleResult.Block;
+        return EventHandleResult.Block;
     }
 
     private static async Task HandleFallback(
