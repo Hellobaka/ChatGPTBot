@@ -26,7 +26,6 @@ public class APIKey
     [SugarColumn(ColumnName = "TokenConsume")]
     public long TotalTokens { get; set; }
 
-    // TODO: 需要计算
     /// <summary>Cumulative cost in RMB (calculated from token usage × pricing).</summary>
     public decimal TotalConsume { get; set; }
 
