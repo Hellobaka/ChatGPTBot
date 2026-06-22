@@ -66,6 +66,12 @@ public class ChatMessage
     public static ChatMessage UserWithParts(List<ContentPart> parts) => new() { Role = "user", Parts = parts };
 
     /// <summary>
+    /// Creates a user message containing a single image file.
+    /// </summary>
+    public static ChatMessage UserWithImageFile(string filePath) =>
+        new() { Role = "user", Parts = [ContentPart.FromImageFile(filePath)] };
+
+    /// <summary>
     /// Creates an assistant message with tool calls.
     /// </summary>
     public static ChatMessage AssistantWithToolCalls(List<ToolCallRequest> toolCalls) =>

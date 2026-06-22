@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.3" />
+    <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.4" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.214" />
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.4.0" />
   </ItemGroup>

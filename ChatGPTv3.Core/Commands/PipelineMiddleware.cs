@@ -196,6 +196,7 @@ public static class PipelineMiddlewareExtensions
     {
         return builder.Use(async (ctx, next) =>
         {
+            ctx.MessageText = await ResolveImages(ctx, ctx.MessageText);
             ctx.MessageText = ResolveReferences(ctx);
             RecordMessage(ctx);
 
@@ -242,6 +243,28 @@ public static class PipelineMiddlewareExtensions
             if (records.Any(r => r.QQ == botQQ)) return true;
         }
         return false;
+    }
+
+    private static async Task<string> ResolveImages(ChatContext ctx, string currentText)
+    {
+        var msg = GetMessage(ctx);
+        var images = msg?.MessageChain?.OfType<Image>().ToList();
+        if (images == null || images.Count == 0) return currentText;
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(currentText))
+            parts.Add(currentText);
+
+        foreach (var image in images)
+        {
+            var desc = await ImageScraper.DescribeAsync(image, ctx.IsMentioned);
+            if (desc != null)
+                parts.Add(desc);
+            else
+                parts.Add("[图片]");
+        }
+
+        return string.Join("\n", parts);
     }
 
     private static string ResolveReferences(ChatContext ctx)

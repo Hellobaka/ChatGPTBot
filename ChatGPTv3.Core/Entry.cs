@@ -1,5 +1,6 @@
 using Another_Mirai_Native.Abstractions;
 using Another_Mirai_Native.Abstractions.Attributes;
+using Another_Mirai_Native.Abstractions.Services;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Commands;
 using ChatGPTv3.Core.Config;
@@ -22,8 +23,12 @@ public class Entry : PluginBase
     private SchedulerManager? _schedulerManager;
     private ScheduledTaskRunner? _taskRunner;
 
+    internal static IMessageApi? MessageApi { get; set; }
+
     public override async Task OnEnableAsync(CancellationToken ct)
     {
+        MessageApi = API.MessageApi;
+
         // ── Wire up logging ──
         CommonHelper.LogInfo = (tag, msg) => API.Logger.Info(tag, msg);
         CommonHelper.LogDebug = (tag, msg) => API.Logger.Debug(tag, msg);
