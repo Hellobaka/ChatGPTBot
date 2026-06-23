@@ -5,9 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.Core</RootNamespace>
-    <AssemblyName>ChatGPTv3.Core</AssemblyName>
+    <AssemblyName>ChatGPTv3</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+	<KeepOriginalFile>true</KeepOriginalFile>
   </PropertyGroup>
 
   <ItemGroup>
