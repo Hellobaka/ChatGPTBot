@@ -1,3 +1,4 @@
+using System.Runtime.Serialization;
 using Another_Mirai_Native.Abstractions.Enums;
 using Another_Mirai_Native.Abstractions.Models;
 using Another_Mirai_Native.Abstractions.Models.MessageItem;
@@ -300,8 +301,8 @@ public static class PipelineMiddlewareExtensions
             try
             {
                 var msg = GetMessage(ctx);
-                var rawText = msg.Text ?? "";
-                var parsedText = string.Join("", msg.MessageChain?
+                var rawText = msg?.Text ?? "";
+                var parsedText = string.Join("", msg?.MessageChain?
                     .Where(i => i is Text)
                     .Select(i => ((Text)i).Content) ?? [rawText]);
 
