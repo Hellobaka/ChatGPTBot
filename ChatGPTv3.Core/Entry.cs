@@ -24,10 +24,14 @@ public class Entry : PluginBase
     private ScheduledTaskRunner? _taskRunner;
 
     internal static IMessageApi? MessageApi { get; set; }
+    internal static IGroupApi? GroupApi { get; set; }
+    internal static IFriendApi? FriendApi { get; set; }
 
     public override async Task OnEnableAsync(CancellationToken ct)
     {
         MessageApi = API.MessageApi;
+        GroupApi = API.GroupApi;
+        FriendApi = API.FriendApi;
 
         // ── Wire up logging ──
         CommonHelper.LogInfo = (tag, msg) => API.Logger.Info(tag, msg);

@@ -35,4 +35,11 @@ public class ChatContext
 
     // ── Cancellation ───────────────────────────────────────
     public CancellationToken CancellationToken { get; set; }
+
+    // ── MCP state ──────────────────────────────────────────
+    /// <summary>
+    /// Images the LLM requested to see natively (via AddPictureToContext).
+    /// Injected at the start of each conversation turn, then cleared.
+    /// </summary>
+    public List<string> PendingImageHashes { get; set; } = [];
 }

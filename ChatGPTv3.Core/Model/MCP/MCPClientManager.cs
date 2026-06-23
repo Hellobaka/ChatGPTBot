@@ -103,13 +103,13 @@ public class MCPClientManager
     /// Gets AI functions (ToolDefinition[]) for a specific conversation context.
     /// Filters by permissions (group/QQ whitelist, master-only, disabled).
     /// </summary>
-    public ToolDefinition[] GetToolsForConversation(long groupId, long qq)
+    public static ToolDefinition[] GetToolsForConversation(MCPToolContext ctx)
     {
         var tools = new List<ToolDefinition>();
 
         foreach (var client in Clients)
         {
-            if (!CanUseClient(client, groupId, qq)) continue;
+            if (!CanUseClient(client, ctx)) continue;
 
             try
             {
@@ -136,7 +136,7 @@ public class MCPClientManager
     /// <summary>
     /// Executes a tool call against the appropriate MCP client.
     /// </summary>
-    public async Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct)
+    public static async Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct)
     {
         foreach (var client in Clients)
         {
@@ -157,35 +157,36 @@ public class MCPClientManager
         return $"Tool '{toolCall.Function.Name}' not found";
     }
 
-    private async Task<object?> ExecuteOnClientAsync(MCPClientBase client, ToolCallRequest toolCall, CancellationToken ct)
+    private static async Task<object?> ExecuteOnClientAsync(MCPClientBase client, ToolCallRequest toolCall, CancellationToken ct)
     {
         if (client is MCPCustomClient customClient)
-        {
             return await customClient.ExecuteToolAsync(toolCall, ct);
-        }
 
-        // For external MCP clients, use ModelContextProtocol to invoke
-        // TODO: Phase 7 — implement external MCP tool invocation
-        return null;
+        if (client is MCPExternalClient extClient)
+            return await extClient.ExecuteToolAsync(toolCall, ct);
+
+        return $"Unknown client type: {client.GetType().Name}";
     }
 
-    private static bool CanUseClient(MCPClientBase client, long groupId, long qq)
+    private static bool CanUseClient(MCPClientBase client, MCPToolContext ctx)
     {
         if (!client.Enabled) return false;
-        if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Contains(qq)) return false;
+        if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Contains(ctx.QQ)) return false;
 
-        if (groupId > 0 && client.GroupEnabled)
+        if (ctx.GroupId > 0 && client.GroupEnabled)
         {
+            if (client.Groups.Length == 0) return true;
             if (client.IsGroupBlackList)
-                return !client.Groups.Contains(groupId);
-            return client.Groups.Contains(groupId);
+                return !client.Groups.Contains(ctx.GroupId);
+            return client.Groups.Contains(ctx.GroupId);
         }
 
-        if (groupId == 0 && qq > 0 && client.PersonEnabled)
+        if (ctx.GroupId == 0 && ctx.QQ > 0 && client.PersonEnabled)
         {
+            if (client.Persons.Length == 0) return true;
             if (client.IsPersonBlackList)
-                return !client.Persons.Contains(qq);
-            return client.Persons.Contains(qq);
+                return !client.Persons.Contains(ctx.QQ);
+            return client.Persons.Contains(ctx.QQ);
         }
 
         return false;

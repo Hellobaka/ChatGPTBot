@@ -5,6 +5,7 @@ using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Model;
+using ChatGPTv3.Core.Model.MCP;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
 
@@ -441,10 +442,63 @@ public static class PipelineMiddlewareExtensions
         var messages = PromptBuilder.BuildRequestBody(systemPrompt,
             history.Take(history.Count - 1).ToList(), dynamicContent);
 
+        // ── Inject pending images from AddPictureToContext (native multimodal) ──
+        if (ctx.PendingImageHashes.Count > 0 && messages.Count > 0)
+        {
+            var lastMsg = messages.Last();
+            var parts = new List<ContentPart>();
+            if (lastMsg.Content is string text && !string.IsNullOrWhiteSpace(text))
+                parts.Add(ContentPart.FromText(text));
+
+            foreach (var hash in ctx.PendingImageHashes)
+            {
+                var pic = Picture.FindByHash(hash);
+                if (pic == null) continue;
+
+                var path = pic.FilePath;
+                if (!File.Exists(path))
+                {
+                    var alt = Path.Combine(CommonHelper.GetAppImageDirectory(), pic.FilePath);
+                    if 
+                        (File.Exists(alt)) path = alt;
+                    else 
+                        continue;
+                }
+                parts.Add(ContentPart.FromImageFile(path));
+            }
+
+            if (parts.Count > 1) // has image parts beyond the original text
+            {
+                lastMsg.Parts = parts;
+                lastMsg.Content = null;
+            }
+            ctx.PendingImageHashes.Clear();
+        }
+
+        // ── MCP tool setup ──
+        ToolExecutor? toolExecutor = null;
+        if (AppConfig.EnableMCP)
+        {
+            var mcpCtx = new MCPToolContext
+            {
+                GroupId = ctx.GroupId,
+                QQ = ctx.QQ,
+                ChatIdentity = $"group_{ctx.GroupId}",
+                PendingImageHashes = ctx.PendingImageHashes  // share the list
+            };
+            foreach (var c in MCPClientManager.Clients.OfType<MCPCustomClient>())
+                c.Context = mcpCtx;
+
+            toolExecutor = new ToolExecutor(
+                () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
+                async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2));
+        }
+
         var chatService = new ChatService();
         var response = await chatService.GetChatResultAsync(
             keys, messages, ChatService.Purpose.聊天,
-            timeout: AppConfig.ChatTimeout, cancellationToken: ctx.CancellationToken);
+            timeout: AppConfig.ChatTimeout, toolExecutor: toolExecutor,
+            cancellationToken: ctx.CancellationToken);
 
         if (response == ChatService.ErrorMessage)
         {

@@ -11,8 +11,10 @@ public enum MCPClientType { Http, Stdio, Custom }
 
 /// <summary>
 /// Abstract base for MCP clients. Supports HTTP, STDIO, and custom in-process implementations.
-/// Uses ModelContextProtocol NuGet for transport, wraps tools as HttpSse ToolDefinition[].
 /// </summary>
+[JsonDerivedType(typeof(MCPCustomClient), typeDiscriminator: "Custom")]
+[JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "Http")]
+[JsonDerivedType(typeof(MCPStdioClient), typeDiscriminator: "Stdio")]
 public abstract class MCPClientBase
 {
     [JsonPropertyName("ToolType")]

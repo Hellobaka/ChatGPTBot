@@ -49,4 +49,10 @@ public class MCPToolContext
     public bool EnableRelationshipFunction { get; set; } = true;
     public bool EnableRecordFunction { get; set; } = true;
     public string[]? DisabledTool { get; set; }
+
+    /// <summary>
+    /// Shared list for AddPictureToContext — the pipeline reads this
+    /// after tool execution to inject images into the next request.
+    /// </summary>
+    public List<string> PendingImageHashes { get; set; } = [];
 }

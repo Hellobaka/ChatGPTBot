@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Another_Mirai_Native.Abstractions.Services;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
+using ChatGPTv3.Core.Model;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
 
@@ -13,12 +15,13 @@ namespace ChatGPTv3.Core.Model.MCP;
 /// </summary>
 public static class MCPSelfBuiltinTools
 {
+    // CQ API methods reference Entry.API.GroupApi / Entry.API.FriendApi
     public static string[] GetBuiltinToolNames() => new[]
     {
         "AddKnowledge", "GetKnowledges",
         "UpdateMood", "UpdateFavorability", "GetRelationship",
         "GetGroupChatHistory", "GetPrivateChatHistory", "GetChatHistoryByIds",
-        "GetRangeUsageDetail", "AddPictureToContext",
+        "GetRangeUsageDetail", "AddPictureToContext", "DescribeImage",
         "UpdateSchedule", "GetCurrentSchedule",
         "CreateSchedule", "ListSchedules", "DeleteSchedule",
         "GetLoginQQ", "GetLoginNick", "GetFriendList",
@@ -61,9 +64,14 @@ public static class MCPSelfBuiltinTools
                 ["start"] = ("string", "开始时间，如 2025-10-13T10:56:40"),
                 ["end"] = ("string", "结束时间，如 2025-10-13T19:56:40")
             }, ["start", "end"]))],
-            "AddPictureToContext" => [MakeTool("AddPictureToContext", "将图片添加到对话上下文中，用于获取更详细的图片信息",
+            "AddPictureToContext" => [MakeTool("AddPictureToContext", "将图片注册到对话上下文，下一轮对话会以原生图片格式注入以获取更详细的信息",
                 Schema(new() {
                     ["hash"] = ("string", "图片的MD5哈希值")
+                }, ["hash"]))],
+            "DescribeImage" => [MakeTool("DescribeImage", "获取图片的文本描述。可附带额外提示词引导描述方向",
+                Schema(new() {
+                    ["hash"] = ("string", "图片的MD5哈希值"),
+                    ["extraPrompt"] = ("string", "额外的描述指导，如'注意图中的文字'、'关注人物表情'")
                 }, ["hash"]))],
 
             "UpdateSchedule" => [MakeTool("UpdateSchedule", "更新或添加日程安排。当你的当前活动因对话而改变时调用。",
@@ -106,6 +114,39 @@ public static class MCPSelfBuiltinTools
             "GetGroupInfo" => [MakeTool("GetGroupInfo", "获取指定群的群信息", Schema(new() {
                 ["groupId"] = ("integer", "群号，默认当前群")
             }, []))],
+            "RemoveMessage" => [MakeTool("RemoveMessage", "撤回指定消息", Schema(new() {
+                ["msgId"] = ("integer", "消息ID")
+            }, ["msgId"]))],
+            "SetGroupMemberBanSpeak" => [MakeTool("SetGroupMemberBanSpeak", "禁言指定群成员", Schema(new() {
+                ["groupId"] = ("integer", "群号"),
+                ["qq"] = ("integer", "成员QQ号"),
+                ["duration"] = ("integer", "禁言时长(秒)，默认600")
+            }, ["groupId", "qq"]))],
+            "RemoveGroupMemberBanSpeak" => [MakeTool("RemoveGroupMemberBanSpeak", "解除指定群成员的禁言", Schema(new() {
+                ["groupId"] = ("integer", "群号"),
+                ["qq"] = ("integer", "成员QQ号")
+            }, ["groupId", "qq"]))],
+            "SetGroupBanSpeak" => [MakeTool("SetGroupBanSpeak", "开启全员禁言", Schema(new() {
+                ["groupId"] = ("integer", "群号")
+            }, ["groupId"]))],
+            "RemoveGroupBanSpeak" => [MakeTool("RemoveGroupBanSpeak", "解除全员禁言", Schema(new() {
+                ["groupId"] = ("integer", "群号")
+            }, ["groupId"]))],
+            "SetGroupMemberVisitingCard" => [MakeTool("SetGroupMemberVisitingCard", "设置群成员名片", Schema(new() {
+                ["groupId"] = ("integer", "群号"),
+                ["qq"] = ("integer", "成员QQ号"),
+                ["card"] = ("string", "名片内容")
+            }, ["groupId", "qq", "card"]))],
+            "SetGroupMemberForeverExclusiveTitle" => [MakeTool("SetGroupMemberForeverExclusiveTitle", "设置群成员专属头衔", Schema(new() {
+                ["groupId"] = ("integer", "群号"),
+                ["qq"] = ("integer", "成员QQ号"),
+                ["title"] = ("string", "专属头衔内容")
+            }, ["groupId", "qq", "title"]))],
+            "RemoveGroupMember" => [MakeTool("RemoveGroupMember", "踢出群成员", Schema(new() {
+                ["groupId"] = ("integer", "群号"),
+                ["qq"] = ("integer", "成员QQ号"),
+                ["refuseJoin"] = ("boolean", "是否拒绝再次加群，默认false")
+            }, ["groupId", "qq"]))],
             _ => []
         };
     }
@@ -132,6 +173,10 @@ public static class MCPSelfBuiltinTools
                 "GetPrivateChatHistory" => GetPrivateChatHistory(args, ctx),
                 "GetChatHistoryByIds"  => GetChatHistoryByIds(args, ctx),
 
+                // Picture
+                "AddPictureToContext" => AddPictureToContext(args, ctx),
+                "DescribeImage"       => DescribeImage(args),
+
                 // Misc
                 "GetRangeUsageDetail" => GetRangeUsageDetail(args),
                 "UpdateSchedule"     => UpdateSchedule(args),
@@ -141,8 +186,21 @@ public static class MCPSelfBuiltinTools
                 "DeleteSchedule"     => DeleteScheduledTask(args),
 
                 // Admin CQ API
-                "GetLoginQQ"   => $"{PromptBuilder.CurrentBotQQ}",
-                "GetLoginNick" => AppConfig.BotName,
+                "GetLoginQQ"      => $"{PromptBuilder.CurrentBotQQ}",
+                "GetLoginNick"    => AppConfig.BotName,
+                "GetFriendList"   => CQ_GetFriendList(),
+                "GetGroupList"    => CQ_GetGroupList(),
+                "GetGroupMemberList" => CQ_GetGroupMemberList(args, ctx),
+                "GetGroupMemberInfo" => CQ_GetGroupMemberInfo(args),
+                "GetGroupInfo"       => CQ_GetGroupInfo(args),
+                "RemoveMessage"             => CQ_RemoveMessage(args),
+                "SetGroupMemberBanSpeak"    => CQ_SetGroupMemberBanSpeak(args),
+                "RemoveGroupMemberBanSpeak" => CQ_RemoveGroupMemberBanSpeak(args),
+                "SetGroupBanSpeak"          => CQ_SetGroupBanSpeak(args),
+                "RemoveGroupBanSpeak"       => CQ_RemoveGroupBanSpeak(args),
+                "SetGroupMemberVisitingCard"        => CQ_SetGroupMemberVisitingCard(args),
+                "SetGroupMemberForeverExclusiveTitle" => CQ_SetGroupMemberForeverExclusiveTitle(args),
+                "RemoveGroupMember" => CQ_RemoveGroupMember(args),
                 _ => "工具暂未实现"
             });
         }
@@ -175,6 +233,69 @@ public static class MCPSelfBuiltinTools
         var results = MemoryManager.GetKnowledge(query);
         if (results.Length == 0) return "未找到相关知识";
         return string.Join("\n", results.Select(r => $"- {r.text} (score: {r.score:F2})"));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Picture Tools
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 将图片注册到待处理列表。下一轮对话时图片会以原生格式（base64/文件）
+    /// 注入到 user message，供多模态模型直接"看到"。
+    /// </summary>
+    private static string AddPictureToContext(JsonDocument args, MCPToolContext ctx)
+    {
+        var hash = args.RootElement.GetProperty("hash").GetString()!;
+        var picture = Picture.FindByHash(hash);
+        if (picture == null)
+            return $"未找到 hash={hash} 的图片记录";
+
+        // Register for next-turn native injection
+        ctx.PendingImageHashes.Add(hash);
+
+        // If we already have a description, return it as feedback to LLM
+        if (!string.IsNullOrEmpty(picture.Description))
+        {
+            picture.UseCount++;
+            picture.LastUsedAt = DateTime.Now;
+            Picture.Upsert(picture);
+            return $"已注册图片 {hash}，下一轮将注入原生内容。当前描述: {picture.Description}";
+        }
+
+        return $"已注册图片 {hash}，当前无描述（将在下次对话中注入原生内容）";
+    }
+
+    /// <summary>
+    /// 获取图片的文本描述。如果缓存中已有描述则直接返回，
+    /// 否则调用视觉模型生成描述。
+    /// </summary>
+    private static string DescribeImage(JsonDocument args)
+    {
+        var hash = args.RootElement.GetProperty("hash").GetString()!;
+        var extraPrompt = args.RootElement.TryGetProperty("extraPrompt", out var ep)
+            ? ep.GetString() : null;
+
+        var picture = Picture.FindByHash(hash);
+        if (picture == null)
+            return $"未找到 hash={hash} 的图片记录";
+
+        // Resolve file path
+        var filePath = picture.FilePath;
+        if (!File.Exists(filePath))
+        {
+            var altPath = Path.Combine(CommonHelper.GetAppImageDirectory(), picture.FilePath);
+            if (File.Exists(altPath))
+                filePath = altPath;
+            else
+                return $"图片文件不存在: hash={hash}";
+        }
+
+        // Describe (uses cache if available, otherwise vision model)
+        var desc = ImageScraper.DescribeAsync(filePath, extraPrompt, picture.IsEmoji).Result;
+        if (desc == null)
+            return $"图片描述失败: hash={hash}";
+
+        return desc;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -419,5 +540,181 @@ public static class MCPSelfBuiltinTools
     private static JsonElement Schema(Dictionary<string, (string type, string desc)> props, string[] required)
     {
         return ToolSchemaBuilder.CreateSchema(props, required);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  CQ API Tools (need GroupApi / FriendApi wired in Entry)
+    // ═══════════════════════════════════════════════════════════
+
+    private static string CQ_GetFriendList()
+    {
+        if (Entry.FriendApi == null) return "接口未就绪 (FriendApi)";
+        try
+        {
+            var friends = Entry.FriendApi.GetFriendInfos();
+            if (friends == null || friends.Count == 0) return "暂无好友";
+            return string.Join("\n", friends.Select(f => $"- {f.QQ} {f.Nick}"));
+        }
+        catch (Exception ex) { return $"获取失败: {ex.Message}"; }
+    }
+
+    private static string CQ_GetGroupList()
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        try
+        {
+            var groups = Entry.GroupApi.GetGroupList();
+            if (groups == null || groups.Count == 0) return "未加入任何群";
+            return string.Join("\n", groups.Select(g => $"- {g.Group} {g.Name}"));
+        }
+        catch (Exception ex) { return $"获取失败: {ex.Message}"; }
+    }
+
+    private static string CQ_GetGroupMemberList(JsonDocument args, MCPToolContext ctx)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.TryGetProperty("groupId", out var g)
+            && g.GetInt64() != 0 ? g.GetInt64() : ctx.GroupId;
+        try
+        {
+            var members = Entry.GroupApi.GetGroupMembers(groupId);
+            if (members == null || members.Count == 0) return "暂无成员";
+            return string.Join("\n", members.Select(m => $"- {m.QQ} {m.Nick}"));
+        }
+        catch (Exception ex) { return $"获取失败: {ex.Message}"; }
+    }
+
+    private static string CQ_GetGroupMemberInfo(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        try
+        {
+            var info = Entry.GroupApi.GetGroupMemberInfo(0, qq);
+            if (info == null) return $"未找到 QQ={qq} 的成员信息";
+            return $"- {info.QQ} {info.Nick}";
+        }
+        catch (Exception ex) { return $"获取失败: {ex.Message}"; }
+    }
+
+    private static string CQ_GetGroupInfo(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.TryGetProperty("groupId", out var g)
+            && g.GetInt64() != 0 ? g.GetInt64() : 0;
+        if (groupId == 0) return "请提供 groupId";
+        try
+        {
+            var info = Entry.GroupApi.GetGroupInfo(groupId);
+            if (info == null) return $"未找到群 {groupId} 的信息";
+            return $"- {info.Group} {info.Name}";
+        }
+        catch (Exception ex) { return $"获取失败: {ex.Message}"; }
+    }
+
+    private static string CQ_RemoveMessage(JsonDocument args)
+    {
+        if (Entry.MessageApi == null) return "接口未就绪 (MessageApi)";
+        var msgId = args.RootElement.GetProperty("msgId").GetInt64();
+        try
+        {
+            Entry.MessageApi.DeleteMessage(msgId);
+            return $"消息 {msgId} 已撤回";
+        }
+        catch (Exception ex) { return $"撤回失败: {ex.Message}"; }
+    }
+
+    private static string CQ_SetGroupMemberBanSpeak(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        var duration = args.RootElement.TryGetProperty("duration", out var d)
+            ? d.GetInt64() : 600;
+        try
+        {
+            Entry.GroupApi.BanMember(groupId, qq, duration);
+            return $"已将 {qq} 禁言 {duration} 秒";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_RemoveGroupMemberBanSpeak(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        try
+        {
+            Entry.GroupApi.BanMember(groupId, qq, 0);
+            return $"已解除 {qq} 的禁言";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_SetGroupBanSpeak(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        try
+        {
+            Entry.GroupApi.BanGroup(groupId, true);
+            return $"已对群 {groupId} 开启全员禁言";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_RemoveGroupBanSpeak(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        try
+        {
+            Entry.GroupApi.BanGroup(groupId, false);
+            return $"已解除群 {groupId} 全员禁言";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_SetGroupMemberVisitingCard(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        var card = args.RootElement.GetProperty("card").GetString()!;
+        try
+        {
+            Entry.GroupApi.SetMemberCard(groupId, qq, card);
+            return $"已将 {qq} 的群名片设为: {card}";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_SetGroupMemberForeverExclusiveTitle(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        var title = args.RootElement.GetProperty("title").GetString()!;
+        try
+        {
+            Entry.GroupApi.SetMemberTitle(groupId, qq, title);
+            return $"已将 {qq} 的专属头衔设为: {title}";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
+    }
+
+    private static string CQ_RemoveGroupMember(JsonDocument args)
+    {
+        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        var groupId = args.RootElement.GetProperty("groupId").GetInt64();
+        var qq = args.RootElement.GetProperty("qq").GetInt64();
+        var refuseJoin = args.RootElement.TryGetProperty("refuseJoin", out var r) && r.GetBoolean();
+        try
+        {
+            Entry.GroupApi.Kick(groupId, qq, refuseJoin);
+            return $"已将 {qq} 踢出群 {groupId} (拒绝再次加群: {refuseJoin})";
+        }
+        catch (Exception ex) { return $"操作失败: {ex.Message}"; }
     }
 }

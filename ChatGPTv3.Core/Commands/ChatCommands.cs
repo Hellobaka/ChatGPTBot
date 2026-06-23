@@ -17,10 +17,15 @@ public class ChatCommands : CommandHandlerBase
     public static Func<ChatContext, Task>? GroupPipeline { get; set; }
     public static Func<ChatContext, Task>? PrivatePipeline { get; set; }
 
+    // Per-context pending image storage — survives across turns since ChatContext is ephemeral
+    private static readonly Dictionary<long, List<string>> _pendingImages = [];
+
     protected override async Task<EventHandleResult> OnNoMatchAsync(
         GroupMessageContext e, CancellationToken ct)
     {
         if (GroupPipeline == null) return EventHandleResult.Pass;
+
+        var groupId = e.FromGroup.Id;
         var ctx = new ChatContext
         {
             GroupCtx = e,
@@ -28,7 +33,25 @@ public class ChatCommands : CommandHandlerBase
             CancellationToken = ct,
             SendFunc = async msg => await e.SendMessageAsync(msg)
         };
+
+        // ── Bridge pending images from previous turn ──
+        lock (_pendingImages)
+        {
+            if (_pendingImages.TryGetValue(groupId, out var list))
+            {
+                ctx.PendingImageHashes = list;
+                _pendingImages.Remove(groupId);
+            }
+        }
+
         await GroupPipeline(ctx);
+
+        // ── Save newly queued images for next turn ──
+        if (ctx.PendingImageHashes.Count > 0)
+        {
+            lock (_pendingImages) { _pendingImages[groupId] = ctx.PendingImageHashes; }
+        }
+
         return ctx.Result;
     }
 
