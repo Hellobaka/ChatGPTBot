@@ -8,8 +8,6 @@
     <AssemblyName>ChatGPTv3.UI</AssemblyName>
     <OutputType>WinExe</OutputType>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-    <!-- UI 不是 AMN 插件，跳过 manifest 生成和 ILRepack -->
-    <GenerateAmnManifest>false</GenerateAmnManifest>
   </PropertyGroup>
 
   <ItemGroup>
