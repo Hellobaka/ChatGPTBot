@@ -14,11 +14,14 @@ public abstract class MCPExternalClient : MCPClientBase
 {
     private const int MaxReconnectAttempts = 3;
     private static readonly TimeSpan ReconnectInterval = TimeSpan.FromSeconds(3);
+    private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromMinutes(2);
 
     private McpClient? _client;
     private Timer? _reconnectTimer;
+    private Timer? _heartbeatTimer;
     private int _reconnectAttempts;
     private volatile bool _connected;
+    public bool IsConnected => _connected;
 
     protected ToolDefinition[] _cachedTools = [];
 
@@ -36,6 +39,7 @@ public abstract class MCPExternalClient : MCPClientBase
             }
             _client = await CreateClientAsync();
             _connected = true;
+            StartHeartbeat();
             CommonHelper.LogInfo?.Invoke("MCP", $"[{Name}] 已连接");
             return true;
         }
@@ -65,6 +69,8 @@ public abstract class MCPExternalClient : MCPClientBase
         _connected = false;
         _reconnectTimer?.Dispose();
         _reconnectTimer = null;
+        _heartbeatTimer?.Dispose();
+        _heartbeatTimer = null;
         _reconnectAttempts = 0;
         if (_client != null)
         {
@@ -73,15 +79,38 @@ public abstract class MCPExternalClient : MCPClientBase
         }
     }
 
+    // ── Heartbeat ─────────────────────────────────────────
+
+    private void StartHeartbeat()
+    {
+        _heartbeatTimer?.Dispose();
+        _heartbeatTimer = new Timer(async _ =>
+        {
+            if (!_connected || _client == null) return;
+            try
+            {
+                await _client.PingAsync();
+            }
+            catch
+            {
+                CommonHelper.LogWarning?.Invoke("MCP", $"[{Name}] 心跳失败，触发重连");
+                _connected = false;
+                ScheduleReconnect();
+            }
+        }, null, HeartbeatInterval, HeartbeatInterval);
+    }
+
     // ── Background reconnection ───────────────────────────
 
     private void ScheduleReconnect()
     {
         if (_reconnectTimer != null) return;
+        _heartbeatTimer?.Dispose();
+        _heartbeatTimer = null;
 
         _reconnectTimer = new Timer(async _ =>
         {
-            if (_connected) { _reconnectTimer?.Dispose(); _reconnectTimer = null; return; }
+            if (_connected) { _reconnectTimer?.Dispose(); _reconnectTimer = null; StartHeartbeat(); return; }
 
             _reconnectAttempts++;
             if (_reconnectAttempts > MaxReconnectAttempts)

@@ -12,6 +12,47 @@ namespace ChatGPTv3.Core.Model.MCP;
 public class MCPClientManager
 {
     public static List<MCPClientBase> Clients { get; set; } = [];
+    private static string _appDir = string.Empty;
+
+    // ── Persistence (for future UI) ────────────────────────
+
+    public static void Save()
+    {
+        if (string.IsNullOrEmpty(_appDir)) return;
+        Save(_appDir);
+    }
+
+    // ── CRUD (for future UI) ───────────────────────────────
+
+    public static void AddClient(MCPClientBase client)
+    {
+        Clients.Add(client);
+        Save();
+        client.Start();
+    }
+
+    public static void RemoveClient(string name)
+    {
+        var client = Clients.FirstOrDefault(c => c.Name == name);
+        if (client != null)
+        {
+            client.Stop();
+            Clients.Remove(client);
+            Save();
+        }
+    }
+
+    public static void UpdateClient(string name, Action<MCPClientBase> update)
+    {
+        var client = Clients.FirstOrDefault(c => c.Name == name);
+        if (client != null)
+        {
+            update(client);
+            Save();
+            client.Stop();
+            client.Start(); // reconnect with new settings
+        }
+    }
 
     public static JsonSerializerOptions JsonOptions { get; } = new()
     {
@@ -24,6 +65,7 @@ public class MCPClientManager
     /// </summary>
     public static void Load(string appDirectory)
     {
+        _appDir = appDirectory;
         try
         {
             var path = Path.Combine(appDirectory, "MCP.json");
