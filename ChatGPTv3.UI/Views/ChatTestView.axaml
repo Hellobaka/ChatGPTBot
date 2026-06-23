@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels"
+             xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
+             x:Class="ChatGPTv3.UI.Views.ChatTestView"
+             x:DataType="vm:ChatTestViewModel"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto" Background="#11111B">
+        <!-- ── Toolbar ── -->
+        <Border Grid.Row="0" Background="#181825" Padding="12,8"
+                BorderBrush="#313244" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="来源群号:" Foreground="#CDD6F4"
+                           VerticalAlignment="Center" FontSize="13" />
+                <TextBox Text="{Binding GroupId}"
+                         Width="120"
+                         Background="#313244" Foreground="#CDD6F4"
+                         BorderBrush="#45475A" FontSize="13"
+                         VerticalContentAlignment="Center"
+                         Watermark="私聊留空" />
+                <TextBlock Text="来源QQ:" Foreground="#CDD6F4"
+                           VerticalAlignment="Center" FontSize="13" />
+                <TextBox Text="{Binding QQ}"
+                         Width="120"
+                         Background="#313244" Foreground="#CDD6F4"
+                         BorderBrush="#45475A" FontSize="13"
+                         VerticalContentAlignment="Center" />
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="#F38BA8" FontSize="12"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!-- ── Chat area ── -->
+        <ScrollViewer Grid.Row="1" x:Name="ChatScroll">
+            <ItemsControl ItemsSource="{Binding Messages}" Margin="12,8">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ChatBubbleItem"
+                                  x:CompileBindings="False">
+                        <StackPanel Margin="0,4"
+                                    HorizontalAlignment="{Binding IsSelf,
+                                        Converter={x:Static conv:ChatConverters.Alignment}}"
+                                    MaxWidth="480">
+                            <!-- Text bubble -->
+                            <Border IsVisible="{Binding !IsImage}"
+                                    Background="{Binding IsSelf,
+                                        Converter={x:Static conv:ChatConverters.BubbleColor}}"
+                                    CornerRadius="12"
+                                    Padding="12,8">
+                                <TextBlock Text="{Binding Content}"
+                                           Foreground="{Binding IsSelf,
+                                               Converter={x:Static conv:ChatConverters.TextColor}}"
+                                           FontSize="13"
+                                           TextWrapping="Wrap" />
+                            </Border>
+                            <TextBlock Text="{Binding Sender}"
+                                       Foreground="#585B70" FontSize="11"
+                                       Margin="4,2,0,0" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- ── Input area ── -->
+        <Border Grid.Row="2" Background="#181825" Padding="12,8"
+                BorderBrush="#313244" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <TextBox Text="{Binding MessageText}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="36" MaxHeight="100"
+                         Background="#313244" Foreground="#CDD6F4"
+                         BorderBrush="#45475A" FontSize="13"
+                         Watermark="输入消息，Enter 发送，↑↓ 历史"
+                         KeyDown="OnInputKeyDown" />
+                <Button Grid.Column="1"
+                        Content="发送"
+                        Command="{Binding SendCommand}"
+                        IsEnabled="{Binding !IsSending}"
+                        Background="#89B4FA" Foreground="#11111B"
+                        FontWeight="Bold" Padding="16,8" FontSize="13"
+                        VerticalAlignment="Stretch" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
