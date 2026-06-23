@@ -1,14 +1,16 @@
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
+using ChatGPTv3.Core.Model.MCP;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
 
 namespace ChatGPTv3.Core.Model;
 
 /// <summary>
-/// Monitors ScheduledTask table and executes due tasks with a dedicated system prompt.
-/// Uses the same MCP tool chain as normal conversations — tasks can do more than text.
+/// Monitors ScheduledTask table (every 30s) and executes due cron tasks.
+/// Each task runs with a dedicated system prompt (persona + task-mode rules)
+/// and full MCP tool chain access — tasks can do more than just text.
 /// </summary>
 public class ScheduledTaskRunner
 {
@@ -29,6 +31,13 @@ public class ScheduledTaskRunner
 
     public static ScheduledTaskRunner? Instance { get; private set; }
 
+    /// <summary>
+    /// Set by Entry during startup. Sends a message to a target group/private chat.
+    /// Parameters: (groupId, qq, message).
+    /// For group messages, qq is ignored. For private, groupId is 0.
+    /// </summary>
+    public static Func<long, long, string, Task>? SendReply { get; set; }
+
     public ScheduledTaskRunner()
     {
         Instance = this;
@@ -40,7 +49,7 @@ public class ScheduledTaskRunner
         _running = true;
         _timer = new Timer(_ => CheckAndExecute(), null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-        _ = CheckAndExecute(); // run immediately on start
+        _ = CheckAndExecute();
     }
 
     public void Stop()
@@ -49,17 +58,19 @@ public class ScheduledTaskRunner
         _timer?.Dispose();
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  Poll & execute
+    // ═══════════════════════════════════════════════════════════
+
     private async Task CheckAndExecute()
     {
-        if (!AppConfig.EnableMCP) return;
-
         try
         {
             var dueTasks = ScheduledTask.GetDue(DateTime.Now);
             foreach (var task in dueTasks)
             {
                 await ExecuteTask(task);
-                // Re-schedule
+
                 var next = CronHelper.GetNextFireTime(task.CronExpr, DateTime.Now);
                 if (next.HasValue)
                 {
@@ -75,16 +86,19 @@ public class ScheduledTaskRunner
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  Single task execution
+    // ═══════════════════════════════════════════════════════════
+
     private async Task ExecuteTask(ScheduledTask task)
     {
         try
         {
-            CommonHelper.LogInfo?.Invoke("ScheduledTask", $"执行: {task.TaskName}");
+            CommonHelper.LogInfo?.Invoke("ScheduledTask",
+                $"执行: {task.TaskName} → {(task.TargetType == 0 ? "群" : "私聊")} {task.TargetId}");
 
-            // Build the task-mode system prompt (persona + task rules)
+            // ── Build task-mode system prompt (persona + rules) ──
             var persona = string.Format(TaskSystemPrompt, AppConfig.GroupPrompt);
-
-            // Build user message — make it the bot's own intention
             var userMsg = $"你想起来要做一件事：{task.ExtraPrompt}\n\n请自然地执行。";
 
             var messages = new List<ChatMessage>
@@ -93,25 +107,69 @@ public class ScheduledTaskRunner
                 ChatMessage.User(userMsg)
             };
 
-            // TODO: Phase 7 — wire MCP tool chain to allow more than text for scheduled tasks
+            // ── MCP tool setup ──
+            ToolExecutor? toolExecutor = null;
+            if (AppConfig.EnableMCP)
+            {
+                var mcpCtx = new MCPToolContext
+                {
+                    GroupId = task.TargetType == 0 ? task.TargetId : 0,
+                    QQ = task.TargetType == 1 ? task.TargetId : 0,
+                    ChatIdentity = $"task_{task.Id}"
+                };
 
+                foreach (var c in MCPClientManager.Clients.OfType<MCPCustomClient>())
+                    c.Context = mcpCtx;
+
+                toolExecutor = new ToolExecutor(
+                    () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
+                    async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2));
+            }
+
+            // ── Call LLM ──
             var chatService = new ChatService();
             var response = await chatService.GetChatResultAsync(
                 AppConfig.ChatAPIKeyId, messages,
                 ChatService.Purpose.聊天,
                 timeout: AppConfig.ChatTimeout,
+                toolExecutor: toolExecutor,
                 identity: $"task_{task.Id}");
 
             if (response == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(response))
+            {
+                CommonHelper.LogWarning?.Invoke("ScheduledTask", $"{task.TaskName}: LLM 返回空");
                 return;
+            }
 
-            CommonHelper.LogInfo?.Invoke("ScheduledTask", $"结果: {response[..Math.Min(response.Length, 100)]}");
+            CommonHelper.LogInfo?.Invoke("ScheduledTask",
+                $"结果: {response[..Math.Min(response.Length, 100)]}");
 
-            // TODO: send to target (group/private) — requires AppApi access
+            // ── Send to target ──
+            await SendToTarget(task, response);
         }
         catch (Exception ex)
         {
             CommonHelper.LogError?.Invoke("ScheduledTask", $"执行失败: {ex.Message}");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Message sending
+    // ═══════════════════════════════════════════════════════════
+
+    private static async Task SendToTarget(ScheduledTask task, string response)
+    {
+        if (SendReply == null) return;
+
+        try
+        {
+            long groupId = task.TargetType == 0 ? task.TargetId : 0;
+            long qq = task.TargetType == 1 ? task.TargetId : 0;
+            await SendReply(groupId, qq, response);
+        }
+        catch (Exception ex)
+        {
+            CommonHelper.LogError?.Invoke("ScheduledTask", $"发送失败: {ex.Message}");
         }
     }
 }

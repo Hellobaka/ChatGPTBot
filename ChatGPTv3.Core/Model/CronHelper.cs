@@ -6,6 +6,61 @@ namespace ChatGPTv3.Core.Model;
 /// </summary>
 public static class CronHelper
 {
+    /// <summary>
+    /// Estimates the minimum interval (minutes) this cron expression could fire.
+    /// Returns null if the expression is invalid.
+    /// </summary>
+    public static int? GetMinIntervalMinutes(string cronExpr)
+    {
+        // Quick check: the minimum possible interval is bounded by the minute field
+        var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 5) return null;
+
+        try
+        {
+            int minInterval = int.MaxValue;
+
+            // Check step values — the smallest step dominates
+            foreach (var field in parts)
+            {
+                if (field == "*") { minInterval = Math.Min(minInterval, 1); continue; }
+                foreach (var part in field.Split(','))
+                {
+                    if (part.StartsWith("*/"))
+                    {
+                        int step = int.Parse(part[2..]);
+                        minInterval = Math.Min(minInterval, part == parts[0] ? step : step * 60);
+                    }
+                    else if (part.Contains('-'))
+                    {
+                        minInterval = Math.Min(minInterval, 1); // range could fire every minute
+                    }
+                    // Single value: doesn't reduce the interval below 1 minute
+                }
+            }
+
+            // If the minute field is * or */N, min interval is at most 1 minute
+            if (parts[0] == "*") minInterval = Math.Min(minInterval, 1);
+
+            // Check for single-value minute (e.g., "30 * * * *" = every hour)
+            if (parts[0].Contains('-') || parts[0].Contains(',') || parts[0] == "*" || parts[0].StartsWith("*/"))
+            {
+                // already handled above
+            }
+            else
+            {
+                // Single minute value: fires at most once per hour
+                minInterval = Math.Min(minInterval, 60);
+            }
+
+            return minInterval == int.MaxValue ? null : minInterval;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public static DateTime? GetNextFireTime(string cronExpr, DateTime from)
     {
         var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);

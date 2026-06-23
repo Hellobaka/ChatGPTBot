@@ -83,7 +83,8 @@ public static class MCPSelfBuiltinTools
             "GetCurrentSchedule" => [MakeTool("GetCurrentSchedule", "获取你当前时间段的日程安排。",
                 Schema(new() {}, []))],
 
-            "CreateSchedule" => [MakeTool("CreateSchedule", "创建一个定时任务。指定cron表达式和任务描述。",
+            "CreateSchedule" => [MakeTool("CreateSchedule",
+                "创建一个定时任务。调用前请评估任务的紧急度和频率合理性：每小时或更高频率的任务不建议创建（如提醒喝水这种用户自己能做的事）。",
                 Schema(new() {
                     ["name"] = ("string", "任务名称，如'提醒吃药'"),
                     ["cronExpr"] = ("string", "cron表达式，如'0 8 * * *'表示每天8点"),
@@ -458,6 +459,10 @@ public static class MCPSelfBuiltinTools
         var name = args.RootElement.GetProperty("name").GetString()!;
         var cronExpr = args.RootElement.GetProperty("cronExpr").GetString()!;
         var prompt = args.RootElement.GetProperty("prompt").GetString()!;
+
+        var minInterval = CronHelper.GetMinIntervalMinutes(cronExpr);
+        if (minInterval != null && minInterval < AppConfig.MinCronIntervalMinutes)
+            return $"cron表达式频率过高（最小间隔约{minInterval}分钟），最低允许 {AppConfig.MinCronIntervalMinutes} 分钟";
 
         var next = CronHelper.GetNextFireTime(cronExpr, DateTime.Now);
         if (!next.HasValue) return "cron表达式无效，请使用5字段格式: 分 时 日 月 周";

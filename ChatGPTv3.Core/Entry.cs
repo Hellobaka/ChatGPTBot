@@ -81,6 +81,13 @@ public class Entry : PluginBase
 
                 // Scheduled task runner
                 _taskRunner = new ScheduledTaskRunner();
+                ScheduledTaskRunner.SendReply = async (groupId, qq, msg) =>
+                {
+                    if (groupId > 0 && MessageApi != null)
+                        await MessageApi.SendGroupMessageAsync(groupId, msg);
+                    else if (qq > 0 && MessageApi != null)
+                        await MessageApi.SendPrivateMessageAsync(qq, msg);
+                };
                 _taskRunner.Start();
                 API.Logger.Info("ChatGPTv3", "定时任务运行器已启动");
 

@@ -205,6 +205,10 @@ public static class AppConfig
     /// <summary>LLM timeout for diary generation (ms).</summary>
     public static int DiaryTimeout { get; set; } = 60000;
 
+    // ── Scheduled Task ────────────────────────────────────
+    /// <summary>Minimum interval in minutes for cron expressions. Prevents abuse.</summary>
+    public static int MinCronIntervalMinutes { get; set; } = 5;
+
     // ── Context Compression ───────────────────────────────
     /// <summary>Enable time-based compression trigger (every N minutes).</summary>
     public static bool EnableCompressByTime { get; set; } = true;
@@ -380,6 +384,9 @@ public static class AppConfig
         DiaryReviewHours = ConfigManager.GetConfig("DiaryReviewHours", 24);
         DiaryMaxKeep = ConfigManager.GetConfig("DiaryMaxKeep", 7);
         DiaryTimeout = ConfigManager.GetConfig("DiaryTimeout", 60000);
+
+        // Scheduled task
+        MinCronIntervalMinutes = ConfigManager.GetConfig("MinCronIntervalMinutes", 5);
 
         // Context compression
         EnableCompressByTime = ConfigManager.GetConfig("EnableCompressByTime", true);
