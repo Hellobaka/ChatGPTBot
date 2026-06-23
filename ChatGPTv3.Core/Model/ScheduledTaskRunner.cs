@@ -64,13 +64,17 @@ public class ScheduledTaskRunner
 
     private async Task CheckAndExecute()
     {
+        if (!_running) return;
+
         try
         {
             var dueTasks = ScheduledTask.GetDue(DateTime.Now);
             foreach (var task in dueTasks)
             {
+                if (!_running) break;
                 await ExecuteTask(task);
 
+                if (!_running) break;
                 var next = CronHelper.GetNextFireTime(task.CronExpr, DateTime.Now);
                 if (next.HasValue)
                 {
@@ -92,6 +96,8 @@ public class ScheduledTaskRunner
 
     private async Task ExecuteTask(ScheduledTask task)
     {
+        if (!_running) return;
+
         try
         {
             CommonHelper.LogInfo?.Invoke("ScheduledTask",
@@ -123,7 +129,7 @@ public class ScheduledTaskRunner
 
                 toolExecutor = new ToolExecutor(
                     () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
-                    async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2));
+                    async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2, mcpCtx));
             }
 
             // ── Call LLM ──
@@ -135,6 +141,8 @@ public class ScheduledTaskRunner
                 toolExecutor: toolExecutor,
                 identity: $"task_{task.Id}");
 
+            if (!_running) return;
+
             if (response == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(response))
             {
                 CommonHelper.LogWarning?.Invoke("ScheduledTask", $"{task.TaskName}: LLM 返回空");
@@ -145,7 +153,8 @@ public class ScheduledTaskRunner
                 $"结果: {response[..Math.Min(response.Length, 100)]}");
 
             // ── Send to target ──
-            await SendToTarget(task, response);
+            if (_running)
+                await SendToTarget(task, response);
         }
         catch (Exception ex)
         {

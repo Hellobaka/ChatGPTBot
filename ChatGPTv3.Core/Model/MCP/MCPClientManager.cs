@@ -179,6 +179,15 @@ public class MCPClientManager
     /// Executes a tool call against the appropriate MCP client.
     /// </summary>
     public static async Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct)
+        => await ExecuteToolAsync(toolCall, ct, null);
+
+    /// <summary>
+    /// Executes a tool call with an explicit <see cref="MCPToolContext"/>.
+    /// When provided, the context is passed directly to the tool handler,
+    /// avoiding reliance on the mutable <see cref="MCPCustomClient.Context"/> property.
+    /// This prevents race conditions when concurrent callers share the same client instance.
+    /// </summary>
+    public static async Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct, MCPToolContext? context)
     {
         foreach (var client in Clients)
         {
@@ -187,10 +196,7 @@ public class MCPClientManager
                 var tools = await client.GetToolsAsync();
                 if (tools.Any(t => t.Function.Name == toolCall.Function.Name))
                 {
-                    // Execute the tool via the MCP client
-                    // For custom clients, this is an in-process call
-                    // For external clients, this goes through ModelContextProtocol
-                    return await ExecuteOnClientAsync(client, toolCall, ct);
+                    return await ExecuteOnClientAsync(client, toolCall, ct, context);
                 }
             }
             catch { }
@@ -199,10 +205,10 @@ public class MCPClientManager
         return $"Tool '{toolCall.Function.Name}' not found";
     }
 
-    private static async Task<object?> ExecuteOnClientAsync(MCPClientBase client, ToolCallRequest toolCall, CancellationToken ct)
+    private static async Task<object?> ExecuteOnClientAsync(MCPClientBase client, ToolCallRequest toolCall, CancellationToken ct, MCPToolContext? context = null)
     {
         if (client is MCPCustomClient customClient)
-            return await customClient.ExecuteToolAsync(toolCall, ct);
+            return await customClient.ExecuteToolAsync(toolCall, ct, context);
 
         if (client is MCPExternalClient extClient)
             return await extClient.ExecuteToolAsync(toolCall, ct);

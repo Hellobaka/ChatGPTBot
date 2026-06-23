@@ -491,7 +491,7 @@ public static class PipelineMiddlewareExtensions
 
             toolExecutor = new ToolExecutor(
                 () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
-                async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2));
+                async (tc, ct2) => await MCPClientManager.ExecuteToolAsync(tc, ct2, mcpCtx));
         }
 
         var chatService = new ChatService();

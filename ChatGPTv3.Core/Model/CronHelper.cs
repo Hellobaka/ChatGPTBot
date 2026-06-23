@@ -12,48 +12,53 @@ public static class CronHelper
     /// </summary>
     public static int? GetMinIntervalMinutes(string cronExpr)
     {
-        // Quick check: the minimum possible interval is bounded by the minute field
         var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 5) return null;
 
         try
         {
-            int minInterval = int.MaxValue;
+            int? minInterval = null;
 
-            // Check step values — the smallest step dominates
-            foreach (var field in parts)
+            // Check step values first — they give the tightest bound
+            for (int i = 0; i < parts.Length; i++)
             {
-                if (field == "*") { minInterval = Math.Min(minInterval, 1); continue; }
-                foreach (var part in field.Split(','))
+                foreach (var sub in parts[i].Split(','))
                 {
-                    if (part.StartsWith("*/"))
+                    if (sub.StartsWith("*/"))
                     {
-                        int step = int.Parse(part[2..]);
-                        minInterval = Math.Min(minInterval, part == parts[0] ? step : step * 60);
+                        int step = int.Parse(sub[2..]);
+                        // Scale step based on field position
+                        int stepMinutes = i switch
+                        {
+                            0 => step,           // minute field
+                            1 => step * 60,      // hour field
+                            2 => step * 1440,    // day of month
+                            3 => step * 44640,   // month (~31 days)
+                            4 => step * 1440,    // day of week
+                            _ => step
+                        };
+                        minInterval = minInterval.HasValue
+                            ? Math.Min(minInterval.Value, stepMinutes)
+                            : stepMinutes;
                     }
-                    else if (part.Contains('-'))
-                    {
-                        minInterval = Math.Min(minInterval, 1); // range could fire every minute
-                    }
-                    // Single value: doesn't reduce the interval below 1 minute
                 }
             }
 
-            // If the minute field is * or */N, min interval is at most 1 minute
-            if (parts[0] == "*") minInterval = Math.Min(minInterval, 1);
-
-            // Check for single-value minute (e.g., "30 * * * *" = every hour)
-            if (parts[0].Contains('-') || parts[0].Contains(',') || parts[0] == "*" || parts[0].StartsWith("*/"))
+            // If no step values found, estimate from the minute field
+            if (!minInterval.HasValue)
             {
-                // already handled above
-            }
-            else
-            {
-                // Single minute value: fires at most once per hour
-                minInterval = Math.Min(minInterval, 60);
+                var minuteField = parts[0];
+                if (minuteField == "*")
+                    minInterval = 1;
+                else if (minuteField.Contains('-'))
+                    minInterval = 1;  // range could fire every minute
+                else if (minuteField.Contains(','))
+                    minInterval = 1;  // conservative: assume sub-values could be dense
+                else
+                    minInterval = 60; // single minute value: once per hour max
             }
 
-            return minInterval == int.MaxValue ? null : minInterval;
+            return minInterval;
         }
         catch
         {

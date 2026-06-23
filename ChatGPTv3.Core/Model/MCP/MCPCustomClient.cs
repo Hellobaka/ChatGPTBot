@@ -25,11 +25,20 @@ public class MCPCustomClient : MCPClientBase
     }
 
     public Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct)
+        => ExecuteToolAsync(toolCall, ct, null);
+
+    /// <summary>
+    /// Execute a tool with an explicit context override.
+    /// When <paramref name="context"/> is provided it takes precedence over <see cref="Context"/>.
+    /// This avoids race conditions when concurrent callers (conversation + scheduled task)
+    /// share the same MCPCustomClient instance.
+    /// </summary>
+    public Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct, MCPToolContext? context)
     {
         var name = toolCall.Function.Name;
         var args = toolCall.Function.ParseArguments();
-
-        return MCPSelfBuiltinTools.ExecuteToolAsync(name, args, Context);
+        var ctx = context ?? Context;
+        return MCPSelfBuiltinTools.ExecuteToolAsync(name, args, ctx);
     }
 }
 
