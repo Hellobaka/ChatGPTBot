@@ -151,6 +151,9 @@ public class Entry : PluginBase
             .UseMessageFilter()
             .UseConcurrencyGate()
             .UseReplyDecision()
+            .UseMessageImageResolver()
+            .UseMessageReferenceResolver()
+            .UseMessageRecorder()
             .UseChatHandler()
             .Build();
 
@@ -158,6 +161,9 @@ public class Entry : PluginBase
             .UsePrivateAccessControl()
             .UseMessageFilter()
             .UsePrivateReplyDecision()
+            .UseMessageImageResolver()
+            .UseMessageReferenceResolver()
+            .UseMessageRecorder()
             .UseChatHandler()
             .Build();
 

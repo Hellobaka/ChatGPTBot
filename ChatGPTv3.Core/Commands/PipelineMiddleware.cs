@@ -186,26 +186,164 @@ public static class PipelineMiddlewareExtensions
             await next();
 
             if (ctx.Result == EventHandleResult.Block)
+            {
                 replyManager.AfterSend();
+            }
             else
+            {
                 replyManager.AfterSkip();
+            }
         });
     }
 
     public static ChatPipelineBuilder UseChatHandler(this ChatPipelineBuilder builder)
     {
+        return builder
+            .UseBackgroundCounters()
+            .UseChatExecutor();
+    }
+
+    public static ChatPipelineBuilder UseMessageImageResolver(this ChatPipelineBuilder builder)
+    {
         return builder.Use(async (ctx, next) =>
         {
-            ctx.MessageText = await ResolveImages(ctx, ctx.MessageText);
-            ctx.MessageText = ResolveReferences(ctx);
-            RecordMessage(ctx);
+            var msg = GetMessage(ctx);
+            var images = msg?.MessageChain?.OfType<Image>().ToList();
+            if (images is not { Count: > 0 })
+            {
+                await next();
+                return;
+            }
 
-            // Increment background counters (diary + compression)
+            // ── Decision: should we describe images? ──
+            var shouldDescribe = AppConfig.EnableVision
+                && (!AppConfig.EnableVisionWhenMentioned || ctx.IsMentioned);
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ctx.MessageText))
+            {
+                parts.Add(ctx.MessageText);
+            }
+
+            foreach (var image in images)
+            {
+                if (!shouldDescribe || (AppConfig.IgnoreNotEmoji && !image.IsEmoji))
+                {
+                    parts.Add("[图片]");
+                    continue;
+                }
+
+                // Resolve file path
+                var filePath = await ImageScraper.ResolvePathAsync(image.FilePath, image.Hash);
+                if (filePath == null)
+                {
+                    parts.Add("[图片]");
+                    continue;
+                }
+
+                // Choose prompt based on emoji status, describe
+                var extraPrompt = image.IsEmoji ? ImageScraper.EmojiPrompt : null;
+                var description = await ImageScraper.DescribeAsync(filePath, extraPrompt, image.IsEmoji);
+
+                if (description != null)
+                {
+                    var type = image.IsEmoji ? "表情包" : "图片";
+                    parts.Add($"[{type} hash:{image.Hash};描述:{description}]");
+                }
+                else
+                {
+                    parts.Add("[图片]");
+                }
+            }
+
+            ctx.MessageText = string.Join("\n", parts);
+
+            await next();
+        });
+    }
+
+    public static ChatPipelineBuilder UseMessageReferenceResolver(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            var msg = GetMessage(ctx);
+            if (msg?.MessageChain != null)
+            {
+                var currentText = ctx.MessageText;
+                var replyItems = msg.MessageChain.OfType<Reply>().ToList();
+                if (replyItems.Count > 0)
+                {
+                    var botQQ = PromptBuilder.CurrentBotQQ;
+                    foreach (var reply in replyItems)
+                    {
+                        var records = ChatRecord.GetByIds([reply.Id], ctx.GroupId);
+                        var quoted = records.FirstOrDefault();
+                        if (quoted != null && quoted.QQ == botQQ)
+                        {
+                            currentText = $"[用户引用了你之前说过的话]\n你: {quoted.ParsedMessage}\n[用户现在说]\n{currentText}";
+                        }
+                    }
+
+                    ctx.MessageText = currentText;
+                }
+            }
+
+            await next();
+        });
+    }
+
+    public static ChatPipelineBuilder UseMessageRecorder(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            try
+            {
+                var msg = GetMessage(ctx);
+                var rawText = msg.Text ?? "";
+                var parsedText = string.Join("", msg.MessageChain?
+                    .Where(i => i is Text)
+                    .Select(i => ((Text)i).Content) ?? [rawText]);
+
+                ChatRecord.Insert(new ChatRecord
+                {
+                    GroupID = ctx.GroupId,
+                    QQ = ctx.QQ,
+                    NickName = ctx.QQ.ToString(),
+                    Message = rawText,
+                    ParsedMessage = parsedText,
+                    SenderType = SenderType.User,
+                    MessageID = msg.Id,
+                    Time = DateTime.Now,
+                    IsMentioned = ctx.IsMentioned,
+                    IsImage = ctx.IsImageOnly,
+                    IsEmpty = !ctx.IsImageOnly && string.IsNullOrWhiteSpace(parsedText)
+                });
+            }
+            catch (Exception ex)
+            {
+                CommonHelper.LogError?.Invoke("Record", ex.Message);
+            }
+
+            await next();
+        });
+    }
+
+    public static ChatPipelineBuilder UseBackgroundCounters(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
             DiaryMemoryManager.OnMessageProcessed(ctx.GroupId);
             ContextCompressor.OnMessageProcessed(ctx.GroupId);
+            await next();
+        });
+    }
 
-            var result = await DoChatAsync(ctx);
-            ctx.Result = result;
+    public static ChatPipelineBuilder UseChatExecutor(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            ctx.Result = await DoChatAsync(ctx);
+            await next();
         });
     }
 
@@ -216,14 +354,22 @@ public static class PipelineMiddlewareExtensions
 
     private static bool CheckAtBot(Message? msg)
     {
-        if (msg?.MessageChain == null) return false;
+        if (msg?.MessageChain == null)
+        {
+            return false;
+        }
+
         var botQQ = PromptBuilder.CurrentBotQQ;
         return msg.MessageChain.OfType<At>().Any(a => a.Target == botQQ || a.AllTarget);
     }
 
     private static bool CheckNickname(string text)
     {
-        if (string.IsNullOrWhiteSpace(text)) return false;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
         return AppConfig.BotNicknames.Any(n =>
             !string.IsNullOrEmpty(n) && text.Contains(n, StringComparison.OrdinalIgnoreCase));
     }
@@ -233,91 +379,36 @@ public static class PipelineMiddlewareExtensions
 
     private static bool CheckReplyToBot(Message? msg, long groupId)
     {
-        if (msg?.MessageChain == null) return false;
+        if (msg?.MessageChain == null)
+        {
+            return false;
+        }
+
         var replyItems = msg.MessageChain.OfType<Reply>().ToList();
-        if (replyItems.Count == 0) return false;
+        if (replyItems.Count == 0)
+        {
+            return false;
+        }
+
         var botQQ = PromptBuilder.CurrentBotQQ;
         foreach (var reply in replyItems)
         {
             var records = ChatRecord.GetByIds([reply.Id], groupId);
-            if (records.Any(r => r.QQ == botQQ)) return true;
-        }
-        return false;
-    }
-
-    private static async Task<string> ResolveImages(ChatContext ctx, string currentText)
-    {
-        var msg = GetMessage(ctx);
-        var images = msg?.MessageChain?.OfType<Image>().ToList();
-        if (images == null || images.Count == 0) return currentText;
-
-        var parts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(currentText))
-            parts.Add(currentText);
-
-        foreach (var image in images)
-        {
-            var desc = await ImageScraper.DescribeAsync(image, ctx.IsMentioned);
-            if (desc != null)
-                parts.Add(desc);
-            else
-                parts.Add("[图片]");
-        }
-
-        return string.Join("\n", parts);
-    }
-
-    private static string ResolveReferences(ChatContext ctx)
-    {
-        var msg = GetMessage(ctx);
-        if (msg?.MessageChain == null) return ctx.MessageText;
-        var currentText = ctx.MessageText;
-        var groupId = ctx.GroupId;
-        var replyItems = msg.MessageChain.OfType<Reply>().ToList();
-        if (replyItems.Count == 0) return currentText;
-        var botQQ = PromptBuilder.CurrentBotQQ;
-        foreach (var reply in replyItems)
-        {
-            var records = ChatRecord.GetByIds([reply.Id], groupId);
-            var quoted = records.FirstOrDefault();
-            if (quoted != null && quoted.QQ == botQQ)
+            if (records.Any(r => r.QQ == botQQ))
             {
-                currentText = $"[用户引用了你之前说过的话]\n你: {quoted.ParsedMessage}\n[用户现在说]\n{currentText}";
+                return true;
             }
         }
-        return currentText;
-    }
-
-    private static void RecordMessage(ChatContext ctx)
-    {
-        try
-        {
-            var msg = GetMessage(ctx);
-            var rawText = msg.Text ?? "";
-            var parsedText = string.Join("", msg.MessageChain?
-                .Where(i => i is Text)
-                .Select(i => ((Text)i).Content) ?? [rawText]);
-
-            ChatRecord.Insert(new ChatRecord
-            {
-                GroupID = ctx.GroupId, QQ = ctx.QQ,
-                NickName = ctx.QQ.ToString(),
-                Message = rawText, ParsedMessage = parsedText,
-                SenderType = SenderType.User,
-                MessageID = msg.Id, Time = DateTime.Now,
-                IsMentioned = ctx.IsMentioned,
-                IsImage = ctx.IsImageOnly,
-                IsEmpty = !ctx.IsImageOnly && string.IsNullOrWhiteSpace(parsedText)
-            });
-        }
-        catch (Exception ex)
-        { CommonHelper.LogError?.Invoke("Record", ex.Message); }
+        return false;
     }
 
     private static async Task<EventHandleResult> DoChatAsync(ChatContext ctx)
     {
         var keys = AppConfig.ChatAPIKeyId;
-        if (keys.Count == 0) return EventHandleResult.Pass;
+        if (keys.Count == 0)
+        {
+            return EventHandleResult.Pass;
+        }
 
         var botQQ = PromptBuilder.CurrentBotQQ;
         var groupCfg = GroupConfig.Get(ctx.GroupId);
@@ -344,9 +435,8 @@ public static class PipelineMiddlewareExtensions
             diaryText,
             effectivePrompt);
 
-        var historyText = string.Join("\n",
-            history.Select(r => $"[{r.Time:HH:mm}]{r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
-        dynamicContent += historyText;
+        var last = history.Last();
+        dynamicContent += $"[{last.Time:HH:mm}]{last.NickName}[{last.QQ}]: {last.ParsedMessage}";
 
         var messages = PromptBuilder.BuildRequestBody(systemPrompt,
             history.Take(history.Count - 1).ToList(), dynamicContent);
@@ -358,7 +448,11 @@ public static class PipelineMiddlewareExtensions
 
         if (response == ChatService.ErrorMessage)
         {
-            if (ctx.IsMentioned) await HandleFallback(ctx, systemPrompt, keys, chatService, response);
+            if (ctx.IsMentioned)
+            {
+                await HandleFallback(ctx, systemPrompt, keys, chatService, response);
+            }
+
             return EventHandleResult.Pass;
         }
 
@@ -373,16 +467,20 @@ public static class PipelineMiddlewareExtensions
         {
             response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
             if (string.IsNullOrWhiteSpace(response))
+            {
                 return EventHandleResult.Pass;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, ctx.GroupId))
+        {
             return EventHandleResult.Pass;
+        }
 
         if (!string.IsNullOrWhiteSpace(response))
         {
-            await ctx.SendFunc!(response);
-            RecordBotMessage(ctx.GroupId, response);
+            var sentText = await SendReplyWithEmoji(ctx, response);
+            RecordBotMessage(ctx.GroupId, sentText);
         }
 
         // Tool call chain recording
@@ -390,9 +488,13 @@ public static class PipelineMiddlewareExtensions
         {
             ChatRecord.Insert(new ChatRecord
             {
-                GroupID = ctx.GroupId, QQ = PromptBuilder.CurrentBotQQ,
-                NickName = AppConfig.BotName, SenderType = SenderType.Assistant,
-                ParsedMessage = string.Empty, HasToolCalls = true, Time = DateTime.Now
+                GroupID = ctx.GroupId,
+                QQ = PromptBuilder.CurrentBotQQ,
+                NickName = AppConfig.BotName,
+                SenderType = SenderType.Assistant,
+                ParsedMessage = string.Empty,
+                HasToolCalls = true,
+                Time = DateTime.Now
             });
 
             var placeholderIds = new List<int>();
@@ -400,11 +502,14 @@ public static class PipelineMiddlewareExtensions
             {
                 var id = ChatRecord.Insert(new ChatRecord
                 {
-                    GroupID = ctx.GroupId, QQ = ctx.QQ,
+                    GroupID = ctx.GroupId,
+                    QQ = ctx.QQ,
                     SenderType = SenderType.Tool,
                     ParsedMessage = $"[{tc.name}]...",
-                    ToolCallId = tc.callId, ToolName = tc.name,
-                    IsToolSuccess = tc.success, Time = DateTime.Now
+                    ToolCallId = tc.callId,
+                    ToolName = tc.name,
+                    IsToolSuccess = tc.success,
+                    Time = DateTime.Now
                 });
                 placeholderIds.Add(id);
             }
@@ -461,9 +566,13 @@ public static class PipelineMiddlewareExtensions
         {
             ChatRecord.Insert(new ChatRecord
             {
-                GroupID = groupId, QQ = PromptBuilder.CurrentBotQQ,
-                NickName = AppConfig.BotName, Message = message,
-                ParsedMessage = message, SenderType = SenderType.Assistant, Time = DateTime.Now
+                GroupID = groupId,
+                QQ = PromptBuilder.CurrentBotQQ,
+                NickName = AppConfig.BotName,
+                Message = message,
+                ParsedMessage = message,
+                SenderType = SenderType.Assistant,
+                Time = DateTime.Now
             });
             ChatRecord.Cleanup(groupId);
         }
@@ -476,11 +585,22 @@ public static class PipelineMiddlewareExtensions
             .Where(r => r.SenderType == SenderType.Assistant)
             .Select(r => r.ParsedMessage)
             .ToList();
-        if (recentBotMessages.Count == 0 || candidate.Length < 6) return false;
+        if (recentBotMessages.Count == 0 || candidate.Length < 6)
+        {
+            return false;
+        }
+
         foreach (var recent in recentBotMessages)
         {
-            if (recent.Length < 6) continue;
-            if (LevenshteinSimilarity(candidate, recent) >= 0.85) return true;
+            if (recent.Length < 6)
+            {
+                continue;
+            }
+
+            if (LevenshteinSimilarity(candidate, recent) >= 0.85)
+            {
+                return true;
+            }
         }
         return false;
     }
@@ -488,19 +608,39 @@ public static class PipelineMiddlewareExtensions
     private static double LevenshteinSimilarity(string a, string b)
     {
         int maxLen = Math.Max(a.Length, b.Length);
-        if (maxLen == 0) return 1.0;
+        if (maxLen == 0)
+        {
+            return 1.0;
+        }
+
         int distance = LevenshteinDistance(a, b);
-        return 1.0 - (double)distance / maxLen;
+        return 1.0 - ((double)distance / maxLen);
     }
 
     private static int LevenshteinDistance(string a, string b)
     {
-        if (a.Length == 0) return b.Length;
-        if (b.Length == 0) return a.Length;
-        if (a.Length < b.Length) (a, b) = (b, a);
+        if (a.Length == 0)
+        {
+            return b.Length;
+        }
+
+        if (b.Length == 0)
+        {
+            return a.Length;
+        }
+
+        if (a.Length < b.Length)
+        {
+            (a, b) = (b, a);
+        }
+
         var prev = new int[b.Length + 1];
         var curr = new int[b.Length + 1];
-        for (int j = 0; j <= b.Length; j++) prev[j] = j;
+        for (int j = 0; j <= b.Length; j++)
+        {
+            prev[j] = j;
+        }
+
         for (int i = 1; i <= a.Length; i++)
         {
             curr[0] = i;
@@ -512,5 +652,79 @@ public static class PipelineMiddlewareExtensions
             (prev, curr) = (curr, prev);
         }
         return prev[b.Length];
+    }
+
+    /// <summary>
+    /// Splits the LLM response on <@Emoji{description}> markers, resolves each
+    /// emoji to a matching image, and sends text/images as separate messages.
+    /// </summary>
+    private static async Task<string> SendReplyWithEmoji(ChatContext ctx, string response)
+    {
+        var activeSend = AppConfig.EnableEmojiActiveSend && response.Contains("<@Emoji");
+        var displayText = new System.Text.StringBuilder();
+
+        // ── Level 1: Splitter for pacing ──
+        var segments = AppConfig.EnableSplitter
+            ? new Splitter(response).Split()
+            : [response];
+
+        foreach (var segment in segments)
+        {
+            if (string.IsNullOrWhiteSpace(segment)) continue;
+
+            // ── Level 2: SplitEmoji within each segment ──
+            var parts = Splitter.SplitEmoji(segment);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                var part = parts[i];
+
+                if (part.isEmoji)
+                {
+                    if (activeSend)
+                        await SendEmojiImage(ctx, part.content, displayText);
+                    // else: silently drop
+                }
+                else
+                {
+                    var text = part.content.Trim();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        await ctx.SendFunc!(text);
+                        displayText.Append(text);
+                    }
+                }
+
+                if (i < parts.Length - 1)
+                {
+                    var delayText = part.isEmoji ? "" : part.content;
+                    await Splitter.ApplyTypingDelay(delayText, ctx.CancellationToken);
+                }
+            }
+        }
+
+        return displayText.ToString().Trim();
+    }
+
+    private static async Task SendEmojiImage(ChatContext ctx, string emotion, System.Text.StringBuilder displayText)
+    {
+        var matches = await Picture.GetRecommendEmojiAsync(emotion, 3);
+        if (matches.Count > 0)
+        {
+            var match = matches[0];
+            var relativePath = CommonHelper.GetRelativePath(
+                match.picture.FilePath, CommonHelper.GetAppImageDirectory());
+            if (string.IsNullOrEmpty(relativePath))
+                relativePath = match.picture.FilePath;
+
+            var msg = new Another_Mirai_Native.Abstractions.Models.MessageBuilder()
+                .Image(relativePath)
+                .Build();
+            await ctx.SendFunc!(msg.ToString());
+            displayText.Append($"\n[表情包: {match.picture.Description}]");
+        }
+        else
+        {
+            displayText.Append($"\n[表情包未找到: {emotion}]");
+        }
     }
 }

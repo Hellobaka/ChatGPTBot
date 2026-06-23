@@ -27,6 +27,7 @@ public static class MemoryManager
             {
                 CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 连接成功，创建集合...");
                 Qdrant.CreateCollection(QdrantService.KnowledgeCollectionName);
+                Qdrant.CreateCollection(QdrantService.ImageCollectionName);
                 CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 集合就绪");
             }
             else

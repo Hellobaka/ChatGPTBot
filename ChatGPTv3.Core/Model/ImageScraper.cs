@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using Another_Mirai_Native.Abstractions.Models.MessageItem;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
@@ -9,43 +8,28 @@ using ChatGPTv3.OpenAIClient;
 namespace ChatGPTv3.Core.Model;
 
 /// <summary>
-/// Image scraping — describe chat images using a vision model.
+/// Pure image description — given a file path, produces a textual description.
 ///
-/// Flow:
-///   1. Image arrives in message chain → check hash
-///   2. Hash in Picture table? → reuse cached description
-///   3. No cache → download + vision model describe + save
-///
-/// Different prompts for emojis vs normal images (from v2):
-///   - Emoji: describe the expression + emotion
-///   - Picture: describe content + text + guess meaning
+/// Caching: results are saved to the Picture table keyed by MD5 hash.
 /// </summary>
 public static class ImageScraper
 {
-    private const string PicturePrompt = "请用中文描述这张图片的内容。如果有文字，请把文字都描述出来。并尝试猜测这个图片的含义。最多200个字。";
-    private const string EmojiPrompt = "这是一个表情包，使用中文简洁的描述一下表情包的内容和表情包所表达的情感。";
+    public const string PicturePrompt = "请用中文描述这张图片的内容。如果有文字，请把文字都描述出来。并尝试猜测这个图片的含义。最多200个字。";
+    public const string EmojiPrompt = "这是一个表情包，使用中文简洁的描述一下表情包的内容和表情包所表达的情感。";
 
     /// <summary>
-    /// Set by Entry during startup. Resolves an image hash to a local file path
-    /// via the AMN2 framework (TryGetImageByHashAsync).
+    /// Describe an image file using a vision model.
+    /// Returns null if the image can't be read or the vision model fails.
     /// </summary>
-    public static Func<string, Task<string?>>? TryResolveImageHash { get; set; }
-
-    /// <summary>
-    /// Process an image from the message chain.
-    /// Returns the description text for context injection, or null if processing should be skipped.
-    /// </summary>
-    public static async Task<string?> DescribeAsync(Image image, bool isMentioned)
+    /// <param name="filePath">Absolute path to the image file.</param>
+    /// <param name="extraPrompt">Optional extra instructions appended to the base prompt.</param>
+    /// <param name="isEmoji">Whether this is an emoji/sticker (saved to DB for filtering).</param>
+    public static async Task<string?> DescribeAsync(string filePath, string? extraPrompt = null, bool isEmoji = false)
     {
-        if (!ShouldProcess(image, isMentioned))
+        if (!File.Exists(filePath))
             return null;
 
-        // ── Resolve file path: use FilePath first, fall back to hash lookup ──
-        var filePath = await ResolveFilePathAsync(image);
-        if (string.IsNullOrEmpty(filePath))
-            return null;
-
-        // ── Compute hash from file content ──
+        // ── Compute hash ──
         var hash = ComputeMD5(filePath);
         if (string.IsNullOrEmpty(hash))
             return null;
@@ -57,14 +41,26 @@ public static class ImageScraper
             cached.UseCount++;
             cached.LastUsedAt = DateTime.Now;
             Picture.Upsert(cached);
-            return FormatResult(hash, image.IsEmoji, cached.Description);
+
+            // Ensure Qdrant has this (may have been lost on restart)
+            _ = Task.Run(() =>
+            {
+                try { MemoryManager.Qdrant?.InsertWithId(cached.Description, QdrantService.ImageCollectionName, hash); }
+                catch { }
+            });
+
+            return cached.Description;
         }
 
-        // ── Describe with vision model ──
+        // ── Build prompt ──
+        var prompt = !string.IsNullOrEmpty(extraPrompt)
+            ? $"{PicturePrompt}\n额外要求：{extraPrompt}"
+            : PicturePrompt;
+
+        // ── Call vision model ──
         var keys = AppConfig.ImageDescriberApiKeyId;
         if (keys.Count == 0) return null;
 
-        var prompt = image.IsEmoji ? EmojiPrompt : PicturePrompt;
         var description = await CallVisionModel(keys, prompt, filePath);
         if (string.IsNullOrEmpty(description))
             return null;
@@ -74,48 +70,39 @@ public static class ImageScraper
         {
             Md5 = hash,
             FilePath = filePath,
-            IsEmoji = image.IsEmoji,
+            IsEmoji = isEmoji,
             Description = description,
             Time = DateTime.Now,
             LastUsedAt = DateTime.Now
         });
 
-        return FormatResult(hash, image.IsEmoji, description);
+        // ── Index in Qdrant for semantic search (fire-and-forget) ──
+        _ = Task.Run(() =>
+        {
+            try { MemoryManager.Qdrant?.InsertWithId(description, QdrantService.ImageCollectionName, hash); }
+            catch { /* embedding failure shouldn't block */ }
+        });
+
+        return description;
     }
 
-    // ── File path resolution ──────────────────────────────
-
-    private static async Task<string?> ResolveFilePathAsync(Image image)
+    /// <summary>
+    /// Resolve an image's local file path. Tries FilePath first,
+    /// falls back to the AMN2 framework image cache via hash.
+    /// </summary>
+    public static async Task<string?> ResolvePathAsync(string filePath, string hash)
     {
-        // FilePath exists — use it directly
-        if (File.Exists(image.FilePath))
-            return image.FilePath;
+        if (File.Exists(filePath))
+            return filePath;
 
-        if (!string.IsNullOrEmpty(image.Hash) && Entry.MessageApi != null)
+        if (!string.IsNullOrEmpty(hash) && Entry.MessageApi != null)
         {
-            (bool resolved, string filePath) = await Entry.MessageApi.TryGetImageByHashAsync(image.Hash);
-            if (resolved && File.Exists(filePath))
-                return filePath;
+            var (resolved, resolvedPath) = await Entry.MessageApi.TryGetImageByHashAsync(hash);
+            if (resolved && File.Exists(resolvedPath))
+                return resolvedPath;
         }
 
-        CommonHelper.LogWarning?.Invoke("Scraper", $"无法解析图片路径: hash={image.Hash} file={image.FilePath}");
         return null;
-    }
-
-    // ── Decision logic ────────────────────────────────────
-
-    private static bool ShouldProcess(Image image, bool isMentioned)
-    {
-        if (!AppConfig.EnableVision)
-            return false;
-
-        if (AppConfig.EnableVisionWhenMentioned && !isMentioned)
-            return false;
-
-        if (AppConfig.IgnoreNotEmoji && !image.IsEmoji)
-            return false;
-
-        return true;
     }
 
     // ── Vision model call ─────────────────────────────────
@@ -125,9 +112,6 @@ public static class ImageScraper
     {
         try
         {
-            var key = keys.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
-            if (key?.Key == null || key.Model == null) return null;
-
             var messages = new List<ChatMessage>
             {
                 ChatMessage.System(prompt),
@@ -158,7 +142,6 @@ public static class ImageScraper
     {
         try
         {
-            if (!File.Exists(filePath)) return null;
             using var stream = File.OpenRead(filePath);
             var hash = MD5.HashData(stream);
             return Convert.ToHexString(hash).ToUpperInvariant();
@@ -168,13 +151,5 @@ public static class ImageScraper
             CommonHelper.LogWarning?.Invoke("Scraper", $"计算MD5失败: {ex.Message}");
             return null;
         }
-    }
-
-    // ── Formatting ────────────────────────────────────────
-
-    private static string FormatResult(string hash, bool isEmoji, string description)
-    {
-        var type = isEmoji ? "表情包" : "图片";
-        return $"[{type} hash:{hash};描述:{description}]";
     }
 }

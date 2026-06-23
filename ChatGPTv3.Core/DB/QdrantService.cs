@@ -16,6 +16,7 @@ public class QdrantService
     private readonly string _baseUrl;
 
     public const string KnowledgeCollectionName = "knowledge_base";
+    public const string ImageCollectionName = "picture_descriptions";
 
     public QdrantService()
     {
@@ -64,20 +65,27 @@ public class QdrantService
 
     public bool Insert(string text, string collectionName)
     {
+        return InsertWithId(text, collectionName, Guid.NewGuid().ToString());
+    }
+
+    /// <summary>
+    /// Insert a point with a custom ID (e.g. MD5 hash for idempotent upserts).
+    /// </summary>
+    public bool InsertWithId(string text, string collectionName, string pointId)
+    {
         try
         {
-            CommonHelper.LogInfo?.Invoke("Qdrant", $"插入向量: collection={collectionName}, text={text[..Math.Min(text.Length, 50)]}...");
+            CommonHelper.LogInfo?.Invoke("Qdrant", $"插入向量: collection={collectionName} id={pointId} text={text[..Math.Min(text.Length, 50)]}...");
             var embedding = GetEmbedding(text);
             if (embedding == null) { CommonHelper.LogWarning?.Invoke("Qdrant", "Embedding 失败"); return false; }
 
-            var pointId = Guid.NewGuid();
             var payload = new Dictionary<string, object>
             {
                 ["points"] = new[]
                 {
                     new
                     {
-                        id = pointId.ToString(),
+                        id = pointId,
                         vector = embedding,
                         payload = new { text, timestamp = DateTime.Now.ToString("O") }
                     }
@@ -86,8 +94,9 @@ public class QdrantService
 
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
+            // Use PUT for upsert (same endpoint, id ensures idempotency)
             var r = _http.PutAsync($"{_baseUrl}/collections/{collectionName}/points", content).Result;
-            CommonHelper.LogInfo?.Invoke("Qdrant", $"插入结果: {(r.IsSuccessStatusCode ? "成功" : $"失败 HTTP{(int)r.StatusCode}")}");
+            CommonHelper.DebugLog("Qdrant", $"插入结果: {(r.IsSuccessStatusCode ? "成功" : $"失败 HTTP{(int)r.StatusCode}")}");
             return r.IsSuccessStatusCode;
         }
         catch (Exception ex)

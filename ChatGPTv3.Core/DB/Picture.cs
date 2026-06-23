@@ -1,4 +1,7 @@
 using SqlSugar;
+using ChatGPTv3.Core.Api;
+using ChatGPTv3.Core.Config;
+using ChatGPTv3.Core.Model;
 
 namespace ChatGPTv3.Core.DB;
 
@@ -48,6 +51,50 @@ public class Picture
     {
         using var db = SQLiteManager.GetInstance();
         return db.Queryable<Picture>().First(p => p.Md5 == md5.ToUpper());
+    }
+
+    /// <summary>
+    /// Search for emoji images matching an emotion description.
+    /// Uses Qdrant for initial recall, then optionally reranks via RerankService.
+    /// Returns pictures sorted by relevance, or empty if none found.
+    /// </summary>
+    public static async Task<List<(Picture picture, float score)>> GetRecommendEmojiAsync(
+        string emotion, int topK = 3)
+    {
+        if (MemoryManager.Qdrant == null || string.IsNullOrWhiteSpace(emotion))
+            return [];
+
+        // ── Step 1: Broad recall from Qdrant ──
+        int recallCount = AppConfig.EnableRerank ? topK * 5 : topK;
+        var results = MemoryManager.Qdrant.Search(emotion, QdrantService.ImageCollectionName, recallCount);
+        if (results.Count == 0) return [];
+
+        var candidates = new List<(Picture picture, float score)>();
+        foreach (var (hash, desc, _, score) in results)
+        {
+            var picture = FindByHash(hash);
+            if (picture != null && picture.IsEmoji && !picture.IsDeleted)
+                candidates.Add((picture, score));
+        }
+
+        if (candidates.Count == 0) return [];
+
+        // ── Step 2: Rerank (if enabled) ──
+        if (AppConfig.EnableRerank && candidates.Count > topK)
+        {
+            var descriptions = candidates.Select(c => c.picture.Description).ToList();
+            var reranked = await RerankService.RerankAsync(emotion, descriptions);
+            if (reranked.Count > 0)
+            {
+                var rerankedCandidates = reranked
+                    .Take(topK)
+                    .Select(r => (candidates[r.index].picture, r.score))
+                    .ToList();
+                return rerankedCandidates;
+            }
+        }
+
+        return candidates.OrderByDescending(c => c.score).Take(topK).ToList();
     }
 
     public static void Upsert(Picture picture)

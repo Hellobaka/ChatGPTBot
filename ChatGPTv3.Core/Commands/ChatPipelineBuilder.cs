@@ -9,7 +9,11 @@ namespace ChatGPTv3.Core.Commands;
 ///       .UseMessageFilter()
 ///       .UseConcurrencyGate()
 ///       .UseReplyDecision()
-///       .UseChatHandler()
+///       .UseMessageImageResolver()
+///       .UseMessageReferenceResolver()
+///       .UseMessageRecorder()
+///       .UseBackgroundCounters()
+///       .UseChatExecutor()
 ///       .Build();
 ///
 /// Execution:
