@@ -7,7 +7,8 @@ namespace ChatGPTv3.UI;
 
 /// <summary>
 /// Standalone bootstrap — replicates Entry.OnEnableAsync() initialization
-/// without AMN2 host dependencies. All AMN2-specific paths are null-guarded.
+/// without AMN2 host dependencies. Used for direct UI debugging (WinExe mode).
+/// When running as AMN2 plugin, Core's Entry already initializes everything.
 /// </summary>
 public static class UIBootstrap
 {

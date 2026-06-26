@@ -1,4 +1,4 @@
-using IconPacks.Avalonia.MaterialDesign;
+using MahApps.Metro.IconPacks;
 
 namespace ChatGPTv3.UI.Models;
 

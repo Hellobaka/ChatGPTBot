@@ -6,9 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.Core</RootNamespace>
     <AssemblyName>ChatGPTv3</AssemblyName>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <EnableDynamicLoading>true</EnableDynamicLoading>
-	<KeepOriginalFile>true</KeepOriginalFile>
+	  <GenerateAmnManifest>false</GenerateAmnManifest>
   </PropertyGroup>
 
   <ItemGroup>

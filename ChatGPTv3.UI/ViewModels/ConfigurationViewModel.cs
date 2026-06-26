@@ -352,6 +352,8 @@ public partial class ConfigurationViewModel : ViewModelBase
 
         AppConfig.Init();
         ErrorMessage = null;
+
+        HandyControl.Controls.Growl.Success("配置已保存");
     }
 
     [RelayCommand]

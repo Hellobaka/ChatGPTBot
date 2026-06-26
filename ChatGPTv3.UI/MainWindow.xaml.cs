@@ -1,18 +1,26 @@
+using System.IO;
 using System.Text.Json;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.Threading;
-using Avalonia.VisualTree;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using ChatGPTv3.UI.Models;
 using ChatGPTv3.UI.Views;
-using IconPacks.Avalonia.MaterialDesign;
+using MahApps.Metro.IconPacks;
 
 namespace ChatGPTv3.UI;
 
-public partial class MainWindow : Window
+public partial class MainWindow
 {
-    private bool _isExpanded = true;
+    public static readonly DependencyProperty SidebarExpandedProperty =
+        DependencyProperty.Register(nameof(SidebarExpanded), typeof(bool), typeof(MainWindow),
+            new PropertyMetadata(true));
+
+    public bool SidebarExpanded
+    {
+        get => (bool)GetValue(SidebarExpandedProperty);
+        set => SetValue(SidebarExpandedProperty, value);
+    }
+
     private const double ExpandedWidth = 220;
     private const double CollapsedWidth = 48;
     private bool _restored;
@@ -30,13 +38,14 @@ public partial class MainWindow : Window
         new() { Name = "系统设置", IconKind = PackIconMaterialDesignKind.Settings, PageKey = "config" },
     ];
 
-    private static string SettingsPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "window_settings.json");
+    private static string SettingsPath => Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory, "window_settings.json");
 
     public MainWindow()
     {
         InitializeComponent();
 
-        HeaderIcon.Kind = PackIconMaterialDesignKind.SmartToy;
+        HeaderIcon.Kind = PackIconMaterialDesignKind.Android;
         NavList.ItemsSource = NavItems;
 
         RestoreWindowState();
@@ -55,13 +64,17 @@ public partial class MainWindow : Window
             var s = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             if (s == null) goto defaults;
 
-            if (s.TryGetValue("Left", out var left)) Position = Position.WithX(left.GetInt32());
-            if (s.TryGetValue("Top", out var top)) Position = Position.WithY(top.GetInt32());
-            if (s.TryGetValue("Width", out var w) && w.GetInt32() > 400) Width = w.GetInt32();
-            if (s.TryGetValue("Height", out var h) && h.GetInt32() > 300) Height = h.GetInt32();
+            if (s.TryGetValue("Left", out var left))
+                Left = left.GetDouble();
+            if (s.TryGetValue("Top", out var top))
+                Top = top.GetDouble();
+            if (s.TryGetValue("Width", out var w) && w.GetDouble() > 400)
+                Width = w.GetDouble();
+            if (s.TryGetValue("Height", out var h) && h.GetDouble() > 300)
+                Height = h.GetDouble();
 
-            _isExpanded = !s.TryGetValue("SidebarExpanded", out var se) || se.GetBoolean();
-            SetExpanded(_isExpanded);
+            SidebarExpanded = !s.TryGetValue("SidebarExpanded", out var se) || se.GetBoolean();
+            SetExpanded(SidebarExpanded);
 
             if (s.TryGetValue("LastTab", out var tab))
             {
@@ -87,11 +100,11 @@ public partial class MainWindow : Window
         {
             var state = new Dictionary<string, object>
             {
-                ["Left"] = Position.X,
-                ["Top"] = Position.Y,
+                ["Left"] = Left,
+                ["Top"] = Top,
                 ["Width"] = Width,
                 ["Height"] = Height,
-                ["SidebarExpanded"] = _isExpanded,
+                ["SidebarExpanded"] = SidebarExpanded,
             };
             if (NavList.SelectedItem is NavigationItem item)
                 state["LastTab"] = item.PageKey;
@@ -111,62 +124,72 @@ public partial class MainWindow : Window
     //  Sidebar toggle
     // ═══════════════════════════════════════════════════
 
-    private void ToggleSidebar(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void ToggleSidebar(object sender, RoutedEventArgs e)
     {
-        _isExpanded = !_isExpanded;
-        SetExpanded(_isExpanded);
+        SidebarExpanded = !SidebarExpanded;
+        SetExpanded(SidebarExpanded);
         SaveWindowState();
     }
 
+    private static readonly System.Windows.Media.Animation.IEasingFunction Ease
+        = new System.Windows.Media.Animation.SineEase
+        {
+            EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut
+        };
+
     private void SetExpanded(bool expanded)
     {
-        Sidebar.Width = expanded ? ExpandedWidth : CollapsedWidth;
-        HeaderExpanded.IsVisible = expanded;
+        var duration = new Duration(TimeSpan.FromMilliseconds(250));
+
+        // ── Animate sidebar width ──
+        Sidebar.BeginAnimation(FrameworkElement.WidthProperty,
+            new System.Windows.Media.Animation.DoubleAnimation(
+                expanded ? ExpandedWidth : CollapsedWidth, duration) { EasingFunction = Ease });
+
+        SidebarExpanded = expanded;
+        HeaderExpanded.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
 
         ToggleIcon.Kind = expanded
             ? PackIconMaterialDesignKind.ChevronLeft
             : PackIconMaterialDesignKind.Menu;
 
         ToggleBtn.HorizontalAlignment = expanded
-            ? Avalonia.Layout.HorizontalAlignment.Right
-            : Avalonia.Layout.HorizontalAlignment.Center;
+            ? HorizontalAlignment.Right
+            : HorizontalAlignment.Center;
 
-        foreach (var container in NavList.GetRealizedContainers())
+        // ── Animate item left margins: expanded=14, collapsed=center icon ──
+        var targetMargin = expanded
+            ? new Thickness(14, 12, 14, 12)
+            : new Thickness(5, 12, 0, 12); // slight nudge right when collapsed
+
+        foreach (var item in NavList.Items)
         {
-            var label = FindVisualChild<TextBlock>(container, "ItemLabel");
-            if (label != null)
-                label.IsVisible = expanded;
+            var container = NavList.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
+            if (container == null) continue;
+            var sp = FindVisualChild<StackPanel>(container);
+            sp?.BeginAnimation(FrameworkElement.MarginProperty,
+                new System.Windows.Media.Animation.ThicknessAnimation(targetMargin, duration)
+                { EasingFunction = Ease });
         }
     }
 
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
     {
-        base.OnPropertyChanged(change);
-        if (change.Property == ListBox.SelectedIndexProperty && !_isExpanded)
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
-            Dispatcher.UIThread.Post(() => SetExpanded(false), DispatcherPriority.Background);
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T t) return t;
+            var result = FindVisualChild<T>(child);
+            if (result != null) return result;
         }
-    }
-
-    private static T? FindVisualChild<T>(Visual parent, string name) where T : Control
-    {
-        if (parent is T t && (parent as Control)?.Name == name) return t;
-        foreach (var child in parent.GetVisualChildren())
-        {
-            if (child is Visual v)
-            {
-                var found = FindVisualChild<T>(v, name);
-                if (found != null) return found;
-            }
-        }
-        return default;
+        return null;
     }
 
     // ═══════════════════════════════════════════════════
     //  Navigation
     // ═══════════════════════════════════════════════════
 
-    private void OnNavSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (NavList.SelectedItem is not NavigationItem item) return;
 
@@ -177,13 +200,12 @@ public partial class MainWindow : Window
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",
-                Foreground = new SolidColorBrush(Color.FromRgb(205, 214, 244)),
                 FontSize = 16
             }
         };
 
-        if (!_isExpanded)
-            Dispatcher.UIThread.Post(() => SetExpanded(false), DispatcherPriority.Background);
+        if (!SidebarExpanded)
+            Dispatcher.BeginInvoke(() => SetExpanded(false));
 
         SaveWindowState();
     }

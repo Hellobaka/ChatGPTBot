@@ -6,9 +6,10 @@ using Another_Mirai_Native.Abstractions.Models;
 using Another_Mirai_Native.Abstractions.Models.MessageItem;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Avalonia.Threading;
+using System.Windows.Threading;
 using ChatGPTv3.Core.Commands;
 using ChatGPTv3.Core.DB;
+using System.IO;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -24,6 +25,7 @@ public partial class ChatTestViewModel : ViewModelBase
     private readonly List<string> _sendHistory = [];
     private int _historyIndex = -1;
     private string? _historyDraft;
+    private readonly Dispatcher _uiDispatcher;
 
     // Full pipelines for testing (same as production)
     private static readonly Func<ChatContext, Task> TestGroupPipeline = new ChatPipelineBuilder()
@@ -73,6 +75,8 @@ public partial class ChatTestViewModel : ViewModelBase
 
     public ChatTestViewModel()
     {
+        _uiDispatcher = System.Windows.Application.Current?.Dispatcher
+                        ?? Dispatcher.CurrentDispatcher;
         LoadSettings();
         LoadMessagesFromDb();
     }
@@ -196,7 +200,7 @@ public partial class ChatTestViewModel : ViewModelBase
         ctx.SendFunc = async msg =>
         {
             tcs.TrySetResult(msg);
-            await Dispatcher.CurrentDispatcher.InvokeAsync(() =>
+            await _uiDispatcher.InvokeAsync(() =>
             {
                 Messages.Add(new ChatBubbleItem { Content = msg, IsSelf = false, Sender = "Bot" });
             });
