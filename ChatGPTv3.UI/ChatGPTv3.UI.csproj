@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.UI</RootNamespace>
     <AssemblyName>ChatGPTv3.UI</AssemblyName>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Library</OutputType>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
   </PropertyGroup>
 

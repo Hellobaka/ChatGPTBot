@@ -171,9 +171,6 @@ public partial class ChatTestViewModel : ViewModelBase
         {
             ctx = new ChatContext
             {
-                IsGroup = true,
-                GroupId = groupId,
-                QQ = qq,
                 MessageText = text,
                 GroupCtx = new GroupMessageContext(null!,
                     new Group(null!, groupId),
@@ -186,8 +183,6 @@ public partial class ChatTestViewModel : ViewModelBase
         {
             ctx = new ChatContext
             {
-                IsGroup = false,
-                QQ = qq,
                 MessageText = text,
                 PrivateCtx = new PrivateMessageContext(null!,
                     new QQ(null!, qq),
