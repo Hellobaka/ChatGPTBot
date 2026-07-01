@@ -44,9 +44,11 @@ public class ChatRecord
     public bool HasToolCalls { get; set; }
 
     /// <summary>OpenAI tool call ID — links Tool records to Assistant tool_calls.</summary>
+    [SugarColumn(IsNullable = true)]
     public string? ToolCallId { get; set; }
 
     /// <summary>Name of the tool that was called (for statistics/debugging).</summary>
+    [SugarColumn(IsNullable = true)]
     public string? ToolName { get; set; }
 
     /// <summary>Whether the tool call succeeded.</summary>
