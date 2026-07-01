@@ -32,6 +32,7 @@ public static class UsageTracker
             };
 
             db.Insertable(record).ExecuteCommand();
+            TokenUsage.NotifyInserted(record);
 
             // Update API key total tokens + cumulative cost
             var keyHint = MaskKey(apiKey);
