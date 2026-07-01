@@ -44,7 +44,7 @@ public class ChatCommands : CommandHandlerBase
             }
         }
 
-        await GroupPipeline(ctx);
+        await Task.Run(() => GroupPipeline(ctx));
 
         // ── Save newly queued images for next turn ──
         if (ctx.PendingImageHashes.Count > 0)
@@ -66,7 +66,7 @@ public class ChatCommands : CommandHandlerBase
             CancellationToken = ct,
             SendFunc = async msg => await e.SendMessageAsync(msg)
         };
-        await PrivatePipeline(ctx);
+        await Task.Run(() => PrivatePipeline(ctx));
         return ctx.Result;
     }
 }
