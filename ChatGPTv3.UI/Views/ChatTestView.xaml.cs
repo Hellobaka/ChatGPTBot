@@ -1,18 +1,26 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using HandyControl.Controls;
 using ChatGPTv3.UI.ViewModels;
+using System.Windows.Threading;
 
 namespace ChatGPTv3.UI.Views;
 
 public partial class ChatTestView : UserControl
 {
     private ChatTestViewModel VM => (ChatTestViewModel)DataContext!;
+    private readonly Dictionary<AutoCompleteTextBox, DateTime> _autoCompleteSuppressUntil = [];
 
     public ChatTestView()
     {
         InitializeComponent();
         DataContext = new ChatTestViewModel();
+        Loaded += (_, _) => ScrollChatToEnd();
+        VM.Messages.CollectionChanged += (_, _) =>
+        {
+            Dispatcher.BeginInvoke(ScrollChatToEnd, DispatcherPriority.Background);
+        };
     }
 
     private void OnInputKeyDown(object sender, KeyEventArgs e)
@@ -37,16 +45,47 @@ public partial class ChatTestView : UserControl
         }
     }
 
+    private void OnAutoCompletePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not AutoCompleteTextBox autoComplete)
+            return;
+
+        if (!autoComplete.IsKeyboardFocusWithin)
+            autoComplete.Focus();
+
+        OpenAutoComplete(autoComplete);
+    }
+
+    private void OnAutoCompleteDropDownClosed(object sender, EventArgs e)
+    {
+        if (sender is AutoCompleteTextBox autoComplete)
+        {
+            _autoCompleteSuppressUntil[autoComplete] = DateTime.UtcNow.AddMilliseconds(250);
+        }
+    }
+
+    private void OpenAutoComplete(object sender)
+    {
+        if (sender is AutoCompleteTextBox autoComplete && autoComplete.Items.Count > 0)
+        {
+            if (_autoCompleteSuppressUntil.TryGetValue(autoComplete, out var until)
+                && DateTime.UtcNow < until)
+                return;
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                autoComplete.IsDropDownOpen = true;
+            }, DispatcherPriority.Input);
+        }
+    }
+
     protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
-        if (e.Property == DataContextProperty && DataContext is ChatTestViewModel vm)
-        {
-            vm.Messages.CollectionChanged += (_, _) =>
-            {
-                Dispatcher.BeginInvoke(new Action(() =>
-                    ChatScroll.ScrollToEnd()));
-            };
-        }
+    }
+
+    private void ScrollChatToEnd()
+    {
+        ChatScroll.ScrollToEnd();
     }
 }
