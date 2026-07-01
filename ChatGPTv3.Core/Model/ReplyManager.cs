@@ -64,6 +64,7 @@ public class ReplyManager
         if (isMentioned)
         {
             attention = AppConfig.AttnMention;
+            return attention;
         }
         else
         {
@@ -155,14 +156,15 @@ public class ReplyManager
     /// LLM-based reply check. Returns (shouldRespond, confidence).
     /// Used as an alternative or supplement to the built-in calculation.
     /// </summary>
-    public static async Task<(bool shouldRespond, double confidence)> CheckByLLM(
+    public static async Task<(bool shouldRespond, double confidence, string reasoning)> CheckByLLM(
         string botName,
         List<string> botNicknames,
+        long qq,
         List<string> recentMessages)
     {
         var nickStr = string.Join(",", botNicknames);
         var prompt = """
-你是一个群聊消息分析器，职责是判断"最新消息"是否在呼叫群聊助手"{BotName}"。你的代称还有"{BotNicknames}"。
+你是一个群聊消息分析器，职责是判断"最新消息"是否在呼叫群聊助手"{BotName}"。你的代称还有"{BotNicknames}"，QQ：{qq}。
 呼叫助手的方式包括：直接叫名字、@助手、或在对话中指代助手。
 
 判断时请严格遵循两步分析流程：
@@ -186,19 +188,20 @@ public class ReplyManager
         try
         {
             var messages = new List<ChatMessage> {
-                ChatMessage.System(prompt.Replace("{BotName}", botName).Replace("{BotNicknames}", nickStr)),
-                ChatMessage.User(string.Join("\n", recentMessages.Skip(1))),
+                ChatMessage.System(prompt.Replace("{BotName}", botName).Replace("{BotNicknames}", nickStr).Replace("{qq}", qq.ToString())),
+                ChatMessage.User(string.Join("\n", recentMessages.Take(recentMessages.Count - 1))),
                 ChatMessage.Assistant("好的，我会分析是否需要回复，请提供最新消息。"),
-                ChatMessage.User(recentMessages.First()),
+                ChatMessage.User(recentMessages.Last()),
             };
             var chatService = new ChatService();
             var result = await chatService.GetChatResultAsync(
                 AppConfig.ReplyAPIKeyId, messages,
                 ChatService.Purpose.回复意愿,
                 timeout: AppConfig.ReplyTimeout);
+            string reasoning = chatService.LastReasoning ?? string.Empty;
 
             if (result == ChatService.ErrorMessage)
-                return (true, 0);
+                return (true, 0, reasoning);
 
             result = result.ToLower().Replace("`", "").Replace("json", "").Trim();
             int start = result.IndexOf('{');
@@ -208,11 +211,11 @@ public class ReplyManager
             using var doc = System.Text.Json.JsonDocument.Parse(result);
             var shouldRespond = doc.RootElement.GetProperty("should_respond").GetBoolean();
             var confidence = doc.RootElement.GetProperty("confidence").GetDouble();
-            return (shouldRespond, confidence);
+            return (shouldRespond, confidence, reasoning);
         }
         catch
         {
-            return (true, 0); // Fallback: respond on error
+            return (true, -1, string.Empty); // Fallback: respond on error
         }
     }
 }
