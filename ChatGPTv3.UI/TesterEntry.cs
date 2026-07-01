@@ -13,10 +13,8 @@ public static class TesterEntry
         var appDir = AppDomain.CurrentDomain.BaseDirectory;
         UIBootstrap.Initialize(appDir);
 
-        var menuEntry = new MenuEntry();
-        menuEntry.OnMenu(null!);
-
-        // Keep process alive while WPF window is open
-        new ManualResetEvent(false).WaitOne();
+        App app = new();
+        app.InitializeComponent();
+        app.Run();
     }
 }

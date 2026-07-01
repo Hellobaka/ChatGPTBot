@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.UI</RootNamespace>
@@ -12,13 +12,19 @@
 	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <EnableDynamicLoading>true</EnableDynamicLoading>
 	  <KeepOriginalFile>true</KeepOriginalFile>
+	  <StartupObject>ChatGPTv3.UI.TesterEntry</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Another-Mirai-Native.Abstractions" Version="1.2.4" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
     <PackageReference Include="HandyControl" Version="3.5.1" />
     <PackageReference Include="MahApps.Metro.IconPacks.MaterialDesign" Version="5.1.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="App.xaml" />
   </ItemGroup>
 
   <ItemGroup>
