@@ -23,21 +23,29 @@ public static class RerankService
 
         try
         {
+            var keyPurpose = AppConfig.RerankApiKeyId
+                .OrderBy(_ => Guid.NewGuid())
+                .FirstOrDefault();
+
+            var endpoint = keyPurpose?.Key?.EndPoint ?? AppConfig.RerankUrl;
+            var model = keyPurpose?.Model?.Name ?? AppConfig.RerankModelName;
+            var useTencentSign = keyPurpose?.Key?.UseTencentSign ?? AppConfig.EnableTencentSign;
+
             var payload = new
             {
                 Query = query,
                 Docs = documents,
-                Model = AppConfig.RerankModelName
+                Model = model
             };
 
             var json = JsonSerializer.Serialize(payload);
-            var request = new HttpRequestMessage(HttpMethod.Post, AppConfig.RerankUrl)
+            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
 
             // Add TC3 signature headers
-            if (AppConfig.EnableTencentSign)
+            if (useTencentSign)
             {
                 var headers = TencentSign.BuildHeaders("lkeap", "lkeap.tencentcloudapi.com",
                     "ap-guangzhou", "RunRerank", "2024-05-22", json);
