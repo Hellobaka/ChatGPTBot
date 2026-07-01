@@ -30,6 +30,12 @@ public class ChatService
     /// <summary>Collects tool call data for post-turn summarization.</summary>
     public List<(string callId, string name, string args, string result, bool success)> ToolCallLog { get; } = [];
 
+    /// <summary>Per-instance response processor — avoids reasoning leakage across concurrent sessions.</summary>
+    public readonly ResponseProcessor ResponseProcessor = new();
+
+    /// <summary>Last accumulated reasoning, exposed for external consumers (e.g. pipeline trace, ChatTest).</summary>
+    public string? LastReasoning => ResponseProcessor.LastReasoning;
+
     /// <summary>
     /// Main chat completion entry point.
     /// </summary>
