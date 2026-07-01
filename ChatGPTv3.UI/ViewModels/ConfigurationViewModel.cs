@@ -195,6 +195,9 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "SplitterRandomDelayMin", Label = "延迟最小 (ms)", DefaultValue = 1000 },
             new() { Key = "SplitterRandomDelayMax", Label = "延迟最大 (ms)", DefaultValue = 4500 },
             new() { Key = "SplitterMinLength", Label = "最小长度", DefaultValue = 20 },
+            new() { Key = "ContextMaxLength", Label = "上下文最大消息数", DefaultValue = 20 },
+            new() { Key = "RemoveThinkBlock", Label = "移除思考块", DefaultValue = true },
+            new() { Key = "LogThinkBlock", Label = "将思考内容输出到日志", DefaultValue = false },
         };
         var emoji = new ObservableCollection<ConfigEntry>
         {
@@ -228,20 +231,11 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "ReplyWillingAmplifier", Label = "回复意愿放大器", DefaultValue = 1.0 },
             new() { Key = "EnableLLMCheckShouldResponse", Label = "LLM 辅助回复决策", DefaultValue = false },
         };
-        var ctx = new ObservableCollection<ConfigEntry>
-        {
-            new() { Key = "ContextMaxLength", Label = "上下文最大消息数", DefaultValue = 20 },
-            new() { Key = "EnableQdrant", Label = "启用 Qdrant", DefaultValue = true },
-            new() { Key = "MinMemorySimilarity", Label = "最小记忆相似度", DefaultValue = 0.8 },
-            new() { Key = "MaxMemoryCount", Label = "最大记忆条数", DefaultValue = 5 },
-            new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024 },
-        };
         Tabs.Add(new ConfigTab("对话行为", "MessageText",
         [
             new ConfigSection("消息分段", splitter),
             new ConfigSection("表情包", emoji),
             new ConfigSection("回复意愿", reply),
-            new ConfigSection("上下文与记忆", ctx),
         ]));
 
         // ── Tab 5: 视觉与接口 ──
@@ -294,8 +288,16 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "CompressIntervalMinutes", Label = "时间间隔 (分钟)", DefaultValue = 60 },
             new() { Key = "CompressMessageThreshold", Label = "消息条数阈值", DefaultValue = 20 },
         };
+        var ctx = new ObservableCollection<ConfigEntry>
+        {
+            new() { Key = "EnableQdrant", Label = "启用 Qdrant", DefaultValue = true },
+            new() { Key = "MinMemorySimilarity", Label = "最小记忆相似度", DefaultValue = 0.8 },
+            new() { Key = "MaxMemoryCount", Label = "最大记忆条数", DefaultValue = 5 },
+            new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024 },
+        };
         Tabs.Add(new ConfigTab("记忆与计划", "Calendar",
         [
+            new ConfigSection("Qdrant", ctx),
             new ConfigSection("日记", diary),
             new ConfigSection("日程", schedule),
             new ConfigSection("上下文压缩", compress),
