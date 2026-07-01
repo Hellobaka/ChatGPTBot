@@ -27,6 +27,11 @@ public class Entry : PluginBase
     internal static IGroupApi? GroupApi { get; set; }
     internal static IFriendApi? FriendApi { get; set; }
 
+    /// <summary>Public read-only accessors for UI/external consumers (e.g. mock test environment).</summary>
+    public static IMessageApi? ApiMessage => MessageApi;
+    public static IGroupApi? ApiGroup => GroupApi;
+    public static IFriendApi? ApiFriend => FriendApi;
+
     public override async Task OnEnableAsync(CancellationToken ct)
     {
         MessageApi = API.MessageApi;
@@ -161,20 +166,22 @@ public class Entry : PluginBase
             .UseAccessControl()
             .UseMessageFilter()
             .UseConcurrencyGate()
-            .UseReplyDecision()
             .UseMessageImageResolver()
+            .UseMessageAtResolver()
             .UseMessageReferenceResolver()
             .UseMessageRecorder()
+            .UseReplyDecision()
             .UseChatHandler()
             .Build();
 
         ChatCommands.PrivatePipeline = new ChatPipelineBuilder()
             .UsePrivateAccessControl()
             .UseMessageFilter()
-            .UsePrivateReplyDecision()
             .UseMessageImageResolver()
+            .UseMessageAtResolver()
             .UseMessageReferenceResolver()
             .UseMessageRecorder()
+            .UsePrivateReplyDecision()
             .UseChatHandler()
             .Build();
 
