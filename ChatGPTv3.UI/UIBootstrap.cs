@@ -2,6 +2,7 @@ using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Model;
 using ChatGPTv3.Core.Model.MCP;
+using ChatGPTv3.UI.Mock;
 
 namespace ChatGPTv3.UI;
 
@@ -20,6 +21,12 @@ public static class UIBootstrap
         if (IsInitialized) return;
         AppDir = appDir;
 
+        // ── Mock Plugin API (replaces the AMN2 host IPluginApi) ──
+        // Provides Logger/MessageApi/GroupApi/FriendApi/AppApi for the test environment.
+        // GroupApi/FriendApi proxy to Entry.ApiGroup/Entry.ApiFriend if available (AMN2 runtime),
+        // otherwise return empty lists.
+        MockPluginApi.Initialize(appDir);
+
         // ── Config ──
         ConfigManager.Initialize(appDir);
         ConfigManager.Load();
@@ -29,6 +36,9 @@ public static class UIBootstrap
         SQLiteManager.CreateDB();
 
         AppConfig.Init();
+
+        // ── Bot QQ (for At-bot and context identity) ──
+        ChatGPTv3.Core.Api.PromptBuilder.CurrentBotQQ = MockAppApi.Instance.MockBotQQ;
 
         // ── MCP ──
         MCPClientManager.Load(appDir);
