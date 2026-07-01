@@ -3,6 +3,14 @@ using Another_Mirai_Native.Abstractions.Enums;
 
 namespace ChatGPTv3.Core.Commands;
 
+public class PipelineTraceEntry
+{
+    public string Step { get; init; } = string.Empty;
+    public bool Passed { get; init; }
+    public string Detail { get; init; } = string.Empty;
+    public DateTime Time { get; init; } = DateTime.Now;
+}
+
 /// <summary>
 /// Data carrier that flows through the entire chat pipeline.
 /// Supports both group and private messages.
@@ -33,6 +41,9 @@ public class ChatContext
     // ── Output ─────────────────────────────────────────────
     public EventHandleResult Result { get; set; } = EventHandleResult.Pass;
 
+    /// <summary>LLM reasoning content (DeepSeek R1 style), populated during chat execution.</summary>
+    public string? Reasoning { get; set; }
+
     // ── Cancellation ───────────────────────────────────────
     public CancellationToken CancellationToken { get; set; }
 
@@ -42,4 +53,33 @@ public class ChatContext
     /// Injected at the start of each conversation turn, then cleared.
     /// </summary>
     public List<string> PendingImageHashes { get; set; } = [];
+
+    // ── Debug / trace ──────────────────────────────────────
+    public List<PipelineTraceEntry> PipelineTrace { get; } = [];
+
+    public void Trace(string step, bool passed, string detail)
+    {
+        PipelineTrace.Add(new PipelineTraceEntry
+        {
+            Step = step,
+            Passed = passed,
+            Detail = detail,
+            Time = DateTime.Now
+        });
+    }
+
+    public IReadOnlyList<PipelineTraceEntry> GetTraceEntries(bool failedOnly = false)
+        => failedOnly
+            ? PipelineTrace.Where(t => !t.Passed).ToList()
+            : PipelineTrace;
+
+    public string FormatTraceReport(bool failedOnly = false)
+    {
+        var entries = GetTraceEntries(failedOnly);
+        if (entries.Count == 0)
+            return failedOnly ? "没有失败节点" : "没有可用追踪记录";
+
+        return string.Join("\n", entries.Select(t =>
+            $"- [{t.Time:HH:mm:ss}] {t.Step} | {(t.Passed ? "PASS" : "FAIL")} | {t.Detail}"));
+    }
 }

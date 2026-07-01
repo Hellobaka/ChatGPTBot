@@ -24,13 +24,22 @@ public static class PipelineMiddlewareExtensions
             if (AppConfig.IsPersonBlackList)
             {
                 if (AppConfig.PersonList.Contains(ctx.QQ))
-                { ctx.Result = EventHandleResult.Pass; return; }
+                {
+                    ctx.Trace("PrivateAccessControl", false, $"QQ {ctx.QQ} 命中私聊黑名单");
+                    ctx.Result = EventHandleResult.Pass;
+                    return;
+                }
             }
             else
             {
                 if (!AppConfig.PersonList.Contains(ctx.QQ))
-                { ctx.Result = EventHandleResult.Pass; return; }
+                {
+                    ctx.Trace("PrivateAccessControl", false, $"QQ {ctx.QQ} 不在私聊白名单");
+                    ctx.Result = EventHandleResult.Pass;
+                    return;
+                }
             }
+            ctx.Trace("PrivateAccessControl", true, "私聊权限检查通过");
             await next();
         });
     }
@@ -40,6 +49,7 @@ public static class PipelineMiddlewareExtensions
         return builder.Use(async (ctx, next) =>
         {
             ctx.IsMentioned = true; // private — always respond
+            ctx.Trace("PrivateReplyDecision", true, "私聊模式固定响应");
             await next();
         });
     }
@@ -51,13 +61,22 @@ public static class PipelineMiddlewareExtensions
             if (AppConfig.IsGroupBlackList)
             {
                 if (AppConfig.GroupList.Contains(ctx.GroupId))
-                { ctx.Result = EventHandleResult.Pass; return; }
+                {
+                    ctx.Trace("AccessControl", false, $"群 {ctx.GroupId} 命中黑名单");
+                    ctx.Result = EventHandleResult.Pass;
+                    return;
+                }
             }
             else
             {
                 if (!AppConfig.GroupList.Contains(ctx.GroupId))
-                { ctx.Result = EventHandleResult.Pass; return; }
+                {
+                    ctx.Trace("AccessControl", false, $"群 {ctx.GroupId} 不在白名单");
+                    ctx.Result = EventHandleResult.Pass;
+                    return;
+                }
             }
+            ctx.Trace("AccessControl", true, "群权限检查通过");
             await next();
         });
     }
@@ -67,7 +86,12 @@ public static class PipelineMiddlewareExtensions
         return builder.Use(async (ctx, next) =>
         {
             if (string.IsNullOrWhiteSpace(ctx.MessageText) && !HasImage(ctx))
-            { ctx.Result = EventHandleResult.Pass; return; }
+            {
+                ctx.Trace("MessageFilter", false, "消息为空且不含图片");
+                ctx.Result = EventHandleResult.Pass;
+                return;
+            }
+            ctx.Trace("MessageFilter", true, "消息内容有效");
             await next();
         });
     }
@@ -114,6 +138,7 @@ public static class PipelineMiddlewareExtensions
                     {
                         // Newer message arrived during debounce — discard this one
                         CommonHelper.DebugLog("Pipeline", $"防抖取消 {key}");
+                        ctx.Trace("ConcurrencyGate", false, $"防抖阶段被更新消息替换，key={key}");
                         ctx.Result = EventHandleResult.Pass;
                         return;
                     }
@@ -128,16 +153,19 @@ public static class PipelineMiddlewareExtensions
                 }
                 if (!iAmLatest)
                 {
+                    ctx.Trace("ConcurrencyGate", false, $"当前消息已过期，存在更新版本，key={key}");
                     ctx.Result = EventHandleResult.Pass;
                     return;
                 }
 
                 ctx.CancellationToken = cts.Token;
+                ctx.Trace("ConcurrencyGate", true, $"并发门控通过，key={key}");
                 await next();
             }
             catch (OperationCanceledException)
             {
                 CommonHelper.DebugLog("Pipeline", $"已打断 {key}");
+                ctx.Trace("ConcurrencyGate", false, $"处理过程中被打断，key={key}");
                 ctx.Result = EventHandleResult.Pass;
             }
             finally
@@ -173,18 +201,43 @@ public static class PipelineMiddlewareExtensions
             // LLM-based check
             if (AppConfig.EnableLLMCheckShouldResponse && !ctx.IsMentioned)
             {
-                (_, ctx.ReplyProbability) = await ReplyManager.CheckByLLM(
-                    AppConfig.BotName, AppConfig.BotNicknames, [ctx.MessageText]);
+                var history = ChatRecord.GetGroupHistory(ctx.GroupId, AppConfig.ContextMaxLength);
+                var recentTexts = history
+                    .Select(r => $"[{r.NickName}]: {r.ParsedMessage}")
+                    .ToList();
+
+                (bool shouldResponse, double confidence, string reasoning) = await ReplyManager.CheckByLLM(
+                    AppConfig.BotName, AppConfig.BotNicknames, PromptBuilder.CurrentBotQQ, recentTexts);
+                if (!shouldResponse)
+                {
+                    ctx.Trace("ReplyDecision", false, $"LLM认为不应该回复，置信度: {confidence}");
+                    ctx.Reasoning = reasoning;
+                    ctx.Result = EventHandleResult.Pass;
+                    return;
+                }
+                if (confidence < 0)
+                {
+                    ctx.Trace("ReplyDecision", false, $"LLM判断失败，使用内置方案");
+                }
+                else
+                {
+                    ctx.ReplyProbability = confidence;
+                }
             }
 
             // Random check
-            if (CommonHelper.NextDouble() >= ctx.ReplyProbability)
+            double decision = CommonHelper.NextDouble();
+            if (decision >= ctx.ReplyProbability)
             {
                 replyManager.AfterSkip();
+                ctx.Trace("ReplyDecision", false,
+                    $"未触发回复：prob={ctx.ReplyProbability:F3}, decision={decision}, mentioned={ctx.IsMentioned}, replyToBot={ctx.IsReplyToBot}, nickname={ctx.ContainsNickname}, question={ctx.HasQuestion}, imageOnly={ctx.IsImageOnly}");
                 ctx.Result = EventHandleResult.Pass;
                 return;
             }
 
+            ctx.Trace("ReplyDecision", true,
+                $"触发回复：prob={ctx.ReplyProbability:F3}, decision={decision}, mentioned={ctx.IsMentioned}, replyToBot={ctx.IsReplyToBot}, nickname={ctx.ContainsNickname}, question={ctx.HasQuestion}, imageOnly={ctx.IsImageOnly}");
             await next();
 
             if (ctx.Result == EventHandleResult.Block)
@@ -213,6 +266,7 @@ public static class PipelineMiddlewareExtensions
             var images = msg?.MessageChain?.OfType<Image>().ToList();
             if (images is not { Count: > 0 })
             {
+                ctx.Trace("ImageResolver", true, "无图片，跳过图片解析");
                 await next();
                 return;
             }
@@ -259,9 +313,68 @@ public static class PipelineMiddlewareExtensions
             }
 
             ctx.MessageText = string.Join("\n", parts);
+            ctx.Trace("ImageResolver", true, $"已处理 {images.Count} 张图片，vision={(shouldDescribe ? "on" : "off")}");
 
             await next();
         });
+    }
+
+    public static ChatPipelineBuilder UseMessageAtResolver(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            var msg = GetMessage(ctx);
+            var atItems = msg?.MessageChain?.OfType<At>().ToList();
+            if (atItems is not { Count: > 0 })
+            {
+                ctx.Trace("AtResolver", true, "无 @ 元素，跳过解析");
+                await next();
+                return;
+            }
+
+            var botQQ = PromptBuilder.CurrentBotQQ;
+            var atTexts = new List<string>();
+            foreach (var at in atItems)
+            {
+                if (at.AllTarget)
+                {
+                    atTexts.Add("[@全体成员]");
+                }
+                else if (at.Target == botQQ)
+                {
+                    atTexts.Add("[@Bot]");
+                }
+                else
+                {
+                    var nick = TryGetNickOrCard(ctx.GroupId, at.Target);
+                    var label = nick ?? at.Target.ToString();
+                    atTexts.Add($"[@{label}]");
+                }
+            }
+
+            var existingText = ctx.MessageText ?? "";
+            ctx.MessageText = string.Join(" ", atTexts) + (existingText.Length > 0 ? " " + existingText : "");
+            ctx.Trace("AtResolver", true, $"已解析 {atItems.Count} 个 @ 元素");
+
+            await next();
+        });
+    }
+
+    private static string? TryGetNickOrCard(long groupId, long qq)
+    {
+        try
+        {
+            var member = Entry.ApiGroup?.GetGroupMemberInfo(groupId, qq);
+            if (member != null)
+                return !string.IsNullOrWhiteSpace(member.Card) ? member.Card : member.Nick;
+
+            var friend = Entry.ApiFriend?.GetFriendInfos()?.FirstOrDefault(f => f.QQ == qq);
+            return friend?.Nick;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public static ChatPipelineBuilder UseMessageReferenceResolver(this ChatPipelineBuilder builder)
@@ -287,7 +400,12 @@ public static class PipelineMiddlewareExtensions
                     }
 
                     ctx.MessageText = currentText;
+                    ctx.Trace("MessageReferenceResolver", true, $"处理了 {replyItems.Count} 条引用消息");
                 }
+            }
+            else
+            {
+                ctx.Trace("MessageReferenceResolver", true, "无可解析的引用消息");
             }
 
             await next();
@@ -302,9 +420,7 @@ public static class PipelineMiddlewareExtensions
             {
                 var msg = GetMessage(ctx);
                 var rawText = msg?.Text ?? "";
-                var parsedText = string.Join("", msg?.MessageChain?
-                    .Where(i => i is Text)
-                    .Select(i => ((Text)i).Content) ?? [rawText]);
+                var parsedText = ctx.MessageText ?? "";
 
                 ChatRecord.Insert(new ChatRecord
                 {
@@ -324,7 +440,10 @@ public static class PipelineMiddlewareExtensions
             catch (Exception ex)
             {
                 CommonHelper.LogError?.Invoke("Record", ex.Message);
+                ctx.Trace("MessageRecorder", false, $"记录消息失败：{ex.Message}");
             }
+            if (!ctx.PipelineTrace.Any(t => t.Step == "MessageRecorder" && !t.Passed))
+                ctx.Trace("MessageRecorder", true, "消息记录完成");
 
             await next();
         });
@@ -336,6 +455,7 @@ public static class PipelineMiddlewareExtensions
         {
             DiaryMemoryManager.OnMessageProcessed(ctx.GroupId);
             ContextCompressor.OnMessageProcessed(ctx.GroupId);
+            ctx.Trace("BackgroundCounters", true, "后台计数与压缩触发完成");
             await next();
         });
     }
@@ -345,6 +465,8 @@ public static class PipelineMiddlewareExtensions
         return builder.Use(async (ctx, next) =>
         {
             ctx.Result = await DoChatAsync(ctx);
+            ctx.Trace("ChatExecutor", ctx.Result == EventHandleResult.Block,
+                ctx.Result == EventHandleResult.Block ? "聊天执行并发送完成" : "聊天执行未产出可发送回复");
             await next();
         });
     }
@@ -409,6 +531,7 @@ public static class PipelineMiddlewareExtensions
         var keys = AppConfig.ChatAPIKeyId;
         if (keys.Count == 0)
         {
+            ctx.Trace("ChatPreparation", false, "未配置 ChatAPIKey");
             return EventHandleResult.Pass;
         }
 
@@ -418,7 +541,7 @@ public static class PipelineMiddlewareExtensions
         var effectiveNicknames = groupCfg?.CustomNicknames ?? string.Join(",", AppConfig.BotNicknames);
 
         var systemPrompt = PromptBuilder.BuildSystemPrompt(
-            AppConfig.BotName, effectiveNicknames, ctx.QQ,
+            AppConfig.BotName, effectiveNicknames, botQQ,
             AppConfig.ChatEmptyResponse, string.Join(",", AppConfig.MasterQQ), effectivePrompt);
 
         var history = ChatRecord.GetGroupHistory(ctx.GroupId, AppConfig.ContextMaxLength);
@@ -501,8 +624,11 @@ public static class PipelineMiddlewareExtensions
             timeout: AppConfig.ChatTimeout, toolExecutor: toolExecutor,
             cancellationToken: ctx.CancellationToken);
 
+        ctx.Reasoning = chatService.LastReasoning;
+
         if (response == ChatService.ErrorMessage)
         {
+            ctx.Trace("ChatService", false, "聊天服务返回错误消息");
             if (ctx.IsMentioned)
             {
                 await HandleFallback(ctx, systemPrompt, keys, chatService, response);
@@ -514,6 +640,7 @@ public static class PipelineMiddlewareExtensions
         var abnormalReason = chatService.LastAbnormalFinishReason;
         if (ctx.IsMentioned && !string.IsNullOrWhiteSpace(abnormalReason) && string.IsNullOrWhiteSpace(response))
         {
+            ctx.Trace("ChatService", false, $"回复被异常终止：{abnormalReason}");
             await HandleFallback(ctx, systemPrompt, keys, chatService, response);
             return EventHandleResult.Block;
         }
@@ -523,12 +650,14 @@ public static class PipelineMiddlewareExtensions
             response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
             if (string.IsNullOrWhiteSpace(response))
             {
+                ctx.Trace("ChatService", false, "模型选择保持沉默");
                 return EventHandleResult.Pass;
             }
         }
 
         if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, ctx.GroupId))
         {
+            ctx.Trace("ChatService", false, "回复与最近消息高度重复，被去重");
             return EventHandleResult.Pass;
         }
 
@@ -536,6 +665,7 @@ public static class PipelineMiddlewareExtensions
         {
             var sentText = await SendReplyWithEmoji(ctx, response);
             RecordBotMessage(ctx.GroupId, sentText);
+            ctx.Trace("ChatService", true, $"生成回复长度 {sentText.Length}");
         }
 
         // Tool call chain recording
