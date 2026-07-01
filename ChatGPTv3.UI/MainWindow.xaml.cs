@@ -28,6 +28,7 @@ public partial class MainWindow
     private static readonly NavigationItem[] NavItems =
     [
         new() { Name = "聊天测试", IconKind = PackIconMaterialDesignKind.Chat, PageKey = "chat" },
+        new() { Name = "接口密钥", IconKind = PackIconMaterialDesignKind.VpnKey, PageKey = "keys" },
         new() { Name = "Token统计", IconKind = PackIconMaterialDesignKind.BarChart, PageKey = "token" },
         new() { Name = "图片管理", IconKind = PackIconMaterialDesignKind.Image, PageKey = "image" },
         new() { Name = "关系管理", IconKind = PackIconMaterialDesignKind.Group, PageKey = "relationship" },
@@ -197,6 +198,8 @@ public partial class MainWindow
         {
             "config" => new ConfigurationView(),
             "chat" => new ChatTestView(),
+            "keys" => new KeyManagementView(),
+            "token" => new TokenUsageView(),
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",
