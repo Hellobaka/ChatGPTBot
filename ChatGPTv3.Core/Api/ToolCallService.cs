@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Collections.Concurrent;
 
 namespace ChatGPTv3.Core.Api;
 
@@ -23,7 +23,11 @@ public class ToolCallService
 
     public void ResetToolCallState(string identity)
     {
-        if (identity == null) return;
+        if (identity == null)
+        {
+            return;
+        }
+
         _counts.AddOrUpdate(identity, 0, (_, _) => 0);
         _results[identity] = [];
         _abortList.TryRemove(identity, out _);
@@ -31,7 +35,11 @@ public class ToolCallService
 
     public void CleanupToolCallState(string identity)
     {
-        if (identity == null) return;
+        if (identity == null)
+        {
+            return;
+        }
+
         _counts.TryRemove(identity, out _);
         _results.TryRemove(identity, out _);
         _abortList.TryRemove(identity, out _);
@@ -122,7 +130,11 @@ public class ToolCallService
     /// </summary>
     public List<ToolCallResult> GetToolCallResults(string identity)
     {
-        if (identity == null) return [];
+        if (identity == null)
+        {
+            return [];
+        }
+
         return _results.GetValueOrDefault(identity, []);
     }
 

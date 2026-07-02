@@ -20,9 +20,13 @@ public class ChatRecord
 {
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public int Id { get; set; }
+
     public long GroupID { get; set; }
+
     public long QQ { get; set; }
+
     public SenderType SenderType { get; set; }
+
     public string NickName { get; set; } = string.Empty;
 
     [SugarColumn(ColumnName = "RawMessage")]
@@ -34,10 +38,15 @@ public class ChatRecord
     /// </summary>
     [SugarColumn(ColumnDataType = "text")]
     public string ParsedMessage { get; set; } = string.Empty;
+
     public long MessageID { get; set; }
+
     public bool IsMentioned { get; set; }
+
     public bool IsImage { get; set; }
+
     public bool IsEmpty { get; set; }
+
     public bool IsInvalidReply { get; set; }
 
     /// <summary>Whether this assistant message includes tool_calls (for grouping).</summary>
@@ -192,6 +201,8 @@ public class ChatRecord
             .Select(r => r.Id)
             .ToList();
         if (toDelete.Count > 0)
+        {
             db.Deleteable<ChatRecord>().In(toDelete).ExecuteCommand();
+        }
     }
 }

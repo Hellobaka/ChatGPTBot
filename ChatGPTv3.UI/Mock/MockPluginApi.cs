@@ -26,8 +26,12 @@ public sealed class MockPluginApi : IPluginApi
     // ── IPluginApi properties ────────────────────────────────
 
     public ILogger Logger => _logger;
+
     public IMessageApi MessageApi => _messageApi;
+
     public IGroupApi GroupApi => _groupApi;
+
     public IFriendApi FriendApi => _friendApi;
+
     public IAppApi AppApi => _appApi;
 }

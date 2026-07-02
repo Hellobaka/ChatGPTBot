@@ -2,7 +2,6 @@ using Another_Mirai_Native.Abstractions;
 using Another_Mirai_Native.Abstractions.Attributes;
 using Another_Mirai_Native.Abstractions.Context;
 using Another_Mirai_Native.Abstractions.Enums;
-using Another_Mirai_Native.Abstractions.Handlers;
 
 namespace ChatGPTv3.Core.Commands;
 
@@ -15,6 +14,7 @@ namespace ChatGPTv3.Core.Commands;
 public class ChatCommands : CommandHandlerBase
 {
     public static Func<ChatContext, Task>? GroupPipeline { get; set; }
+
     public static Func<ChatContext, Task>? PrivatePipeline { get; set; }
 
     // Per-context pending image storage — survives across turns since ChatContext is ephemeral
@@ -23,7 +23,10 @@ public class ChatCommands : CommandHandlerBase
     protected override async Task<EventHandleResult> OnNoMatchAsync(
         GroupMessageContext e, CancellationToken ct)
     {
-        if (GroupPipeline == null) return EventHandleResult.Pass;
+        if (GroupPipeline == null)
+        {
+            return EventHandleResult.Pass;
+        }
 
         var groupId = e.FromGroup.Id;
         var ctx = new ChatContext
@@ -58,7 +61,11 @@ public class ChatCommands : CommandHandlerBase
     protected override async Task<EventHandleResult> OnNoMatchAsync(
         PrivateMessageContext e, CancellationToken ct)
     {
-        if (PrivatePipeline == null) return EventHandleResult.Pass;
+        if (PrivatePipeline == null)
+        {
+            return EventHandleResult.Pass;
+        }
+
         var ctx = new ChatContext
         {
             PrivateCtx = e,

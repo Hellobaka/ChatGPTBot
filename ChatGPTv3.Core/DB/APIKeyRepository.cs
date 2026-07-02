@@ -38,7 +38,9 @@ public static class APIKeyRepository
         }
 
         if (models.Count > 0)
+        {
             db.Insertable(models).ExecuteCommand();
+        }
 
         key.AvailableModels = models;
         return key;
@@ -54,7 +56,10 @@ public static class APIKeyRepository
     public static string MaskKey(string key)
     {
         if (string.IsNullOrEmpty(key) || key.Length <= 8)
+        {
             return "***";
+        }
+
         return key[..4] + "***" + key[^4..];
     }
 
@@ -117,10 +122,16 @@ public static class APIKeyRepository
 public class ModelSpendSummary
 {
     public string ModelName { get; set; } = string.Empty;
+
     public int CallCount { get; set; }
+
     public int PromptTokens { get; set; }
+
     public int CachedPromptTokens { get; set; }
+
     public int CompletionTokens { get; set; }
+
     public int TotalTokens { get; set; }
+
     public decimal EstimatedConsume { get; set; }
 }

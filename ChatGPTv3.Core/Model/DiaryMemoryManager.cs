@@ -1,9 +1,9 @@
-using System.Text.Json;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Model;
 
@@ -24,6 +24,7 @@ public static class DiaryMemoryManager
 {
     // TODO: 验证日记是否起到了压缩上下文的功能
     private static readonly Dictionary<long, int> _msgCounts = [];
+
     private static readonly Dictionary<long, DateTime> _lastDiaryTimes = [];
     private static readonly object _lock = new();
     private static Timer? _timer;
@@ -66,13 +67,19 @@ public static class DiaryMemoryManager
     /// </summary>
     public static void OnMessageProcessed(long groupId)
     {
-        if (groupId == 0 || !AppConfig.EnableDiary || !_initialized) return;
+        if (groupId == 0 || !AppConfig.EnableDiary || !_initialized)
+        {
+            return;
+        }
 
         int count;
         lock (_lock)
         {
             if (!_msgCounts.ContainsKey(groupId))
+            {
                 _msgCounts[groupId] = 0;
+            }
+
             _msgCounts[groupId]++;
             count = _msgCounts[groupId];
         }
@@ -87,7 +94,10 @@ public static class DiaryMemoryManager
 
     private static void OnTimerTick()
     {
-        if (!AppConfig.EnableDiary || !_initialized) return;
+        if (!AppConfig.EnableDiary || !_initialized)
+        {
+            return;
+        }
 
         List<long> groupsToCheck;
         lock (_lock)
@@ -106,7 +116,9 @@ public static class DiaryMemoryManager
                     if (_lastDiaryTimes.TryGetValue(groupId, out var lastDiary))
                     {
                         if ((now - lastDiary).TotalMinutes >= AppConfig.DiaryIntervalMinutes)
+                        {
                             shouldGenerate = true;
+                        }
                     }
                     else
                     {
@@ -218,7 +230,9 @@ public static class DiaryMemoryManager
 
                 // Clean mood text
                 if (!string.IsNullOrWhiteSpace(afterMood))
+                {
                     moodText = afterMood;
+                }
             }
 
             // 6. Save diary
@@ -249,15 +263,24 @@ public static class DiaryMemoryManager
     public static string? GetDiaryContext(long groupId)
     {
         var diaries = LoadDiaries(groupId);
-        if (diaries.Count == 0) return null;
+        if (diaries.Count == 0)
+        {
+            return null;
+        }
 
         var latest = diaries.Last();
         var age = DateTime.Now - latest.time;
 
         if (age.TotalHours < 6)
+        {
             return $"你当前的日记记忆：{latest.text}";
+        }
+
         if (age.TotalHours < 24)
+        {
             return $"你今天的日记记忆：{latest.text}";
+        }
+
         return $"你之前的日记记忆({latest.time:MM-dd HH:mm})：{latest.text}（已经过去了）";
     }
 
@@ -271,7 +294,9 @@ public static class DiaryMemoryManager
         // Keep only last N
         var maxKeep = AppConfig.DiaryMaxKeep;
         if (diaries.Count > maxKeep)
+        {
             diaries = diaries.Skip(diaries.Count - maxKeep).ToList();
+        }
 
         var path = Path.Combine(_appDir, $"diary_{groupId}.json");
         try
@@ -292,7 +317,10 @@ public static class DiaryMemoryManager
     private static List<(DateTime time, string text)> LoadDiaries(long groupId)
     {
         var path = Path.Combine(_appDir, $"diary_{groupId}.json");
-        if (!File.Exists(path)) return [];
+        if (!File.Exists(path))
+        {
+            return [];
+        }
 
         try
         {
@@ -309,7 +337,10 @@ public static class DiaryMemoryManager
 
     private static void SaveState()
     {
-        if (string.IsNullOrEmpty(_appDir)) return;
+        if (string.IsNullOrEmpty(_appDir))
+        {
+            return;
+        }
 
         try
         {
@@ -333,10 +364,16 @@ public static class DiaryMemoryManager
 
     private static void LoadState()
     {
-        if (string.IsNullOrEmpty(_appDir)) return;
+        if (string.IsNullOrEmpty(_appDir))
+        {
+            return;
+        }
 
         var path = Path.Combine(_appDir, "diary_state.json");
-        if (!File.Exists(path)) return;
+        if (!File.Exists(path))
+        {
+            return;
+        }
 
         try
         {
@@ -346,12 +383,20 @@ public static class DiaryMemoryManager
                 lock (_lock)
                 {
                     foreach (var (key, val) in state.Counts)
+                    {
                         if (long.TryParse(key, out var id))
+                        {
                             _msgCounts[id] = val;
+                        }
+                    }
 
                     foreach (var (key, val) in state.LastTimes)
+                    {
                         if (long.TryParse(key, out var id))
+                        {
                             _lastDiaryTimes[id] = val;
+                        }
+                    }
                 }
             }
         }
@@ -366,12 +411,14 @@ public static class DiaryMemoryManager
     private class DiaryEntry
     {
         public DateTime Time { get; set; }
+
         public string Text { get; set; } = string.Empty;
     }
 
     private class DiaryState
     {
         public Dictionary<string, int> Counts { get; set; } = [];
+
         public Dictionary<string, DateTime> LastTimes { get; set; } = [];
     }
 }

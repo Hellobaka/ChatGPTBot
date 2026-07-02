@@ -20,6 +20,7 @@ public static class ContextCompressor
 {
     // Per-group tracking (in-memory, rebuilt from DB on restart)
     private static readonly Dictionary<long, int> _msgCounts = [];
+
     private static readonly Dictionary<long, DateTime> _lastCompressTimes = [];
     private static readonly Dictionary<long, int> _lastCompressedId = []; // Last ChatRecord.Id covered
     private static readonly object _lock = new();
@@ -43,7 +44,11 @@ public static class ContextCompressor
 
     public static void Initialize()
     {
-        if (_initialized) return;
+        if (_initialized)
+        {
+            return;
+        }
+
         _initialized = true;
 
         _timer = new Timer(_ => OnTimerTick(), null,
@@ -66,13 +71,19 @@ public static class ContextCompressor
 
     public static void OnMessageProcessed(long groupId)
     {
-        if (groupId == 0 || !AppConfig.EnableCompressByCount) return;
+        if (groupId == 0 || !AppConfig.EnableCompressByCount)
+        {
+            return;
+        }
 
         int count;
         lock (_lock)
         {
             if (!_msgCounts.ContainsKey(groupId))
+            {
                 _msgCounts[groupId] = 0;
+            }
+
             _msgCounts[groupId]++;
             count = _msgCounts[groupId];
         }
@@ -89,7 +100,10 @@ public static class ContextCompressor
 
     private static void OnTimerTick()
     {
-        if (!AppConfig.EnableCompressByTime) return;
+        if (!AppConfig.EnableCompressByTime)
+        {
+            return;
+        }
 
         List<long> groups;
         lock (_lock) { groups = _msgCounts.Keys.ToList(); }
@@ -105,14 +119,21 @@ public static class ContextCompressor
                     if (_lastCompressTimes.TryGetValue(groupId, out var lastTime))
                     {
                         if ((now - lastTime).TotalMinutes >= AppConfig.CompressIntervalMinutes)
+                        {
                             shouldCompress = true;
+                        }
                     }
-                    else shouldCompress = true;
+                    else
+                    {
+                        shouldCompress = true;
+                    }
                 }
             }
 
             if (shouldCompress)
+            {
                 _ = Task.Run(async () => await RunCompressionAsync(groupId));
+            }
         }
     }
 
@@ -167,7 +188,9 @@ public static class ContextCompressor
                 : null;
             var summaryText = await SummarizeWithLLM(dropped, existingSummary?.Summary);
             if (string.IsNullOrWhiteSpace(summaryText))
+            {
                 return;
+            }
 
             // Save: record the first and last message IDs covered
             int firstId = dropped[0].Id;
@@ -195,7 +218,9 @@ public static class ContextCompressor
         var query = db.Queryable<ChatRecord>()
             .Where(r => r.GroupID == groupId);
         if (afterId > 0)
+        {
             query = query.Where(r => r.Id > afterId);
+        }
 
         var newest = query.OrderByDescending(r => r.Time)
             .Take(count)
@@ -213,7 +238,10 @@ public static class ContextCompressor
         var keys = AppConfig.SummarizerApiKeyId.Count > 0
             ? AppConfig.SummarizerApiKeyId
             : AppConfig.ChatAPIKeyId;
-        if (keys.Count == 0) return null;
+        if (keys.Count == 0)
+        {
+            return null;
+        }
 
         var chatLog = new System.Text.StringBuilder();
         foreach (var r in dropped)
@@ -243,7 +271,9 @@ public static class ContextCompressor
                 timeout: AppConfig.ChatTimeout);
 
             if (result == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(result))
+            {
                 return null;
+            }
 
             var timeSpan = dropped.Count > 1
                 ? $"{dropped[0].Time:HH:mm}-{dropped[^1].Time:HH:mm}"

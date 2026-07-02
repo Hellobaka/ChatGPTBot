@@ -47,7 +47,9 @@ public static class CommonHelper
     public static int Next(int minValue, int maxValue)
     {
         if (minValue >= maxValue)
+        {
             throw new ArgumentOutOfRangeException(nameof(minValue));
+        }
 
         long diff = (long)maxValue - minValue;
         byte[] uint32Buffer = new byte[4];
@@ -73,8 +75,11 @@ public static class CommonHelper
     public static double NextDouble(double minValue, double maxValue)
     {
         if (minValue >= maxValue)
+        {
             throw new ArgumentOutOfRangeException(nameof(minValue));
-        return minValue + (maxValue - minValue) * NextDouble();
+        }
+
+        return minValue + ((maxValue - minValue) * NextDouble());
     }
 
     // ── Logging ──────────────────────────────────────────
@@ -83,9 +88,13 @@ public static class CommonHelper
     /// Set by Entry during initialization. Used for debug-level logging.
     /// </summary>
     public static Action<string, string>? LogDebug { get; set; }
+
     public static Action<string, string>? LogInfo { get; set; }
+
     public static Action<string, string>? LogWarning { get; set; }
+
     public static Action<string, string>? LogError { get; set; }
+
     public static bool DebugMode { get; set; }
 
     public static void DebugLog(string type, string message)
@@ -115,10 +124,16 @@ public static class CommonHelper
 
     public static string RemoveFirstLineFast(string input)
     {
-        if (string.IsNullOrEmpty(input)) return string.Empty;
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
 
         int firstNewLineIndex = input.IndexOfAny(['\r', '\n']);
-        if (firstNewLineIndex == -1) return string.Empty;
+        if (firstNewLineIndex == -1)
+        {
+            return string.Empty;
+        }
 
         if (input[firstNewLineIndex] == '\r' &&
             firstNewLineIndex + 1 < input.Length &&
@@ -136,7 +151,10 @@ public static class CommonHelper
 
     public static string GetRelativePath(string fullPath, string baseDirectory)
     {
-        if (!File.Exists(fullPath)) return string.Empty;
+        if (!File.Exists(fullPath))
+        {
+            return string.Empty;
+        }
 
         string normalizedFull = Path.GetFullPath(fullPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         string normalizedBase = baseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;

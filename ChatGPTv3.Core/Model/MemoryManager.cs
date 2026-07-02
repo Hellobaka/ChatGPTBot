@@ -11,6 +11,7 @@ namespace ChatGPTv3.Core.Model;
 public static class MemoryManager
 {
     public static QdrantService? Qdrant { get; private set; }
+
     private static string _appDir = string.Empty;
 
     // ── Init ──────────────────────────────────────────────────
@@ -51,7 +52,11 @@ public static class MemoryManager
 
     public static (string id, string text, DateTime time, float score)[] GetKnowledge(string query)
     {
-        if (Qdrant == null) return [];
+        if (Qdrant == null)
+        {
+            return [];
+        }
+
         return Qdrant.Search(query, QdrantService.KnowledgeCollectionName, AppConfig.MaxMemoryCount).ToArray();
     }
 }

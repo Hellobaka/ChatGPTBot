@@ -23,7 +23,10 @@ public static class EmbeddingService
         }
 
         var key = keys.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
-        if (key?.Key == null) return null;
+        if (key?.Key == null)
+        {
+            return null;
+        }
 
         // Key's model takes priority, then config, then fallback
         var model = key.Model?.Name

@@ -1,11 +1,9 @@
-using System.Text.Json;
-using Another_Mirai_Native.Abstractions.Services;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
-using ChatGPTv3.Core.Model;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Model.MCP;
 
@@ -154,52 +152,55 @@ public static class MCPSelfBuiltinTools
 
     public static Task<object?> ExecuteToolAsync(string name, JsonDocument? args, MCPToolContext ctx)
     {
-        if (ctx == null) return Task.FromResult<object?>("无上下文");
+        if (ctx == null)
+        {
+            return Task.FromResult<object?>("无上下文");
+        }
 
         try
         {
             return Task.FromResult<object?>(name switch
             {
                 // Knowledge
-                "AddKnowledge"  => Mem(AddKnowledge, args),
+                "AddKnowledge" => Mem(AddKnowledge, args),
                 "GetKnowledges" => Mem(GetKnowledges, args),
 
                 // Relationship
-                "UpdateMood"       => UpdateMood(args, ctx),
+                "UpdateMood" => UpdateMood(args, ctx),
                 "UpdateFavorability" => UpdateFavorability(args, ctx),
-                "GetRelationship"   => GetRelationship(args, ctx),
+                "GetRelationship" => GetRelationship(args, ctx),
 
                 // Record
-                "GetGroupChatHistory"  => GetGroupChatHistory(args, ctx),
+                "GetGroupChatHistory" => GetGroupChatHistory(args, ctx),
                 "GetPrivateChatHistory" => GetPrivateChatHistory(args, ctx),
-                "GetChatHistoryByIds"  => GetChatHistoryByIds(args, ctx),
+                "GetChatHistoryByIds" => GetChatHistoryByIds(args, ctx),
 
                 // Picture
                 "AddPictureToContext" => AddPictureToContext(args, ctx),
-                "DescribeImage"       => DescribeImage(args),
+                "DescribeImage" => DescribeImage(args),
 
                 // Misc
                 "GetRangeUsageDetail" => GetRangeUsageDetail(args),
-                "UpdateSchedule"     => UpdateSchedule(args),
+                "UpdateSchedule" => UpdateSchedule(args),
                 "GetCurrentSchedule" => GetCurrentSchedule(),
-                "CreateSchedule"     => CreateScheduledTask(args, ctx),
-                "ListSchedules"      => ListScheduledTasks(),
-                "DeleteSchedule"     => DeleteScheduledTask(args),
+                "CreateSchedule" => CreateScheduledTask(args, ctx),
+                "ListSchedules" => ListScheduledTasks(),
+                "DeleteSchedule" => DeleteScheduledTask(args),
 
                 // Admin CQ API
-                "GetLoginQQ"      => $"{PromptBuilder.CurrentBotQQ}",
-                "GetLoginNick"    => AppConfig.BotName,
-                "GetFriendList"   => CQ_GetFriendList(),
-                "GetGroupList"    => CQ_GetGroupList(),
+                "GetLoginQQ" => $"{PromptBuilder.CurrentBotQQ}",
+                "GetLoginNick" => AppConfig.BotName,
+                "GetFriendList" => CQ_GetFriendList(),
+                "GetGroupList" => CQ_GetGroupList(),
                 "GetGroupMemberList" => CQ_GetGroupMemberList(args, ctx),
                 "GetGroupMemberInfo" => CQ_GetGroupMemberInfo(args),
-                "GetGroupInfo"       => CQ_GetGroupInfo(args),
-                "RemoveMessage"             => CQ_RemoveMessage(args),
-                "SetGroupMemberBanSpeak"    => CQ_SetGroupMemberBanSpeak(args),
+                "GetGroupInfo" => CQ_GetGroupInfo(args),
+                "RemoveMessage" => CQ_RemoveMessage(args),
+                "SetGroupMemberBanSpeak" => CQ_SetGroupMemberBanSpeak(args),
                 "RemoveGroupMemberBanSpeak" => CQ_RemoveGroupMemberBanSpeak(args),
-                "SetGroupBanSpeak"          => CQ_SetGroupBanSpeak(args),
-                "RemoveGroupBanSpeak"       => CQ_RemoveGroupBanSpeak(args),
-                "SetGroupMemberVisitingCard"        => CQ_SetGroupMemberVisitingCard(args),
+                "SetGroupBanSpeak" => CQ_SetGroupBanSpeak(args),
+                "RemoveGroupBanSpeak" => CQ_RemoveGroupBanSpeak(args),
+                "SetGroupMemberVisitingCard" => CQ_SetGroupMemberVisitingCard(args),
                 "SetGroupMemberForeverExclusiveTitle" => CQ_SetGroupMemberForeverExclusiveTitle(args),
                 "RemoveGroupMember" => CQ_RemoveGroupMember(args),
                 _ => "工具暂未实现"
@@ -232,7 +233,11 @@ public static class MCPSelfBuiltinTools
     {
         var query = args.RootElement.GetProperty("query").GetString()!;
         var results = MemoryManager.GetKnowledge(query);
-        if (results.Length == 0) return "未找到相关知识";
+        if (results.Length == 0)
+        {
+            return "未找到相关知识";
+        }
+
         return string.Join("\n", results.Select(r => $"- {r.text} (score: {r.score:F2})"));
     }
 
@@ -249,7 +254,9 @@ public static class MCPSelfBuiltinTools
         var hash = args.RootElement.GetProperty("hash").GetString()!;
         var picture = Picture.FindByHash(hash);
         if (picture == null)
+        {
             return $"未找到 hash={hash} 的图片记录";
+        }
 
         // Register for next-turn native injection
         ctx.PendingImageHashes.Add(hash);
@@ -278,7 +285,9 @@ public static class MCPSelfBuiltinTools
 
         var picture = Picture.FindByHash(hash);
         if (picture == null)
+        {
             return $"未找到 hash={hash} 的图片记录";
+        }
 
         // Resolve file path
         var filePath = picture.FilePath;
@@ -286,15 +295,21 @@ public static class MCPSelfBuiltinTools
         {
             var altPath = Path.Combine(CommonHelper.GetAppImageDirectory(), picture.FilePath);
             if (File.Exists(altPath))
+            {
                 filePath = altPath;
+            }
             else
+            {
                 return $"图片文件不存在: hash={hash}";
+            }
         }
 
         // Describe (uses cache if available, otherwise vision model)
         var desc = ImageScraper.DescribeAsync(filePath, extraPrompt, picture.IsEmoji).Result;
         if (desc == null)
+        {
             return $"图片描述失败: hash={hash}";
+        }
 
         return desc;
     }
@@ -313,7 +328,11 @@ public static class MCPSelfBuiltinTools
     private static string UpdateMood(JsonDocument args, MCPToolContext ctx)
     {
         var moodText = args.RootElement.GetProperty("mood").GetString()!;
-        if (string.IsNullOrWhiteSpace(moodText)) return "心情描述不能为空";
+        if (string.IsNullOrWhiteSpace(moodText))
+        {
+            return "心情描述不能为空";
+        }
+
         long contextId = ctx.GroupId > 0 ? ctx.GroupId : ctx.QQ;
         MoodState.UpdateMood(contextId, moodText);
         return $"心情已更新: {moodText}";
@@ -409,10 +428,16 @@ public static class MCPSelfBuiltinTools
             !args.RootElement.TryGetProperty("end", out var e) ||
             !DateTime.TryParse(s.GetString(), out var start) ||
             !DateTime.TryParse(e.GetString(), out var end))
+        {
             return "参数错误：start/end 需要有效的日期时间格式";
+        }
 
         var records = TokenUsage.GetRange(start, end);
-        if (records.Count == 0) return "该时间段内无使用记录";
+        if (records.Count == 0)
+        {
+            return "该时间段内无使用记录";
+        }
+
         return string.Join("\n", records.Select(r =>
             $"- {r.Time:yyyy-MM-dd HH:mm} | {r.Purpose} | {r.Model} | in:{r.PromptTokens} out:{r.CompletionTokens}"));
     }
@@ -440,7 +465,11 @@ public static class MCPSelfBuiltinTools
     /// <returns>当前活动描述文本</returns>
     private static string GetCurrentSchedule()
     {
-        if (SchedulerManager.Instance == null) return "日程系统未初始化";
+        if (SchedulerManager.Instance == null)
+        {
+            return "日程系统未初始化";
+        }
+
         return SchedulerManager.Instance.GetCurrentSchedule(DateTime.Now);
     }
 
@@ -462,10 +491,15 @@ public static class MCPSelfBuiltinTools
 
         var minInterval = CronHelper.GetMinIntervalMinutes(cronExpr);
         if (minInterval != null && minInterval < AppConfig.MinCronIntervalMinutes)
+        {
             return $"cron表达式频率过高（最小间隔约{minInterval}分钟），最低允许 {AppConfig.MinCronIntervalMinutes} 分钟";
+        }
 
         var next = CronHelper.GetNextFireTime(cronExpr, DateTime.Now);
-        if (!next.HasValue) return "cron表达式无效，请使用5字段格式: 分 时 日 月 周";
+        if (!next.HasValue)
+        {
+            return "cron表达式无效，请使用5字段格式: 分 时 日 月 周";
+        }
 
         var task = new ScheduledTask
         {
@@ -491,7 +525,11 @@ public static class MCPSelfBuiltinTools
     private static string ListScheduledTasks()
     {
         var tasks = ScheduledTask.GetAll();
-        if (tasks.Count == 0) return "暂无定时任务";
+        if (tasks.Count == 0)
+        {
+            return "暂无定时任务";
+        }
+
         return string.Join("\n", tasks.Select(t =>
             $"- [{t.Id}] {t.TaskName} | {t.CronExpr} | 下次: {t.NextFireAt:yyyy-MM-dd HH:mm} | {(t.IsEnabled ? "启用" : "禁用")}"));
     }
@@ -515,13 +553,21 @@ public static class MCPSelfBuiltinTools
     private static Relationship GetOrCreateRelationship(long groupId, long qq)
     {
         var rel = Relationship.GetOrCreate(groupId, qq);
-        if (string.IsNullOrEmpty(rel.NickName)) rel.NickName = qq.ToString();
+        if (string.IsNullOrEmpty(rel.NickName))
+        {
+            rel.NickName = qq.ToString();
+        }
+
         return rel;
     }
 
     private static string FormatHistory(List<ChatRecord> records)
     {
-        if (records.Count == 0) return "无聊天记录";
+        if (records.Count == 0)
+        {
+            return "无聊天记录";
+        }
+
         return string.Join("\n", records.Select(r =>
             $"[{r.Time:HH:mm}] {r.NickName}[{r.QQ}]: {r.ParsedMessage}"));
     }
@@ -529,7 +575,11 @@ public static class MCPSelfBuiltinTools
     /// <summary>Null-safe wrapper for tools.</summary>
     private static string Mem(Func<JsonDocument, string> fn, JsonDocument? args)
     {
-        if (args == null) return "参数错误";
+        if (args == null)
+        {
+            return "参数错误";
+        }
+
         return fn(args);
     }
 
@@ -553,11 +603,19 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_GetFriendList()
     {
-        if (Entry.FriendApi == null) return "接口未就绪 (FriendApi)";
+        if (Entry.FriendApi == null)
+        {
+            return "接口未就绪 (FriendApi)";
+        }
+
         try
         {
             var friends = Entry.FriendApi.GetFriendInfos();
-            if (friends == null || friends.Count == 0) return "暂无好友";
+            if (friends == null || friends.Count == 0)
+            {
+                return "暂无好友";
+            }
+
             return string.Join("\n", friends.Select(f => $"- {f.QQ} {f.Nick}"));
         }
         catch (Exception ex) { return $"获取失败: {ex.Message}"; }
@@ -565,11 +623,19 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_GetGroupList()
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         try
         {
             var groups = Entry.GroupApi.GetGroupList();
-            if (groups == null || groups.Count == 0) return "未加入任何群";
+            if (groups == null || groups.Count == 0)
+            {
+                return "未加入任何群";
+            }
+
             return string.Join("\n", groups.Select(g => $"- {g.Group} {g.Name}"));
         }
         catch (Exception ex) { return $"获取失败: {ex.Message}"; }
@@ -577,13 +643,21 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_GetGroupMemberList(JsonDocument args, MCPToolContext ctx)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.TryGetProperty("groupId", out var g)
             && g.GetInt64() != 0 ? g.GetInt64() : ctx.GroupId;
         try
         {
             var members = Entry.GroupApi.GetGroupMembers(groupId);
-            if (members == null || members.Count == 0) return "暂无成员";
+            if (members == null || members.Count == 0)
+            {
+                return "暂无成员";
+            }
+
             return string.Join("\n", members.Select(m => $"- {m.QQ} {m.Nick}"));
         }
         catch (Exception ex) { return $"获取失败: {ex.Message}"; }
@@ -591,12 +665,20 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_GetGroupMemberInfo(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         try
         {
             var info = Entry.GroupApi.GetGroupMemberInfo(0, qq);
-            if (info == null) return $"未找到 QQ={qq} 的成员信息";
+            if (info == null)
+            {
+                return $"未找到 QQ={qq} 的成员信息";
+            }
+
             return $"- {info.QQ} {info.Nick}";
         }
         catch (Exception ex) { return $"获取失败: {ex.Message}"; }
@@ -604,14 +686,26 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_GetGroupInfo(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.TryGetProperty("groupId", out var g)
             && g.GetInt64() != 0 ? g.GetInt64() : 0;
-        if (groupId == 0) return "请提供 groupId";
+        if (groupId == 0)
+        {
+            return "请提供 groupId";
+        }
+
         try
         {
             var info = Entry.GroupApi.GetGroupInfo(groupId);
-            if (info == null) return $"未找到群 {groupId} 的信息";
+            if (info == null)
+            {
+                return $"未找到群 {groupId} 的信息";
+            }
+
             return $"- {info.Group} {info.Name}";
         }
         catch (Exception ex) { return $"获取失败: {ex.Message}"; }
@@ -619,7 +713,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_RemoveMessage(JsonDocument args)
     {
-        if (Entry.MessageApi == null) return "接口未就绪 (MessageApi)";
+        if (Entry.MessageApi == null)
+        {
+            return "接口未就绪 (MessageApi)";
+        }
+
         var msgId = args.RootElement.GetProperty("msgId").GetInt64();
         try
         {
@@ -631,7 +729,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_SetGroupMemberBanSpeak(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         var duration = args.RootElement.TryGetProperty("duration", out var d)
@@ -646,7 +748,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_RemoveGroupMemberBanSpeak(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         try
@@ -659,7 +765,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_SetGroupBanSpeak(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         try
         {
@@ -671,7 +781,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_RemoveGroupBanSpeak(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         try
         {
@@ -683,7 +797,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_SetGroupMemberVisitingCard(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         var card = args.RootElement.GetProperty("card").GetString()!;
@@ -697,7 +815,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_SetGroupMemberForeverExclusiveTitle(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         var title = args.RootElement.GetProperty("title").GetString()!;
@@ -711,7 +833,11 @@ public static class MCPSelfBuiltinTools
 
     private static string CQ_RemoveGroupMember(JsonDocument args)
     {
-        if (Entry.GroupApi == null) return "接口未就绪 (GroupApi)";
+        if (Entry.GroupApi == null)
+        {
+            return "接口未就绪 (GroupApi)";
+        }
+
         var groupId = args.RootElement.GetProperty("groupId").GetInt64();
         var qq = args.RootElement.GetProperty("qq").GetInt64();
         var refuseJoin = args.RootElement.TryGetProperty("refuseJoin", out var r) && r.GetBoolean();

@@ -1,7 +1,7 @@
-using System.Text.Json;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Model.MCP;
 
@@ -12,13 +12,18 @@ namespace ChatGPTv3.Core.Model.MCP;
 public class MCPClientManager
 {
     public static List<MCPClientBase> Clients { get; set; } = [];
+
     private static string _appDir = string.Empty;
 
     // ── Persistence (for future UI) ────────────────────────
 
     public static void Save()
     {
-        if (string.IsNullOrEmpty(_appDir)) return;
+        if (string.IsNullOrEmpty(_appDir))
+        {
+            return;
+        }
+
         Save(_appDir);
     }
 
@@ -69,7 +74,10 @@ public class MCPClientManager
         try
         {
             var path = Path.Combine(appDirectory, "MCP.json");
-            if (!File.Exists(path)) return;
+            if (!File.Exists(path))
+            {
+                return;
+            }
 
             var json = File.ReadAllText(path);
             var wrapper = JsonSerializer.Deserialize<McpConfigWrapper>(json);
@@ -107,7 +115,10 @@ public class MCPClientManager
     /// </summary>
     public static void Rebuild()
     {
-        if (!AppConfig.EnableMCP) return;
+        if (!AppConfig.EnableMCP)
+        {
+            return;
+        }
 
         EnsureCustomClientsExist();
 
@@ -151,7 +162,10 @@ public class MCPClientManager
 
         foreach (var client in Clients)
         {
-            if (!CanUseClient(client, ctx)) continue;
+            if (!CanUseClient(client, ctx))
+            {
+                continue;
+            }
 
             try
             {
@@ -208,32 +222,57 @@ public class MCPClientManager
     private static async Task<object?> ExecuteOnClientAsync(MCPClientBase client, ToolCallRequest toolCall, CancellationToken ct, MCPToolContext? context = null)
     {
         if (client is MCPCustomClient customClient)
+        {
             return await customClient.ExecuteToolAsync(toolCall, ct, context);
+        }
 
         if (client is MCPExternalClient extClient)
+        {
             return await extClient.ExecuteToolAsync(toolCall, ct);
+        }
 
         return $"Unknown client type: {client.GetType().Name}";
     }
 
     private static bool CanUseClient(MCPClientBase client, MCPToolContext ctx)
     {
-        if (!client.Enabled) return false;
-        if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Contains(ctx.QQ)) return false;
+        if (!client.Enabled)
+        {
+            return false;
+        }
+
+        if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Contains(ctx.QQ))
+        {
+            return false;
+        }
 
         if (ctx.GroupId > 0 && client.GroupEnabled)
         {
-            if (client.Groups.Length == 0) return true;
+            if (client.Groups.Length == 0)
+            {
+                return true;
+            }
+
             if (client.IsGroupBlackList)
+            {
                 return !client.Groups.Contains(ctx.GroupId);
+            }
+
             return client.Groups.Contains(ctx.GroupId);
         }
 
         if (ctx.GroupId == 0 && ctx.QQ > 0 && client.PersonEnabled)
         {
-            if (client.Persons.Length == 0) return true;
+            if (client.Persons.Length == 0)
+            {
+                return true;
+            }
+
             if (client.IsPersonBlackList)
+            {
                 return !client.Persons.Contains(ctx.QQ);
+            }
+
             return client.Persons.Contains(ctx.QQ);
         }
 

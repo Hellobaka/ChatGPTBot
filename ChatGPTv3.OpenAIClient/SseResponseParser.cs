@@ -34,18 +34,25 @@ public static class SseResponseParser
             var line = await reader.ReadLineAsync(ct);
 
             if (line == null)
+            {
                 break; // End of stream
+            }
 
             // SSE event boundary: blank line means end of current event
             if (string.IsNullOrEmpty(line))
             {
-                if (dataLines.Count == 0) continue;
+                if (dataLines.Count == 0)
+                {
+                    continue;
+                }
 
                 var json = string.Concat(dataLines);
                 dataLines.Clear();
 
                 if (json == "[DONE]")
+                {
                     yield break;
+                }
 
                 var update = ParseChunk(json, accum);
                 if (update != null)
@@ -79,12 +86,35 @@ public static class SseResponseParser
             var update = new StreamingUpdate();
 
             // Parse all standard fields
-            if (root.TryGetProperty("id", out var id)) update.Id = id.GetString();
-            if (root.TryGetProperty("object", out var obj)) update.Object = obj.GetString();
-            if (root.TryGetProperty("created", out var created) && created.TryGetInt64(out var c)) update.Created = c;
-            if (root.TryGetProperty("model", out var model)) update.Model = model.GetString();
-            if (root.TryGetProperty("system_fingerprint", out var sf)) update.SystemFingerprint = sf.GetString();
-            if (root.TryGetProperty("service_tier", out var st)) update.ServiceTier = st.GetString();
+            if (root.TryGetProperty("id", out var id))
+            {
+                update.Id = id.GetString();
+            }
+
+            if (root.TryGetProperty("object", out var obj))
+            {
+                update.Object = obj.GetString();
+            }
+
+            if (root.TryGetProperty("created", out var created) && created.TryGetInt64(out var c))
+            {
+                update.Created = c;
+            }
+
+            if (root.TryGetProperty("model", out var model))
+            {
+                update.Model = model.GetString();
+            }
+
+            if (root.TryGetProperty("system_fingerprint", out var sf))
+            {
+                update.SystemFingerprint = sf.GetString();
+            }
+
+            if (root.TryGetProperty("service_tier", out var st))
+            {
+                update.ServiceTier = st.GetString();
+            }
 
             // Parse usage (may appear in usage-only chunk or final chunk)
             if (root.TryGetProperty("usage", out var usageEl) && usageEl.ValueKind != JsonValueKind.Null)
@@ -117,10 +147,14 @@ public static class SseResponseParser
         var choice = new StreamingChoice();
 
         if (choiceEl.TryGetProperty("index", out var idx) && idx.TryGetInt32(out var i))
+        {
             choice.Index = i;
+        }
 
         if (choiceEl.TryGetProperty("finish_reason", out var fr) && fr.ValueKind != JsonValueKind.Null)
+        {
             choice.FinishReason = fr.GetString();
+        }
 
         if (choiceEl.TryGetProperty("delta", out var deltaEl) && deltaEl.ValueKind == JsonValueKind.Object)
         {
@@ -134,13 +168,25 @@ public static class SseResponseParser
     {
         var delta = new DeltaContent();
 
-        if (deltaEl.TryGetProperty("role", out var role)) delta.Role = role.GetString();
+        if (deltaEl.TryGetProperty("role", out var role))
+        {
+            delta.Role = role.GetString();
+        }
+
         if (deltaEl.TryGetProperty("content", out var content) && content.ValueKind != JsonValueKind.Null)
+        {
             delta.Content = content.GetString();
+        }
+
         if (deltaEl.TryGetProperty("reasoning_content", out var rc) && rc.ValueKind != JsonValueKind.Null)
+        {
             delta.ReasoningContent = rc.GetString();
+        }
+
         if (deltaEl.TryGetProperty("refusal", out var refusal) && refusal.ValueKind != JsonValueKind.Null)
+        {
             delta.Refusal = refusal.GetString();
+        }
 
         // Parse tool_calls with index-based accumulation
         if (deltaEl.TryGetProperty("tool_calls", out var toolCallsEl) && toolCallsEl.ValueKind == JsonValueKind.Array)
@@ -153,7 +199,10 @@ public static class SseResponseParser
         {
             // Even without new tool_calls, return current merged state so callers see consistent data
             var merged = accum.GetMergedToolCalls(choiceIndex);
-            if (merged.Count > 0) delta.ToolCalls = merged;
+            if (merged.Count > 0)
+            {
+                delta.ToolCalls = merged;
+            }
         }
 
         return delta;
@@ -172,20 +221,31 @@ public static class SseResponseParser
             var raw = new RawToolCallDelta();
 
             if (tcEl.TryGetProperty("index", out var idx) && idx.TryGetInt32(out var i))
+            {
                 raw.Index = i;
+            }
 
             if (tcEl.TryGetProperty("id", out var id) && id.ValueKind != JsonValueKind.Null)
+            {
                 raw.Id = id.GetString();
+            }
 
             if (tcEl.TryGetProperty("type", out var type))
+            {
                 raw.Type = type.GetString();
+            }
 
             if (tcEl.TryGetProperty("function", out var funcEl) && funcEl.ValueKind == JsonValueKind.Object)
             {
                 if (funcEl.TryGetProperty("name", out var name) && name.ValueKind != JsonValueKind.Null)
+                {
                     raw.FunctionName = name.GetString();
+                }
+
                 if (funcEl.TryGetProperty("arguments", out var args) && args.ValueKind != JsonValueKind.Null)
+                {
                     raw.Arguments = args.GetString();
+                }
             }
 
             result.Add(raw);
@@ -213,9 +273,20 @@ public static class SseResponseParser
                     _states[key] = state;
                 }
 
-                if (d.Id != null) state.Id = d.Id;
-                if (d.FunctionName != null) state.Name = d.FunctionName;
-                if (d.Arguments != null) state.ArgsBuilder.Append(d.Arguments);
+                if (d.Id != null)
+                {
+                    state.Id = d.Id;
+                }
+
+                if (d.FunctionName != null)
+                {
+                    state.Name = d.FunctionName;
+                }
+
+                if (d.Arguments != null)
+                {
+                    state.ArgsBuilder.Append(d.Arguments);
+                }
             }
         }
 
@@ -228,8 +299,15 @@ public static class SseResponseParser
             var result = new List<ToolCallRequest>();
             foreach (var ((ci, _), state) in _states)
             {
-                if (ci != choiceIndex) continue;
-                if (string.IsNullOrEmpty(state.Name)) continue;
+                if (ci != choiceIndex)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(state.Name))
+                {
+                    continue;
+                }
 
                 result.Add(new ToolCallRequest
                 {
@@ -254,7 +332,9 @@ public static class SseResponseParser
         private class MergeState
         {
             public string Id { get; set; } = string.Empty;
+
             public string Name { get; set; } = string.Empty;
+
             public StringBuilder ArgsBuilder { get; } = new();
         }
     }
@@ -262,9 +342,13 @@ public static class SseResponseParser
     private class RawToolCallDelta
     {
         public int Index { get; set; }
+
         public string? Id { get; set; }
+
         public string? Type { get; set; }
+
         public string? FunctionName { get; set; }
+
         public string? Arguments { get; set; }
     }
 }

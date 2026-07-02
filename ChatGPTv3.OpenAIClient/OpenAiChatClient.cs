@@ -28,9 +28,13 @@ public class OpenAiChatClient : IDisposable
         _baseUrl = options.BaseUrl.TrimEnd('/');
         // Strip known API suffix paths for clean URL building
         if (_baseUrl.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+        {
             _baseUrl = _baseUrl[..^"/chat/completions".Length];
+        }
         else if (_baseUrl.EndsWith("/embeddings", StringComparison.OrdinalIgnoreCase))
+        {
             _baseUrl = _baseUrl[..^"/embeddings".Length];
+        }
 
         _httpClient = new HttpClient
         {
@@ -178,17 +182,60 @@ public class OpenAiChatClient : IDisposable
             ["stream"] = request.Stream
         };
 
-        if (request.MaxTokens.HasValue) body["max_completion_tokens"] = request.MaxTokens.Value;
-        if (request.Temperature.HasValue) body["temperature"] = request.Temperature.Value;
-        if (request.Tools != null) body["tools"] = request.Tools;
-        if (request.ToolChoice != null) body["tool_choice"] = request.ToolChoice;
-        if (request.ResponseFormat != null) body["response_format"] = request.ResponseFormat;
-        if (request.TopP.HasValue) body["top_p"] = request.TopP.Value;
-        if (request.FrequencyPenalty.HasValue) body["frequency_penalty"] = request.FrequencyPenalty.Value;
-        if (request.PresencePenalty.HasValue) body["presence_penalty"] = request.PresencePenalty.Value;
-        if (request.Stop != null) body["stop"] = request.Stop;
-        if (request.Seed.HasValue) body["seed"] = request.Seed.Value;
-        if (request.StreamOptions != null) body["stream_options"] = request.StreamOptions;
+        if (request.MaxTokens.HasValue)
+        {
+            body["max_completion_tokens"] = request.MaxTokens.Value;
+        }
+
+        if (request.Temperature.HasValue)
+        {
+            body["temperature"] = request.Temperature.Value;
+        }
+
+        if (request.Tools != null)
+        {
+            body["tools"] = request.Tools;
+        }
+
+        if (request.ToolChoice != null)
+        {
+            body["tool_choice"] = request.ToolChoice;
+        }
+
+        if (request.ResponseFormat != null)
+        {
+            body["response_format"] = request.ResponseFormat;
+        }
+
+        if (request.TopP.HasValue)
+        {
+            body["top_p"] = request.TopP.Value;
+        }
+
+        if (request.FrequencyPenalty.HasValue)
+        {
+            body["frequency_penalty"] = request.FrequencyPenalty.Value;
+        }
+
+        if (request.PresencePenalty.HasValue)
+        {
+            body["presence_penalty"] = request.PresencePenalty.Value;
+        }
+
+        if (request.Stop != null)
+        {
+            body["stop"] = request.Stop;
+        }
+
+        if (request.Seed.HasValue)
+        {
+            body["seed"] = request.Seed.Value;
+        }
+
+        if (request.StreamOptions != null)
+        {
+            body["stream_options"] = request.StreamOptions;
+        }
 
         return body;
     }
@@ -197,7 +244,11 @@ public class OpenAiChatClient : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
         _httpClient.Dispose();
     }

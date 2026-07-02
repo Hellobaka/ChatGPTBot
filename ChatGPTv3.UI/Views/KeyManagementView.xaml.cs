@@ -1,5 +1,5 @@
-using System.Windows.Controls;
 using ChatGPTv3.UI.ViewModels;
+using System.Windows.Controls;
 
 namespace ChatGPTv3.UI.Views;
 

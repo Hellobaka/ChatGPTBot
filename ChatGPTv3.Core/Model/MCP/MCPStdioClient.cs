@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using ModelContextProtocol.Client;
+using System.Text.Json.Serialization;
 
 namespace ChatGPTv3.Core.Model.MCP;
 

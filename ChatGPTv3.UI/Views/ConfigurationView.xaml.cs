@@ -1,11 +1,11 @@
+using ChatGPTv3.UI.Converters;
+using ChatGPTv3.UI.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using ChatGPTv3.UI.Converters;
-using ChatGPTv3.UI.ViewModels;
 using HC = HandyControl.Controls;
 
 namespace ChatGPTv3.UI.Views;
@@ -23,8 +23,15 @@ public partial class ConfigurationView : UserControl
 
     private void OnConfigRowLoaded(object sender, RoutedEventArgs e)
     {
-        if (sender is not ContentControl host || host.DataContext is not ConfigEntry entry) return;
-        if (host.Content != null) return;
+        if (sender is not ContentControl host || host.DataContext is not ConfigEntry entry)
+        {
+            return;
+        }
+
+        if (host.Content != null)
+        {
+            return;
+        }
 
         host.Content = BuildEditor(entry);
     }
@@ -297,7 +304,10 @@ public partial class ConfigurationView : UserControl
         {
             error.Visibility = Visibility.Collapsed;
             var text = addBox.Text?.Trim();
-            if (string.IsNullOrWhiteSpace(text)) return;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
 
             var items = entry.GetListItems();
             if (items.Contains(text))
@@ -316,7 +326,10 @@ public partial class ConfigurationView : UserControl
         addBtn.Click += (_, _) => DoAdd();
         addBox.KeyDown += (_, args) =>
         {
-            if (args.Key == Key.Enter) DoAdd();
+            if (args.Key == Key.Enter)
+            {
+                DoAdd();
+            }
         };
 
         RefreshList();

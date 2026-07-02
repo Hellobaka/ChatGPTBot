@@ -24,12 +24,16 @@ public class Entry : PluginBase
     private ScheduledTaskRunner? _taskRunner;
 
     internal static IMessageApi? MessageApi { get; set; }
+
     internal static IGroupApi? GroupApi { get; set; }
+
     internal static IFriendApi? FriendApi { get; set; }
 
     /// <summary>Public read-only accessors for UI/external consumers (e.g. mock test environment).</summary>
     public static IMessageApi? ApiMessage => MessageApi;
+
     public static IGroupApi? ApiGroup => GroupApi;
+
     public static IFriendApi? ApiFriend => FriendApi;
 
     public override async Task OnEnableAsync(CancellationToken ct)
@@ -54,7 +58,9 @@ public class Entry : PluginBase
         string appDir = API.AppApi.GetAppDirectory();
         ConfigManager.Initialize(appDir);
         if (!ConfigManager.Load())
+        {
             API.Logger.Warn("ChatGPTv3", "配置文件加载失败，使用默认配置");
+        }
 
         // ── Initialize database ──
         SQLiteManager.AppDirectory = appDir;
@@ -81,7 +87,10 @@ public class Entry : PluginBase
                 // Scheduler
                 _schedulerManager = new SchedulerManager(appDir);
                 if (AppConfig.EnableSchedules)
+                {
                     _schedulerManager.EnableTimer();
+                }
+
                 API.Logger.Info("ChatGPTv3", "日程管理器已初始化");
 
                 // Scheduled task runner
@@ -89,9 +98,13 @@ public class Entry : PluginBase
                 ScheduledTaskRunner.SendReply = async (groupId, qq, msg) =>
                 {
                     if (groupId > 0 && MessageApi != null)
+                    {
                         await MessageApi.SendGroupMessageAsync(groupId, msg);
+                    }
                     else if (qq > 0 && MessageApi != null)
+                    {
                         await MessageApi.SendPrivateMessageAsync(qq, msg);
+                    }
                 };
                 _taskRunner.Start();
                 API.Logger.Info("ChatGPTv3", "定时任务运行器已启动");

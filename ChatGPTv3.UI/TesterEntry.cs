@@ -1,5 +1,3 @@
-using System.Threading;
-
 namespace ChatGPTv3.UI;
 
 /// <summary>

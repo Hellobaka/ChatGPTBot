@@ -1,6 +1,5 @@
 using Another_Mirai_Native.Abstractions.Models;
 using Another_Mirai_Native.Abstractions.Services;
-using ChatGPTv3.Core;
 
 namespace ChatGPTv3.UI.Mock;
 
@@ -50,26 +49,32 @@ public sealed class MockMessageApi : IMessageApi
     // ── Forward ─────────────────────────────────────────────
 
     public int SendGroupForwardMessage(long groupId, string[] messages) => 0;
+
     public Task<int> SendGroupForwardMessageAsync(long groupId, string[] messages) => Task.FromResult(0);
 
     public int SendPrivateForwardMessage(long userId, string[] messages) => 0;
+
     public Task<int> SendPrivateForwardMessageAsync(long userId, string[] messages) => Task.FromResult(0);
 
     // ── Delete ──────────────────────────────────────────────
 
     public bool DeleteMessage(long messageId) => true;
+
     public Task<bool> DeleteMessageAsync(long messageId) => Task.FromResult(true);
 
     // ── History ─────────────────────────────────────────────
 
     public List<ChatHistory> GetChatHistories(long groupId, long qq, int count) => [];
+
     public Task<List<ChatHistory>> GetChatHistoriesAsync(long groupId, long qq, int count) => Task.FromResult(new List<ChatHistory>());
 
     public ChatHistory? GetChatHistoryById(long id, bool isGroup, int count) => null;
+
     public Task<ChatHistory?> GetChatHistoryByIdAsync(long id, bool isGroup, int count) => Task.FromResult<ChatHistory?>(null);
 
     // ── Image ───────────────────────────────────────────────
 
     public (bool Success, string FilePath) TryGetImageByHash(string hash) => (false, "");
+
     public Task<(bool Success, string FilePath)> TryGetImageByHashAsync(string hash) => Task.FromResult((false, ""));
 }

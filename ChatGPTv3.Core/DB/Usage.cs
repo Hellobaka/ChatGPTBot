@@ -120,19 +120,32 @@ public class TokenUsage
         var start = query.Start;
         var end = query.End;
         if (end < start)
+        {
             (start, end) = (end, start);
+        }
 
         var usageQuery = db.Queryable<TokenUsage>()
             .Where(u => u.Time >= start && u.Time <= end);
 
         if (query.EndPoints is { Count: > 0 })
+        {
             usageQuery = usageQuery.Where(u => query.EndPoints.Contains(u.EndPoint));
+        }
+
         if (query.Purposes is { Count: > 0 })
+        {
             usageQuery = usageQuery.Where(u => query.Purposes.Contains(u.Purpose));
+        }
+
         if (query.Models is { Count: > 0 })
+        {
             usageQuery = usageQuery.Where(u => query.Models.Contains(u.Model));
+        }
+
         if (query.APIKeyHints is { Count: > 0 })
+        {
             usageQuery = usageQuery.Where(u => query.APIKeyHints.Contains(u.APIKeyHint));
+        }
 
         var records = usageQuery
             .OrderByDescending(u => u.Time)
@@ -260,18 +273,24 @@ public class TokenUsage
 
     private static decimal ComputeCost(TokenUsage usage, LLMModelConfig? pricing)
     {
-        if (pricing == null) return 0m;
+        if (pricing == null)
+        {
+            return 0m;
+        }
 
         int billableInput = Math.Max(0, usage.PromptTokens - usage.CachedPromptTokens);
-        return (billableInput * pricing.InputPricePer1M
-              + usage.CachedPromptTokens * pricing.CachePricePer1M
-              + usage.CompletionTokens * pricing.OutputPricePer1M) / 1_000_000m;
+        return ((billableInput * pricing.InputPricePer1M)
+              + (usage.CachedPromptTokens * pricing.CachePricePer1M)
+              + (usage.CompletionTokens * pricing.OutputPricePer1M)) / 1_000_000m;
     }
 
     private static DateTime BucketTime(DateTime value, TimeSpan bucket)
     {
         if (bucket == TimeSpan.FromHours(1))
+        {
             return new DateTime(value.Year, value.Month, value.Day, value.Hour, 0, 0, value.Kind);
+        }
+
         return value.Date;
     }
 
@@ -281,78 +300,122 @@ public class TokenUsage
 public class TokenUsageQuery
 {
     public DateTime Start { get; set; }
+
     public DateTime End { get; set; }
+
     public List<string> EndPoints { get; set; } = [];
+
     public List<string> Purposes { get; set; } = [];
+
     public List<string> Models { get; set; } = [];
+
     public List<string> APIKeyHints { get; set; } = [];
+
     public int DetailLimit { get; set; } = 200;
 }
 
 public class TokenUsageSummary
 {
     public int RecordCount { get; set; }
+
     public int CallCount { get; set; }
+
     public int PromptTokens { get; set; }
+
     public int CachedPromptTokens { get; set; }
+
     public int CompletionTokens { get; set; }
+
     public int TotalTokens { get; set; }
+
     public decimal EstimatedCost { get; set; }
+
     public double CacheRate { get; set; }
 }
 
 public class TokenUsageBreakdown
 {
     public string Label { get; set; } = string.Empty;
+
     public int RecordCount { get; set; }
+
     public int PromptTokens { get; set; }
+
     public int CachedPromptTokens { get; set; }
+
     public int CompletionTokens { get; set; }
+
     public int TotalTokens { get; set; }
+
     public decimal EstimatedCost { get; set; }
 }
 
 public class TokenUsageDetail
 {
     public int Id { get; set; }
+
     public DateTime Time { get; set; }
+
     public string EndPoint { get; set; } = string.Empty;
+
     public string Model { get; set; } = string.Empty;
+
     public string Purpose { get; set; } = string.Empty;
+
     public string APIKeyHint { get; set; } = string.Empty;
+
     public int PromptTokens { get; set; }
+
     public int CachedPromptTokens { get; set; }
+
     public int CompletionTokens { get; set; }
+
     public int TotalTokens { get; set; }
+
     public decimal EstimatedCost { get; set; }
 }
 
 public class TokenUsageFilterOptions
 {
     public List<string> EndPoints { get; set; } = [];
+
     public List<string> Purposes { get; set; } = [];
+
     public List<string> Models { get; set; } = [];
+
     public List<string> ApiKeyHints { get; set; } = [];
 }
 
 public class TokenUsageTrendPoint
 {
     public DateTime Bucket { get; set; }
+
     public string Label { get; set; } = string.Empty;
+
     public int PromptTokens { get; set; }
+
     public int CachedPromptTokens { get; set; }
+
     public int CompletionTokens { get; set; }
+
     public int TotalTokens { get; set; }
+
     public int RecordCount { get; set; }
+
     public decimal EstimatedCost { get; set; }
 }
 
 public class TokenUsageReport
 {
     public TokenUsageSummary Summary { get; set; } = new();
+
     public List<TokenUsageBreakdown> PurposeBreakdown { get; set; } = [];
+
     public List<TokenUsageBreakdown> ModelBreakdown { get; set; } = [];
+
     public List<TokenUsageBreakdown> ServiceBreakdown { get; set; } = [];
+
     public List<TokenUsageTrendPoint> Trend { get; set; } = [];
+
     public List<TokenUsageDetail> Records { get; set; } = [];
 }

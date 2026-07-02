@@ -1,11 +1,11 @@
+using ChatGPTv3.UI.Models;
+using ChatGPTv3.UI.Views;
+using MahApps.Metro.IconPacks;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using ChatGPTv3.UI.Models;
-using ChatGPTv3.UI.Views;
-using MahApps.Metro.IconPacks;
 
 namespace ChatGPTv3.UI;
 
@@ -60,19 +60,37 @@ public partial class MainWindow
     {
         try
         {
-            if (!File.Exists(SettingsPath)) goto defaults;
+            if (!File.Exists(SettingsPath))
+            {
+                goto defaults;
+            }
+
             var json = File.ReadAllText(SettingsPath);
             var s = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-            if (s == null) goto defaults;
+            if (s == null)
+            {
+                goto defaults;
+            }
 
             if (s.TryGetValue("Left", out var left))
+            {
                 Left = left.GetDouble();
+            }
+
             if (s.TryGetValue("Top", out var top))
+            {
                 Top = top.GetDouble();
+            }
+
             if (s.TryGetValue("Width", out var w) && w.GetDouble() > 400)
+            {
                 Width = w.GetDouble();
+            }
+
             if (s.TryGetValue("Height", out var h) && h.GetDouble() > 300)
+            {
                 Height = h.GetDouble();
+            }
 
             SidebarExpanded = !s.TryGetValue("SidebarExpanded", out var se) || se.GetBoolean();
             SetExpanded(SidebarExpanded);
@@ -81,7 +99,10 @@ public partial class MainWindow
             {
                 var pageKey = tab.GetString();
                 var idx = Array.FindIndex(NavItems, n => n.PageKey == pageKey);
-                if (idx >= 0) NavList.SelectedIndex = idx;
+                if (idx >= 0)
+                {
+                    NavList.SelectedIndex = idx;
+                }
             }
 
             _restored = true;
@@ -96,7 +117,11 @@ public partial class MainWindow
 
     private void SaveWindowState()
     {
-        if (!_restored) return;
+        if (!_restored)
+        {
+            return;
+        }
+
         try
         {
             var state = new Dictionary<string, object>
@@ -108,7 +133,9 @@ public partial class MainWindow
                 ["SidebarExpanded"] = SidebarExpanded,
             };
             if (NavList.SelectedItem is NavigationItem item)
+            {
                 state["LastTab"] = item.PageKey;
+            }
 
             File.WriteAllText(SettingsPath, JsonSerializer.Serialize(state));
         }
@@ -145,7 +172,8 @@ public partial class MainWindow
         // ── Animate sidebar width ──
         Sidebar.BeginAnimation(FrameworkElement.WidthProperty,
             new System.Windows.Media.Animation.DoubleAnimation(
-                expanded ? ExpandedWidth : CollapsedWidth, duration) { EasingFunction = Ease });
+                expanded ? ExpandedWidth : CollapsedWidth, duration)
+            { EasingFunction = Ease });
 
         SidebarExpanded = expanded;
         HeaderExpanded.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
@@ -166,7 +194,11 @@ public partial class MainWindow
         foreach (var item in NavList.Items)
         {
             var container = NavList.ItemContainerGenerator.ContainerFromItem(item) as FrameworkElement;
-            if (container == null) continue;
+            if (container == null)
+            {
+                continue;
+            }
+
             var sp = FindVisualChild<StackPanel>(container);
             sp?.BeginAnimation(FrameworkElement.MarginProperty,
                 new System.Windows.Media.Animation.ThicknessAnimation(targetMargin, duration)
@@ -179,9 +211,16 @@ public partial class MainWindow
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
         {
             var child = VisualTreeHelper.GetChild(parent, i);
-            if (child is T t) return t;
+            if (child is T t)
+            {
+                return t;
+            }
+
             var result = FindVisualChild<T>(child);
-            if (result != null) return result;
+            if (result != null)
+            {
+                return result;
+            }
         }
         return null;
     }
@@ -192,7 +231,10 @@ public partial class MainWindow
 
     private void OnNavSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (NavList.SelectedItem is not NavigationItem item) return;
+        if (NavList.SelectedItem is not NavigationItem item)
+        {
+            return;
+        }
 
         ContentArea.Content = item.PageKey switch
         {
@@ -208,7 +250,9 @@ public partial class MainWindow
         };
 
         if (!SidebarExpanded)
+        {
             Dispatcher.BeginInvoke(() => SetExpanded(false));
+        }
 
         SaveWindowState();
     }

@@ -10,6 +10,7 @@ public static class ChatConverters
     public static readonly IValueConverter Alignment = new AlignmentConverter();
     public static readonly IValueConverter BubbleColor = new BubbleColorConverter();
     public static readonly IValueConverter TextColor = new TextColorConverter();
+
     public static readonly IValueConverter BoolToVisibility =
         new System.Windows.Controls.BooleanToVisibilityConverter();
 }

@@ -23,17 +23,24 @@ public sealed class MockAppApi : IAppApi
     }
 
     public string GetAppDirectory() => AppDir;
+
     public Task<string> GetAppDirectoryAsync() => Task.FromResult(AppDir);
 
     public long GetLoginQQ() => MockBotQQ;
+
     public Task<long> GetLoginQQAsync() => Task.FromResult(MockBotQQ);
 
     public string GetLoginQQNick() => "MockBot";
+
     public Task<string> GetLoginQQNickAsync() => Task.FromResult("MockBot");
 
-    public void ReloadPlugin() { /* no-op */ }
+    public void ReloadPlugin()
+    { /* no-op */ }
+
     public Task ReloadPluginAsync() => Task.CompletedTask;
 
-    public void DisablePlugin() { /* no-op */ }
+    public void DisablePlugin()
+    { /* no-op */ }
+
     public Task DisablePluginAsync() => Task.CompletedTask;
 }

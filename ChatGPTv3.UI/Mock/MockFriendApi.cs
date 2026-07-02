@@ -33,10 +33,12 @@ public sealed class MockFriendApi : IFriendApi
     // ── Praise ─────────────────────────────────────────────
 
     public bool SendPraise(long userId, int count) => true;
+
     public Task<bool> SendPraiseAsync(long userId, int count) => Task.FromResult(true);
 
     // ── Request ────────────────────────────────────────────
 
     public bool SetFriendAddRequest(string flag, bool approve, string remark) => true;
+
     public Task<bool> SetFriendAddRequestAsync(string flag, bool approve, string remark) => Task.FromResult(true);
 }

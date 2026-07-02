@@ -1,8 +1,8 @@
+using ChatGPTv3.UI.ViewModels;
+using HandyControl.Controls;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using HandyControl.Controls;
-using ChatGPTv3.UI.ViewModels;
 using System.Windows.Threading;
 
 namespace ChatGPTv3.UI.Views;
@@ -10,6 +10,7 @@ namespace ChatGPTv3.UI.Views;
 public partial class ChatTestView : UserControl
 {
     private ChatTestViewModel VM => (ChatTestViewModel)DataContext!;
+
     private readonly Dictionary<AutoCompleteTextBox, DateTime> _autoCompleteSuppressUntil = [];
 
     public ChatTestView()
@@ -48,10 +49,14 @@ public partial class ChatTestView : UserControl
     private void OnAutoCompletePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is not AutoCompleteTextBox autoComplete)
+        {
             return;
+        }
 
         if (!autoComplete.IsKeyboardFocusWithin)
+        {
             autoComplete.Focus();
+        }
 
         OpenAutoComplete(autoComplete);
     }
@@ -70,7 +75,9 @@ public partial class ChatTestView : UserControl
         {
             if (_autoCompleteSuppressUntil.TryGetValue(autoComplete, out var until)
                 && DateTime.UtcNow < until)
+            {
                 return;
+            }
 
             Dispatcher.BeginInvoke(() =>
             {

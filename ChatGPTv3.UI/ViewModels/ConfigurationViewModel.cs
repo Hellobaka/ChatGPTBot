@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
+using ChatGPTv3.Core.Config;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ChatGPTv3.Core.Config;
+using System.Collections.ObjectModel;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -11,9 +11,13 @@ namespace ChatGPTv3.UI.ViewModels;
 public partial class ConfigEntry : ObservableObject
 {
     public string Key { get; init; } = "";
+
     public string Label { get; init; } = "";
+
     public object? DefaultValue { get; init; }
+
     public bool IsMultiline { get; init; }
+
     public bool IsList { get; init; }
 
     [ObservableProperty]
@@ -21,7 +25,9 @@ public partial class ConfigEntry : ObservableObject
 
     // Control type flags — stable after construction (DefaultValue doesn't change)
     public bool IsSwitch => DefaultValue is bool;
+
     public bool IsNumber => DefaultValue is int or double or float or ushort;
+
     public bool IsText => !IsSwitch && !IsNumber && !IsMultiline && !IsList;
 
     /// <summary>
@@ -63,8 +69,21 @@ public partial class ConfigEntry : ObservableObject
     public System.Collections.ObjectModel.ObservableCollection<string> GetListItems()
     {
         var items = new System.Collections.ObjectModel.ObservableCollection<string>();
-        if (Value is List<string> sl) foreach (var s in sl) items.Add(s);
-        else if (Value is List<long> ll) foreach (var l in ll) items.Add(l.ToString());
+        if (Value is List<string> sl)
+        {
+            foreach (var s in sl)
+            {
+                items.Add(s);
+            }
+        }
+        else if (Value is List<long> ll)
+        {
+            foreach (var l in ll)
+            {
+                items.Add(l.ToString());
+            }
+        }
+
         return items;
     }
 
@@ -75,7 +94,13 @@ public partial class ConfigEntry : ObservableObject
         {
             var list = new List<long>();
             foreach (var s in items)
-                if (long.TryParse(s.Trim(), out var n)) list.Add(n);
+            {
+                if (long.TryParse(s.Trim(), out var n))
+                {
+                    list.Add(n);
+                }
+            }
+
             Value = list;
         }
         else
@@ -117,6 +142,7 @@ public partial class ConfigEntry : ObservableObject
 public class ConfigSection(string title, ObservableCollection<ConfigEntry> items)
 {
     public string Title { get; } = title;
+
     public ObservableCollection<ConfigEntry> Items { get; } = items;
 }
 
@@ -126,7 +152,9 @@ public class ConfigSection(string title, ObservableCollection<ConfigEntry> items
 public class ConfigTab(string name, string icon, List<ConfigSection> sections)
 {
     public string Name { get; } = name;
+
     public string Icon { get; } = icon;
+
     public List<ConfigSection> Sections { get; } = sections;
 }
 
@@ -327,19 +355,23 @@ public partial class ConfigurationViewModel : ViewModelBase
     private void LoadAll()
     {
         foreach (var tab in Tabs)
-        foreach (var section in tab.Sections)
-        foreach (var entry in section.Items)
         {
-            switch (entry.DefaultValue)
+            foreach (var section in tab.Sections)
             {
-                case bool b: entry.Load(b); break;
-                case int i: entry.Load(i); break;
-                case double d: entry.Load(d); break;
-                case float f: entry.Load(f); break;
-                case ushort u: entry.Load(u); break;
-                case List<string> sl: entry.Load(sl); break;
-                case List<long> ll: entry.Load(ll); break;
-                default: entry.Load(entry.DefaultValue as string ?? ""); break;
+                foreach (var entry in section.Items)
+                {
+                    switch (entry.DefaultValue)
+                    {
+                        case bool b: entry.Load(b); break;
+                        case int i: entry.Load(i); break;
+                        case double d: entry.Load(d); break;
+                        case float f: entry.Load(f); break;
+                        case ushort u: entry.Load(u); break;
+                        case List<string> sl: entry.Load(sl); break;
+                        case List<long> ll: entry.Load(ll); break;
+                        default: entry.Load(entry.DefaultValue as string ?? ""); break;
+                    }
+                }
             }
         }
     }
@@ -348,9 +380,15 @@ public partial class ConfigurationViewModel : ViewModelBase
     private void SaveAll()
     {
         foreach (var tab in Tabs)
-        foreach (var section in tab.Sections)
-        foreach (var entry in section.Items)
-            entry.Save();
+        {
+            foreach (var section in tab.Sections)
+            {
+                foreach (var entry in section.Items)
+                {
+                    entry.Save();
+                }
+            }
+        }
 
         AppConfig.Init();
         ErrorMessage = null;
@@ -362,9 +400,15 @@ public partial class ConfigurationViewModel : ViewModelBase
     private void ResetAll()
     {
         foreach (var tab in Tabs)
-        foreach (var section in tab.Sections)
-        foreach (var entry in section.Items)
-            entry.Reset();
+        {
+            foreach (var section in tab.Sections)
+            {
+                foreach (var entry in section.Items)
+                {
+                    entry.Reset();
+                }
+            }
+        }
 
         AppConfig.Init();
     }

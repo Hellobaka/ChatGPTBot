@@ -34,15 +34,23 @@ public static class MoodState
         lock (_lock)
         {
             if (!_moods.TryGetValue(contextId, out var entry))
+            {
                 return null;
+            }
 
             var age = DateTime.Now - entry.updatedAt;
 
             // Time-weakening: adjust wording based on age
             if (age.TotalHours < 6)
+            {
                 return $"你当前的心情：{entry.mood}";
+            }
+
             if (age.TotalHours < 24)
+            {
                 return $"你今天的心情：{entry.mood}";
+            }
+
             return $"你之前在这个群里的心情：{entry.mood}（已经过去了一天以上）";
         }
     }
@@ -76,7 +84,9 @@ public static class MoodState
                         foreach (var (key, entry) in data)
                         {
                             if (long.TryParse(key, out var id))
+                            {
                                 _moods[id] = (entry.Mood, entry.UpdatedAt);
+                            }
                         }
                     }
                 }
@@ -112,6 +122,7 @@ public static class MoodState
     private class MoodEntry
     {
         public string Mood { get; set; } = string.Empty;
+
         public DateTime UpdatedAt { get; set; }
     }
 }

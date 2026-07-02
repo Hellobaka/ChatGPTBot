@@ -45,14 +45,23 @@ public class OpenAiApiException : Exception
             if (doc.RootElement.TryGetProperty("error", out var error))
             {
                 if (error.TryGetProperty("message", out var msg))
+                {
                     message = msg.GetString() ?? body;
+                }
                 else
+                {
                     message = body;
+                }
 
                 if (error.TryGetProperty("type", out var t))
+                {
                     errorType = t.GetString();
+                }
+
                 if (error.TryGetProperty("code", out var c))
+                {
                     errorCode = c.GetString();
+                }
             }
             else
             {

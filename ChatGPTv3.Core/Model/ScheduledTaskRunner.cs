@@ -45,7 +45,11 @@ public class ScheduledTaskRunner
 
     public void Start()
     {
-        if (_running) return;
+        if (_running)
+        {
+            return;
+        }
+
         _running = true;
         _timer = new Timer(_ => CheckAndExecute(), null,
             TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
@@ -64,17 +68,28 @@ public class ScheduledTaskRunner
 
     private async Task CheckAndExecute()
     {
-        if (!_running) return;
+        if (!_running)
+        {
+            return;
+        }
 
         try
         {
             var dueTasks = ScheduledTask.GetDue(DateTime.Now);
             foreach (var task in dueTasks)
             {
-                if (!_running) break;
+                if (!_running)
+                {
+                    break;
+                }
+
                 await ExecuteTask(task);
 
-                if (!_running) break;
+                if (!_running)
+                {
+                    break;
+                }
+
                 var next = CronHelper.GetNextFireTime(task.CronExpr, DateTime.Now);
                 if (next.HasValue)
                 {
@@ -96,7 +111,10 @@ public class ScheduledTaskRunner
 
     private async Task ExecuteTask(ScheduledTask task)
     {
-        if (!_running) return;
+        if (!_running)
+        {
+            return;
+        }
 
         try
         {
@@ -125,7 +143,9 @@ public class ScheduledTaskRunner
                 };
 
                 foreach (var c in MCPClientManager.Clients.OfType<MCPCustomClient>())
+                {
                     c.Context = mcpCtx;
+                }
 
                 toolExecutor = new ToolExecutor(
                     () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
@@ -141,7 +161,10 @@ public class ScheduledTaskRunner
                 toolExecutor: toolExecutor,
                 identity: $"task_{task.Id}");
 
-            if (!_running) return;
+            if (!_running)
+            {
+                return;
+            }
 
             if (response == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(response))
             {
@@ -154,7 +177,9 @@ public class ScheduledTaskRunner
 
             // ── Send to target ──
             if (_running)
+            {
                 await SendToTarget(task, response);
+            }
         }
         catch (Exception ex)
         {
@@ -168,7 +193,10 @@ public class ScheduledTaskRunner
 
     private static async Task SendToTarget(ScheduledTask task, string response)
     {
-        if (SendReply == null) return;
+        if (SendReply == null)
+        {
+            return;
+        }
 
         try
         {

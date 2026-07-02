@@ -35,7 +35,10 @@ public class ReplyManager
     public static ReplyManager Get(long id)
     {
         if (_managers.TryGetValue(id, out var mgr))
+        {
             return mgr;
+        }
+
         return _managers[id] = new ReplyManager();
     }
 
@@ -68,14 +71,31 @@ public class ReplyManager
         }
         else
         {
-            if (isReplyToBot)     attention = Math.Max(attention, AppConfig.AttnReplyToBot);
-            if (containsNickname) attention = Math.Max(attention, AppConfig.AttnNickname);
-            if (hasQuestion)      attention = Math.Max(attention, AppConfig.AttnQuestion);
-            if (fromSamePerson)   attention = Math.Max(attention, AppConfig.AttnContinuity);
+            if (isReplyToBot)
+            {
+                attention = Math.Max(attention, AppConfig.AttnReplyToBot);
+            }
+
+            if (containsNickname)
+            {
+                attention = Math.Max(attention, AppConfig.AttnNickname);
+            }
+
+            if (hasQuestion)
+            {
+                attention = Math.Max(attention, AppConfig.AttnQuestion);
+            }
+
+            if (fromSamePerson)
+            {
+                attention = Math.Max(attention, AppConfig.AttnContinuity);
+            }
         }
 
         if (isImageOnly && !isMentioned)
+        {
             attention *= AppConfig.AttnImageFactor;
+        }
 
         // ── Timing: how long have I been silent? ──
         double timing = EvaluateTiming();
@@ -102,11 +122,11 @@ public class ReplyManager
     {
         return _silentMessageCount switch
         {
-            0    => AppConfig.TimingJustSent,
+            0 => AppConfig.TimingJustSent,
             <= 3 => AppConfig.TimingBriefPause,
             <= 10 => AppConfig.TimingOptimal,
             <= 20 => AppConfig.TimingStale,
-            _    => AppConfig.TimingVeryStale,
+            _ => AppConfig.TimingVeryStale,
         };
     }
 
@@ -201,13 +221,18 @@ public class ReplyManager
             string reasoning = chatService.LastReasoning ?? string.Empty;
 
             if (result == ChatService.ErrorMessage)
+            {
                 return (true, 0, reasoning);
+            }
 
             result = result.ToLower().Replace("`", "").Replace("json", "").Trim();
             int start = result.IndexOf('{');
             int end = result.LastIndexOf('}');
             if (start >= 0 && end > start)
+            {
                 result = result[start..(end + 1)];
+            }
+
             using var doc = System.Text.Json.JsonDocument.Parse(result);
             var shouldRespond = doc.RootElement.GetProperty("should_respond").GetBoolean();
             var confidence = doc.RootElement.GetProperty("confidence").GetDouble();

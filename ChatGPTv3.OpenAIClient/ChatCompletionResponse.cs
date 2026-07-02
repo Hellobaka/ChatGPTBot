@@ -100,16 +100,24 @@ public class ResponseMessage
     /// </summary>
     public string? GetTextContent()
     {
-        if (Content == null) return null;
+        if (Content == null)
+        {
+            return null;
+        }
 
         // Plain string content
-        if (Content is string s) return s;
+        if (Content is string s)
+        {
+            return s;
+        }
 
         if (Content is JsonElement je)
         {
             // String value
             if (je.ValueKind == JsonValueKind.String)
+            {
                 return je.GetString();
+            }
 
             // Array of content parts (multi-modal response)
             if (je.ValueKind == JsonValueKind.Array)

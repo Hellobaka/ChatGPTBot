@@ -14,11 +14,16 @@ namespace ChatGPTv3.UI;
 public static class UIBootstrap
 {
     public static string AppDir { get; private set; } = string.Empty;
+
     public static bool IsInitialized { get; private set; }
 
     public static void Initialize(string appDir)
     {
-        if (IsInitialized) return;
+        if (IsInitialized)
+        {
+            return;
+        }
+
         AppDir = appDir;
 
         // ── Mock Plugin API (replaces the AMN2 host IPluginApi) ──

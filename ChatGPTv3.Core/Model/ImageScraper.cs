@@ -1,9 +1,9 @@
-using System.Security.Cryptography;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Security.Cryptography;
 
 namespace ChatGPTv3.Core.Model;
 
@@ -27,12 +27,16 @@ public static class ImageScraper
     public static async Task<string?> DescribeAsync(string filePath, string? extraPrompt = null, bool isEmoji = false)
     {
         if (!File.Exists(filePath))
+        {
             return null;
+        }
 
         // ── Compute hash ──
         var hash = ComputeMD5(filePath);
         if (string.IsNullOrEmpty(hash))
+        {
             return null;
+        }
 
         // ── Check cache ──
         var cached = Picture.FindByHash(hash);
@@ -59,11 +63,16 @@ public static class ImageScraper
 
         // ── Call vision model ──
         var keys = AppConfig.ImageDescriberApiKeyId;
-        if (keys.Count == 0) return null;
+        if (keys.Count == 0)
+        {
+            return null;
+        }
 
         var description = await CallVisionModel(keys, prompt, filePath);
         if (string.IsNullOrEmpty(description))
+        {
             return null;
+        }
 
         // ── Save to cache ──
         Picture.Upsert(new Picture
@@ -93,13 +102,17 @@ public static class ImageScraper
     public static async Task<string?> ResolvePathAsync(string filePath, string hash)
     {
         if (File.Exists(filePath))
+        {
             return filePath;
+        }
 
         if (!string.IsNullOrEmpty(hash) && Entry.MessageApi != null)
         {
             var (resolved, resolvedPath) = await Entry.MessageApi.TryGetImageByHashAsync(hash);
             if (resolved && File.Exists(resolvedPath))
+            {
                 return resolvedPath;
+            }
         }
 
         return null;
@@ -125,7 +138,9 @@ public static class ImageScraper
                 timeout: AppConfig.ImageDescriberTimeout);
 
             if (result == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(result))
+            {
                 return null;
+            }
 
             return result.Trim();
         }

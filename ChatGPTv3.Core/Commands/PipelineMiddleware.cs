@@ -1,4 +1,3 @@
-using System.Runtime.Serialization;
 using Another_Mirai_Native.Abstractions.Enums;
 using Another_Mirai_Native.Abstractions.Models;
 using Another_Mirai_Native.Abstractions.Models.MessageItem;
@@ -366,7 +365,9 @@ public static class PipelineMiddlewareExtensions
         {
             var member = Entry.ApiGroup?.GetGroupMemberInfo(groupId, qq);
             if (member != null)
+            {
                 return !string.IsNullOrWhiteSpace(member.Card) ? member.Card : member.Nick;
+            }
 
             var friend = Entry.ApiFriend?.GetFriendInfos()?.FirstOrDefault(f => f.QQ == qq);
             return friend?.Nick;
@@ -443,7 +444,9 @@ public static class PipelineMiddlewareExtensions
                 ctx.Trace("MessageRecorder", false, $"记录消息失败：{ex.Message}");
             }
             if (!ctx.PipelineTrace.Any(t => t.Step == "MessageRecorder" && !t.Passed))
+            {
                 ctx.Trace("MessageRecorder", true, "消息记录完成");
+            }
 
             await next();
         });
@@ -572,21 +575,31 @@ public static class PipelineMiddlewareExtensions
             var lastMsg = messages.Last();
             var parts = new List<ContentPart>();
             if (lastMsg.Content is string text && !string.IsNullOrWhiteSpace(text))
+            {
                 parts.Add(ContentPart.FromText(text));
+            }
 
             foreach (var hash in ctx.PendingImageHashes)
             {
                 var pic = Picture.FindByHash(hash);
-                if (pic == null) continue;
+                if (pic == null)
+                {
+                    continue;
+                }
 
                 var path = pic.FilePath;
                 if (!File.Exists(path))
                 {
                     var alt = Path.Combine(CommonHelper.GetAppImageDirectory(), pic.FilePath);
-                    if 
-                        (File.Exists(alt)) path = alt;
-                    else 
+                    if
+                        (File.Exists(alt))
+                    {
+                        path = alt;
+                    }
+                    else
+                    {
                         continue;
+                    }
                 }
                 parts.Add(ContentPart.FromImageFile(path));
             }
@@ -611,7 +624,9 @@ public static class PipelineMiddlewareExtensions
                 PendingImageHashes = ctx.PendingImageHashes  // share the list
             };
             foreach (var c in MCPClientManager.Clients.OfType<MCPCustomClient>())
+            {
                 c.Context = mcpCtx;
+            }
 
             toolExecutor = new ToolExecutor(
                 () => MCPClientManager.GetToolsForConversation(mcpCtx).ToList(),
@@ -855,7 +870,10 @@ public static class PipelineMiddlewareExtensions
 
         foreach (var segment in segments)
         {
-            if (string.IsNullOrWhiteSpace(segment)) continue;
+            if (string.IsNullOrWhiteSpace(segment))
+            {
+                continue;
+            }
 
             // ── Level 2: SplitEmoji within each segment ──
             var parts = Splitter.SplitEmoji(segment);
@@ -866,7 +884,9 @@ public static class PipelineMiddlewareExtensions
                 if (part.isEmoji)
                 {
                     if (activeSend)
+                    {
                         await SendEmojiImage(ctx, part.content, displayText);
+                    }
                     // else: silently drop
                 }
                 else
@@ -899,7 +919,9 @@ public static class PipelineMiddlewareExtensions
             var relativePath = CommonHelper.GetRelativePath(
                 match.picture.FilePath, CommonHelper.GetAppImageDirectory());
             if (string.IsNullOrEmpty(relativePath))
+            {
                 relativePath = match.picture.FilePath;
+            }
 
             var msg = new Another_Mirai_Native.Abstractions.Models.MessageBuilder()
                 .Image(relativePath)

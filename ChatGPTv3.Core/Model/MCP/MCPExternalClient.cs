@@ -1,8 +1,8 @@
-using System.Text.Json;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Model.MCP;
 
@@ -21,6 +21,7 @@ public abstract class MCPExternalClient : MCPClientBase
     private Timer? _heartbeatTimer;
     private int _reconnectAttempts;
     private volatile bool _connected;
+
     public bool IsConnected => _connected;
 
     protected ToolDefinition[] _cachedTools = [];
@@ -56,7 +57,9 @@ public abstract class MCPExternalClient : MCPClientBase
     {
         await StopAsync();
         if (await ConnectAsync())
+        {
             _reconnectAttempts = 0;
+        }
     }
 
     public override async void Stop()
@@ -86,7 +89,11 @@ public abstract class MCPExternalClient : MCPClientBase
         _heartbeatTimer?.Dispose();
         _heartbeatTimer = new Timer(async _ =>
         {
-            if (!_connected || _client == null) return;
+            if (!_connected || _client == null)
+            {
+                return;
+            }
+
             try
             {
                 await _client.PingAsync();
@@ -104,7 +111,11 @@ public abstract class MCPExternalClient : MCPClientBase
 
     private void ScheduleReconnect()
     {
-        if (_reconnectTimer != null) return;
+        if (_reconnectTimer != null)
+        {
+            return;
+        }
+
         _heartbeatTimer?.Dispose();
         _heartbeatTimer = null;
 
@@ -140,7 +151,9 @@ public abstract class MCPExternalClient : MCPClientBase
     public override async Task<ToolDefinition[]> GetToolsAsync()
     {
         if (_client == null || !_connected)
+        {
             return _cachedTools;
+        }
 
         try
         {
@@ -194,7 +207,9 @@ public abstract class MCPExternalClient : MCPClientBase
     public async Task<object?> ExecuteToolAsync(ToolCallRequest toolCall, CancellationToken ct)
     {
         if (_client == null || !_connected)
+        {
             return $"[{Name}] 未连接，工具不可用";
+        }
 
         try
         {
@@ -203,6 +218,7 @@ public abstract class MCPExternalClient : MCPClientBase
             if (jsonArgs != null)
             {
                 foreach (var prop in jsonArgs.RootElement.EnumerateObject())
+                {
                     args[prop.Name] = prop.Value.ValueKind switch
                     {
                         JsonValueKind.String => prop.Value.GetString(),
@@ -211,6 +227,7 @@ public abstract class MCPExternalClient : MCPClientBase
                         JsonValueKind.False => false,
                         _ => prop.Value.GetRawText()
                     };
+                }
             }
             var result = await _client.CallToolAsync(
                 toolCall.Function.Name,
@@ -218,7 +235,9 @@ public abstract class MCPExternalClient : MCPClientBase
                 cancellationToken: ct);
 
             if (result?.Content == null || result.Content.Count == 0)
+            {
                 return "工具返回空结果";
+            }
 
             var texts = result.Content
                 .Select(c => c?.ToString() ?? "")

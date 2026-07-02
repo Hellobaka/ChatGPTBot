@@ -13,7 +13,10 @@ public static class CronHelper
     public static int? GetMinIntervalMinutes(string cronExpr)
     {
         var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 5) return null;
+        if (parts.Length != 5)
+        {
+            return null;
+        }
 
         try
         {
@@ -49,13 +52,21 @@ public static class CronHelper
             {
                 var minuteField = parts[0];
                 if (minuteField == "*")
+                {
                     minInterval = 1;
+                }
                 else if (minuteField.Contains('-'))
+                {
                     minInterval = 1;  // range could fire every minute
+                }
                 else if (minuteField.Contains(','))
+                {
                     minInterval = 1;  // conservative: assume sub-values could be dense
+                }
                 else
+                {
                     minInterval = 60; // single minute value: once per hour max
+                }
             }
 
             return minInterval;
@@ -69,7 +80,10 @@ public static class CronHelper
     public static DateTime? GetNextFireTime(string cronExpr, DateTime from)
     {
         var parts = cronExpr.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 5) return null;
+        if (parts.Length != 5)
+        {
+            return null;
+        }
 
         try
         {
@@ -88,7 +102,9 @@ public static class CronHelper
                     && dow.Contains((int)candidate.DayOfWeek)
                     && hours.Contains(candidate.Hour)
                     && mins.Contains(candidate.Minute))
+                {
                     return candidate;
+                }
 
                 candidate = candidate.AddMinutes(1);
             }
@@ -105,7 +121,11 @@ public static class CronHelper
         var result = new HashSet<int>();
         if (field == "*")
         {
-            for (int i = min; i <= max; i++) result.Add(i);
+            for (int i = min; i <= max; i++)
+            {
+                result.Add(i);
+            }
+
             return result;
         }
         foreach (var part in field.Split(','))
@@ -113,12 +133,18 @@ public static class CronHelper
             if (part.StartsWith("*/"))
             {
                 int step = int.Parse(part[2..]);
-                for (int i = min; i <= max; i += step) result.Add(i);
+                for (int i = min; i <= max; i += step)
+                {
+                    result.Add(i);
+                }
             }
             else if (part.Contains('-'))
             {
                 var range = part.Split('-');
-                for (int i = int.Parse(range[0]); i <= int.Parse(range[1]); i++) result.Add(i);
+                for (int i = int.Parse(range[0]); i <= int.Parse(range[1]); i++)
+                {
+                    result.Add(i);
+                }
             }
             else
             {

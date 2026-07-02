@@ -1,6 +1,6 @@
-using System.Text.RegularExpressions;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
+using System.Text.RegularExpressions;
 
 namespace ChatGPTv3.Core.Api;
 

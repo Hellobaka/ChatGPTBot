@@ -1,13 +1,13 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json.Serialization;
 
 namespace ChatGPTv3.Core.Model.MCP;
 
 /// <summary>
 /// MCP transport type discriminator.
 /// </summary>
-public enum MCPClientType { Http, Stdio, Custom }
+public enum MCPClientType
+{ Http, Stdio, Custom }
 
 /// <summary>
 /// Abstract base for MCP clients. Supports HTTP, STDIO, and custom in-process implementations.
@@ -28,11 +28,17 @@ public abstract class MCPClientBase
 
     // ── Permission Settings ──
     public bool GroupEnabled { get; set; }
+
     public bool PersonEnabled { get; set; }
+
     public bool CanOnlyMasterCall { get; set; }
+
     public bool IsGroupBlackList { get; set; }
+
     public long[] Groups { get; set; } = [];
+
     public bool IsPersonBlackList { get; set; }
+
     public long[] Persons { get; set; } = [];
 
     // ── Tool Name Mapping ──
@@ -46,10 +52,12 @@ public abstract class MCPClientBase
     /// <summary>
     /// Starts any background maintenance (e.g., heartbeat).
     /// </summary>
-    public virtual void Start() { }
+    public virtual void Start()
+    { }
 
     /// <summary>
     /// Stops background maintenance and releases resources.
     /// </summary>
-    public virtual void Stop() { }
+    public virtual void Stop()
+    { }
 }

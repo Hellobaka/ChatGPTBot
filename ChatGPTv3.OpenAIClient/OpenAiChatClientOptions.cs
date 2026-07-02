@@ -38,8 +38,13 @@ public class OpenAiChatClientOptions
     public void Validate()
     {
         if (string.IsNullOrWhiteSpace(BaseUrl))
+        {
             throw new ArgumentException("BaseUrl is required");
+        }
+
         if (string.IsNullOrWhiteSpace(ApiKey))
+        {
             throw new ArgumentException("ApiKey is required");
+        }
     }
 }

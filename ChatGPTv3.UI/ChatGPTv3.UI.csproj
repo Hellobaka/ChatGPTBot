@@ -12,6 +12,7 @@
 	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	  <EnableDynamicLoading>true</EnableDynamicLoading>
 	  <KeepOriginalFile>true</KeepOriginalFile>
+	  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 	  <StartupObject>ChatGPTv3.UI.TesterEntry</StartupObject>
   </PropertyGroup>
 

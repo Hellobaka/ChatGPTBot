@@ -1,7 +1,7 @@
-using SqlSugar;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Model;
+using SqlSugar;
 
 namespace ChatGPTv3.Core.DB;
 
@@ -62,22 +62,32 @@ public class Picture
         string emotion, int topK = 3)
     {
         if (MemoryManager.Qdrant == null || string.IsNullOrWhiteSpace(emotion))
+        {
             return [];
+        }
 
         // ── Step 1: Broad recall from Qdrant ──
         int recallCount = AppConfig.EnableRerank ? topK * 5 : topK;
         var results = MemoryManager.Qdrant.Search(emotion, QdrantService.ImageCollectionName, recallCount);
-        if (results.Count == 0) return [];
+        if (results.Count == 0)
+        {
+            return [];
+        }
 
         var candidates = new List<(Picture picture, float score)>();
         foreach (var (hash, desc, _, score) in results)
         {
             var picture = FindByHash(hash);
             if (picture != null && picture.IsEmoji && !picture.IsDeleted)
+            {
                 candidates.Add((picture, score));
+            }
         }
 
-        if (candidates.Count == 0) return [];
+        if (candidates.Count == 0)
+        {
+            return [];
+        }
 
         // ── Step 2: Rerank (if enabled) ──
         if (AppConfig.EnableRerank && candidates.Count > topK)

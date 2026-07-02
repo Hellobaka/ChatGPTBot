@@ -62,7 +62,10 @@ public static class ConfigManager
                 try
                 {
                     var result = JsonSerializer.Deserialize<T>(element.GetRawText());
-                    if (result != null) return result;
+                    if (result != null)
+                    {
+                        return result;
+                    }
                 }
                 catch { }
             }
@@ -125,8 +128,15 @@ public static class ConfigManager
     /// </summary>
     public static void EnableHotReload()
     {
-        if (_hotReloadEnabled) return;
-        if (string.IsNullOrEmpty(_configPath)) return;
+        if (_hotReloadEnabled)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(_configPath))
+        {
+            return;
+        }
 
         try
         {
@@ -181,15 +191,51 @@ public static class ConfigManager
 
     private static T GetDefaultForType<T>()
     {
-        if (typeof(T) == typeof(string)) return (T)(object)"";
-        if (typeof(T) == typeof(int)) return (T)(object)0;
-        if (typeof(T) == typeof(long)) return (T)(object)0L;
-        if (typeof(T) == typeof(bool)) return (T)(object)false;
-        if (typeof(T) == typeof(double)) return (T)(object)0.0;
-        if (typeof(T) == typeof(float)) return (T)(object)0f;
-        if (typeof(T) == typeof(ushort)) return (T)(object)(ushort)0;
-        if (typeof(T) == typeof(List<long>)) return (T)(object)new List<long>();
-        if (typeof(T) == typeof(List<string>)) return (T)(object)new List<string>();
+        if (typeof(T) == typeof(string))
+        {
+            return (T)(object)"";
+        }
+
+        if (typeof(T) == typeof(int))
+        {
+            return (T)(object)0;
+        }
+
+        if (typeof(T) == typeof(long))
+        {
+            return (T)(object)0L;
+        }
+
+        if (typeof(T) == typeof(bool))
+        {
+            return (T)(object)false;
+        }
+
+        if (typeof(T) == typeof(double))
+        {
+            return (T)(object)0.0;
+        }
+
+        if (typeof(T) == typeof(float))
+        {
+            return (T)(object)0f;
+        }
+
+        if (typeof(T) == typeof(ushort))
+        {
+            return (T)(object)(ushort)0;
+        }
+
+        if (typeof(T) == typeof(List<long>))
+        {
+            return (T)(object)new List<long>();
+        }
+
+        if (typeof(T) == typeof(List<string>))
+        {
+            return (T)(object)new List<string>();
+        }
+
         throw new InvalidOperationException($"Cannot create default for type {typeof(T)}");
     }
 }

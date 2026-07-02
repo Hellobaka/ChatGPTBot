@@ -141,7 +141,10 @@ public class ChatCompletionRequest
     {
         var result = new List<object>();
         foreach (var msg in Messages)
+        {
             result.Add(SerializeMessage(msg));
+        }
+
         return result;
     }
 
@@ -150,17 +153,36 @@ public class ChatCompletionRequest
         var dict = new Dictionary<string, object?> { ["role"] = msg.Role };
 
         if (msg.Parts != null && msg.Parts.Count > 0)
+        {
             dict["content"] = msg.Parts.Select(p => p.ToSerializable()).ToList();
+        }
         else if (msg.Content is string s)
+        {
             dict["content"] = s;
+        }
         else if (msg.Content is JsonElement je)
+        {
             dict["content"] = je;
+        }
         else if (msg.Content != null)
+        {
             dict["content"] = msg.Content;
+        }
 
-        if (msg.Name != null) dict["name"] = msg.Name;
-        if (msg.ToolCallId != null) dict["tool_call_id"] = msg.ToolCallId;
-        if (msg.ToolCalls != null) dict["tool_calls"] = msg.ToolCalls;
+        if (msg.Name != null)
+        {
+            dict["name"] = msg.Name;
+        }
+
+        if (msg.ToolCallId != null)
+        {
+            dict["tool_call_id"] = msg.ToolCallId;
+        }
+
+        if (msg.ToolCalls != null)
+        {
+            dict["tool_calls"] = msg.ToolCalls;
+        }
 
         return dict;
     }

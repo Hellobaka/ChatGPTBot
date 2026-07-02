@@ -53,7 +53,10 @@ public class Relationship
         using var db = SQLiteManager.GetInstance();
         var existing = db.Queryable<Relationship>()
             .First(r => r.GroupID == groupId && r.QQ == qq);
-        if (existing != null) return existing;
+        if (existing != null)
+        {
+            return existing;
+        }
 
         var rel = new Relationship { GroupID = groupId, QQ = qq };
         db.Insertable(rel).ExecuteCommand();

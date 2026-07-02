@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.IO;
-using System.Windows;
 using ChatGPTv3.Core.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,6 +6,10 @@ using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using Microsoft.Win32;
 using SkiaSharp;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
+using System.Windows;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -24,27 +24,44 @@ public partial class TokenUsageSummaryCard : ObservableObject
 public partial class TokenUsageBreakdownItem : ObservableObject
 {
     public string Label { get; init; } = string.Empty;
+
     public int RecordCount { get; init; }
+
     public int PromptTokens { get; init; }
+
     public int CachedPromptTokens { get; init; }
+
     public int CompletionTokens { get; init; }
+
     public int TotalTokens { get; init; }
+
     public decimal EstimatedCost { get; init; }
+
     public string CostText => EstimatedCost.ToString("F4");
 }
 
 public partial class TokenUsageRecordItem : ObservableObject
 {
     public DateTime Time { get; init; }
+
     public string EndPoint { get; init; } = string.Empty;
+
     public string Purpose { get; init; } = string.Empty;
+
     public string Model { get; init; } = string.Empty;
+
     public string APIKeyHint { get; init; } = string.Empty;
+
     public int PromptTokens { get; init; }
+
     public int CachedPromptTokens { get; init; }
+
     public int CompletionTokens { get; init; }
+
     public int TotalTokens { get; init; }
+
     public decimal EstimatedCost { get; init; }
+
     public string CostText => EstimatedCost.ToString("F4");
 }
 
@@ -59,11 +76,15 @@ public partial class TokenUsageFilterItem : ObservableObject
 public partial class TokenUsageViewModel : ViewModelBase
 {
     public ObservableCollection<TokenUsageFilterItem> Services { get; } = [];
+
     public ObservableCollection<TokenUsageFilterItem> Models { get; } = [];
+
     public ObservableCollection<TokenUsageFilterItem> Purposes { get; } = [];
+
     public ObservableCollection<TokenUsageFilterItem> ApiKeys { get; } = [];
 
     public ObservableCollection<TokenUsageSummaryCard> SummaryCards { get; } = [];
+
     public ObservableCollection<TokenUsageRecordItem> Records { get; } = [];
 
     [ObservableProperty]
@@ -107,16 +128,23 @@ public partial class TokenUsageViewModel : ViewModelBase
     private bool _hasData;
 
     public bool HasTrendData => TrendSeries.Any();
+
     public bool HasPurposePieData => PurposePieSeries.Any();
+
     public bool HasModelPieData => ModelPieSeries.Any();
 
     public SolidColorPaint ChartTextPaint { get; } = new(SKColors.White);
+
     public SolidColorPaint ChartSubtleTextPaint { get; } = new(new SKColor(180, 188, 204));
+
     public SolidColorPaint ChartGridPaint { get; } = new(new SKColor(90, 96, 115)) { StrokeThickness = 1 };
 
     public string ServiceSelectionText => GetSelectionText(CheckedServiceCount, Services.Count);
+
     public string ModelSelectionText => GetSelectionText(CheckedModelCount, Models.Count);
+
     public string PurposeSelectionText => GetSelectionText(CheckedPurposeCount, Purposes.Count);
+
     public string ApiKeySelectionText => GetSelectionText(CheckedApiKeyCount, ApiKeys.Count);
 
     public TokenUsageViewModel()
@@ -221,7 +249,9 @@ public partial class TokenUsageViewModel : ViewModelBase
         };
 
         if (dialog.ShowDialog() != true)
+        {
             return;
+        }
 
         using var writer = new StreamWriter(dialog.FileName, false, System.Text.Encoding.UTF8);
         writer.WriteLine("时间,服务商,模型,用途,APIKey,输入Token,缓存Token,输出Token,总Token,估算成本");
@@ -280,9 +310,13 @@ public partial class TokenUsageViewModel : ViewModelBase
             });
 
             if (includeFilters)
+            {
                 ApplyFilterOptions(result.filters);
+            }
             else
+            {
                 RefreshOptionsKeepingSelection(Services, result.filters.EndPoints, nameof(CheckedServiceCount));
+            }
 
             if (!includeFilters)
             {
@@ -450,7 +484,9 @@ public partial class TokenUsageViewModel : ViewModelBase
     private static void SetAll(IEnumerable<TokenUsageFilterItem> items, bool isChecked)
     {
         foreach (var item in items)
+        {
             item.Checked = isChecked;
+        }
     }
 
     private void UpdateCheckedCounts()
@@ -464,7 +500,9 @@ public partial class TokenUsageViewModel : ViewModelBase
     private static List<string> GetSelectedValues(ObservableCollection<TokenUsageFilterItem> current, List<string> fallbackAll)
     {
         if (current.Count == 0)
+        {
             return fallbackAll;
+        }
 
         var selected = current.Where(x => x.Checked).Select(x => x.Name).ToList();
         return selected.Count == 0 || selected.Count == current.Count ? fallbackAll : selected;
@@ -472,9 +510,21 @@ public partial class TokenUsageViewModel : ViewModelBase
 
     private static string GetSelectionText(int checkedCount, int totalCount)
     {
-        if (totalCount == 0) return "暂无数据";
-        if (checkedCount <= 0) return "未选择";
-        if (checkedCount >= totalCount) return $"全部 ({totalCount})";
+        if (totalCount == 0)
+        {
+            return "暂无数据";
+        }
+
+        if (checkedCount <= 0)
+        {
+            return "未选择";
+        }
+
+        if (checkedCount >= totalCount)
+        {
+            return $"全部 ({totalCount})";
+        }
+
         return $"已选 {checkedCount}/{totalCount}";
     }
 
@@ -482,13 +532,17 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         target.Clear();
         foreach (var value in values)
+        {
             target.Add(value);
+        }
     }
 
     private void FilterItem_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(TokenUsageFilterItem.Checked))
+        {
             return;
+        }
 
         UpdateCheckedCounts();
     }
@@ -504,7 +558,10 @@ public partial class TokenUsageViewModel : ViewModelBase
     private static string EscapeCsv(string value)
     {
         if (value.IndexOfAny([',', '"', '\r', '\n']) < 0)
+        {
             return value;
+        }
+
         return $"\"{value.Replace("\"", "\"\"")}\"";
     }
 }

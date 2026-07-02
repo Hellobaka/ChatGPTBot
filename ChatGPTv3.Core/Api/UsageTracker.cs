@@ -64,13 +64,16 @@ public static class UsageTracker
         {
             var pricing = db.Queryable<LLMModelConfig>()
                 .First(m => m.Name == model);
-            if (pricing == null) return 0m;
+            if (pricing == null)
+            {
+                return 0m;
+            }
 
             int cached = usage.GetCachedPromptTokens();
             int billableInput = Math.Max(0, usage.PromptTokens - cached);
-            decimal cost = (billableInput * pricing.InputPricePer1M
-                          + cached * pricing.CachePricePer1M
-                          + usage.CompletionTokens * pricing.OutputPricePer1M) / 1_000_000m;
+            decimal cost = ((billableInput * pricing.InputPricePer1M)
+                          + (cached * pricing.CachePricePer1M)
+                          + (usage.CompletionTokens * pricing.OutputPricePer1M)) / 1_000_000m;
             return cost;
         }
         catch
@@ -82,7 +85,10 @@ public static class UsageTracker
     private static string MaskKey(string key)
     {
         if (string.IsNullOrEmpty(key) || key.Length <= 8)
+        {
             return "***";
+        }
+
         return key.Substring(0, 4) + "***" + key.Substring(key.Length - 4);
     }
 }

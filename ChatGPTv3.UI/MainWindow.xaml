@@ -96,8 +96,8 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="{x:Type models:NavigationItem}">
                             <StackPanel
-                                Margin="14,12"
                                 MinHeight="24"
+                                Margin="14,12"
                                 Cursor="Hand"
                                 Orientation="Horizontal">
                                 <iconPacks:PackIconMaterialDesign

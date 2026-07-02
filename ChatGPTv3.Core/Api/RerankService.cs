@@ -1,8 +1,7 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.Json;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
+using System.Text;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Api;
 
@@ -19,7 +18,9 @@ public static class RerankService
         CancellationToken ct = default)
     {
         if (!AppConfig.EnableRerank || documents.Count == 0)
+        {
             return [];
+        }
 
         try
         {

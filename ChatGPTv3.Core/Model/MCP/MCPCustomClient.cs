@@ -1,6 +1,3 @@
-using System.Text.Json;
-using ChatGPTv3.Core.Config;
-using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
 
 namespace ChatGPTv3.Core.Model.MCP;
@@ -48,15 +45,25 @@ public class MCPCustomClient : MCPClientBase
 public class MCPToolContext
 {
     public long GroupId { get; set; }
+
     public long QQ { get; set; }
+
     public string ChatIdentity { get; set; } = string.Empty;
+
     public string Prompt { get; set; } = string.Empty;
+
     public Action<string, long, long, int>? SendReply { get; set; }
+
     public int MessageId { get; set; }
+
     public bool EnableMemoryFunction { get; set; } = true;
+
     public bool EnableCQApiFunction { get; set; } = true;
+
     public bool EnableRelationshipFunction { get; set; } = true;
+
     public bool EnableRecordFunction { get; set; } = true;
+
     public string[]? DisabledTool { get; set; }
 
     /// <summary>

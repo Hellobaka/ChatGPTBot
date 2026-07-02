@@ -6,8 +6,11 @@ namespace ChatGPTv3.Core.Commands;
 public class PipelineTraceEntry
 {
     public string Step { get; init; } = string.Empty;
+
     public bool Passed { get; init; }
+
     public string Detail { get; init; } = string.Empty;
+
     public DateTime Time { get; init; } = DateTime.Now;
 }
 
@@ -19,10 +22,13 @@ public class ChatContext
 {
     // ── Input ──────────────────────────────────────────────
     public GroupMessageContext? GroupCtx { get; init; }
+
     public PrivateMessageContext? PrivateCtx { get; init; }
 
     public bool IsGroup => GroupCtx != null;
+
     public long GroupId => GroupCtx?.FromGroup.Id ?? 0;
+
     public long QQ => IsGroup ? GroupCtx!.FromQQ.Id : PrivateCtx!.FromQQ.Id;
 
     public string MessageText { get; set; } = string.Empty;
@@ -32,10 +38,15 @@ public class ChatContext
 
     // ── Middleware results ─────────────────────────────────
     public bool IsMentioned { get; set; }
+
     public bool ContainsNickname { get; set; }
+
     public bool IsImageOnly { get; set; }
+
     public bool IsReplyToBot { get; set; }
+
     public bool HasQuestion { get; set; }
+
     public double ReplyProbability { get; set; }
 
     // ── Output ─────────────────────────────────────────────
@@ -77,7 +88,9 @@ public class ChatContext
     {
         var entries = GetTraceEntries(failedOnly);
         if (entries.Count == 0)
+        {
             return failedOnly ? "没有失败节点" : "没有可用追踪记录";
+        }
 
         return string.Join("\n", entries.Select(t =>
             $"- [{t.Time:HH:mm:ss}] {t.Step} | {(t.Passed ? "PASS" : "FAIL")} | {t.Detail}"));

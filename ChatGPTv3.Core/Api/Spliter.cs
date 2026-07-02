@@ -12,6 +12,7 @@ namespace ChatGPTv3.Core.Api;
 public class Splitter
 {
     private readonly string _message;
+
     private static readonly Regex RegexSplit = new(
         @"(?<=[。？！?!]|\.(?!\d|\.))", RegexOptions.Compiled);
 
@@ -46,11 +47,20 @@ public class Splitter
 
     public string[] Split()
     {
-        if (string.IsNullOrEmpty(_message)) return [_message];
-        if (_message.Length <= AppConfig.SplitterMinLength) return [_message];
+        if (string.IsNullOrEmpty(_message))
+        {
+            return [_message];
+        }
+
+        if (_message.Length <= AppConfig.SplitterMinLength)
+        {
+            return [_message];
+        }
 
         if (AppConfig.SplitterRegexFirst)
+        {
             return RegexSplitFallback();
+        }
 
         try
         {
@@ -83,7 +93,9 @@ public class Splitter
             timeout: AppConfig.SplitterTimeout).Result;
 
         if (result == ChatService.ErrorMessage)
+        {
             throw new Exception("Splitter API error");
+        }
 
         return ParseSplitResult(result);
     }
@@ -102,7 +114,9 @@ public class Splitter
                     line = line.TrimEnd('。', '.', '，', ',');
                 }
                 if (!string.IsNullOrWhiteSpace(line))
+                {
                     lines.Add(line);
+                }
             }
 
             // Truncate to max lines, append overflow to last
@@ -130,7 +144,9 @@ public class Splitter
             .ToArray();
 
         if (parts.Length <= AppConfig.SplitterMaxLines)
+        {
             return parts;
+        }
 
         var result = parts.Take(AppConfig.SplitterMaxLines - 1).ToList();
         result.Add(string.Join("", parts.Skip(AppConfig.SplitterMaxLines - 1)));
@@ -174,7 +190,9 @@ public class Splitter
             {
                 var text = message.Substring(lastIndex, match.Index - lastIndex);
                 if (!string.IsNullOrWhiteSpace(text))
+                {
                     parts.Add((false, text));
+                }
             }
             parts.Add((true, match.Groups[1].Value.Trim()));
             lastIndex = match.Index + match.Length;
@@ -184,7 +202,9 @@ public class Splitter
         {
             var remaining = message.Substring(lastIndex);
             if (!string.IsNullOrWhiteSpace(remaining))
+            {
                 parts.Add((false, remaining));
+            }
         }
 
         return parts.ToArray();
@@ -195,7 +215,10 @@ public class Splitter
     /// </summary>
     public static async Task ApplyTypingDelay(string text, CancellationToken ct = default)
     {
-        if (!AppConfig.EnableSplitterRandomDelay) return;
+        if (!AppConfig.EnableSplitterRandomDelay)
+        {
+            return;
+        }
 
         var typingMs = (int)(text.Length / (AppConfig.SplitterSimulateTypeSpeed / 60.0) * 1000);
         var randomMs = CommonHelper.Next(AppConfig.SplitterRandomDelayMin, AppConfig.SplitterRandomDelayMax);

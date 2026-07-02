@@ -1,10 +1,11 @@
-<UserControl x:Class="ChatGPTv3.UI.Views.TokenUsageView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
-             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
-             xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
-             xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
+<UserControl
+    x:Class="ChatGPTv3.UI.Views.TokenUsageView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
+    xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+    xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
+    xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
@@ -17,9 +18,10 @@
             <Setter Property="Margin" Value="0,0,0,12" />
         </Style>
 
-        <Style x:Key="PopupFilterButtonStyle"
-               BasedOn="{StaticResource ToggleButtonDefault}"
-               TargetType="ToggleButton">
+        <Style
+            x:Key="PopupFilterButtonStyle"
+            BasedOn="{StaticResource ToggleButtonDefault}"
+            TargetType="ToggleButton">
             <Setter Property="MinWidth" Value="130" />
             <Setter Property="Padding" Value="10,6" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -29,52 +31,64 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <Grid Margin="0,0,0,8">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Expander Grid.Row="0"
-                      Margin="0,0,0,12"
-                      Header="筛选"
-                      IsExpanded="True">
-                <Border Margin="0,10,0,0"
-                        Padding="14"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
+            <Expander
+                Grid.Row="0"
+                Margin="0,0,0,12"
+                Header="筛选"
+                IsExpanded="True">
+                <Border
+                    Margin="0,10,0,0"
+                    Padding="14"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                     <StackPanel>
                         <WrapPanel Margin="0,0,0,10" VerticalAlignment="Center">
-                            <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="服务商" />
-                            <ToggleButton x:Name="ServiceFilterButton"
-                                          Margin="0,0,14,8"
-                                          Content="{Binding ServiceSelectionText}"
-                                          Style="{StaticResource PopupFilterButtonStyle}" />
-                            <Popup Placement="Bottom"
-                                   PlacementTarget="{Binding ElementName=ServiceFilterButton}"
-                                   StaysOpen="False"
-                                   IsOpen="{Binding IsChecked, ElementName=ServiceFilterButton, Mode=TwoWay}">
-                                <Border Width="260"
-                                        MaxHeight="360"
-                                        Padding="12"
-                                        Background="{DynamicResource RegionBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Text="服务商" />
+                            <ToggleButton
+                                x:Name="ServiceFilterButton"
+                                Margin="0,0,14,8"
+                                Content="{Binding ServiceSelectionText}"
+                                Style="{StaticResource PopupFilterButtonStyle}" />
+                            <Popup
+                                IsOpen="{Binding IsChecked, ElementName=ServiceFilterButton, Mode=TwoWay}"
+                                Placement="Bottom"
+                                PlacementTarget="{Binding ElementName=ServiceFilterButton}"
+                                StaysOpen="False">
+                                <Border
+                                    Width="260"
+                                    MaxHeight="360"
+                                    Padding="12"
+                                    Background="{DynamicResource RegionBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
                                     <StackPanel>
                                         <WrapPanel Margin="0,0,0,8">
-                                            <Button Margin="0,0,6,0" Content="全选" Command="{Binding SelectAllServicesCommand}" />
-                                            <Button Content="清空" Command="{Binding ClearServicesCommand}" />
+                                            <Button
+                                                Margin="0,0,6,0"
+                                                Command="{Binding SelectAllServicesCommand}"
+                                                Content="全选" />
+                                            <Button Command="{Binding ClearServicesCommand}" Content="清空" />
                                         </WrapPanel>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding Services}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="{x:Type vm:TokenUsageFilterItem}">
-                                                        <CheckBox Margin="0,0,0,6"
-                                                                  Content="{Binding Name}"
-                                                                  IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <CheckBox
+                                                            Margin="0,0,0,6"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -83,34 +97,44 @@
                                 </Border>
                             </Popup>
 
-                            <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="模型" />
-                            <ToggleButton x:Name="ModelFilterButton"
-                                          Margin="0,0,14,8"
-                                          Content="{Binding ModelSelectionText}"
-                                          Style="{StaticResource PopupFilterButtonStyle}" />
-                            <Popup Placement="Bottom"
-                                   PlacementTarget="{Binding ElementName=ModelFilterButton}"
-                                   StaysOpen="False"
-                                   IsOpen="{Binding IsChecked, ElementName=ModelFilterButton, Mode=TwoWay}">
-                                <Border Width="260"
-                                        MaxHeight="360"
-                                        Padding="12"
-                                        Background="{DynamicResource RegionBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Text="模型" />
+                            <ToggleButton
+                                x:Name="ModelFilterButton"
+                                Margin="0,0,14,8"
+                                Content="{Binding ModelSelectionText}"
+                                Style="{StaticResource PopupFilterButtonStyle}" />
+                            <Popup
+                                IsOpen="{Binding IsChecked, ElementName=ModelFilterButton, Mode=TwoWay}"
+                                Placement="Bottom"
+                                PlacementTarget="{Binding ElementName=ModelFilterButton}"
+                                StaysOpen="False">
+                                <Border
+                                    Width="260"
+                                    MaxHeight="360"
+                                    Padding="12"
+                                    Background="{DynamicResource RegionBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
                                     <StackPanel>
                                         <WrapPanel Margin="0,0,0,8">
-                                            <Button Margin="0,0,6,0" Content="全选" Command="{Binding SelectAllModelsCommand}" />
-                                            <Button Content="清空" Command="{Binding ClearModelsCommand}" />
+                                            <Button
+                                                Margin="0,0,6,0"
+                                                Command="{Binding SelectAllModelsCommand}"
+                                                Content="全选" />
+                                            <Button Command="{Binding ClearModelsCommand}" Content="清空" />
                                         </WrapPanel>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding Models}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="{x:Type vm:TokenUsageFilterItem}">
-                                                        <CheckBox Margin="0,0,0,6"
-                                                                  Content="{Binding Name}"
-                                                                  IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <CheckBox
+                                                            Margin="0,0,0,6"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -119,34 +143,44 @@
                                 </Border>
                             </Popup>
 
-                            <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="用途" />
-                            <ToggleButton x:Name="PurposeFilterButton"
-                                          Margin="0,0,14,8"
-                                          Content="{Binding PurposeSelectionText}"
-                                          Style="{StaticResource PopupFilterButtonStyle}" />
-                            <Popup Placement="Bottom"
-                                   PlacementTarget="{Binding ElementName=PurposeFilterButton}"
-                                   StaysOpen="False"
-                                   IsOpen="{Binding IsChecked, ElementName=PurposeFilterButton, Mode=TwoWay}">
-                                <Border Width="260"
-                                        MaxHeight="360"
-                                        Padding="12"
-                                        Background="{DynamicResource RegionBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Text="用途" />
+                            <ToggleButton
+                                x:Name="PurposeFilterButton"
+                                Margin="0,0,14,8"
+                                Content="{Binding PurposeSelectionText}"
+                                Style="{StaticResource PopupFilterButtonStyle}" />
+                            <Popup
+                                IsOpen="{Binding IsChecked, ElementName=PurposeFilterButton, Mode=TwoWay}"
+                                Placement="Bottom"
+                                PlacementTarget="{Binding ElementName=PurposeFilterButton}"
+                                StaysOpen="False">
+                                <Border
+                                    Width="260"
+                                    MaxHeight="360"
+                                    Padding="12"
+                                    Background="{DynamicResource RegionBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
                                     <StackPanel>
                                         <WrapPanel Margin="0,0,0,8">
-                                            <Button Margin="0,0,6,0" Content="全选" Command="{Binding SelectAllPurposesCommand}" />
-                                            <Button Content="清空" Command="{Binding ClearPurposesCommand}" />
+                                            <Button
+                                                Margin="0,0,6,0"
+                                                Command="{Binding SelectAllPurposesCommand}"
+                                                Content="全选" />
+                                            <Button Command="{Binding ClearPurposesCommand}" Content="清空" />
                                         </WrapPanel>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding Purposes}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="{x:Type vm:TokenUsageFilterItem}">
-                                                        <CheckBox Margin="0,0,0,6"
-                                                                  Content="{Binding Name}"
-                                                                  IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <CheckBox
+                                                            Margin="0,0,0,6"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -155,34 +189,44 @@
                                 </Border>
                             </Popup>
 
-                            <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="API Key" />
-                            <ToggleButton x:Name="ApiKeyFilterButton"
-                                          Margin="0,0,0,8"
-                                          Content="{Binding ApiKeySelectionText}"
-                                          Style="{StaticResource PopupFilterButtonStyle}" />
-                            <Popup Placement="Bottom"
-                                   PlacementTarget="{Binding ElementName=ApiKeyFilterButton}"
-                                   StaysOpen="False"
-                                   IsOpen="{Binding IsChecked, ElementName=ApiKeyFilterButton, Mode=TwoWay}">
-                                <Border Width="260"
-                                        MaxHeight="360"
-                                        Padding="12"
-                                        Background="{DynamicResource RegionBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="8">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Text="API Key" />
+                            <ToggleButton
+                                x:Name="ApiKeyFilterButton"
+                                Margin="0,0,0,8"
+                                Content="{Binding ApiKeySelectionText}"
+                                Style="{StaticResource PopupFilterButtonStyle}" />
+                            <Popup
+                                IsOpen="{Binding IsChecked, ElementName=ApiKeyFilterButton, Mode=TwoWay}"
+                                Placement="Bottom"
+                                PlacementTarget="{Binding ElementName=ApiKeyFilterButton}"
+                                StaysOpen="False">
+                                <Border
+                                    Width="260"
+                                    MaxHeight="360"
+                                    Padding="12"
+                                    Background="{DynamicResource RegionBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
                                     <StackPanel>
                                         <WrapPanel Margin="0,0,0,8">
-                                            <Button Margin="0,0,6,0" Content="全选" Command="{Binding SelectAllApiKeysCommand}" />
-                                            <Button Content="清空" Command="{Binding ClearApiKeysCommand}" />
+                                            <Button
+                                                Margin="0,0,6,0"
+                                                Command="{Binding SelectAllApiKeysCommand}"
+                                                Content="全选" />
+                                            <Button Command="{Binding ClearApiKeysCommand}" Content="清空" />
                                         </WrapPanel>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                                             <ItemsControl ItemsSource="{Binding ApiKeys}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate DataType="{x:Type vm:TokenUsageFilterItem}">
-                                                        <CheckBox Margin="0,0,0,6"
-                                                                  Content="{Binding Name}"
-                                                                  IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                        <CheckBox
+                                                            Margin="0,0,0,6"
+                                                            Content="{Binding Name}"
+                                                            IsChecked="{Binding Checked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -193,37 +237,59 @@
                         </WrapPanel>
 
                         <WrapPanel VerticalAlignment="Center">
-                            <TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="时间段" />
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                VerticalAlignment="Center"
+                                Text="时间段" />
                             <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                            <TextBlock Margin="8,0" VerticalAlignment="Center" Text="~" />
+                            <TextBlock
+                                Margin="8,0"
+                                VerticalAlignment="Center"
+                                Text="~" />
                             <DatePicker Margin="0,0,14,0" SelectedDate="{Binding EndDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <Button Margin="0,0,6,0" Content="今天" Command="{Binding ApplyTodayCommand}" />
-                            <Button Margin="0,0,6,0" Content="昨天" Command="{Binding ApplyYesterdayCommand}" />
-                            <Button Margin="0,0,6,0" Content="近7天" Command="{Binding ApplyLast7DaysCommand}" />
-                            <Button Margin="0,0,14,0" Content="近30天" Command="{Binding ApplyLast30DaysCommand}" />
+                            <Button
+                                Margin="0,0,6,0"
+                                Command="{Binding ApplyTodayCommand}"
+                                Content="今天" />
+                            <Button
+                                Margin="0,0,6,0"
+                                Command="{Binding ApplyYesterdayCommand}"
+                                Content="昨天" />
+                            <Button
+                                Margin="0,0,6,0"
+                                Command="{Binding ApplyLast7DaysCommand}"
+                                Content="近7天" />
+                            <Button
+                                Margin="0,0,14,0"
+                                Command="{Binding ApplyLast30DaysCommand}"
+                                Content="近30天" />
 
-                            <Button Margin="0,0,6,0"
-                                    MinWidth="88"
-                                    Content="搜索"
-                                    Command="{Binding RefreshCommand}"
-                                    Style="{StaticResource ButtonPrimary}" />
-                            <Button Margin="0,0,6,0"
-                                    MinWidth="96"
-                                    Content="重置筛选"
-                                    Command="{Binding ResetFiltersCommand}" />
-                            <Button MinWidth="88"
-                                    Content="导出"
-                                    Command="{Binding ExportCommand}" />
+                            <Button
+                                MinWidth="88"
+                                Margin="0,0,6,0"
+                                Command="{Binding RefreshCommand}"
+                                Content="搜索"
+                                Style="{StaticResource ButtonPrimary}" />
+                            <Button
+                                MinWidth="96"
+                                Margin="0,0,6,0"
+                                Command="{Binding ResetFiltersCommand}"
+                                Content="重置筛选" />
+                            <Button
+                                MinWidth="88"
+                                Command="{Binding ExportCommand}"
+                                Content="导出" />
                         </WrapPanel>
                     </StackPanel>
                 </Border>
             </Expander>
 
-            <Expander Grid.Row="1"
-                      Margin="0,0,0,12"
-                      Header="数据总览"
-                      IsExpanded="True">
+            <Expander
+                Grid.Row="1"
+                Margin="0,0,0,12"
+                Header="数据总览"
+                IsExpanded="True">
                 <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding SummaryCards}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -232,23 +298,26 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:TokenUsageSummaryCard}">
-                            <Border Width="176"
-                                    Margin="0,0,12,12"
-                                    Padding="12,14"
-                                    Background="{DynamicResource RegionBrush}"
-                                    BorderBrush="{DynamicResource BorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="8">
+                            <Border
+                                Width="176"
+                                Margin="0,0,12,12"
+                                Padding="12,14"
+                                Background="{DynamicResource RegionBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8">
                                 <StackPanel>
-                                    <TextBlock FontSize="12"
-                                               Opacity="0.72"
-                                               Text="{Binding Title}"
-                                               TextAlignment="Center" />
-                                    <TextBlock Margin="0,10,0,0"
-                                               FontSize="22"
-                                               FontWeight="SemiBold"
-                                               Text="{Binding Value}"
-                                               TextAlignment="Center" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Opacity="0.72"
+                                        Text="{Binding Title}"
+                                        TextAlignment="Center" />
+                                    <TextBlock
+                                        Margin="0,10,0,0"
+                                        FontSize="22"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding Value}"
+                                        TextAlignment="Center" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -256,10 +325,11 @@
                 </ItemsControl>
             </Expander>
 
-            <TextBlock Grid.Row="2"
-                       Margin="0,0,0,12"
-                       Foreground="IndianRed"
-                       Text="{Binding ErrorMessage}" />
+            <TextBlock
+                Grid.Row="2"
+                Margin="0,0,0,12"
+                Foreground="IndianRed"
+                Text="{Binding ErrorMessage}" />
 
             <Grid Grid.Row="3" Margin="0,0,0,12">
                 <Grid.RowDefinitions>
@@ -276,38 +346,54 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Text="模型占比" />
-                            <TextBlock Margin="0,4,0,10" Opacity="0.68" Text="按总 Token 展示模型使用分布" />
+                            <TextBlock
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="模型占比" />
+                            <TextBlock
+                                Margin="0,4,0,10"
+                                Opacity="0.68"
+                                Text="按总 Token 展示模型使用分布" />
                             <Grid>
-                                <lvc:PieChart MinHeight="280"
-                                              Series="{Binding ModelPieSeries}"
-                                              LegendTextPaint="{Binding ChartTextPaint}"
-                                              TooltipTextPaint="{Binding ChartTextPaint}"
-                                              Visibility="{Binding HasModelPieData, Converter={StaticResource BoolToVis}}" />
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Opacity="0.72"
-                                           Text="暂无数据"
-                                           Visibility="{Binding HasModelPieData, Converter={StaticResource InvertBoolToVis}}" />
+                                <lvc:PieChart
+                                    MinHeight="280"
+                                    LegendTextPaint="{Binding ChartTextPaint}"
+                                    Series="{Binding ModelPieSeries}"
+                                    TooltipTextPaint="{Binding ChartTextPaint}"
+                                    Visibility="{Binding HasModelPieData, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    Opacity="0.72"
+                                    Text="暂无数据"
+                                    Visibility="{Binding HasModelPieData, Converter={StaticResource InvertBoolToVis}}" />
                             </Grid>
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock FontSize="14" FontWeight="SemiBold" Text="用途占比" />
-                            <TextBlock Margin="0,4,0,10" Opacity="0.68" Text="按总 Token 展示用途使用分布" />
+                            <TextBlock
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="用途占比" />
+                            <TextBlock
+                                Margin="0,4,0,10"
+                                Opacity="0.68"
+                                Text="按总 Token 展示用途使用分布" />
                             <Grid>
-                                <lvc:PieChart MinHeight="280"
-                                              Series="{Binding PurposePieSeries}"
-                                              LegendTextPaint="{Binding ChartTextPaint}"
-                                              TooltipTextPaint="{Binding ChartTextPaint}"
-                                              Visibility="{Binding HasPurposePieData, Converter={StaticResource BoolToVis}}" />
-                                <TextBlock HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="16"
-                                           Opacity="0.72"
-                                           Text="暂无数据"
-                                           Visibility="{Binding HasPurposePieData, Converter={StaticResource InvertBoolToVis}}" />
+                                <lvc:PieChart
+                                    MinHeight="280"
+                                    LegendTextPaint="{Binding ChartTextPaint}"
+                                    Series="{Binding PurposePieSeries}"
+                                    TooltipTextPaint="{Binding ChartTextPaint}"
+                                    Visibility="{Binding HasPurposePieData, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    Opacity="0.72"
+                                    Text="暂无数据"
+                                    Visibility="{Binding HasPurposePieData, Converter={StaticResource InvertBoolToVis}}" />
                             </Grid>
                         </StackPanel>
                     </Grid>
@@ -315,51 +401,92 @@
 
                 <Border Grid.Row="1" Style="{StaticResource SectionCardStyle}">
                     <StackPanel>
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="Token 时段统计" />
-                        <TextBlock Margin="0,4,0,10" Opacity="0.68" Text="输入 / 缓存 / 输出 Token 的堆叠柱状图" />
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="Token 时段统计" />
+                        <TextBlock
+                            Margin="0,4,0,10"
+                            Opacity="0.68"
+                            Text="输入 / 缓存 / 输出 Token 的堆叠柱状图" />
                         <Grid>
-                            <lvc:CartesianChart MinHeight="280"
-                                                Series="{Binding TrendSeries}"
-                                                XAxes="{Binding TrendXAxes}"
-                                                YAxes="{Binding TrendYAxes}"
-                                                LegendTextPaint="{Binding ChartTextPaint}"
-                                                TooltipTextPaint="{Binding ChartTextPaint}"
-                                                Visibility="{Binding HasTrendData, Converter={StaticResource BoolToVis}}" />
-                            <TextBlock HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       FontSize="16"
-                                       Opacity="0.72"
-                                       Text="暂无数据"
-                                       Visibility="{Binding HasTrendData, Converter={StaticResource InvertBoolToVis}}" />
+                            <lvc:CartesianChart
+                                MinHeight="280"
+                                LegendTextPaint="{Binding ChartTextPaint}"
+                                Series="{Binding TrendSeries}"
+                                TooltipTextPaint="{Binding ChartTextPaint}"
+                                Visibility="{Binding HasTrendData, Converter={StaticResource BoolToVis}}"
+                                XAxes="{Binding TrendXAxes}"
+                                YAxes="{Binding TrendYAxes}" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Opacity="0.72"
+                                Text="暂无数据"
+                                Visibility="{Binding HasTrendData, Converter={StaticResource InvertBoolToVis}}" />
                         </Grid>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <Expander Grid.Row="4"
-                      Header="调用明细"
-                      IsExpanded="False">
-                <Border Margin="0,10,0,0"
-                        Padding="12"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                    <DataGrid AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              HeadersVisibility="Column"
-                              ItemsSource="{Binding Records}">
+            <Expander
+                Grid.Row="4"
+                Header="调用明细"
+                IsExpanded="False">
+                <Border
+                    Margin="0,10,0,0"
+                    Padding="12"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        HeadersVisibility="Column"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding Records}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="150" Header="时间" Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}" />
-                            <DataGridTextColumn Width="180" Header="服务商" Binding="{Binding EndPoint}" />
-                            <DataGridTextColumn Width="140" Header="模型" Binding="{Binding Model}" />
-                            <DataGridTextColumn Width="110" Header="用途" Binding="{Binding Purpose}" />
-                            <DataGridTextColumn Width="90" Header="Key" Binding="{Binding APIKeyHint}" />
-                            <DataGridTextColumn Width="80" Header="输入" Binding="{Binding PromptTokens}" />
-                            <DataGridTextColumn Width="80" Header="缓存" Binding="{Binding CachedPromptTokens}" />
-                            <DataGridTextColumn Width="80" Header="输出" Binding="{Binding CompletionTokens}" />
-                            <DataGridTextColumn Width="90" Header="总 Token" Binding="{Binding TotalTokens}" />
-                            <DataGridTextColumn Width="90" Header="估算成本" Binding="{Binding CostText}" />
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}"
+                                Header="时间" />
+                            <DataGridTextColumn
+                                Width="180"
+                                Binding="{Binding EndPoint}"
+                                Header="服务商" />
+                            <DataGridTextColumn
+                                Width="140"
+                                Binding="{Binding Model}"
+                                Header="模型" />
+                            <DataGridTextColumn
+                                Width="110"
+                                Binding="{Binding Purpose}"
+                                Header="用途" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding APIKeyHint}"
+                                Header="Key" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding PromptTokens}"
+                                Header="输入" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding CachedPromptTokens}"
+                                Header="缓存" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding CompletionTokens}"
+                                Header="输出" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding TotalTokens}"
+                                Header="总 Token" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding CostText}"
+                                Header="估算成本" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>

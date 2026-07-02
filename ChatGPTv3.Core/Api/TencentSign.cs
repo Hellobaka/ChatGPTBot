@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ChatGPTv3.Core.Api;
 

@@ -1,15 +1,16 @@
-using System.Collections.ObjectModel;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using System.Collections.ObjectModel;
 
 namespace ChatGPTv3.UI.ViewModels;
 
 public partial class ProviderModelItem : ObservableObject
 {
     public int Id { get; set; }
+
     public int APIKeyId { get; set; }
 
     [ObservableProperty] private string _name = string.Empty;
@@ -60,7 +61,10 @@ public partial class ProviderItem : ObservableObject
             TotalConsume = TotalConsume
         };
         foreach (var model in Models)
+        {
             clone.Models.Add(model.Clone());
+        }
+
         return clone;
     }
 }
@@ -68,18 +72,26 @@ public partial class ProviderItem : ObservableObject
 public partial class ModelSpendSummaryItem : ObservableObject
 {
     public string ModelName { get; init; } = string.Empty;
+
     public int CallCount { get; init; }
+
     public int PromptTokens { get; init; }
+
     public int CachedPromptTokens { get; init; }
+
     public int CompletionTokens { get; init; }
+
     public int TotalTokens { get; init; }
+
     public decimal EstimatedConsume { get; init; }
+
     public string ConsumeText => EstimatedConsume.ToString("F4");
 }
 
 public partial class PurposeBindingItem : ObservableObject
 {
     public PurposeBindingGroup? ParentGroup { get; set; }
+
     [ObservableProperty] private ProviderItem? _selectedProvider;
     [ObservableProperty] private ProviderModelItem? _selectedModel;
 
@@ -102,15 +114,20 @@ public partial class PurposeBindingItem : ObservableObject
 public partial class PurposeBindingGroup : ObservableObject
 {
     public string ConfigKey { get; init; } = string.Empty;
+
     public string Title { get; init; } = string.Empty;
+
     public string Description { get; init; } = string.Empty;
+
     public ObservableCollection<PurposeBindingItem> Items { get; } = [];
 }
 
 public partial class KeyManagementViewModel : ViewModelBase
 {
     public ObservableCollection<ProviderItem> Providers { get; } = [];
+
     public ObservableCollection<ModelSpendSummaryItem> SelectedProviderSpend { get; } = [];
+
     public ObservableCollection<PurposeBindingGroup> PurposeGroups { get; } = [];
 
     [ObservableProperty] private ProviderItem? _selectedProvider;
@@ -159,21 +176,30 @@ public partial class KeyManagementViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveProvider(ProviderItem? provider)
     {
-        if (provider == null) return;
+        if (provider == null)
+        {
+            return;
+        }
 
         foreach (var group in PurposeGroups)
         {
             var stale = group.Items.Where(x => x.SelectedProvider == provider).ToList();
             foreach (var item in stale)
+            {
                 group.Items.Remove(item);
+            }
         }
 
         if (provider.Id > 0)
+        {
             APIKeyRepository.Delete(provider.Id);
+        }
 
         Providers.Remove(provider);
         if (SelectedProvider == provider)
+        {
             SelectedProvider = Providers.FirstOrDefault();
+        }
     }
 
     [RelayCommand]
@@ -193,23 +219,34 @@ public partial class KeyManagementViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveModel(ProviderModelItem? model)
     {
-        if (SelectedProvider == null || model == null) return;
+        if (SelectedProvider == null || model == null)
+        {
+            return;
+        }
 
         foreach (var group in PurposeGroups)
         {
             foreach (var item in group.Items.Where(x => x.SelectedProvider == SelectedProvider && x.SelectedModel?.Name == model.Name))
+            {
                 item.SelectedModel = null;
+            }
         }
 
         SelectedProvider.Models.Remove(model);
         if (SelectedModel == model)
+        {
             SelectedModel = SelectedProvider.Models.FirstOrDefault();
+        }
     }
 
     [RelayCommand]
     private void AddPurposeBinding(PurposeBindingGroup? group)
     {
-        if (group == null) return;
+        if (group == null)
+        {
+            return;
+        }
+
         var item = new PurposeBindingItem();
         item.ParentGroup = group;
         var provider = Providers.FirstOrDefault();
@@ -331,7 +368,9 @@ public partial class KeyManagementViewModel : ViewModelBase
     private void LoadPurposeBindings()
     {
         foreach (var group in PurposeGroups)
+        {
             group.Items.Clear();
+        }
 
         LoadPurposeGroup("ChatAPIKeyId", AppConfig.ChatAPIKeyId);
         LoadPurposeGroup("ReplyAPIKeyId", AppConfig.ReplyAPIKeyId);
@@ -363,7 +402,9 @@ public partial class KeyManagementViewModel : ViewModelBase
     {
         SelectedProviderSpend.Clear();
         if (SelectedProvider == null)
+        {
             return;
+        }
 
         foreach (var summary in APIKeyRepository.GetModelSpendSummaries(new APIKey
         {

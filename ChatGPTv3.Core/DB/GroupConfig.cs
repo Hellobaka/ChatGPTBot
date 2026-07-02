@@ -49,7 +49,10 @@ public class GroupConfig
     {
         lock (CacheLock)
         {
-            if (Cache.TryGetValue(groupId, out var cached)) return cached;
+            if (Cache.TryGetValue(groupId, out var cached))
+            {
+                return cached;
+            }
         }
 
         using var db = SQLiteManager.GetInstance();
@@ -65,9 +68,13 @@ public class GroupConfig
         config.UpdatedAt = DateTime.Now;
         using var db = SQLiteManager.GetInstance();
         if (config.Id > 0)
+        {
             db.Updateable(config).ExecuteCommand();
+        }
         else
+        {
             db.Insertable(config).ExecuteCommand();
+        }
 
         lock (CacheLock) { Cache[config.GroupID] = config; }
     }

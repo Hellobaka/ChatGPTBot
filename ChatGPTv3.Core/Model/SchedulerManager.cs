@@ -1,8 +1,8 @@
-using System.Text.Json;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json;
 
 namespace ChatGPTv3.Core.Model;
 
@@ -69,7 +69,10 @@ public class SchedulerManager
                             item.GetProperty("Action").GetString() ?? ""))
                         .ToList();
                     _lastUpdateTime = lastUpdate;
-                    if (_schedules.Count > 0) return;
+                    if (_schedules.Count > 0)
+                    {
+                        return;
+                    }
                 }
             }
             catch { /* Cache invalid, regenerate */ }
@@ -94,7 +97,10 @@ public class SchedulerManager
                 ChatService.Purpose.日程获取,
                 timeout: AppConfig.ChatTimeout);
 
-            if (json == ChatService.ErrorMessage) return;
+            if (json == ChatService.ErrorMessage)
+            {
+                return;
+            }
 
             using var doc = JsonDocument.Parse(json);
             _schedules = doc.RootElement.EnumerateArray()
@@ -132,13 +138,20 @@ public class SchedulerManager
     /// <param name="newAction">New action description.</param>
     public void UpdateSchedule(string timeStr, string newAction)
     {
-        if (!TimeSpan.TryParse(timeStr, out var ts)) return;
+        if (!TimeSpan.TryParse(timeStr, out var ts))
+        {
+            return;
+        }
 
         var existing = _schedules.FindIndex(s => s.time.TimeOfDay == ts);
         if (existing >= 0)
+        {
             _schedules[existing] = (_schedules[existing].time.Date + ts, newAction);
+        }
         else
+        {
             _schedules.Add((DateTime.Today + ts, newAction));
+        }
 
         _schedules = _schedules.OrderBy(s => s.time.TimeOfDay).ToList();
         CacheToFile();
@@ -149,7 +162,10 @@ public class SchedulerManager
     /// </summary>
     public string GetCurrentSchedule(DateTime time)
     {
-        if (_schedules.Count <= 1) return AppConfig.DefaultSchedule;
+        if (_schedules.Count <= 1)
+        {
+            return AppConfig.DefaultSchedule;
+        }
 
         foreach (var (scheduleTime, action) in _schedules)
         {
@@ -158,7 +174,9 @@ public class SchedulerManager
                 // Check next schedule hasn't started yet
                 var next = _schedules.FirstOrDefault(s => s.time.TimeOfDay > time.TimeOfDay);
                 if (next == default || next.time.TimeOfDay > scheduleTime.TimeOfDay)
+                {
                     return action;
+                }
             }
         }
 

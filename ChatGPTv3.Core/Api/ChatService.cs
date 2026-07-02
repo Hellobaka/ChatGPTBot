@@ -1,8 +1,8 @@
-using System.Text;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using System.Text;
 
 namespace ChatGPTv3.Core.Api;
 
@@ -18,6 +18,7 @@ public class ChatService
     }
 
     public const string ErrorMessage = "连接发生问题，查看日志排查问题";
+
     /// <summary>Non-null when the LLM response ended with a non-"stop" finish_reason.</summary>
     public string? LastAbnormalFinishReason { get; private set; }
 
@@ -27,6 +28,7 @@ public class ChatService
     public static event Action<string, byte[], string?>? OnAudioChunk;
     /// <summary>Fires when an inline image is received (generated image output).</summary>
     public static event Action<string, string>? OnImageChunk;
+
     /// <summary>Collects tool call data for post-turn summarization.</summary>
     public List<(string callId, string name, string args, string result, bool success)> ToolCallLog { get; } = [];
 
@@ -258,12 +260,16 @@ public class ChatService
             }
 
             if (update.Usage != null)
+            {
                 usage = update.Usage;
+            }
 
             // ── Accumulate text content ──
             var delta = update.GetDeltaContent();
             if (!string.IsNullOrEmpty(delta))
+            {
                 msg.Append(delta);
+            }
 
             // ── Accumulate reasoning ──
             ResponseProcessor.AppendReasoning(update.GetReasoningContent());
@@ -300,10 +306,14 @@ public class ChatService
             {
                 var toolCalls = update.GetToolCalls();
                 if (toolCalls != null && toolCalls.Count > 0)
+                {
                     _pendingToolCalls = toolCalls;
+                }
 
                 if (msg.Length > 0)
+                {
                     CommonHelper.DebugLog("ToolCall", $"中间内容: {msg}");
+                }
             }
         }
 
@@ -366,6 +376,7 @@ public class ToolExecutor
     }
 
     public List<ToolDefinition> GetToolDefinitions() => _getDefinitions();
+
     public Task<object?> ExecuteAsync(ToolCallRequest toolCall, CancellationToken ct) =>
         _executor(toolCall, ct);
 }

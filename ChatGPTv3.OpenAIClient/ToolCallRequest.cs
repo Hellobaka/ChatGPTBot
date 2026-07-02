@@ -60,7 +60,11 @@ public class FunctionCall
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(Arguments)) return null;
+            if (string.IsNullOrWhiteSpace(Arguments))
+            {
+                return null;
+            }
+
             return JsonDocument.Parse(Arguments);
         }
         catch

@@ -50,7 +50,10 @@ public static class ToolResultSummarizer
         string finalResponse,
         List<int> placeholderIds)
     {
-        if (toolCalls.Count == 0) return;
+        if (toolCalls.Count == 0)
+        {
+            return;
+        }
 
         _ = Task.Run(async () =>
         {
@@ -60,13 +63,17 @@ public static class ToolResultSummarizer
 
                 // UPDATE all placeholder records with the merged summary
                 foreach (var id in placeholderIds)
+                {
                     ChatRecord.UpdateParsedMessage(id, summary);
+                }
             }
             catch (Exception ex)
             {
                 var fallback = $"[{toolCalls.Count} 次工具调用: {string.Join(", ", toolCalls.Select(t => t.name))}]";
                 foreach (var id in placeholderIds)
+                {
                     ChatRecord.UpdateParsedMessage(id, fallback);
+                }
 
                 CommonHelper.LogWarning?.Invoke("Summarizer", $"总结失败: {ex.Message}");
             }
@@ -88,7 +95,10 @@ public static class ToolResultSummarizer
             var keys = AppConfig.SummarizerApiKeyId.Count > 0
                 ? AppConfig.SummarizerApiKeyId
                 : AppConfig.ChatAPIKeyId;
-            if (keys.Count == 0) return FallbackText(toolCalls);
+            if (keys.Count == 0)
+            {
+                return FallbackText(toolCalls);
+            }
 
             // Build structured messages: System → User → Assistant(tool_calls) → Tool → Assistant(final)
             var messages = new List<ChatMessage>
@@ -133,7 +143,9 @@ public static class ToolResultSummarizer
                 timeout: 15000);
 
             if (result == ChatService.ErrorMessage || string.IsNullOrWhiteSpace(result))
+            {
                 return FallbackText(toolCalls);
+            }
 
             return result.Trim();
         }

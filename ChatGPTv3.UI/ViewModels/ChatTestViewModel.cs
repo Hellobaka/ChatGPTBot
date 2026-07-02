@@ -1,8 +1,3 @@
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Security.Cryptography;
-using System.Text.Json;
-using System.Windows.Media.Imaging;
 using Another_Mirai_Native.Abstractions.Context;
 using Another_Mirai_Native.Abstractions.Enums;
 using Another_Mirai_Native.Abstractions.Models;
@@ -15,6 +10,10 @@ using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.UI.Mock;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Security.Cryptography;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Regex = System.Text.RegularExpressions.Regex;
 
@@ -26,9 +25,13 @@ public partial class ChatBubbleItem : ObservableObject
     private string _content = "";
 
     public bool IsSelf { get; init; }
+
     public string Sender { get; init; } = "";
+
     public DateTime Time { get; init; } = DateTime.Now;
+
     public string? Reasoning { get; init; }
+
     public bool HasReasoning => !string.IsNullOrWhiteSpace(Reasoning);
 }
 
@@ -36,7 +39,9 @@ public partial class ChatBubbleItem : ObservableObject
 public partial class GroupItem : ObservableObject
 {
     public long Id { get; init; }
+
     public string Name { get; init; } = "";
+
     public string Display => string.IsNullOrEmpty(Name) ? Id.ToString() : $"{Name} ({Id})";
 }
 
@@ -44,7 +49,9 @@ public partial class GroupItem : ObservableObject
 public partial class FriendItem : ObservableObject
 {
     public long Id { get; init; }
+
     public string Name { get; init; } = "";
+
     public string Display => string.IsNullOrEmpty(Name) ? Id.ToString() : $"{Name} ({Id})";
 }
 
@@ -52,8 +59,11 @@ public partial class FriendItem : ObservableObject
 public partial class PendingImage : ObservableObject
 {
     public string SourcePath { get; init; } = "";
+
     public string Hash { get; init; } = "";
+
     public BitmapImage? Preview { get; init; }
+
     public bool IsEmoji { get; init; }
 }
 
@@ -94,6 +104,7 @@ public partial class ChatTestViewModel : ViewModelBase
 
     // ── AutoComplete candidates (dynamic) ──────────────────
     public ObservableCollection<GroupItem> GroupCandidates { get; } = [];
+
     public ObservableCollection<FriendItem> QQCandidates { get; } = [];
 
     [ObservableProperty]
@@ -113,6 +124,7 @@ public partial class ChatTestViewModel : ViewModelBase
 
     // ── Images ─────────────────────────────────────────────
     public ObservableCollection<PendingImage> PendingImages { get; } = [];
+
     public bool HasPendingImages => PendingImages.Count > 0;
 
     [ObservableProperty]
@@ -176,12 +188,16 @@ public partial class ChatTestViewModel : ViewModelBase
         {
             var groups = Entry.ApiGroup?.GetGroupList() ?? MockGroupApi.Instance.GetGroupList();
             foreach (var g in groups)
+            {
                 _allGroupCandidates.Add(new GroupItem { Id = g.Group, Name = g.Name ?? "" });
+            }
 
             FilterGroupCandidates(GroupSearchText);
 
             if (!IsPrivateMode && SelectedGroup == null && GroupCandidates.Count > 0)
+            {
                 SelectedGroup = GroupCandidates[0];
+            }
         }
         catch (Exception ex)
         {
@@ -203,7 +219,9 @@ public partial class ChatTestViewModel : ViewModelBase
             {
                 var friends = Entry.ApiFriend?.GetFriendInfos() ?? MockFriendApi.Instance.GetFriendInfos();
                 foreach (var f in friends)
+                {
                     _allQQCandidates.Add(new FriendItem { Id = f.QQ, Name = f.Nick ?? "" });
+                }
             }
             else if (SelectedGroup != null)
             {
@@ -244,13 +262,20 @@ public partial class ChatTestViewModel : ViewModelBase
         // Load recent history for whichever context is currently selected.
         long qq = SelectedQQ?.Id ?? 0;
         long groupId = SelectedGroup?.Id ?? 0;
-        if (qq <= 0) return;
+        if (qq <= 0)
+        {
+            return;
+        }
 
         List<ChatRecord> records;
         if (!IsPrivateMode && groupId > 0)
+        {
             records = ChatRecord.GetGroupHistory(groupId, 50);
+        }
         else
+        {
             records = ChatRecord.GetPrivateHistory(qq, 50);
+        }
 
         var botQQ = PromptBuilder.CurrentBotQQ;
         foreach (var r in records)
@@ -269,7 +294,9 @@ public partial class ChatTestViewModel : ViewModelBase
     private void AutoSelectDefaultQQ()
     {
         if (SelectedQQ == null && QQCandidates.Count > 0)
+        {
             SelectedQQ = QQCandidates[0];
+        }
     }
 
     private void FilterGroupCandidates(string? keyword)
@@ -280,7 +307,9 @@ public partial class ChatTestViewModel : ViewModelBase
             || item.Name.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)));
 
         if (SelectedGroup != null && !GroupCandidates.Any(x => x.Id == SelectedGroup.Id))
+        {
             SelectedGroup = GroupCandidates.FirstOrDefault();
+        }
     }
 
     private void FilterQQCandidates(string? keyword)
@@ -291,13 +320,18 @@ public partial class ChatTestViewModel : ViewModelBase
             || item.Name.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)));
 
         if (SelectedQQ != null && !QQCandidates.Any(x => x.Id == SelectedQQ.Id))
+        {
             SelectedQQ = QQCandidates.FirstOrDefault();
+        }
     }
 
     private static IEnumerable<T> FilterItems<T>(IEnumerable<T> source, string? keyword, Func<T, bool> predicate)
     {
         if (string.IsNullOrWhiteSpace(keyword))
+        {
             return source;
+        }
+
         return source.Where(predicate);
     }
 
@@ -305,7 +339,9 @@ public partial class ChatTestViewModel : ViewModelBase
     {
         target.Clear();
         foreach (var value in values)
+        {
             target.Add(value);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -331,11 +367,18 @@ public partial class ChatTestViewModel : ViewModelBase
             Multiselect = true,
             Filter = "图片文件|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp|所有文件|*.*"
         };
-        if (dlg.ShowDialog() != true) return;
+        if (dlg.ShowDialog() != true)
+        {
+            return;
+        }
 
         foreach (var path in dlg.FileNames)
         {
-            if (!File.Exists(path)) continue;
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
             var hash = ComputeMD5(path);
             var preview = LoadPreview(path);
             PendingImages.Add(new PendingImage
@@ -352,7 +395,11 @@ public partial class ChatTestViewModel : ViewModelBase
     [RelayCommand]
     private void RemoveImage(PendingImage? image)
     {
-        if (image == null) return;
+        if (image == null)
+        {
+            return;
+        }
+
         PendingImages.Remove(image);
         OnPropertyChanged(nameof(HasPendingImages));
     }
@@ -376,13 +423,22 @@ public partial class ChatTestViewModel : ViewModelBase
 
         foreach (var p in PendingImages)
         {
-            if (!File.Exists(p.SourcePath)) continue;
+            if (!File.Exists(p.SourcePath))
+            {
+                continue;
+            }
 
             var ext = Path.GetExtension(p.SourcePath);
-            if (string.IsNullOrEmpty(ext)) ext = ".png";
+            if (string.IsNullOrEmpty(ext))
+            {
+                ext = ".png";
+            }
+
             var destPath = Path.Combine(imageDir, $"{p.Hash}{ext}");
             if (!File.Exists(destPath))
+            {
                 File.Copy(p.SourcePath, destPath, overwrite: false);
+            }
 
             images.Add(new Image(destPath, p.Hash, isFlash: false, isEmoji: p.IsEmoji));
         }
@@ -439,7 +495,9 @@ public partial class ChatTestViewModel : ViewModelBase
     private static void AppendParsedTextAndMentions(Message message, string text)
     {
         if (string.IsNullOrEmpty(text))
+        {
             return;
+        }
 
         int current = 0;
         foreach (System.Text.RegularExpressions.Match match in AtRegex.Matches(text))
@@ -448,11 +506,15 @@ public partial class ChatTestViewModel : ViewModelBase
             {
                 var plain = text[current..match.Index];
                 if (!string.IsNullOrEmpty(plain))
+                {
                     message.MessageChain.Add(new Text(plain));
+                }
             }
 
             if (long.TryParse(match.Groups["qq"].Value, out var qq))
+            {
                 message.MessageChain.Add(new At(qq, allTarget: false));
+            }
 
             current = match.Index + match.Length;
         }
@@ -461,7 +523,9 @@ public partial class ChatTestViewModel : ViewModelBase
         {
             var tail = text[current..];
             if (!string.IsNullOrEmpty(tail))
+            {
                 message.MessageChain.Add(new Text(tail));
+            }
         }
     }
 
@@ -482,7 +546,10 @@ public partial class ChatTestViewModel : ViewModelBase
     {
         var text = MessageText?.Trim();
         var hasImages = PendingImages.Count > 0;
-        if ((string.IsNullOrWhiteSpace(text) && !hasImages) || IsSending) return;
+        if ((string.IsNullOrWhiteSpace(text) && !hasImages) || IsSending)
+        {
+            return;
+        }
 
         var qq = SelectedQQ?.Id ?? 0;
         if (qq <= 0)
@@ -511,9 +578,15 @@ public partial class ChatTestViewModel : ViewModelBase
         var message = new Message(api, Random.Shared.Next() * -1, text ?? "");
         message.MessageChain.Clear();
         if (!string.IsNullOrWhiteSpace(text))
+        {
             AppendParsedTextAndMentions(message, text);
+        }
+
         foreach (var img in PrepareImagesForSend())
+        {
             message.MessageChain.Add(img);
+        }
+
         PendingImages.Clear();
         OnPropertyChanged(nameof(HasPendingImages));
 
@@ -603,15 +676,27 @@ public partial class ChatTestViewModel : ViewModelBase
 
     public void HistoryUp()
     {
-        if (_sendHistory.Count == 0) return;
+        if (_sendHistory.Count == 0)
+        {
+            return;
+        }
+
         if (_historyIndex == -1) { _historyDraft = MessageText; _historyIndex = _sendHistory.Count - 1; }
-        else if (_historyIndex > 0) _historyIndex--;
+        else if (_historyIndex > 0)
+        {
+            _historyIndex--;
+        }
+
         MessageText = _sendHistory[_historyIndex];
     }
 
     public void HistoryDown()
     {
-        if (_historyIndex == -1) return;
+        if (_historyIndex == -1)
+        {
+            return;
+        }
+
         if (_historyIndex < _sendHistory.Count - 1) { _historyIndex++; MessageText = _sendHistory[_historyIndex]; }
         else { _historyIndex = -1; MessageText = _historyDraft ?? ""; _historyDraft = null; }
     }

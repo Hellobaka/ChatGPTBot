@@ -1,7 +1,6 @@
-using System.Text;
-using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.OpenAIClient;
+using System.Text;
 
 namespace ChatGPTv3.Core.Api;
 
@@ -94,7 +93,11 @@ public static class PromptBuilder
         {
             sb.AppendLine("以下是可能相关的知识：");
             sb.AppendLine("<knowledge>");
-            foreach (var item in knowledgeItems) sb.AppendLine(item);
+            foreach (var item in knowledgeItems)
+            {
+                sb.AppendLine(item);
+            }
+
             sb.AppendLine("</knowledge>");
         }
 

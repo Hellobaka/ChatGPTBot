@@ -1,6 +1,6 @@
+using Another_Mirai_Native.Abstractions.Enums;
 using Another_Mirai_Native.Abstractions.Models;
 using Another_Mirai_Native.Abstractions.Services;
-using Another_Mirai_Native.Abstractions.Enums;
 using ChatGPTv3.Core;
 
 namespace ChatGPTv3.UI.Mock;
@@ -111,33 +111,42 @@ public sealed class MockGroupApi : IGroupApi
     // ── Admin / Ban / Kick (no-ops in mock, return true) ───
 
     public bool SetAdmin(long groupId, long qq, bool isAdmin) => true;
+
     public Task<bool> SetAdminAsync(long groupId, long qq, bool isAdmin) => Task.FromResult(true);
 
     public bool BanMember(long groupId, long qq, long durationSeconds) => true;
+
     public Task<bool> BanMemberAsync(long groupId, long qq, long durationSeconds) => Task.FromResult(true);
 
     public bool BanGroup(long groupId, bool isBan) => true;
+
     public Task<bool> BanGroupAsync(long groupId, bool isBan) => Task.FromResult(true);
 
     public bool Kick(long groupId, long qq, bool rejectRequest) => true;
+
     public Task<bool> KickAsync(long groupId, long qq, bool rejectRequest) => Task.FromResult(true);
 
     public bool Leave(long groupId) => true;
+
     public Task<bool> LeaveAsync(long groupId) => Task.FromResult(true);
 
     // ── Card / Title ───────────────────────────────────────
 
     public bool SetMemberCard(long groupId, long qq, string card) => true;
+
     public Task<bool> SetMemberCardAsync(long groupId, long qq, string card) => Task.FromResult(true);
 
     public bool SetMemberTitle(long groupId, long qq, string title) => true;
+
     public Task<bool> SetMemberTitleAsync(long groupId, long qq, string title) => Task.FromResult(true);
 
     // ── Requests ───────────────────────────────────────────
 
     public bool SetGroupAddRequest(string flag, bool approve, string reason) => true;
+
     public Task<bool> SetGroupAddRequestAsync(string flag, bool approve, string reason) => Task.FromResult(true);
 
     public bool SetGroupInviteRequest(string flag, bool approve, string reason) => true;
+
     public Task<bool> SetGroupInviteRequestAsync(string flag, bool approve, string reason) => Task.FromResult(true);
 }
