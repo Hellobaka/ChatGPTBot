@@ -190,7 +190,7 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "SplitterMaxLines", Label = "最大行数", DefaultValue = 3 },
             new() { Key = "SplitterRegexFirst", Label = "优先正则分段", DefaultValue = false },
             new() { Key = "SplitterRegexRemovePunctuation", Label = "正则移除标点", DefaultValue = false },
-            new() { Key = "SplitterSimulateTypeSpeed", Label = "打字速度 (ms)", DefaultValue = 100 },
+            new() { Key = "SplitterSimulateTypeSpeed", Label = "打字速度 (字/分钟)", DefaultValue = 100 },
             new() { Key = "EnableSplitterRandomDelay", Label = "随机延迟", DefaultValue = true },
             new() { Key = "SplitterRandomDelayMin", Label = "延迟最小 (ms)", DefaultValue = 1000 },
             new() { Key = "SplitterRandomDelayMax", Label = "延迟最大 (ms)", DefaultValue = 4500 },

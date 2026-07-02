@@ -875,7 +875,7 @@ public static class PipelineMiddlewareExtensions
                     if (!string.IsNullOrWhiteSpace(text))
                     {
                         await ctx.SendFunc!(text);
-                        displayText.Append(text);
+                        displayText.Append(text + ' ');
                     }
                 }
 
