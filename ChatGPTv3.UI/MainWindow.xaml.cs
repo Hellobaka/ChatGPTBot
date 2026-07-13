@@ -245,6 +245,7 @@ public partial class MainWindow
             "chat" => GetOrCreate("chat", () => new ChatTestView()),
             "keys" => GetOrCreate("keys", () => new KeyManagementView()),
             "token" => GetOrCreate("token", () => new TokenUsageView()),
+            "mcp" => GetOrCreate("mcp", () => new MCPManagementView()),
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",

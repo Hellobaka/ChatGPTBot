@@ -1,0 +1,344 @@
+<UserControl
+    x:Class="ChatGPTv3.UI.Views.MCPManagementView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InvertBoolToVisibilityConverter x:Key="InvertBoolToVis" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left: Client List -->
+        <Border
+            Grid.Column="0"
+            Margin="0,0,12,0"
+            Padding="8"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Grid.Row="0"
+                    Margin="6,6,0,8"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Text="MCP 客户端" />
+
+                <ListBox
+                    Grid.Row="1"
+                    ItemsSource="{Binding Clients}"
+                    SelectedItem="{Binding SelectedClient, Mode=TwoWay}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:MCPClientItem}">
+                            <Grid Margin="0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Grid.Column="0"
+                                    Padding="4,2"
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    CornerRadius="3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBuiltIn}" Value="True">
+                                                    <Setter Property="Background" Value="#2A5A3A" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsBuiltIn}" Value="False">
+                                                    <Setter Property="Background" Value="#3A4A6A" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="#CDE0F4"
+                                        Text="{Binding TypeBadge}" />
+                                </Border>
+
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis" />
+
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="LightGreen"
+                                    Text="✓"
+                                    Visibility="{Binding Enabled, Converter={StaticResource BoolToVis}}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Grid.Row="2" Margin="4,8,4,4">
+                    <Button
+                        Margin="0,0,0,6"
+                        Command="{Binding OpenAddClientDialogCommand}"
+                        Content="添加外部工具" />
+                    <Button
+                        Command="{Binding RebuildAllCommand}"
+                        Content="重建全部连接" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Right: Details -->
+        <Border
+            Grid.Column="1"
+            Padding="16"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Text="{Binding SelectedClientName}" />
+                            <TextBlock
+                                Margin="0,2,0,0"
+                                Opacity="0.64"
+                                Text="{Binding SelectedClient.TypeBadge, StringFormat='类型: {0}'}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button
+                                Margin="0,0,8,0"
+                                Command="{Binding ToggleEnabledCommand}">
+                                <Button.Style>
+                                    <Style BasedOn="{StaticResource ButtonPrimary}" TargetType="Button">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedClient.Enabled}" Value="True">
+                                                <Setter Property="Content" Value="禁用" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedClient.Enabled}" Value="False">
+                                                <Setter Property="Content" Value="启用" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button
+                                Command="{Binding DeleteClientCommand}"
+                                Content="删除"
+                                Visibility="{Binding IsExternalSelected, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border
+                        Padding="12"
+                        Background="{DynamicResource RegionBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="13"
+                                FontWeight="SemiBold"
+                                Text="权限设置" />
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="启用群聊" />
+                                <CheckBox
+                                    Grid.Column="1"
+                                    IsChecked="{Binding GroupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="群号列表" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBox Text="{Binding GroupsText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                    <TextBlock
+                                        Margin="0,2,0,0"
+                                        Opacity="0.48"
+                                        Text="多个群号用英文逗号分隔" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="群列表模式" />
+                                <CheckBox
+                                    Grid.Column="1"
+                                    IsChecked="{Binding IsGroupBlackList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Width="80"
+                                    VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsGroupBlackList}" Value="True">
+                                                    <Setter Property="Text" Value="黑名单" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsGroupBlackList}" Value="False">
+                                                    <Setter Property="Text" Value="白名单" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+
+                            <Grid Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="启用私聊" />
+                                <CheckBox
+                                    Grid.Column="1"
+                                    IsChecked="{Binding PersonEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="QQ号列表" />
+                                <StackPanel Grid.Column="1">
+                                    <TextBox Text="{Binding PersonsText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                    <TextBlock
+                                        Margin="0,2,0,0"
+                                        Opacity="0.48"
+                                        Text="多个QQ号用英文逗号分隔" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="私聊列表模式" />
+                                <CheckBox
+                                    Grid.Column="1"
+                                    IsChecked="{Binding IsPersonBlackList, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock
+                                    Grid.Column="2"
+                                    Width="80"
+                                    VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsPersonBlackList}" Value="True">
+                                                    <Setter Property="Text" Value="黑名单" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsPersonBlackList}" Value="False">
+                                                    <Setter Property="Text" Value="白名单" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    Width="100"
+                                    VerticalAlignment="Center"
+                                    Text="仅限管理调用" />
+                                <CheckBox
+                                    Grid.Column="1"
+                                    IsChecked="{Binding CanOnlyMasterCall, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+
+                            <Button
+                                Margin="0,14,0,0"
+                                Command="{Binding SavePermissionsCommand}"
+                                Content="保存权限配置"
+                                Style="{StaticResource ButtonPrimary}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <TextBlock
+            Grid.Column="1"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="16"
+            Opacity="0.48"
+            Text="选择左侧客户端以编辑权限"
+            Visibility="{Binding HasSelection, Converter={StaticResource InvertBoolToVis}}" />
+    </Grid>
+</UserControl>

@@ -1,0 +1,58 @@
+<hc:Window
+    x:Class="ChatGPTv3.UI.Views.MCPToolTestDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    Title="工具测试"
+    SizeToContent="WidthAndHeight"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource WindowWin10}">
+
+    <Border
+        Background="{DynamicResource PopupBackgroundBrush}"
+        BorderBrush="{DynamicResource BorderBrush}"
+        BorderThickness="1"
+        CornerRadius="8"
+        Padding="16">
+        <StackPanel Width="500">
+            <TextBlock
+                FontSize="14"
+                FontWeight="Bold"
+                Text="{Binding ToolName, StringFormat='工具: {0}'}" />
+
+            <TextBlock
+                Margin="0,10,0,0"
+                Text="参数 (JSON):" />
+
+            <TextBox
+                Height="120"
+                Margin="0,6,0,0"
+                AcceptsReturn="True"
+                FontFamily="Consolas"
+                Text="{Binding JsonArgs, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
+
+            <Button
+                Margin="0,10,0,0"
+                Command="{Binding ExecuteAsyncCommand}"
+                Content="执行"
+                IsEnabled="{Binding CanExecute}"
+                Style="{StaticResource ButtonPrimary}" />
+
+            <TextBlock
+                Margin="0,10,0,0"
+                Text="结果:" />
+
+            <TextBox
+                Height="180"
+                Margin="0,6,0,0"
+                AcceptsReturn="True"
+                FontFamily="Consolas"
+                IsReadOnly="True"
+                Text="{Binding Result}"
+                TextWrapping="Wrap"
+                VerticalScrollBarVisibility="Auto" />
+        </StackPanel>
+    </Border>
+</hc:Window>

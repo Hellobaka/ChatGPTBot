@@ -7,13 +7,14 @@ namespace ChatGPTv3.Core.Model.MCP;
 /// MCP transport type discriminator.
 /// </summary>
 public enum MCPClientType
-{ Http, Stdio, Custom }
+{ Http, SSE, Stdio, Custom }
 
 /// <summary>
 /// Abstract base for MCP clients. Supports HTTP, STDIO, and custom in-process implementations.
 /// </summary>
 [JsonDerivedType(typeof(MCPCustomClient), typeDiscriminator: "Custom")]
 [JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "Http")]
+[JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "SSE")]
 [JsonDerivedType(typeof(MCPStdioClient), typeDiscriminator: "Stdio")]
 public abstract class MCPClientBase
 {
