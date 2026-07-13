@@ -1,6 +1,7 @@
 using ChatGPTv3.UI.Models;
 using ChatGPTv3.UI.Views;
 using MahApps.Metro.IconPacks;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -38,6 +39,8 @@ public partial class MainWindow
         new() { Name = "MCP管理", IconKind = PackIconMaterialDesignKind.Api, PageKey = "mcp" },
         new() { Name = "系统设置", IconKind = PackIconMaterialDesignKind.Settings, PageKey = "config" },
     ];
+
+    private readonly Dictionary<string, UIElement> _pageCache = [];
 
     private static string SettingsPath => Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory, "window_settings.json");
@@ -238,10 +241,10 @@ public partial class MainWindow
 
         ContentArea.Content = item.PageKey switch
         {
-            "config" => new ConfigurationView(),
-            "chat" => new ChatTestView(),
-            "keys" => new KeyManagementView(),
-            "token" => new TokenUsageView(),
+            "config" => GetOrCreate("config", () => new ConfigurationView()),
+            "chat" => GetOrCreate("chat", () => new ChatTestView()),
+            "keys" => GetOrCreate("keys", () => new KeyManagementView()),
+            "token" => GetOrCreate("token", () => new TokenUsageView()),
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",
@@ -255,5 +258,15 @@ public partial class MainWindow
         }
 
         SaveWindowState();
+    }
+
+    private UIElement GetOrCreate(string key, Func<UIElement> factory)
+    {
+        if (!_pageCache.TryGetValue(key, out var page))
+        {
+            page = factory();
+            _pageCache[key] = page;
+        }
+        return page;
     }
 }
