@@ -1,0 +1,101 @@
+<hc:Window
+    x:Class="ChatGPTv3.UI.Views.ModelEditDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    Width="480"
+    Height="420"
+    BorderBrush="{DynamicResource BorderBrush}"
+    Style="{StaticResource WindowWin10}"
+    Title="{Binding WindowTitle}"
+    WindowStartupLocation="CenterOwner">
+
+    <Border
+        Background="{DynamicResource PopupBackgroundBrush}"
+        BorderBrush="{DynamicResource BorderBrush}"
+        BorderThickness="1"
+        CornerRadius="8">
+        <Grid Margin="16,8,16,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title -->
+            <Border
+                Grid.Row="0"
+                Margin="0,0,0,12"
+                Padding="0,6,0,6"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Text="{Binding WindowTitle}" />
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Grid.Row="1">
+                <CheckBox
+                    Margin="0,0,0,12"
+                    Content="启用"
+                    IsChecked="{Binding Enabled}" />
+
+                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="模型名" />
+                <TextBox Margin="0,0,0,12" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="定价 (每百万 Token)" />
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock FontSize="12" Text="输入价格" />
+                        <TextBox
+                            Margin="0,4,0,0"
+                            Text="{Binding InputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock FontSize="12" Text="缓存价格" />
+                        <TextBox
+                            Margin="0,4,0,0"
+                            Text="{Binding CachePricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
+                        <TextBlock FontSize="12" Text="输出价格" />
+                        <TextBox
+                            Margin="0,4,0,0"
+                            Text="{Binding OutputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="模型能力" />
+                <WrapPanel>
+                    <CheckBox Margin="0,0,16,4" Content="Chat" IsChecked="{Binding IsChat}" />
+                    <CheckBox Margin="0,0,16,4" Content="Image" IsChecked="{Binding IsImage}" />
+                    <CheckBox Margin="0,0,16,4" Content="Embedding" IsChecked="{Binding IsEmbedding}" />
+                    <CheckBox Content="Rerank" IsChecked="{Binding IsRerank}" />
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Bottom buttons -->
+            <WrapPanel Grid.Row="2" Margin="0,16,0,0" HorizontalAlignment="Right">
+                <Button
+                    MinWidth="100"
+                    Margin="0,0,12,0"
+                    Command="{Binding SaveCommand}"
+                    Content="保存"
+                    Style="{StaticResource ButtonPrimary}" />
+                <Button
+                    MinWidth="100"
+                    Command="{Binding CancelCommand}"
+                    Content="取消" />
+            </WrapPanel>
+        </Grid>
+    </Border>
+</hc:Window>

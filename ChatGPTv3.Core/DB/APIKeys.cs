@@ -3,6 +3,18 @@ using SqlSugar;
 namespace ChatGPTv3.Core.DB;
 
 /// <summary>
+/// Model capability flags — determines which purposes a model can serve.
+/// </summary>
+[Flags]
+public enum ModelCapability
+{
+    Chat = 1 << 0,
+    Image = 1 << 1,
+    Embedding = 1 << 2,
+    Rerank = 1 << 3
+}
+
+/// <summary>
 /// API key record for LLM service authentication.
 /// Aligned with v2 schema for backward compatibility.
 /// </summary>
@@ -63,6 +75,9 @@ public class LLMModelConfig
 
     /// <summary>Cache-hit price per 1M tokens (RMB) — for prompt caching discounts.</summary>
     public decimal CachePricePer1M { get; set; }
+
+    /// <summary>What this model can do (chat, image, embedding, rerank).</summary>
+    public ModelCapability Capabilities { get; set; } = ModelCapability.Chat;
 }
 
 /// <summary>
@@ -78,4 +93,23 @@ public class APIKeyPurpose
 
     [SugarColumn(IsIgnore = true)]
     public LLMModelConfig? Model { get; set; }
+}
+
+/// <summary>
+/// DB-persisted purpose → (APIKey, LLMModelConfig) binding. One purpose can have multiple bindings.
+/// </summary>
+[SugarTable("PurposeBinding")]
+public class PurposeBinding
+{
+    [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
+    public int Id { get; set; }
+
+    /// <summary>Purpose name: Chat, Reply, Splitter, ImageDescriber, Summarizer, Diary, Embedding, Rerank.</summary>
+    public string Purpose { get; set; } = string.Empty;
+
+    /// <summary>Foreign key to APIKey.</summary>
+    public int APIKeyId { get; set; }
+
+    /// <summary>Foreign key to LLMModelConfig.</summary>
+    public int LLMModelConfigId { get; set; }
 }

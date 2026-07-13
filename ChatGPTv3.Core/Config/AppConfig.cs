@@ -300,14 +300,14 @@ public static class AppConfig
     {
         ConfigManager.DisableHotReload();
 
-        // API key purpose lists
-        ChatAPIKeyId = ConfigManager.GetConfig("ChatAPIKeyId", new List<APIKeyPurpose>());
-        ReplyAPIKeyId = ConfigManager.GetConfig("ReplyAPIKeyId", new List<APIKeyPurpose>());
-        SplitterApiKeyId = ConfigManager.GetConfig("SplitterApiKeyId", new List<APIKeyPurpose>());
-        ImageDescriberApiKeyId = ConfigManager.GetConfig("ImageDescriberApiKeyId", new List<APIKeyPurpose>());
-        EmbeddingApiKeyId = ConfigManager.GetConfig("EmbeddingApiKeyId", new List<APIKeyPurpose>());
-        SummarizerApiKeyId = ConfigManager.GetConfig("SummarizerApiKeyId", new List<APIKeyPurpose>());
-        RerankApiKeyId = ConfigManager.GetConfig("RerankApiKeyId", new List<APIKeyPurpose>());
+        // API key purpose lists — loaded from DB in ReloadAPIKeys
+        ChatAPIKeyId = [];
+        ReplyAPIKeyId = [];
+        SplitterApiKeyId = [];
+        ImageDescriberApiKeyId = [];
+        EmbeddingApiKeyId = [];
+        SummarizerApiKeyId = [];
+        RerankApiKeyId = [];
 
         // Chat config
         ChatMaxTokens = ConfigManager.GetConfig("ChatMaxTokens", 3000);
@@ -444,7 +444,7 @@ public static class AppConfig
 
         // Diary
         EnableDiary = ConfigManager.GetConfig("EnableDiary", true);
-        DiaryAPIKeyId = ConfigManager.GetConfig("DiaryAPIKeyId", new List<APIKeyPurpose>());
+        DiaryAPIKeyId = [];
         DiaryMessageThreshold = ConfigManager.GetConfig("DiaryMessageThreshold", 50);
         DiaryIntervalMinutes = ConfigManager.GetConfig("DiaryIntervalMinutes", 120);
         DiaryReviewHours = ConfigManager.GetConfig("DiaryReviewHours", 24);
@@ -479,22 +479,46 @@ public static class AppConfig
             .Includes(k => k.AvailableModels)
             .ToList();
 
-        foreach (var keyList in new[] { ChatAPIKeyId, ReplyAPIKeyId,
-                       SplitterApiKeyId, ImageDescriberApiKeyId, EmbeddingApiKeyId, RerankApiKeyId,
-                       SummarizerApiKeyId, DiaryAPIKeyId })
-        {
-            foreach (var item in keyList)
-            {
-                item.Key = allKeys.FirstOrDefault(k => k.Id == item.Id);
-                item.Model = item.Key?.AvailableModels?
-                    .FirstOrDefault(m => m.Name == item.Model?.Name);
+        // Load purpose bindings from DB
+        var dbBindings = db.Queryable<PurposeBinding>().ToList();
 
-                if (item.Model == null)
-                {
-                    CommonHelper.LogWarning?.Invoke("API 无效",
-                        $"Id = {item.Id} 的 Key 中不包括 API 中的模型，请重新配置");
-                }
+        // Build purpose → list mapping
+        ChatAPIKeyId.Clear();
+        ReplyAPIKeyId.Clear();
+        SplitterApiKeyId.Clear();
+        ImageDescriberApiKeyId.Clear();
+        EmbeddingApiKeyId.Clear();
+        RerankApiKeyId.Clear();
+        SummarizerApiKeyId.Clear();
+        DiaryAPIKeyId.Clear();
+
+        var purposeMap = new Dictionary<string, List<APIKeyPurpose>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Chat"] = ChatAPIKeyId,
+            ["Reply"] = ReplyAPIKeyId,
+            ["Splitter"] = SplitterApiKeyId,
+            ["ImageDescriber"] = ImageDescriberApiKeyId,
+            ["Embedding"] = EmbeddingApiKeyId,
+            ["Rerank"] = RerankApiKeyId,
+            ["Summarizer"] = SummarizerApiKeyId,
+            ["Diary"] = DiaryAPIKeyId
+        };
+
+        foreach (var binding in dbBindings)
+        {
+            if (!purposeMap.TryGetValue(binding.Purpose, out var list))
+            {
+                continue;
             }
+
+            var key = allKeys.FirstOrDefault(k => k.Id == binding.APIKeyId);
+            var model = key?.AvailableModels?.FirstOrDefault(m => m.Id == binding.LLMModelConfigId);
+            list.Add(new APIKeyPurpose
+            {
+                Id = binding.APIKeyId,
+                Key = key,
+                Model = model
+            });
         }
     }
 }

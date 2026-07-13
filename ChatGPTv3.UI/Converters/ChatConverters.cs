@@ -1,3 +1,4 @@
+using ChatGPTv3.Core.DB;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -7,6 +8,8 @@ namespace ChatGPTv3.UI.Converters;
 
 public static class ChatConverters
 {
+    public static readonly IValueConverter CapabilityToText = new CapabilityToTextConverter();
+
     public static readonly IValueConverter Alignment = new AlignmentConverter();
     public static readonly IValueConverter BubbleColor = new BubbleColorConverter();
     public static readonly IValueConverter TextColor = new TextColorConverter();
@@ -94,6 +97,45 @@ public class TextColorConverter : IValueConverter
 
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         => value is true ? SelfBrush : BotBrush;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public class CapabilityToTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not ModelCapability caps)
+        {
+            return "(无)";
+        }
+
+        var parts = new List<string>();
+        if ((caps & ModelCapability.Chat) != 0)
+        {
+            parts.Add("Chat");
+        }
+        if ((caps & ModelCapability.Image) != 0)
+        {
+            parts.Add("Image");
+        }
+        if ((caps & ModelCapability.Embedding) != 0)
+        {
+            parts.Add("Emb");
+        }
+        if ((caps & ModelCapability.Rerank) != 0)
+        {
+            parts.Add("Rerank");
+        }
+
+        return parts.Count switch
+        {
+            0 => "(无)",
+            1 => parts[0],
+            _ => $"{parts.Count} 项功能"
+        };
+    }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();

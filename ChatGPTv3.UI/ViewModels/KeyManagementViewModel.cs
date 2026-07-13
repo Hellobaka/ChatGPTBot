@@ -21,6 +21,7 @@ public partial class ProviderModelItem : ObservableObject
     [ObservableProperty] private decimal _inputPricePer1M;
     [ObservableProperty] private decimal _outputPricePer1M;
     [ObservableProperty] private decimal _cachePricePer1M;
+    [ObservableProperty] private ModelCapability _capabilities = ModelCapability.Chat;
 
     public ProviderModelItem Clone() => new()
     {
@@ -30,7 +31,8 @@ public partial class ProviderModelItem : ObservableObject
         Enabled = Enabled,
         InputPricePer1M = InputPricePer1M,
         OutputPricePer1M = OutputPricePer1M,
-        CachePricePer1M = CachePricePer1M
+        CachePricePer1M = CachePricePer1M,
+        Capabilities = Capabilities
     };
 }
 
@@ -86,12 +88,17 @@ public partial class PurposeBindingItem : ObservableObject
         AvailableModels.Clear();
         if (value != null)
         {
-            foreach (var model in value.Models.Where(x => x.Enabled))
+            var required = ParentGroup?.RequiredCapability ?? ModelCapability.Chat;
+            foreach (var model in value.Models.Where(x => x.Enabled && (x.Capabilities & required) != 0))
+            {
                 AvailableModels.Add(model);
+            }
         }
 
         if (SelectedModel != null && !AvailableModels.Any(x => x.Name == SelectedModel.Name))
+        {
             SelectedModel = AvailableModels.FirstOrDefault();
+        }
     }
 }
 
@@ -102,6 +109,9 @@ public partial class PurposeBindingGroup : ObservableObject
     public string Title { get; init; } = string.Empty;
 
     public string Description { get; init; } = string.Empty;
+
+    /// <summary>Only models matching these capabilities can be bound to this purpose.</summary>
+    public ModelCapability RequiredCapability { get; init; } = ModelCapability.Chat;
 
     public ObservableCollection<PurposeBindingItem> Items { get; } = [];
 }
@@ -116,14 +126,14 @@ public partial class KeyManagementViewModel : ViewModelBase
 
     public KeyManagementViewModel()
     {
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ChatAPIKeyId", Title = "聊天模型", Description = "群聊 / 主对话使用的 Key 与模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ReplyAPIKeyId", Title = "回复决策模型", Description = "边界回复判断使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "SplitterApiKeyId", Title = "分段模型", Description = "分段和润色使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ImageDescriberApiKeyId", Title = "图像描述模型", Description = "视觉描述使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "SummarizerApiKeyId", Title = "工具总结模型", Description = "工具结果总结使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "DiaryAPIKeyId", Title = "日记模型", Description = "日记与回顾使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "EmbeddingApiKeyId", Title = "Embedding 模型", Description = "向量嵌入使用的模型" });
-        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "RerankApiKeyId", Title = "Rerank 模型", Description = "重排序使用的模型" });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ChatAPIKeyId", Title = "聊天模型", Description = "群聊 / 主对话使用的 Key 与模型", RequiredCapability = ModelCapability.Chat });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ReplyAPIKeyId", Title = "回复决策模型", Description = "边界回复判断使用的模型", RequiredCapability = ModelCapability.Chat });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "SplitterApiKeyId", Title = "分段模型", Description = "分段和润色使用的模型", RequiredCapability = ModelCapability.Chat });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "ImageDescriberApiKeyId", Title = "图像描述模型", Description = "视觉描述使用的模型", RequiredCapability = ModelCapability.Chat | ModelCapability.Image });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "SummarizerApiKeyId", Title = "工具总结模型", Description = "工具结果总结使用的模型", RequiredCapability = ModelCapability.Chat });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "DiaryAPIKeyId", Title = "日记模型", Description = "日记与回顾使用的模型", RequiredCapability = ModelCapability.Chat });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "EmbeddingApiKeyId", Title = "Embedding 模型", Description = "向量嵌入使用的模型", RequiredCapability = ModelCapability.Embedding });
+        PurposeGroups.Add(new PurposeBindingGroup { ConfigKey = "RerankApiKeyId", Title = "Rerank 模型", Description = "重排序使用的模型", RequiredCapability = ModelCapability.Rerank });
 
         LoadData();
     }
@@ -131,6 +141,7 @@ public partial class KeyManagementViewModel : ViewModelBase
     [RelayCommand]
     private void Reload()
     {
+        AppConfig.Init();
         LoadData();
         Growl.Success("接口配置已刷新");
     }
@@ -148,6 +159,7 @@ public partial class KeyManagementViewModel : ViewModelBase
         var item = dialogVm.ToProviderItem();
         Providers.Add(item);
         SelectedProvider = item;
+        PersistProvider(item);
     }
 
     [RelayCommand]
@@ -176,6 +188,39 @@ public partial class KeyManagementViewModel : ViewModelBase
         foreach (var m in edited.Models)
         {
             provider.Models.Add(m);
+        }
+        PersistProvider(provider);
+    }
+
+    private void PersistProvider(ProviderItem provider)
+    {
+        var entity = new APIKey
+        {
+            Id = provider.Id,
+            Name = provider.Name.Trim(),
+            EndPoint = provider.EndPoint.Trim(),
+            Key = provider.Key.Trim(),
+            TotalTokens = provider.TotalTokens,
+            TotalConsume = provider.TotalConsume,
+            UseTencentSign = provider.UseTencentSign,
+            AvailableModels = provider.Models.Select(model => new LLMModelConfig
+            {
+                Id = model.Id,
+                APIKeyId = provider.Id,
+                Name = model.Name.Trim(),
+                Enabled = model.Enabled,
+                InputPricePer1M = model.InputPricePer1M,
+                OutputPricePer1M = model.OutputPricePer1M,
+                CachePricePer1M = model.CachePricePer1M,
+                Capabilities = model.Capabilities
+            }).ToList()
+        };
+
+        var saved = APIKeyRepository.Save(entity);
+        provider.Id = saved.Id;
+        for (int i = 0; i < provider.Models.Count; i++)
+        {
+            provider.Models[i].APIKeyId = saved.Id;
         }
     }
 
@@ -264,7 +309,8 @@ public partial class KeyManagementViewModel : ViewModelBase
                         Enabled = model.Enabled,
                         InputPricePer1M = model.InputPricePer1M,
                         OutputPricePer1M = model.OutputPricePer1M,
-                        CachePricePer1M = model.CachePricePer1M
+                        CachePricePer1M = model.CachePricePer1M,
+                        Capabilities = model.Capabilities
                     }).ToList()
                 };
 
@@ -280,11 +326,20 @@ public partial class KeyManagementViewModel : ViewModelBase
                 group => group.ConfigKey,
                 group => group.Items
                     .Where(item => item.SelectedProvider != null && item.SelectedModel != null)
-                    .Select(item => new APIKeyPurpose
+                    .Select(item =>
                     {
-                        Id = item.SelectedProvider!.Id,
-                        Key = new APIKey { Id = item.SelectedProvider.Id, Name = item.SelectedProvider.Name },
-                        Model = new LLMModelConfig { Name = item.SelectedModel!.Name }
+                        if ((item.SelectedModel!.Capabilities & group.RequiredCapability) == 0)
+                        {
+                            throw new InvalidOperationException(
+                                $"模型「{item.SelectedModel.Name}」不支持「{group.Title}」所需的能力。" +
+                                $"模型能力: {item.SelectedModel.Capabilities}, 需要: {group.RequiredCapability}");
+                        }
+                        return new APIKeyPurpose
+                        {
+                            Id = item.SelectedProvider!.Id,
+                            Key = new APIKey { Id = item.SelectedProvider.Id, Name = item.SelectedProvider.Name },
+                            Model = new LLMModelConfig { Id = item.SelectedModel.Id, Name = item.SelectedModel.Name }
+                        };
                     })
                     .ToList());
 
@@ -325,7 +380,8 @@ public partial class KeyManagementViewModel : ViewModelBase
                     Enabled = model.Enabled,
                     InputPricePer1M = model.InputPricePer1M,
                     OutputPricePer1M = model.OutputPricePer1M,
-                    CachePricePer1M = model.CachePricePer1M
+                    CachePricePer1M = model.CachePricePer1M,
+                    Capabilities = model.Capabilities == 0 ? ModelCapability.Chat : model.Capabilities
                 });
             }
             Providers.Add(item);
@@ -371,7 +427,8 @@ public partial class KeyManagementViewModel : ViewModelBase
                 ParentGroup = group,
                 SelectedProvider = provider
             };
-            item.SelectedModel = item.AvailableModels.FirstOrDefault(x => x.Name == purpose.Model?.Name);
+            item.SelectedModel = item.AvailableModels.FirstOrDefault(x => x.Id == purpose.Model?.Id)
+                ?? item.AvailableModels.FirstOrDefault(x => x.Name == purpose.Model?.Name);
             group.Items.Add(item);
         }
     }

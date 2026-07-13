@@ -1,8 +1,11 @@
+using ChatGPTv3.Core.DB;
 using ChatGPTv3.OpenAIClient;
+using ChatGPTv3.UI.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -67,9 +70,47 @@ public partial class KeyEditDialogViewModel : ObservableObject
     [RelayCommand]
     private void AddModel()
     {
-        var model = new ProviderModelItem { Name = "new-model", Enabled = true };
+        var dialogVm = new ModelEditDialogViewModel();
+        var dialog = new ModelEditDialog(dialogVm) { Owner = GetActiveWindow() };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var model = new ProviderModelItem
+        {
+            Name = dialogVm.Name.Trim(),
+            Enabled = dialogVm.Enabled,
+            InputPricePer1M = dialogVm.InputPricePer1M,
+            OutputPricePer1M = dialogVm.OutputPricePer1M,
+            CachePricePer1M = dialogVm.CachePricePer1M,
+            Capabilities = dialogVm.GetCapabilities()
+        };
         Models.Add(model);
         SelectedModel = model;
+    }
+
+    [RelayCommand]
+    private void EditModel(ProviderModelItem? model)
+    {
+        if (model == null)
+        {
+            return;
+        }
+
+        var dialogVm = new ModelEditDialogViewModel(model);
+        var dialog = new ModelEditDialog(dialogVm) { Owner = GetActiveWindow() };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        model.Name = dialogVm.Name.Trim();
+        model.Enabled = dialogVm.Enabled;
+        model.InputPricePer1M = dialogVm.InputPricePer1M;
+        model.OutputPricePer1M = dialogVm.OutputPricePer1M;
+        model.CachePricePer1M = dialogVm.CachePricePer1M;
+        model.Capabilities = dialogVm.GetCapabilities();
     }
 
     [RelayCommand]
@@ -141,4 +182,7 @@ public partial class KeyEditDialogViewModel : ObservableObject
             Growl.Error($"模型 {model.Name} 测试失败: {ex.Message}");
         }
     }
+
+    private static System.Windows.Window? GetActiveWindow() =>
+        System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w => w.IsActive);
 }

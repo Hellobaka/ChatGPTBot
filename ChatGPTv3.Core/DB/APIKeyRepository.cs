@@ -107,15 +107,39 @@ public static class APIKeyRepository
 
     public static void SavePurposeBindings(Dictionary<string, List<APIKeyPurpose>> bindings)
     {
-        ConfigManager.SetConfig("ChatAPIKeyId", bindings["ChatAPIKeyId"]);
-        ConfigManager.SetConfig("ReplyAPIKeyId", bindings["ReplyAPIKeyId"]);
-        ConfigManager.SetConfig("SplitterApiKeyId", bindings["SplitterApiKeyId"]);
-        ConfigManager.SetConfig("ImageDescriberApiKeyId", bindings["ImageDescriberApiKeyId"]);
-        ConfigManager.SetConfig("EmbeddingApiKeyId", bindings["EmbeddingApiKeyId"]);
-        ConfigManager.SetConfig("RerankApiKeyId", bindings["RerankApiKeyId"]);
-        ConfigManager.SetConfig("SummarizerApiKeyId", bindings["SummarizerApiKeyId"]);
-        ConfigManager.SetConfig("DiaryAPIKeyId", bindings["DiaryAPIKeyId"]);
+        using var db = SQLiteManager.GetInstance();
+
+        // Clear all existing bindings
+        db.Deleteable<PurposeBinding>().ExecuteCommand();
+
+        // Insert new bindings
+        var rows = new List<PurposeBinding>();
+        foreach (var (purpose, items) in bindings)
+        {
+            var purposeName = purpose.Replace("ApiKeyId", "").Replace("APIKeyId", "");
+            foreach (var item in items)
+            {
+                rows.Add(new PurposeBinding
+                {
+                    Purpose = purposeName,
+                    APIKeyId = item.Id,
+                    LLMModelConfigId = item.Model?.Id ?? 0
+                });
+            }
+        }
+
+        if (rows.Count > 0)
+        {
+            db.Insertable(rows).ExecuteCommand();
+        }
+
         AppConfig.Init();
+    }
+
+    public static List<PurposeBinding> GetAllPurposeBindings()
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<PurposeBinding>().ToList();
     }
 }
 
