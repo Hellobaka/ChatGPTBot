@@ -1,9 +1,12 @@
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
+using ChatGPTv3.UI.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using System.Collections.ObjectModel;
+using System.Windows;
+using MessageBox = HandyControl.Controls.MessageBox;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -69,25 +72,6 @@ public partial class ProviderItem : ObservableObject
     }
 }
 
-public partial class ModelSpendSummaryItem : ObservableObject
-{
-    public string ModelName { get; init; } = string.Empty;
-
-    public int CallCount { get; init; }
-
-    public int PromptTokens { get; init; }
-
-    public int CachedPromptTokens { get; init; }
-
-    public int CompletionTokens { get; init; }
-
-    public int TotalTokens { get; init; }
-
-    public decimal EstimatedConsume { get; init; }
-
-    public string ConsumeText => EstimatedConsume.ToString("F4");
-}
-
 public partial class PurposeBindingItem : ObservableObject
 {
     public PurposeBindingGroup? ParentGroup { get; set; }
@@ -126,12 +110,9 @@ public partial class KeyManagementViewModel : ViewModelBase
 {
     public ObservableCollection<ProviderItem> Providers { get; } = [];
 
-    public ObservableCollection<ModelSpendSummaryItem> SelectedProviderSpend { get; } = [];
-
     public ObservableCollection<PurposeBindingGroup> PurposeGroups { get; } = [];
 
     [ObservableProperty] private ProviderItem? _selectedProvider;
-    [ObservableProperty] private ProviderModelItem? _selectedModel;
 
     public KeyManagementViewModel()
     {
@@ -147,12 +128,6 @@ public partial class KeyManagementViewModel : ViewModelBase
         LoadData();
     }
 
-    partial void OnSelectedProviderChanged(ProviderItem? value)
-    {
-        SelectedModel = value?.Models.FirstOrDefault();
-        ReloadSelectedProviderSpend();
-    }
-
     [RelayCommand]
     private void Reload()
     {
@@ -163,20 +138,58 @@ public partial class KeyManagementViewModel : ViewModelBase
     [RelayCommand]
     private void AddProvider()
     {
-        var provider = new ProviderItem
+        var dialogVm = new KeyEditDialogViewModel();
+        var dialog = new KeyEditDialog(dialogVm) { Owner = GetActiveWindow() };
+        if (dialog.ShowDialog() != true)
         {
-            Name = "新服务商",
-            EndPoint = "https://api.openai.com/v1"
-        };
-        provider.Models.Add(new ProviderModelItem { Name = "gpt-4o", Enabled = true });
-        Providers.Add(provider);
-        SelectedProvider = provider;
+            return;
+        }
+
+        var item = dialogVm.ToProviderItem();
+        Providers.Add(item);
+        SelectedProvider = item;
+    }
+
+    [RelayCommand]
+    private void EditProvider(ProviderItem? provider)
+    {
+        if (provider == null)
+        {
+            return;
+        }
+
+        var dialogVm = new KeyEditDialogViewModel(provider);
+        var dialog = new KeyEditDialog(dialogVm) { Owner = GetActiveWindow() };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var edited = dialogVm.ToProviderItem();
+        provider.Name = edited.Name;
+        provider.EndPoint = edited.EndPoint;
+        provider.Key = edited.Key;
+        provider.UseTencentSign = edited.UseTencentSign;
+        provider.TotalTokens = edited.TotalTokens;
+        provider.TotalConsume = edited.TotalConsume;
+        provider.Models.Clear();
+        foreach (var m in edited.Models)
+        {
+            provider.Models.Add(m);
+        }
     }
 
     [RelayCommand]
     private void RemoveProvider(ProviderItem? provider)
     {
         if (provider == null)
+        {
+            return;
+        }
+
+        if (MessageBox.Show(
+                $"确定要删除服务商「{provider.DisplayName}」吗？\n该操作不可撤销，并将移除所有对应的用途绑定。",
+                "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
         {
             return;
         }
@@ -199,43 +212,6 @@ public partial class KeyManagementViewModel : ViewModelBase
         if (SelectedProvider == provider)
         {
             SelectedProvider = Providers.FirstOrDefault();
-        }
-    }
-
-    [RelayCommand]
-    private void AddModel()
-    {
-        if (SelectedProvider == null)
-        {
-            ErrorMessage = "请先在顶部选择一个服务商，或点击「新增服务商」创建";
-            return;
-        }
-        var model = new ProviderModelItem { Name = "new-model", Enabled = true };
-        SelectedProvider.Models.Add(model);
-        SelectedModel = model;
-        ErrorMessage = null;
-    }
-
-    [RelayCommand]
-    private void RemoveModel(ProviderModelItem? model)
-    {
-        if (SelectedProvider == null || model == null)
-        {
-            return;
-        }
-
-        foreach (var group in PurposeGroups)
-        {
-            foreach (var item in group.Items.Where(x => x.SelectedProvider == SelectedProvider && x.SelectedModel?.Name == model.Name))
-            {
-                item.SelectedModel = null;
-            }
-        }
-
-        SelectedProvider.Models.Remove(model);
-        if (SelectedModel == model)
-        {
-            SelectedModel = SelectedProvider.Models.FirstOrDefault();
         }
     }
 
@@ -326,7 +302,6 @@ public partial class KeyManagementViewModel : ViewModelBase
     {
         ErrorMessage = null;
         Providers.Clear();
-        SelectedProviderSpend.Clear();
 
         foreach (var provider in APIKeyRepository.GetAllWithModels())
         {
@@ -365,6 +340,9 @@ public partial class KeyManagementViewModel : ViewModelBase
         SelectedProvider ??= Providers.FirstOrDefault();
     }
 
+    private static System.Windows.Window? GetActiveWindow() =>
+        System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w => w.IsActive);
+
     private void LoadPurposeBindings()
     {
         foreach (var group in PurposeGroups)
@@ -398,42 +376,4 @@ public partial class KeyManagementViewModel : ViewModelBase
         }
     }
 
-    private void ReloadSelectedProviderSpend()
-    {
-        SelectedProviderSpend.Clear();
-        if (SelectedProvider == null)
-        {
-            return;
-        }
-
-        foreach (var summary in APIKeyRepository.GetModelSpendSummaries(new APIKey
-        {
-            Id = SelectedProvider.Id,
-            Name = SelectedProvider.Name,
-            EndPoint = SelectedProvider.EndPoint,
-            Key = SelectedProvider.Key,
-            AvailableModels = SelectedProvider.Models.Select(x => new LLMModelConfig
-            {
-                Id = x.Id,
-                APIKeyId = x.APIKeyId,
-                Name = x.Name,
-                Enabled = x.Enabled,
-                InputPricePer1M = x.InputPricePer1M,
-                OutputPricePer1M = x.OutputPricePer1M,
-                CachePricePer1M = x.CachePricePer1M
-            }).ToList()
-        }))
-        {
-            SelectedProviderSpend.Add(new ModelSpendSummaryItem
-            {
-                ModelName = summary.ModelName,
-                CallCount = summary.CallCount,
-                PromptTokens = summary.PromptTokens,
-                CachedPromptTokens = summary.CachedPromptTokens,
-                CompletionTokens = summary.CompletionTokens,
-                TotalTokens = summary.TotalTokens,
-                EstimatedConsume = summary.EstimatedConsume
-            });
-        }
-    }
 }

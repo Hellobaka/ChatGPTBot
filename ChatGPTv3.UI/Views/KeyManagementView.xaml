@@ -11,238 +11,81 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
-            <Grid Margin="0,0,0,8">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+        <TabControl Grid.Row="0" Background="Transparent" BorderThickness="0">
 
-                <WrapPanel Grid.Row="0" Margin="0,0,0,12">
-                    <Button
-                        Margin="0,0,8,0"
-                        Command="{Binding AddProviderCommand}"
-                        Content="新增服务商"
-                        Style="{StaticResource ButtonPrimary}" />
-                    <Button
-                        Margin="0,0,8,0"
-                        Command="{Binding ReloadCommand}"
-                        Content="刷新" />
-                    <TextBlock
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        Foreground="IndianRed"
-                        Text="{Binding ErrorMessage}" />
-                </WrapPanel>
+            <!-- ═══ Tab 1: 服务商列表 ═══ -->
+            <TabItem Header="服务商列表">
+                <Grid Margin="4,8,4,8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                <Expander
-                    Grid.Row="1"
-                    Margin="0,0,0,12"
-                    Header="服务商管理"
-                    IsExpanded="True">
-                    <StackPanel Margin="0,10,0,0">
-                        <!--  Provider selector + actions  -->
-                        <WrapPanel Margin="0,0,0,12">
-                            <TextBlock
-                                VerticalAlignment="Center"
-                                FontWeight="SemiBold"
-                                Text="当前服务商：" />
-                            <ComboBox
-                                Width="300"
-                                Margin="10,0,12,0"
-                                DisplayMemberPath="DisplayName"
-                                ItemsSource="{Binding Providers}"
-                                SelectedItem="{Binding SelectedProvider}" />
-                            <Button
-                                Margin="0,0,0,0"
-                                Command="{Binding RemoveProviderCommand}"
-                                CommandParameter="{Binding SelectedProvider}"
-                                Content="删除" />
-                        </WrapPanel>
+                    <WrapPanel Grid.Row="0" Margin="0,0,0,12">
+                        <Button
+                            Margin="0,0,8,0"
+                            Command="{Binding AddProviderCommand}"
+                            Content="新增服务商"
+                            Style="{StaticResource ButtonPrimary}" />
+                        <Button
+                            Margin="0,0,8,0"
+                            Command="{Binding ReloadCommand}"
+                            Content="刷新" />
+                        <Button
+                            Command="{Binding RemoveProviderCommand}"
+                            CommandParameter="{Binding SelectedProvider}"
+                            Content="删除选中" />
+                    </WrapPanel>
 
-                        <!--  Provider edit fields  -->
-                        <Border
-                            Padding="12"
-                            BorderBrush="{DynamicResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="8">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                    <DataGrid
+                        Grid.Row="1"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        IsReadOnly="True"
+                        ItemsSource="{Binding Providers}"
+                        SelectedItem="{Binding SelectedProvider}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="140"
+                                Binding="{Binding Name}"
+                                Header="名称" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding EndPoint}"
+                                Header="端点" />
+                            <DataGridCheckBoxColumn
+                                Width="80"
+                                Binding="{Binding UseTencentSign}"
+                                Header="腾讯云签名" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding TotalTokens, StringFormat=N0}"
+                                Header="累计 Token" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding TotalConsume, StringFormat=F4}"
+                                Header="累计花费" />
+                            <DataGridTemplateColumn Width="70" Header="操作">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            Padding="8,2"
+                                            Command="{Binding DataContext.EditProviderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Content="编辑"
+                                            Style="{StaticResource ButtonPrimary}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
 
-                                <WrapPanel Grid.Row="0" Margin="0,0,0,10">
-                                    <StackPanel Width="340" Margin="0,0,12,10">
-                                        <TextBlock FontWeight="SemiBold" Text="名称" />
-                                        <TextBox Margin="0,6,0,0" Text="{Binding SelectedProvider.Name, UpdateSourceTrigger=PropertyChanged}" />
-                                    </StackPanel>
-                                    <StackPanel Width="340" Margin="0,0,12,10">
-                                        <TextBlock FontWeight="SemiBold" Text="EndPoint" />
-                                        <TextBox Margin="0,6,0,0" Text="{Binding SelectedProvider.EndPoint, UpdateSourceTrigger=PropertyChanged}" />
-                                    </StackPanel>
-                                    <StackPanel Width="340" Margin="0,0,12,10">
-                                        <TextBlock FontWeight="SemiBold" Text="API Key" />
-                                        <TextBox Margin="0,6,0,0" Text="{Binding SelectedProvider.Key, UpdateSourceTrigger=PropertyChanged}" />
-                                    </StackPanel>
-                                </WrapPanel>
-
-                                <WrapPanel Grid.Row="1" Margin="0,0,0,8">
-                                    <CheckBox
-                                        Margin="0,0,20,0"
-                                        VerticalAlignment="Center"
-                                        Content="腾讯云签名"
-                                        IsChecked="{Binding SelectedProvider.UseTencentSign}" />
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock VerticalAlignment="Center" Text="累计 Token：" />
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding SelectedProvider.TotalTokens, StringFormat=N0}" />
-                                    </StackPanel>
-                                    <StackPanel Margin="20,0,0,0" Orientation="Horizontal">
-                                        <TextBlock VerticalAlignment="Center" Text="累计花费：" />
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            FontWeight="SemiBold"
-                                            Text="{Binding SelectedProvider.TotalConsume, StringFormat=F4}" />
-                                    </StackPanel>
-                                </WrapPanel>
-
-                                <!--  Model grid  -->
-                                <Expander
-                                    Grid.Row="2"
-                                    Margin="0,6,0,0"
-                                    Header="模型配置"
-                                    IsExpanded="True">
-                                    <StackPanel Margin="0,10,0,0">
-                                        <WrapPanel Margin="0,0,0,8">
-                                            <Button
-                                                Margin="0,0,8,0"
-                                                Command="{Binding AddModelCommand}"
-                                                Content="新增模型"
-                                                Style="{StaticResource ButtonPrimary}" />
-                                            <Button
-                                                Command="{Binding RemoveModelCommand}"
-                                                CommandParameter="{Binding SelectedModel}"
-                                                Content="删除选中模型" />
-                                        </WrapPanel>
-                                        <DataGrid
-                                            Height="180"
-                                            AutoGenerateColumns="False"
-                                            CanUserAddRows="False"
-                                            ItemsSource="{Binding SelectedProvider.Models}"
-                                            SelectedItem="{Binding SelectedModel}">
-                                            <DataGrid.Columns>
-                                                <DataGridCheckBoxColumn
-                                                    Width="55"
-                                                    Binding="{Binding Enabled}"
-                                                    Header="启用" />
-                                                <DataGridTextColumn
-                                                    Width="*"
-                                                    Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                                    Header="模型名" />
-                                                <DataGridTemplateColumn Width="90" Header="输入/1M">
-                                                    <DataGridTemplateColumn.CellEditingTemplate>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding InputPricePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4, ValidatesOnExceptions=True}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellEditingTemplate>
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding InputPricePer1M, StringFormat=F4}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                                <DataGridTemplateColumn Width="110" Header="缓存输入/1M">
-                                                    <DataGridTemplateColumn.CellEditingTemplate>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding CachePricePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4, ValidatesOnExceptions=True}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellEditingTemplate>
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding CachePricePer1M, StringFormat=F4}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                                <DataGridTemplateColumn Width="90" Header="输出/1M">
-                                                    <DataGridTemplateColumn.CellEditingTemplate>
-                                                        <DataTemplate>
-                                                            <TextBox Text="{Binding OutputPricePer1M, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4, ValidatesOnExceptions=True}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellEditingTemplate>
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding OutputPricePer1M, StringFormat=F4}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </StackPanel>
-                                </Expander>
-
-                                <!--  Spend summary  -->
-                                <Expander
-                                    Grid.Row="3"
-                                    Margin="0,6,0,0"
-                                    Header="模型花费统计"
-                                    IsExpanded="True">
-                                    <DataGrid
-                                        Height="180"
-                                        Margin="0,10,0,0"
-                                        AutoGenerateColumns="False"
-                                        CanUserAddRows="False"
-                                        IsReadOnly="True"
-                                        ItemsSource="{Binding SelectedProviderSpend}">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn
-                                                Width="*"
-                                                Binding="{Binding ModelName}"
-                                                Header="模型" />
-                                            <DataGridTextColumn
-                                                Width="60"
-                                                Binding="{Binding CallCount}"
-                                                Header="调用" />
-                                            <DataGridTextColumn
-                                                Width="70"
-                                                Binding="{Binding PromptTokens}"
-                                                Header="输入" />
-                                            <DataGridTextColumn
-                                                Width="70"
-                                                Binding="{Binding CachedPromptTokens}"
-                                                Header="缓存" />
-                                            <DataGridTextColumn
-                                                Width="70"
-                                                Binding="{Binding CompletionTokens}"
-                                                Header="输出" />
-                                            <DataGridTextColumn
-                                                Width="80"
-                                                Binding="{Binding TotalTokens}"
-                                                Header="总Token" />
-                                            <DataGridTextColumn
-                                                Width="80"
-                                                Binding="{Binding ConsumeText}"
-                                                Header="花费" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </Expander>
-                            </Grid>
-                        </Border>
-                    </StackPanel>
-                </Expander>
-
-                <!--  Purpose bindings  -->
-                <Expander
-                    Grid.Row="2"
-                    Header="用途与模型绑定"
-                    IsExpanded="False">
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding PurposeGroups}">
+            <!-- ═══ Tab 2: 用途绑定 ═══ -->
+            <TabItem Header="用途绑定">
+                <ScrollViewer Margin="4,8,4,8" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding PurposeGroups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:PurposeBindingGroup}">
                                 <Border
@@ -252,7 +95,6 @@
                                     BorderThickness="1"
                                     CornerRadius="8">
                                     <StackPanel>
-                                        <!--  Header  -->
                                         <Grid Margin="0,0,0,10">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -274,7 +116,6 @@
                                                 Style="{StaticResource ButtonPrimary}" />
                                         </Grid>
 
-                                        <!--  Column labels  -->
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="220" />
@@ -294,7 +135,6 @@
                                                 Text="模型" />
                                         </Grid>
 
-                                        <!--  Binding rows  -->
                                         <ItemsControl ItemsSource="{Binding Items}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate DataType="{x:Type vm:PurposeBindingItem}">
@@ -332,7 +172,6 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
 
-                                        <!--  Empty hint  -->
                                         <TextBlock
                                             Margin="0,4,0,0"
                                             FontSize="13"
@@ -355,9 +194,9 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </Expander>
-            </Grid>
-        </ScrollViewer>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
         <Border
             Grid.Row="1"
