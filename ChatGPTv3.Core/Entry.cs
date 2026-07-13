@@ -185,6 +185,8 @@ public class Entry : PluginBase
             .UseMessageRecorder()
             .UseReplyDecision()
             .UseChatHandler()
+            .UseBotMessageRecorder()
+            .UseToolCallRecorder()
             .Build();
 
         ChatCommands.PrivatePipeline = new ChatPipelineBuilder()
@@ -196,6 +198,8 @@ public class Entry : PluginBase
             .UseMessageRecorder()
             .UsePrivateReplyDecision()
             .UseChatHandler()
+            .UseBotMessageRecorder()
+            .UseToolCallRecorder()
             .Build();
 
         API.Logger.Info("ChatGPTv3", "插件启动完成");
