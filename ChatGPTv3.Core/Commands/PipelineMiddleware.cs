@@ -746,7 +746,15 @@ public static class PipelineMiddlewareExtensions
         var response = await chatService.GetChatResultAsync(
             keys, messages, ChatService.Purpose.聊天,
             timeout: AppConfig.ChatTimeout, toolExecutor: toolExecutor,
-            cancellationToken: ctx.CancellationToken);
+            cancellationToken: ctx.CancellationToken,
+            onIntermediateText: async text =>
+            {
+                if (ctx.SendFunc != null)
+                {
+                    await ctx.SendFunc(text);
+                    ctx.BotReplies.Add((text, DateTime.Now));
+                }
+            });
 
         ctx.Reasoning = chatService.LastReasoning;
 
@@ -919,7 +927,6 @@ public static class PipelineMiddlewareExtensions
     /// </summary>
     private static async Task<string> SendReplyWithEmoji(ChatContext ctx, string response)
     {
-        ctx.BotReplies.Clear();
         var activeSend = AppConfig.EnableEmojiActiveSend && response.Contains("<@Emoji");
         var displayText = new System.Text.StringBuilder();
 

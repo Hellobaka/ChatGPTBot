@@ -49,7 +49,8 @@ public class ChatService
         int timeout = 30000,
         ToolExecutor? toolExecutor = null,
         string? identity = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Func<string, Task>? onIntermediateText = null)
     {
         // Randomly select a key if multiple available
         var key = keyList?.OrderBy(_ => Guid.NewGuid()).FirstOrDefault();
@@ -68,7 +69,8 @@ public class ChatService
             jsonMode,
             timeout,
             toolExecutor,
-            identity);
+            identity,
+            onIntermediateText: onIntermediateText);
     }
 
     /// <summary>
@@ -83,7 +85,8 @@ public class ChatService
         bool jsonMode = false,
         int timeout = 30000,
         ToolExecutor? toolExecutor = null,
-        string? identity = null)
+        string? identity = null,
+        Func<string, Task>? onIntermediateText = null)
     {
         // Normalize URL
         baseUrl = baseUrl.Replace("/chat/completions", "").TrimEnd('/');
@@ -154,6 +157,12 @@ public class ChatService
                 if (pendingToolCalls == null || pendingToolCalls.Count == 0 || toolExecutor == null)
                 {
                     break; // No tool calls, done
+                }
+
+                // Send intermediate text if LLM spoke during tool call round
+                if (onIntermediateText != null && !string.IsNullOrWhiteSpace(msg))
+                {
+                    await onIntermediateText(msg);
                 }
 
                 // Execute tool calls
