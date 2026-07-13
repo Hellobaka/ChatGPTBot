@@ -11,8 +11,6 @@ public partial class ChatTestView : UserControl
 {
     private ChatTestViewModel VM => (ChatTestViewModel)DataContext!;
 
-    private readonly Dictionary<AutoCompleteTextBox, DateTime> _autoCompleteSuppressUntil = [];
-
     public ChatTestView()
     {
         InitializeComponent();
@@ -48,51 +46,27 @@ public partial class ChatTestView : UserControl
 
     private void OnAutoCompletePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not AutoCompleteTextBox autoComplete)
-        {
-            return;
-        }
-
-        if (!autoComplete.IsKeyboardFocusWithin)
-        {
-            autoComplete.Focus();
-        }
-
-        OpenAutoComplete(autoComplete);
-    }
-
-    private void OnAutoCompleteDropDownClosed(object sender, EventArgs e)
-    {
-        if (sender is AutoCompleteTextBox autoComplete)
-        {
-            _autoCompleteSuppressUntil[autoComplete] = DateTime.UtcNow.AddMilliseconds(250);
-        }
-    }
-
-    private void OpenAutoComplete(object sender)
-    {
         if (sender is AutoCompleteTextBox autoComplete && autoComplete.Items.Count > 0)
         {
-            if (_autoCompleteSuppressUntil.TryGetValue(autoComplete, out var until)
-                && DateTime.UtcNow < until)
-            {
-                return;
-            }
-
-            Dispatcher.BeginInvoke(() =>
-            {
-                autoComplete.IsDropDownOpen = true;
-            }, DispatcherPriority.Input);
+            autoComplete.IsDropDownOpen = true;
         }
-    }
-
-    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
-    {
-        base.OnPropertyChanged(e);
     }
 
     private void ScrollChatToEnd()
     {
         ChatScroll.ScrollToEnd();
+    }
+
+    private void OnClearQqClick(object sender, RoutedEventArgs e)
+    {
+        VM.ClearQQCommand.Execute(null);
+        QQAutoComplete.SelectedItem = null;
+        QQAutoComplete.Text = string.Empty;
+
+        // AutoCompleteTextBox keeps display text in internal PART_SearchTextBox
+        if (QQAutoComplete.Template?.FindName("PART_SearchTextBox", QQAutoComplete) is System.Windows.Controls.TextBox innerBox)
+        {
+            innerBox.Text = string.Empty;
+        }
     }
 }

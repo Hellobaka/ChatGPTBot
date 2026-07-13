@@ -65,6 +65,16 @@ public class ChatContext
     /// </summary>
     public List<string> PendingImageHashes { get; set; } = [];
 
+    // ── Output recording ───────────────────────────────────
+    /// <summary>Bot reply segments with send timestamps. Populated by SendReplyWithEmoji, consumed by UseBotMessageRecorder.</summary>
+    public List<(string text, DateTime time)> BotReplies { get; } = [];
+
+    /// <summary>Fallback reply text, set by HandleFallback. Consumed by UseBotMessageRecorder.</summary>
+    public string? FallbackReply { get; set; }
+
+    /// <summary>Tool call log from the chat turn. Consumed by UseToolCallRecorder.</summary>
+    public List<(string callId, string name, string args, string result, bool success)>? PendingToolCalls { get; set; }
+
     // ── Debug / trace ──────────────────────────────────────
     public List<PipelineTraceEntry> PipelineTrace { get; } = [];
 

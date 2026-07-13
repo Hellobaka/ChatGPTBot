@@ -254,7 +254,9 @@ public static class PipelineMiddlewareExtensions
     {
         return builder
             .UseBackgroundCounters()
-            .UseChatExecutor();
+            .UseChatExecutor()
+            .UseBotMessageRecorder()
+            .UseToolCallRecorder();
     }
 
     public static ChatPipelineBuilder UseMessageImageResolver(this ChatPipelineBuilder builder)
@@ -474,6 +476,113 @@ public static class PipelineMiddlewareExtensions
         });
     }
 
+    public static ChatPipelineBuilder UseBotMessageRecorder(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            await next();
+
+            var hasFallback = !string.IsNullOrWhiteSpace(ctx.FallbackReply);
+            var hasSegments = ctx.BotReplies.Count > 0;
+
+            if (!hasFallback && !hasSegments)
+            {
+                return;
+            }
+
+            try
+            {
+                if (hasFallback)
+                {
+                    ChatRecord.Insert(new ChatRecord
+                    {
+                        GroupID = ctx.GroupId,
+                        QQ = PromptBuilder.CurrentBotQQ,
+                        NickName = AppConfig.BotName,
+                        Message = ctx.FallbackReply,
+                        ParsedMessage = ctx.FallbackReply,
+                        SenderType = SenderType.Assistant,
+                        Time = DateTime.Now
+                    });
+                }
+                else
+                {
+                    foreach (var (text, time) in ctx.BotReplies)
+                    {
+                        ChatRecord.Insert(new ChatRecord
+                        {
+                            GroupID = ctx.GroupId,
+                            QQ = PromptBuilder.CurrentBotQQ,
+                            NickName = AppConfig.BotName,
+                            Message = text,
+                            ParsedMessage = text,
+                            SenderType = SenderType.Assistant,
+                            Time = time
+                        });
+                    }
+                }
+
+                ChatRecord.Cleanup(ctx.GroupId);
+            }
+            catch (Exception ex)
+            {
+                CommonHelper.LogError?.Invoke("RecordBot", ex.Message);
+            }
+        });
+    }
+
+    public static ChatPipelineBuilder UseToolCallRecorder(this ChatPipelineBuilder builder)
+    {
+        return builder.Use(async (ctx, next) =>
+        {
+            await next();
+
+            if (ctx.PendingToolCalls == null || ctx.PendingToolCalls.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                ChatRecord.Insert(new ChatRecord
+                {
+                    GroupID = ctx.GroupId,
+                    QQ = PromptBuilder.CurrentBotQQ,
+                    NickName = AppConfig.BotName,
+                    SenderType = SenderType.Assistant,
+                    ParsedMessage = string.Empty,
+                    HasToolCalls = true,
+                    Time = DateTime.Now
+                });
+
+                var placeholderIds = new List<int>();
+                foreach (var tc in ctx.PendingToolCalls)
+                {
+                    var id = ChatRecord.Insert(new ChatRecord
+                    {
+                        GroupID = ctx.GroupId,
+                        QQ = ctx.QQ,
+                        SenderType = SenderType.Tool,
+                        ParsedMessage = $"[{tc.name}]...",
+                        ToolCallId = tc.callId,
+                        ToolName = tc.name,
+                        IsToolSuccess = tc.success,
+                        Time = DateTime.Now
+                    });
+                    placeholderIds.Add(id);
+                }
+
+                ToolResultSummarizer.SummarizeAsync(
+                    ctx.GroupId, ctx.MessageText,
+                    ctx.PendingToolCalls, string.Join(" ", ctx.BotReplies.Select(r => r.text)), placeholderIds);
+            }
+            catch (Exception ex)
+            {
+                CommonHelper.LogError?.Invoke("ToolRecorder", ex.Message);
+            }
+        });
+    }
+
     // ── Shared helpers ────────────────────────────────────
 
     private static Message? GetMessage(ChatContext ctx)
@@ -679,44 +788,13 @@ public static class PipelineMiddlewareExtensions
         if (!string.IsNullOrWhiteSpace(response))
         {
             var sentText = await SendReplyWithEmoji(ctx, response);
-            RecordBotMessage(ctx.GroupId, sentText);
             ctx.Trace("ChatService", true, $"生成回复长度 {sentText.Length}");
         }
 
-        // Tool call chain recording
+        // Tool call log — store on context for UseToolCallRecorder middleware
         if (chatService.ToolCallLog.Count > 0)
         {
-            ChatRecord.Insert(new ChatRecord
-            {
-                GroupID = ctx.GroupId,
-                QQ = PromptBuilder.CurrentBotQQ,
-                NickName = AppConfig.BotName,
-                SenderType = SenderType.Assistant,
-                ParsedMessage = string.Empty,
-                HasToolCalls = true,
-                Time = DateTime.Now
-            });
-
-            var placeholderIds = new List<int>();
-            foreach (var tc in chatService.ToolCallLog)
-            {
-                var id = ChatRecord.Insert(new ChatRecord
-                {
-                    GroupID = ctx.GroupId,
-                    QQ = ctx.QQ,
-                    SenderType = SenderType.Tool,
-                    ParsedMessage = $"[{tc.name}]...",
-                    ToolCallId = tc.callId,
-                    ToolName = tc.name,
-                    IsToolSuccess = tc.success,
-                    Time = DateTime.Now
-                });
-                placeholderIds.Add(id);
-            }
-
-            ToolResultSummarizer.SummarizeAsync(
-                ctx.GroupId, ctx.MessageText,
-                chatService.ToolCallLog, response, placeholderIds);
+            ctx.PendingToolCalls = chatService.ToolCallLog;
         }
 
         return EventHandleResult.Block;
@@ -748,7 +826,7 @@ public static class PipelineMiddlewareExtensions
             if (deflection != ChatService.ErrorMessage && !string.IsNullOrWhiteSpace(deflection))
             {
                 await ctx.SendFunc!(deflection);
-                RecordBotMessage(ctx.GroupId, deflection);
+                ctx.FallbackReply = deflection;
             }
         }
         else if (AppConfig.ContentFilterFallbacks.Count > 0)
@@ -756,27 +834,8 @@ public static class PipelineMiddlewareExtensions
             var fallback = AppConfig.ContentFilterFallbacks[
                 CommonHelper.Next(0, AppConfig.ContentFilterFallbacks.Count)];
             await ctx.SendFunc!(fallback);
-            RecordBotMessage(ctx.GroupId, fallback);
+            ctx.FallbackReply = fallback;
         }
-    }
-
-    private static void RecordBotMessage(long groupId, string message)
-    {
-        try
-        {
-            ChatRecord.Insert(new ChatRecord
-            {
-                GroupID = groupId,
-                QQ = PromptBuilder.CurrentBotQQ,
-                NickName = AppConfig.BotName,
-                Message = message,
-                ParsedMessage = message,
-                SenderType = SenderType.Assistant,
-                Time = DateTime.Now
-            });
-            ChatRecord.Cleanup(groupId);
-        }
-        catch (Exception ex) { CommonHelper.LogError?.Invoke("RecordBot", ex.Message); }
     }
 
     private static bool IsNearDuplicate(string candidate, long groupId)
@@ -860,6 +919,7 @@ public static class PipelineMiddlewareExtensions
     /// </summary>
     private static async Task<string> SendReplyWithEmoji(ChatContext ctx, string response)
     {
+        ctx.BotReplies.Clear();
         var activeSend = AppConfig.EnableEmojiActiveSend && response.Contains("<@Emoji");
         var displayText = new System.Text.StringBuilder();
 
@@ -895,6 +955,7 @@ public static class PipelineMiddlewareExtensions
                     if (!string.IsNullOrWhiteSpace(text))
                     {
                         await ctx.SendFunc!(text);
+                        ctx.BotReplies.Add((text, DateTime.Now));
                         displayText.Append(text + ' ');
                     }
                 }

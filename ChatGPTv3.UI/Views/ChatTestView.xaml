@@ -48,7 +48,6 @@
                     Width="180"
                     Margin="0,0,12,0"
                     DisplayMemberPath="Display"
-                    DropDownClosed="OnAutoCompleteDropDownClosed"
                     IsEnabled="{Binding IsPrivateMode, Converter={StaticResource InvertBoolToVis}}"
                     ItemsSource="{Binding GroupCandidates}"
                     PreviewMouseLeftButtonDown="OnAutoCompletePreviewMouseLeftButtonDown"
@@ -59,14 +58,27 @@
                     VerticalAlignment="Center"
                     Text="QQ:" />
                 <hc:AutoCompleteTextBox
+                    x:Name="QQAutoComplete"
                     Width="180"
-                    Margin="0,0,12,0"
+                    Margin="0,0,4,0"
                     DisplayMemberPath="Display"
-                    DropDownClosed="OnAutoCompleteDropDownClosed"
                     ItemsSource="{Binding QQCandidates}"
                     PreviewMouseLeftButtonDown="OnAutoCompletePreviewMouseLeftButtonDown"
                     SelectedItem="{Binding SelectedQQ}"
                     Text="{Binding QqSearchText, UpdateSourceTrigger=PropertyChanged}" />
+                <Button
+                    Width="20"
+                    Height="20"
+                    Margin="0,0,8,0"
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    Click="OnClearQqClick"
+                    Content="✕"
+                    FontSize="11"
+                    Foreground="{DynamicResource SecondaryTextBrush}"
+                    Style="{StaticResource ButtonDefault}"
+                    ToolTip="清除选择，重新搜索"
+                    Visibility="{Binding HasQQSelected, Converter={StaticResource BoolToVis}}" />
                 <Button
                     Width="36"
                     Height="36"
