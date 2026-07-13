@@ -28,10 +28,13 @@ public static class EmbeddingService
             return null;
         }
 
-        // Key's model takes priority, then config, then fallback
-        var model = key.Model?.Name
-            ?? (string.IsNullOrEmpty(AppConfig.EmbeddingModelName) ? null : AppConfig.EmbeddingModelName)
-            ?? "text-embedding-ada-002";
+        // Model must come from the bound APIKey; no built-in fallback
+        if (key.Model == null)
+        {
+            CommonHelper.LogError?.Invoke("Embedding", "No valid Embedding model configured on key");
+            return null;
+        }
+        var model = key.Model.Name;
 
         try
         {

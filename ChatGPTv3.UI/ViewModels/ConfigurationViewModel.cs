@@ -170,6 +170,11 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "BotName", Label = "机器人名称", DefaultValue = "ChatGPT" },
             new() { Key = "BotNicknames", Label = "机器人昵称", DefaultValue = new List<string>{"ChatGPT"}, IsList = true },
             new() { Key = "MasterQQ", Label = "主人QQ", DefaultValue = new List<long>(), IsList = true },
+            new() { Key = "EnableGroupReply", Label = "启用群聊回复", DefaultValue = false },
+        };
+        var general = new ObservableCollection<ConfigEntry>
+        {
+            new() { Key = "MessageDebounceMs", Label = "消息防抖间隔 (ms)", DefaultValue = 3000 },
         };
         var debug = new ObservableCollection<ConfigEntry>
         {
@@ -178,6 +183,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         Tabs.Add(new ConfigTab("基本设置", "Cog",
         [
             new ConfigSection("机器人身份", bot),
+            new ConfigSection("通用", general),
             new ConfigSection("调试", debug),
         ]));
 
@@ -186,14 +192,22 @@ public partial class ConfigurationViewModel : ViewModelBase
         {
             new() { Key = "ChatMaxTokens", Label = "最大 Token 数", DefaultValue = 3000 },
             new() { Key = "ChatTemperature", Label = "温度 (0-2)", DefaultValue = 1.0 },
-            new() { Key = "ChatTimeout", Label = "超时时间 (ms)", DefaultValue = 30000 },
+            new() { Key = "ChatTimeout", Label = "对话超时 (ms)", DefaultValue = 30000 },
             new() { Key = "StreamMode", Label = "流式输出", DefaultValue = true },
             new() { Key = "GroupPrompt", Label = "群聊系统提示词", DefaultValue = "", IsMultiline = true },
             new() { Key = "PrivatePrompt", Label = "私聊系统提示词", DefaultValue = "", IsMultiline = true },
         };
+        var timeouts = new ObservableCollection<ConfigEntry>
+        {
+            new() { Key = "ReplyTimeout", Label = "回复决策超时 (ms)", DefaultValue = 5000 },
+            new() { Key = "SplitterTimeout", Label = "消息分段超时 (ms)", DefaultValue = 30000 },
+            new() { Key = "ImageDescriberTimeout", Label = "图片描述超时 (ms)", DefaultValue = 30000 },
+            new() { Key = "EmbeddingTimeout", Label = "向量嵌入超时 (ms)", DefaultValue = 3000 },
+        };
         Tabs.Add(new ConfigTab("LLM 设置", "Brain",
         [
             new ConfigSection("模型与提示词", llm),
+            new ConfigSection("超时设置", timeouts),
         ]));
 
         // ── Tab 3: 权限控制 ──
@@ -274,22 +288,26 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var qdrant = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "QdrantHost", Label = "主机地址", DefaultValue = "localhost" },
-            new() { Key = "QdrantPort", Label = "端口", DefaultValue = (ushort)6333 },
-            new() { Key = "QdrantAPIKey", Label = "API Key", DefaultValue = "" },
+            new() { Key = "QdrantHost", Label = "Qdrant 主机地址", DefaultValue = "localhost" },
+            new() { Key = "QdrantPort", Label = "Qdrant 端口", DefaultValue = (ushort)6333 },
+            new() { Key = "QdrantAPIKey", Label = "Qdrant API Key", DefaultValue = "" },
         };
         var rerank = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableRerank", Label = "启用重排序", DefaultValue = true },
-            new() { Key = "RerankUrl", Label = "API 地址", DefaultValue = "https://lkeap.tencentcloudapi.com" },
-            new() { Key = "RerankModelName", Label = "模型名", DefaultValue = "lke-reranker-base" },
             new() { Key = "RerankTimeout", Label = "超时 (ms)", DefaultValue = 3000 },
+        };
+        var tencent = new ObservableCollection<ConfigEntry>
+        {
+            new() { Key = "TencentSecretId", Label = "腾讯云 SecretId", DefaultValue = "" },
+            new() { Key = "TencentSecretKey", Label = "腾讯云 SecretKey", DefaultValue = "" },
         };
         Tabs.Add(new ConfigTab("视觉与接口", "Eye",
         [
             new ConfigSection("视觉识别", vision),
-            new ConfigSection("Qdrant", qdrant),
-            new ConfigSection("Rerank", rerank),
+            new ConfigSection("向量检索 (Qdrant)", qdrant),
+            new ConfigSection("Rerank 重排序", rerank),
+            new ConfigSection("腾讯云签名", tencent),
         ]));
 
         // ── Tab 6: 记忆与计划 ──
@@ -305,7 +323,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         var schedule = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableSchedules", Label = "启用日程", DefaultValue = true },
-            new() { Key = "SchedulePrompt", Label = "日程提示词", DefaultValue = "", IsMultiline = true },
+            new() { Key = "SchedulePrompt", Label = "日程提示词", DefaultValue = "喜欢打各种游戏，为人热情积极向上，作息健康，10%概率熬夜", IsMultiline = true },
             new() { Key = "DefaultSchedule", Label = "默认日程", DefaultValue = "摸鱼" },
             new() { Key = "MinCronIntervalMinutes", Label = "最小 Cron 间隔 (分钟)", DefaultValue = 5 },
         };
@@ -318,14 +336,19 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var ctx = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "EnableQdrant", Label = "启用 Qdrant", DefaultValue = true },
-            new() { Key = "MinMemorySimilarity", Label = "最小记忆相似度", DefaultValue = 0.8 },
-            new() { Key = "MaxMemoryCount", Label = "最大记忆条数", DefaultValue = 5 },
+            new() { Key = "EnableQdrant", Label = "启用 Qdrant 知识检索", DefaultValue = true },
+            new() { Key = "MinMemorySimilarity", Label = "最小知识相似度", DefaultValue = 0.8 },
+            new() { Key = "MaxMemoryCount", Label = "最大知识条数", DefaultValue = 5 },
             new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024 },
+        };
+        var relation = new ObservableCollection<ConfigEntry>
+        {
+            new() { Key = "RelationshipUpdateTime", Label = "关系值更新间隔 (天)", DefaultValue = 7 },
         };
         Tabs.Add(new ConfigTab("记忆与计划", "Calendar",
         [
-            new ConfigSection("Qdrant", ctx),
+            new ConfigSection("Qdrant 知识检索", ctx),
+            new ConfigSection("关系管理", relation),
             new ConfigSection("日记", diary),
             new ConfigSection("日程", schedule),
             new ConfigSection("上下文压缩", compress),

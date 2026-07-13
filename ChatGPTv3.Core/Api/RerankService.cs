@@ -28,9 +28,15 @@ public static class RerankService
                 .OrderBy(_ => Guid.NewGuid())
                 .FirstOrDefault();
 
-            var endpoint = keyPurpose?.Key?.EndPoint ?? AppConfig.RerankUrl;
-            var model = keyPurpose?.Model?.Name ?? AppConfig.RerankModelName;
-            var useTencentSign = keyPurpose?.Key?.UseTencentSign ?? AppConfig.EnableTencentSign;
+            if (keyPurpose?.Key == null || keyPurpose.Model == null)
+            {
+                CommonHelper.LogError?.Invoke("Rerank", "No valid Rerank API key configured");
+                return [];
+            }
+
+            var endpoint = keyPurpose.Key.EndPoint;
+            var model = keyPurpose.Model.Name;
+            var useTencentSign = keyPurpose.Key.UseTencentSign;
 
             var payload = new
             {

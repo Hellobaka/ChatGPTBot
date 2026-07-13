@@ -215,20 +215,11 @@ public static class AppConfig
     public static int AbortToolCallCountEachTurn { get; set; } = 7;
 
     // ── Embedding ─────────────────────────────────────────
-    public static string EmbeddingUrl { get; set; } = "https://api.openai.com/v1/embeddings";
-
-    public static string EmbeddingModelName { get; set; } = "text-embedding-ada-002";
 
     // ── Rerank ────────────────────────────────────────────
     public static bool EnableRerank { get; set; } = true;
 
-    public static string RerankUrl { get; set; } = "https://lkeap.tencentcloudapi.com";
-
-    public static string RerankModelName { get; set; } = "lke-reranker-base";
-
     // ── Tencent Cloud ─────────────────────────────────────
-    public static bool EnableTencentSign { get; set; }
-
     public static string TencentSecretId { get; set; } = "";
 
     public static string TencentSecretKey { get; set; } = "";
@@ -342,7 +333,7 @@ public static class AppConfig
         IsPersonBlackList = ConfigManager.GetConfig("IsPersonBlackList", false);
         GroupList = ConfigManager.GetConfig("GroupList", new List<long>());
         PersonList = ConfigManager.GetConfig("PersonList", new List<long>());
-        Filters = ConfigManager.GetConfig("Filter", new List<string> { "[CQ:", "&#" });
+        Filters = ConfigManager.GetConfig("Filters", new List<string> { "[CQ:", "&#" });
 
         // Prompts
         GroupPrompt = ConfigManager.GetConfig("GroupPrompt", GroupPrompt);
@@ -426,16 +417,12 @@ public static class AppConfig
         AbortToolCallCountEachTurn = ConfigManager.GetConfig("AbortToolCallCountEachTurn", 7);
 
         // Embedding
-        EmbeddingUrl = ConfigManager.GetConfig("EmbeddingUrl", "https://api.openai.com/v1/embeddings");
-        EmbeddingModelName = ConfigManager.GetConfig("EmbeddingModelName", "text-embedding-ada-002");
+        // Endpoint and model are now managed via APIKey binding (EmbeddingApiKeyId)
 
         // Rerank
         EnableRerank = ConfigManager.GetConfig("EnableRerank", true);
-        RerankUrl = ConfigManager.GetConfig("RerankUrl", "https://lkeap.tencentcloudapi.com");
-        RerankModelName = ConfigManager.GetConfig("RerankModelName", "lke-reranker-base");
 
         // Tencent Cloud
-        EnableTencentSign = ConfigManager.GetConfig("EnableTencentSign", false);
         TencentSecretId = ConfigManager.GetConfig("TencentSecretId", "");
         TencentSecretKey = ConfigManager.GetConfig("TencentSecretKey", "");
 
