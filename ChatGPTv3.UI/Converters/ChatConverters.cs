@@ -140,3 +140,13 @@ public class CapabilityToTextConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>Converts 0-based page index to 1-based for HandyControl Pagination and back.</summary>
+public class PageIndexConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is int i ? i + 1 : 1;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is int i ? Math.Max(0, i - 1) : 0;
+}

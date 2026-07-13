@@ -1,6 +1,8 @@
+using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -104,7 +106,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     private int _checkedApiKeyCount;
 
     [ObservableProperty]
-    private DateTime? _startDate = DateTime.Today;
+    private DateTime? _startDate = DateTime.Today.AddDays(-7);
 
     [ObservableProperty]
     private DateTime? _endDate = DateTime.Today;
@@ -126,6 +128,65 @@ public partial class TokenUsageViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _hasData;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalPages))]
+    [NotifyPropertyChangedFor(nameof(CanGoPrevious))]
+    [NotifyPropertyChangedFor(nameof(CanGoNext))]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    [NotifyPropertyChangedFor(nameof(DisplayPageIndex))]
+    private int _pageIndex;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalPages))]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    private int _totalRecordCount;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalPages))]
+    [NotifyPropertyChangedFor(nameof(PageInfoText))]
+    private int _pageSize = 20;
+
+    public List<int> PageSizeOptions { get; } = [20, 50, 100, 200];
+
+    [ObservableProperty]
+    private bool _isFilterExpanded = true;
+
+    [ObservableProperty]
+    private bool _isSummaryExpanded = true;
+
+    [ObservableProperty]
+    private bool _isPieChartExpanded = true;
+
+    [ObservableProperty]
+    private bool _isTrendChartExpanded = true;
+
+    [ObservableProperty]
+    private bool _isDetailsExpanded;
+
+    public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling((double)TotalRecordCount / PageSize);
+
+    public int DisplayPageIndex
+    {
+        get => PageIndex + 1;
+        set
+        {
+            var newIdx = value - 1;
+            if (newIdx >= 0 && newIdx != PageIndex && newIdx < TotalPages)
+            {
+                PageIndex = newIdx;
+                _ = LoadAsync(includeFilters: false);
+            }
+        }
+    }
+
+    public bool CanGoPrevious => PageIndex > 0;
+
+    public bool CanGoNext => PageIndex < TotalPages - 1;
+
+    public string PageInfoText => TotalRecordCount <= 0
+        ? "无数据"
+        : $"第 {PageIndex + 1}/{TotalPages} 页，共 {TotalRecordCount} 条";
 
     public bool HasTrendData => TrendSeries.Any();
 
@@ -149,19 +210,53 @@ public partial class TokenUsageViewModel : ViewModelBase
 
     public TokenUsageViewModel()
     {
+        _isFilterExpanded = ConfigManager.GetConfig("TokenStats_FilterExpanded", true);
+        _isSummaryExpanded = ConfigManager.GetConfig("TokenStats_SummaryExpanded", true);
+        _isPieChartExpanded = ConfigManager.GetConfig("TokenStats_PieChartExpanded", true);
+        _isTrendChartExpanded = ConfigManager.GetConfig("TokenStats_TrendChartExpanded", true);
+        _isDetailsExpanded = ConfigManager.GetConfig("TokenStats_DetailsExpanded", false);
+        _pageSize = ConfigManager.GetConfig("TokenStats_PageSize", 50);
+
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "调用次数", Value = "0" });
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "输入 Token", Value = "0" });
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "输出 Token", Value = "0" });
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "缓存 Token", Value = "0" });
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "总 Token", Value = "0" });
         SummaryCards.Add(new TokenUsageSummaryCard { Title = "缓存率", Value = "0.00%" });
+        SummaryCards.Add(new TokenUsageSummaryCard { Title = "总花费", Value = "¥0.0000" });
 
         TokenUsage.OnInserted += HandleUsageInserted;
         _ = LoadAsync(includeFilters: true);
     }
 
+    partial void OnPageSizeChanged(int value)
+    {
+        ConfigManager.SetConfig("TokenStats_PageSize", value);
+        PageIndex = 0;
+        _ = LoadAsync(includeFilters: false);
+    }
+
+    partial void OnIsFilterExpandedChanged(bool value)
+        => ConfigManager.SetConfig("TokenStats_FilterExpanded", value);
+
+    partial void OnIsSummaryExpandedChanged(bool value)
+        => ConfigManager.SetConfig("TokenStats_SummaryExpanded", value);
+
+    partial void OnIsPieChartExpandedChanged(bool value)
+        => ConfigManager.SetConfig("TokenStats_PieChartExpanded", value);
+
+    partial void OnIsTrendChartExpandedChanged(bool value)
+        => ConfigManager.SetConfig("TokenStats_TrendChartExpanded", value);
+
+    partial void OnIsDetailsExpandedChanged(bool value)
+        => ConfigManager.SetConfig("TokenStats_DetailsExpanded", value);
+
     [RelayCommand]
-    private Task RefreshAsync() => LoadAsync(includeFilters: false);
+    private async Task RefreshAsync()
+    {
+        PageIndex = 0;
+        await LoadAsync(includeFilters: false);
+    }
 
     [RelayCommand]
     private async Task ResetFiltersAsync()
@@ -173,6 +268,7 @@ public partial class TokenUsageViewModel : ViewModelBase
         SetAll(Purposes, true);
         SetAll(ApiKeys, true);
         UpdateCheckedCounts();
+        PageIndex = 0;
         await LoadAsync(includeFilters: false);
     }
 
@@ -181,6 +277,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         StartDate = DateTime.Today;
         EndDate = DateTime.Today;
+        PageIndex = 0;
         await LoadAsync(includeFilters: false);
     }
 
@@ -189,6 +286,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddDays(-1);
         EndDate = DateTime.Today.AddDays(-1);
+        PageIndex = 0;
         await LoadAsync(includeFilters: false);
     }
 
@@ -197,6 +295,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddDays(-6);
         EndDate = DateTime.Today;
+        PageIndex = 0;
         await LoadAsync(includeFilters: false);
     }
 
@@ -205,6 +304,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddDays(-29);
         EndDate = DateTime.Today;
+        PageIndex = 0;
         await LoadAsync(includeFilters: false);
     }
 
@@ -233,41 +333,78 @@ public partial class TokenUsageViewModel : ViewModelBase
     private void ClearApiKeys() => SetSelectionAndRefresh(ApiKeys, false);
 
     [RelayCommand]
-    private void Export()
+    private async Task ExportAsync()
     {
-        if (Records.Count == 0)
+        if (StartDate == null || EndDate == null)
         {
-            ErrorMessage = "当前没有可导出的数据";
+            Growl.Warning("请选择日期范围");
             return;
         }
 
-        var dialog = new SaveFileDialog
-        {
-            AddExtension = true,
-            Filter = "逗号分隔文件|*.csv|所有文件|*.*",
-            FileName = $"token-usage-{DateTime.Now:yyyyMMdd-HHmmss}.csv"
-        };
+        IsLoading = true;
 
-        if (dialog.ShowDialog() != true)
+        try
         {
-            return;
+            var result = await Task.Run(() =>
+            {
+                var filters = TokenUsage.GetFilterOptions();
+                var query = new TokenUsageQuery
+                {
+                    Start = StartDate.Value.Date,
+                    End = EndDate.Value.Date.AddDays(1).AddTicks(-1),
+                    EndPoints = GetSelectedValues(Services, filters.EndPoints),
+                    Models = GetSelectedValues(Models, filters.Models),
+                    Purposes = GetSelectedValues(Purposes, filters.Purposes),
+                    APIKeyHints = GetSelectedValues(ApiKeys, filters.ApiKeyHints),
+                    Skip = 0,
+                    Take = int.MaxValue
+                };
+                return TokenUsage.QueryReport(query);
+            });
+
+            var allRecords = result.Records;
+            if (allRecords.Count == 0)
+            {
+                Growl.Info("当前没有可导出的数据");
+                return;
+            }
+
+            var dialog = new SaveFileDialog
+            {
+                AddExtension = true,
+                Filter = "逗号分隔文件|*.csv|所有文件|*.*",
+                FileName = $"token-usage-{DateTime.Now:yyyyMMdd-HHmmss}.csv"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            using var writer = new StreamWriter(dialog.FileName, false, System.Text.Encoding.UTF8);
+            writer.WriteLine("时间,服务商,模型,用途,APIKey,输入Token,缓存Token,输出Token,总Token,估算成本");
+            foreach (var item in allRecords)
+            {
+                writer.WriteLine(string.Join(",",
+                    EscapeCsv(item.Time.ToString("yyyy-MM-dd HH:mm:ss")),
+                    EscapeCsv(item.EndPoint),
+                    EscapeCsv(item.Model),
+                    EscapeCsv(item.Purpose),
+                    EscapeCsv(item.APIKeyHint),
+                    item.PromptTokens.ToString(CultureInfo.InvariantCulture),
+                    item.CachedPromptTokens.ToString(CultureInfo.InvariantCulture),
+                    item.CompletionTokens.ToString(CultureInfo.InvariantCulture),
+                    item.TotalTokens.ToString(CultureInfo.InvariantCulture),
+                    item.EstimatedCost.ToString(CultureInfo.InvariantCulture)));
+            }
         }
-
-        using var writer = new StreamWriter(dialog.FileName, false, System.Text.Encoding.UTF8);
-        writer.WriteLine("时间,服务商,模型,用途,APIKey,输入Token,缓存Token,输出Token,总Token,估算成本");
-        foreach (var item in Records)
+        catch (Exception ex)
         {
-            writer.WriteLine(string.Join(",",
-                EscapeCsv(item.Time.ToString("yyyy-MM-dd HH:mm:ss")),
-                EscapeCsv(item.EndPoint),
-                EscapeCsv(item.Model),
-                EscapeCsv(item.Purpose),
-                EscapeCsv(item.APIKeyHint),
-                item.PromptTokens.ToString(CultureInfo.InvariantCulture),
-                item.CachedPromptTokens.ToString(CultureInfo.InvariantCulture),
-                item.CompletionTokens.ToString(CultureInfo.InvariantCulture),
-                item.TotalTokens.ToString(CultureInfo.InvariantCulture),
-                item.EstimatedCost.ToString(CultureInfo.InvariantCulture)));
+            Growl.Error($"导出失败: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -275,7 +412,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         if (StartDate == null || EndDate == null)
         {
-            ErrorMessage = "请选择开始和结束日期";
+            Growl.Warning("请选择开始和结束日期");
             return;
         }
 
@@ -283,14 +420,13 @@ public partial class TokenUsageViewModel : ViewModelBase
         var end = EndDate.Value.Date.AddDays(1).AddTicks(-1);
         if (end < start)
         {
-            ErrorMessage = "结束日期不能早于开始日期";
+            Growl.Warning("结束日期不能早于开始日期");
             return;
         }
 
         try
         {
             IsLoading = true;
-            ErrorMessage = null;
 
             var result = await Task.Run(() =>
             {
@@ -303,7 +439,8 @@ public partial class TokenUsageViewModel : ViewModelBase
                     Models = GetSelectedValues(Models, filters.Models),
                     Purposes = GetSelectedValues(Purposes, filters.Purposes),
                     APIKeyHints = GetSelectedValues(ApiKeys, filters.ApiKeyHints),
-                    DetailLimit = int.MaxValue
+                    Skip = PageIndex * PageSize,
+                    Take = PageSize
                 };
                 var report = TokenUsage.QueryReport(query);
                 return (report, filters);
@@ -330,7 +467,7 @@ public partial class TokenUsageViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"加载 Token 统计失败: {ex.Message}";
+            Growl.Error($"加载 Token 统计失败: {ex.Message}");
         }
         finally
         {
@@ -349,13 +486,14 @@ public partial class TokenUsageViewModel : ViewModelBase
     private void RefreshOptionsKeepingSelection(ObservableCollection<TokenUsageFilterItem> target, IEnumerable<string> values, string _)
     {
         var selected = target.Where(x => x.Checked).Select(x => x.Name).ToHashSet(StringComparer.Ordinal);
+        var hadItems = target.Count > 0;
         target.Clear();
         foreach (var value in values)
         {
             var item = new TokenUsageFilterItem
             {
                 Name = value,
-                Checked = selected.Count == 0 || selected.Contains(value)
+                Checked = hadItems ? selected.Contains(value) : true
             };
             item.PropertyChanged += FilterItem_PropertyChanged;
             target.Add(item);
@@ -385,6 +523,7 @@ public partial class TokenUsageViewModel : ViewModelBase
         SummaryCards[3].Value = report.Summary.CachedPromptTokens.ToString("N0");
         SummaryCards[4].Value = report.Summary.TotalTokens.ToString("N0");
         SummaryCards[5].Value = report.Summary.CacheRate.ToString("P2");
+        SummaryCards[6].Value = $"¥{report.Summary.EstimatedCost:F4}";
 
         TrendXAxes =
         [
@@ -469,6 +608,7 @@ public partial class TokenUsageViewModel : ViewModelBase
         }));
 
         HasData = report.Summary.RecordCount > 0;
+        TotalRecordCount = report.TotalDetailCount;
         OnPropertyChanged(nameof(HasTrendData));
         OnPropertyChanged(nameof(HasPurposePieData));
         OnPropertyChanged(nameof(HasModelPieData));
@@ -478,6 +618,7 @@ public partial class TokenUsageViewModel : ViewModelBase
     {
         SetAll(items, isChecked);
         UpdateCheckedCounts();
+        PageIndex = 0;
         _ = LoadAsync(includeFilters: false);
     }
 
@@ -497,15 +638,15 @@ public partial class TokenUsageViewModel : ViewModelBase
         CheckedApiKeyCount = ApiKeys.Count(x => x.Checked);
     }
 
-    private static List<string> GetSelectedValues(ObservableCollection<TokenUsageFilterItem> current, List<string> fallbackAll)
+    private static List<string>? GetSelectedValues(ObservableCollection<TokenUsageFilterItem> current, List<string> fallbackAll)
     {
         if (current.Count == 0)
         {
-            return fallbackAll;
+            return null;
         }
 
         var selected = current.Where(x => x.Checked).Select(x => x.Name).ToList();
-        return selected.Count == 0 || selected.Count == current.Count ? fallbackAll : selected;
+        return selected.Count == current.Count ? null : selected;
     }
 
     private static string GetSelectionText(int checkedCount, int totalCount)
@@ -547,12 +688,35 @@ public partial class TokenUsageViewModel : ViewModelBase
         UpdateCheckedCounts();
     }
 
+    private volatile bool _needsRefresh;
+    private volatile bool _isVisible;
+
+    public void NotifyVisibilityChanged(bool isVisible)
+    {
+        _isVisible = isVisible;
+        if (isVisible && _needsRefresh)
+        {
+            _needsRefresh = false;
+            PageIndex = 0;
+            _ = LoadAsync(includeFilters: false);
+        }
+    }
+
     private void HandleUsageInserted(TokenUsage usage)
     {
-        Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+        _needsRefresh = true;
+        if (_isVisible)
         {
-            _ = LoadAsync(includeFilters: false);
-        }));
+            Application.Current?.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (_needsRefresh)
+                {
+                    _needsRefresh = false;
+                    PageIndex = 0;
+                    _ = LoadAsync(includeFilters: false);
+                }
+            }));
+        }
     }
 
     private static string EscapeCsv(string value)

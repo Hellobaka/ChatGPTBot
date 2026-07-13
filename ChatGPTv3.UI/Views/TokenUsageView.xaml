@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
     xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
     xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
@@ -10,13 +11,7 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <conv:InvertBoolToVisibilityConverter x:Key="InvertBoolToVis" />
-        <Style x:Key="SectionCardStyle" TargetType="Border">
-            <Setter Property="Padding" Value="14,12" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Margin" Value="0,0,0,12" />
-        </Style>
+        <conv:PageIndexConverter x:Key="PageIndexConv" />
 
         <Style
             x:Key="PopupFilterButtonStyle"
@@ -42,7 +37,7 @@
                 Grid.Row="0"
                 Margin="0,0,0,12"
                 Header="筛选"
-                IsExpanded="True">
+                IsExpanded="{Binding IsFilterExpanded, Mode=TwoWay}">
                 <Border
                     Margin="0,10,0,0"
                     Padding="14"
@@ -278,7 +273,7 @@
                                 Content="重置筛选" />
                             <Button
                                 MinWidth="88"
-                                Command="{Binding ExportCommand}"
+                                Command="{Binding ExportAsyncCommand}"
                                 Content="导出" />
                         </WrapPanel>
                     </StackPanel>
@@ -289,17 +284,16 @@
                 Grid.Row="1"
                 Margin="0,0,0,12"
                 Header="数据总览"
-                IsExpanded="True">
+                IsExpanded="{Binding IsSummaryExpanded, Mode=TwoWay}">
                 <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding SummaryCards}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <WrapPanel />
+                            <UniformGrid Columns="{Binding SummaryCards.Count}" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:TokenUsageSummaryCard}">
                             <Border
-                                Width="176"
                                 Margin="0,0,12,12"
                                 Padding="12,14"
                                 Background="{DynamicResource RegionBrush}"
@@ -314,7 +308,7 @@
                                         TextAlignment="Center" />
                                     <TextBlock
                                         Margin="0,10,0,0"
-                                        FontSize="22"
+                                        FontSize="20"
                                         FontWeight="SemiBold"
                                         Text="{Binding Value}"
                                         TextAlignment="Center" />
@@ -325,170 +319,228 @@
                 </ItemsControl>
             </Expander>
 
-            <TextBlock
-                Grid.Row="2"
-                Margin="0,0,0,12"
-                Foreground="IndianRed"
-                Text="{Binding ErrorMessage}" />
-
             <Grid Grid.Row="3" Margin="0,0,0,12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Style="{StaticResource SectionCardStyle}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="16" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <TextBlock
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="模型占比" />
-                            <TextBlock
-                                Margin="0,4,0,10"
-                                Opacity="0.68"
-                                Text="按总 Token 展示模型使用分布" />
-                            <Grid>
-                                <lvc:PieChart
-                                    MinHeight="280"
-                                    LegendTextPaint="{Binding ChartTextPaint}"
-                                    Series="{Binding ModelPieSeries}"
-                                    TooltipTextPaint="{Binding ChartTextPaint}"
-                                    Visibility="{Binding HasModelPieData, Converter={StaticResource BoolToVis}}" />
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="16"
-                                    Opacity="0.72"
-                                    Text="暂无数据"
-                                    Visibility="{Binding HasModelPieData, Converter={StaticResource InvertBoolToVis}}" />
-                            </Grid>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
-                            <TextBlock
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="用途占比" />
-                            <TextBlock
-                                Margin="0,4,0,10"
-                                Opacity="0.68"
-                                Text="按总 Token 展示用途使用分布" />
-                            <Grid>
-                                <lvc:PieChart
-                                    MinHeight="280"
-                                    LegendTextPaint="{Binding ChartTextPaint}"
-                                    Series="{Binding PurposePieSeries}"
-                                    TooltipTextPaint="{Binding ChartTextPaint}"
-                                    Visibility="{Binding HasPurposePieData, Converter={StaticResource BoolToVis}}" />
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="16"
-                                    Opacity="0.72"
-                                    Text="暂无数据"
-                                    Visibility="{Binding HasPurposePieData, Converter={StaticResource InvertBoolToVis}}" />
-                            </Grid>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <Border Grid.Row="1" Style="{StaticResource SectionCardStyle}">
-                    <StackPanel>
-                        <TextBlock
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="Token 时段统计" />
-                        <TextBlock
-                            Margin="0,4,0,10"
-                            Opacity="0.68"
-                            Text="输入 / 缓存 / 输出 Token 的堆叠柱状图" />
+                <Expander
+                    Grid.Row="0"
+                    Margin="0,0,0,12"
+                    Header="图表 - 分布占比"
+                    IsExpanded="{Binding IsPieChartExpanded, Mode=TwoWay}">
+                    <Border
+                        Margin="0,10,0,0"
+                        Padding="14,12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
                         <Grid>
-                            <lvc:CartesianChart
-                                MinHeight="280"
-                                LegendTextPaint="{Binding ChartTextPaint}"
-                                Series="{Binding TrendSeries}"
-                                TooltipTextPaint="{Binding ChartTextPaint}"
-                                Visibility="{Binding HasTrendData, Converter={StaticResource BoolToVis}}"
-                                XAxes="{Binding TrendXAxes}"
-                                YAxes="{Binding TrendYAxes}" />
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="16"
-                                Opacity="0.72"
-                                Text="暂无数据"
-                                Visibility="{Binding HasTrendData, Converter={StaticResource InvertBoolToVis}}" />
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Text="模型占比" />
+                                <TextBlock
+                                    Margin="0,4,0,10"
+                                    Opacity="0.68"
+                                    Text="按总 Token 展示模型使用分布" />
+                                <Grid>
+                                    <lvc:PieChart
+                                        MinHeight="280"
+                                        LegendTextPaint="{Binding ChartTextPaint}"
+                                        Series="{Binding ModelPieSeries}"
+                                        TooltipTextPaint="{Binding ChartTextPaint}"
+                                        Visibility="{Binding HasModelPieData, Converter={StaticResource BoolToVis}}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        Opacity="0.72"
+                                        Text="暂无数据"
+                                        Visibility="{Binding HasModelPieData, Converter={StaticResource InvertBoolToVis}}" />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock
+                                    FontSize="14"
+                                    FontWeight="SemiBold"
+                                    Text="用途占比" />
+                                <TextBlock
+                                    Margin="0,4,0,10"
+                                    Opacity="0.68"
+                                    Text="按总 Token 展示用途使用分布" />
+                                <Grid>
+                                    <lvc:PieChart
+                                        MinHeight="280"
+                                        LegendTextPaint="{Binding ChartTextPaint}"
+                                        Series="{Binding PurposePieSeries}"
+                                        TooltipTextPaint="{Binding ChartTextPaint}"
+                                        Visibility="{Binding HasPurposePieData, Converter={StaticResource BoolToVis}}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        Opacity="0.72"
+                                        Text="暂无数据"
+                                        Visibility="{Binding HasPurposePieData, Converter={StaticResource InvertBoolToVis}}" />
+                                </Grid>
+                            </StackPanel>
                         </Grid>
-                    </StackPanel>
-                </Border>
+                    </Border>
+                </Expander>
+
+                <Expander
+                    Grid.Row="1"
+                    Header="图表 - 时段统计"
+                    IsExpanded="{Binding IsTrendChartExpanded, Mode=TwoWay}">
+                    <Border
+                        Margin="0,10,0,0"
+                        Padding="14,12"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel>
+                            <TextBlock
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="Token 时段统计" />
+                            <TextBlock
+                                Margin="0,4,0,10"
+                                Opacity="0.68"
+                                Text="输入 / 缓存 / 输出 Token 的堆叠柱状图" />
+                            <Grid>
+                                <lvc:CartesianChart
+                                    MinHeight="280"
+                                    LegendTextPaint="{Binding ChartTextPaint}"
+                                    Series="{Binding TrendSeries}"
+                                    TooltipTextPaint="{Binding ChartTextPaint}"
+                                    Visibility="{Binding HasTrendData, Converter={StaticResource BoolToVis}}"
+                                    XAxes="{Binding TrendXAxes}"
+                                    YAxes="{Binding TrendYAxes}" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    Opacity="0.72"
+                                    Text="暂无数据"
+                                    Visibility="{Binding HasTrendData, Converter={StaticResource InvertBoolToVis}}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Expander>
             </Grid>
 
             <Expander
                 Grid.Row="4"
                 Header="调用明细"
-                IsExpanded="False">
+                IsExpanded="{Binding IsDetailsExpanded, Mode=TwoWay}">
                 <Border
                     Margin="0,10,0,0"
                     Padding="12"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="8">
-                    <DataGrid
-                        AutoGenerateColumns="False"
-                        CanUserAddRows="False"
-                        HeadersVisibility="Column"
-                        IsReadOnly="True"
-                        ItemsSource="{Binding Records}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn
-                                Width="150"
-                                Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}"
-                                Header="时间" />
-                            <DataGridTextColumn
-                                Width="180"
-                                Binding="{Binding EndPoint}"
-                                Header="服务商" />
-                            <DataGridTextColumn
-                                Width="140"
-                                Binding="{Binding Model}"
-                                Header="模型" />
-                            <DataGridTextColumn
-                                Width="110"
-                                Binding="{Binding Purpose}"
-                                Header="用途" />
-                            <DataGridTextColumn
-                                Width="90"
-                                Binding="{Binding APIKeyHint}"
-                                Header="Key" />
-                            <DataGridTextColumn
-                                Width="80"
-                                Binding="{Binding PromptTokens}"
-                                Header="输入" />
-                            <DataGridTextColumn
-                                Width="80"
-                                Binding="{Binding CachedPromptTokens}"
-                                Header="缓存" />
-                            <DataGridTextColumn
-                                Width="80"
-                                Binding="{Binding CompletionTokens}"
-                                Header="输出" />
-                            <DataGridTextColumn
-                                Width="90"
-                                Binding="{Binding TotalTokens}"
-                                Header="总 Token" />
-                            <DataGridTextColumn
-                                Width="90"
-                                Binding="{Binding CostText}"
-                                Header="估算成本" />
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <StackPanel>
+                        <DataGrid
+                            AutoGenerateColumns="False"
+                            CanUserAddRows="False"
+                            HeadersVisibility="Column"
+                            IsReadOnly="True"
+                            ItemsSource="{Binding Records}"
+                            PreviewMouseWheel="DataGrid_PreviewMouseWheel">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn
+                                    Width="150"
+                                    Binding="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}"
+                                    Header="时间" />
+                                <DataGridTextColumn
+                                    Width="180"
+                                    Binding="{Binding EndPoint}"
+                                    Header="服务商" />
+                                <DataGridTextColumn
+                                    Width="140"
+                                    Binding="{Binding Model}"
+                                    Header="模型" />
+                                <DataGridTextColumn
+                                    Width="110"
+                                    Binding="{Binding Purpose}"
+                                    Header="用途" />
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding APIKeyHint}"
+                                    Header="Key" />
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding PromptTokens}"
+                                    Header="输入" />
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding CachedPromptTokens}"
+                                    Header="缓存" />
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding CompletionTokens}"
+                                    Header="输出" />
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding TotalTokens}"
+                                    Header="总 Token" />
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding CostText}"
+                                    Header="估算成本" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border
+                            Margin="0,10,0,0"
+                            Padding="10,8"
+                            Background="{DynamicResource RegionBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Orientation="Horizontal">
+                                        <hc:Pagination
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            MaxPageCount="{Binding TotalPages}"
+                                            MaxPageInterval="5"
+                                            PageIndex="{Binding DisplayPageIndex, Mode=TwoWay}" />
+                                        <TextBlock
+                                            Margin="10,0"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding PageInfoText}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <TextBlock VerticalAlignment="Center" Text="每页" />
+                                        <ComboBox
+                                            Width="70"
+                                            Margin="6,0"
+                                            ItemsSource="{Binding PageSizeOptions}"
+                                            SelectedItem="{Binding PageSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBlock VerticalAlignment="Center" Text="条" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Border>
             </Expander>
         </Grid>

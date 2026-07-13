@@ -127,22 +127,22 @@ public class TokenUsage
         var usageQuery = db.Queryable<TokenUsage>()
             .Where(u => u.Time >= start && u.Time <= end);
 
-        if (query.EndPoints is { Count: > 0 })
+        if (query.EndPoints != null)
         {
             usageQuery = usageQuery.Where(u => query.EndPoints.Contains(u.EndPoint));
         }
 
-        if (query.Purposes is { Count: > 0 })
+        if (query.Purposes != null)
         {
             usageQuery = usageQuery.Where(u => query.Purposes.Contains(u.Purpose));
         }
 
-        if (query.Models is { Count: > 0 })
+        if (query.Models != null)
         {
             usageQuery = usageQuery.Where(u => query.Models.Contains(u.Model));
         }
 
-        if (query.APIKeyHints is { Count: > 0 })
+        if (query.APIKeyHints != null)
         {
             usageQuery = usageQuery.Where(u => query.APIKeyHints.Contains(u.APIKeyHint));
         }
@@ -248,7 +248,8 @@ public class TokenUsage
             ModelBreakdown = modelBreakdown,
             ServiceBreakdown = serviceBreakdown,
             Trend = trend,
-            Records = detailedRecords.Take(Math.Max(1, query.DetailLimit)).ToList()
+            Records = detailedRecords.Skip(query.Skip).Take(query.Take).ToList(),
+            TotalDetailCount = detailedRecords.Count
         };
     }
 
@@ -303,15 +304,19 @@ public class TokenUsageQuery
 
     public DateTime End { get; set; }
 
-    public List<string> EndPoints { get; set; } = [];
+    public List<string>? EndPoints { get; set; }
 
-    public List<string> Purposes { get; set; } = [];
+    public List<string>? Purposes { get; set; }
 
-    public List<string> Models { get; set; } = [];
+    public List<string>? Models { get; set; }
 
-    public List<string> APIKeyHints { get; set; } = [];
+    public List<string>? APIKeyHints { get; set; }
 
     public int DetailLimit { get; set; } = 200;
+
+    public int Skip { get; set; }
+
+    public int Take { get; set; } = 50;
 }
 
 public class TokenUsageSummary
@@ -418,4 +423,6 @@ public class TokenUsageReport
     public List<TokenUsageTrendPoint> Trend { get; set; } = [];
 
     public List<TokenUsageDetail> Records { get; set; } = [];
+
+    public int TotalDetailCount { get; set; }
 }
