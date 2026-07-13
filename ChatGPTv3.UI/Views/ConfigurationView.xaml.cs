@@ -60,6 +60,7 @@ public partial class ConfigurationView : UserControl
 
         FrameworkElement editor = entry switch
         {
+            { IsPresetSelector: true } => BuildPresetSelector(entry),
             { IsList: true } => BuildListEditor(entry),
             { IsMultiline: true } => BuildMultilineBox(entry),
             { IsSwitch: true } => BuildToggleSwitch(entry),
@@ -73,6 +74,36 @@ public partial class ConfigurationView : UserControl
     }
 
     // ── Basic editors ──
+
+    private static FrameworkElement BuildPresetSelector(ConfigEntry entry)
+    {
+        var cb = new ComboBox
+        {
+            DataContext = entry,
+            Width = 180,
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 13,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            DisplayMemberPath = "Key",
+            SelectedValuePath = "Key",
+        };
+
+        cb.SetBinding(Selector.SelectedValueProperty, new Binding("PresetValue")
+        {
+            Mode = BindingMode.TwoWay,
+            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+        });
+
+        cb.ItemsSource = new Dictionary<string, string>
+        {
+            ["默认"] = "默认",
+            ["积极回复"] = "积极回复",
+            ["仅@时回复"] = "仅@时回复",
+            ["不积极回复"] = "不积极回复",
+        };
+
+        return cb;
+    }
 
     private static TextBox BuildTextBox(ConfigEntry entry)
     {

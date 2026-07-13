@@ -20,6 +20,21 @@ public partial class ConfigEntry : ObservableObject
 
     public bool IsList { get; init; }
 
+    public bool IsPresetSelector { get; init; }
+
+    [ObservableProperty]
+    private string? _presetValue = null;
+
+    public Action<string>? OnPresetApplied { get; set; }
+
+    partial void OnPresetValueChanged(string? value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            OnPresetApplied?.Invoke(value);
+        }
+    }
+
     [ObservableProperty]
     private object? _value;
 
@@ -254,6 +269,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var reply = new ObservableCollection<ConfigEntry>
         {
+            new() { Key = "__ReplyPreset", Label = "回复意愿预设", DefaultValue = "默认", IsPresetSelector = true, OnPresetApplied = ApplyPreset },
             new() { Key = "BaseAttention", Label = "基础关注度", DefaultValue = 0.1 },
             new() { Key = "AttnMention", Label = "@提及权重", DefaultValue = 1.0 },
             new() { Key = "AttnReplyToBot", Label = "回复机器人权重", DefaultValue = 0.9 },
@@ -418,6 +434,123 @@ public partial class ConfigurationViewModel : ViewModelBase
 
         HandyControl.Controls.Growl.Success("配置已保存");
     }
+
+    private void ApplyPreset(string key)
+    {
+        var replySection = Tabs
+            .First(t => t.Name == "对话行为")
+            .Sections
+            .First(s => s.Title == "回复意愿");
+
+        var values = Presets.GetValueOrDefault(key);
+        if (values == null)
+        {
+            return;
+        }
+
+        foreach (var entry in replySection.Items)
+        {
+            if (entry.Key == "__ReplyPreset")
+            {
+                continue;
+            }
+
+            if (!values.TryGetValue(entry.Key, out var val))
+            {
+                continue;
+            }
+
+            entry.Value = val;
+        }
+    }
+
+    private static readonly Dictionary<string, Dictionary<string, object>> Presets = new()
+    {
+        ["默认"] = new()
+        {
+            ["BaseAttention"] = 0.1,
+            ["AttnMention"] = 1.0,
+            ["AttnReplyToBot"] = 0.9,
+            ["AttnNickname"] = 0.8,
+            ["AttnQuestion"] = 0.5,
+            ["AttnContinuity"] = 0.4,
+            ["AttnImageFactor"] = 0.1,
+            ["TimingJustSent"] = 0.1,
+            ["TimingBriefPause"] = 0.3,
+            ["TimingOptimal"] = 1.0,
+            ["TimingStale"] = 0.6,
+            ["TimingVeryStale"] = 0.3,
+            ["ActivityFirst"] = 1.0,
+            ["ActivitySecond"] = 0.5,
+            ["ActivityThird"] = 0.2,
+            ["ActivityThrottleSeconds"] = 60,
+            ["ReplyWillingAmplifier"] = 1.0,
+            ["EnableLLMCheckShouldResponse"] = false,
+        },
+        ["积极回复"] = new()
+        {
+            ["BaseAttention"] = 0.2,
+            ["AttnMention"] = 1.0,
+            ["AttnReplyToBot"] = 0.95,
+            ["AttnNickname"] = 0.85,
+            ["AttnQuestion"] = 0.6,
+            ["AttnContinuity"] = 0.5,
+            ["AttnImageFactor"] = 0.15,
+            ["TimingJustSent"] = 0.2,
+            ["TimingBriefPause"] = 0.5,
+            ["TimingOptimal"] = 1.0,
+            ["TimingStale"] = 0.7,
+            ["TimingVeryStale"] = 0.4,
+            ["ActivityFirst"] = 1.0,
+            ["ActivitySecond"] = 0.6,
+            ["ActivityThird"] = 0.3,
+            ["ActivityThrottleSeconds"] = 30,
+            ["ReplyWillingAmplifier"] = 1.5,
+            ["EnableLLMCheckShouldResponse"] = false,
+        },
+        ["仅@时回复"] = new()
+        {
+            ["BaseAttention"] = 0.0,
+            ["AttnMention"] = 1.0,
+            ["AttnReplyToBot"] = 0.0,
+            ["AttnNickname"] = 0.0,
+            ["AttnQuestion"] = 0.0,
+            ["AttnContinuity"] = 0.0,
+            ["AttnImageFactor"] = 0.0,
+            ["TimingJustSent"] = 1.0,
+            ["TimingBriefPause"] = 1.0,
+            ["TimingOptimal"] = 1.0,
+            ["TimingStale"] = 1.0,
+            ["TimingVeryStale"] = 1.0,
+            ["ActivityFirst"] = 1.0,
+            ["ActivitySecond"] = 1.0,
+            ["ActivityThird"] = 1.0,
+            ["ActivityThrottleSeconds"] = 0,
+            ["ReplyWillingAmplifier"] = 0.0,
+            ["EnableLLMCheckShouldResponse"] = false,
+        },
+        ["不积极回复"] = new()
+        {
+            ["BaseAttention"] = 0.03,
+            ["AttnMention"] = 1.0,
+            ["AttnReplyToBot"] = 0.5,
+            ["AttnNickname"] = 0.4,
+            ["AttnQuestion"] = 0.2,
+            ["AttnContinuity"] = 0.15,
+            ["AttnImageFactor"] = 0.02,
+            ["TimingJustSent"] = 0.05,
+            ["TimingBriefPause"] = 0.1,
+            ["TimingOptimal"] = 0.5,
+            ["TimingStale"] = 0.3,
+            ["TimingVeryStale"] = 0.1,
+            ["ActivityFirst"] = 1.0,
+            ["ActivitySecond"] = 0.3,
+            ["ActivityThird"] = 0.1,
+            ["ActivityThrottleSeconds"] = 120,
+            ["ReplyWillingAmplifier"] = 0.5,
+            ["EnableLLMCheckShouldResponse"] = false,
+        },
+    };
 
     [RelayCommand]
     private void ResetAll()
