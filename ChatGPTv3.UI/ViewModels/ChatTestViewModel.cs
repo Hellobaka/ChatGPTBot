@@ -80,8 +80,11 @@ public partial class ChatTestViewModel : ViewModelBase
         .UseMessageImageResolver()
         .UseMessageAtResolver()
         .UseMessageReferenceResolver()
+        .UseMessageRecorder()
         .UseReplyDecision()
         .UseChatHandler()
+        .UseBotMessageRecorder()
+        .UseToolCallRecorder()
         .Build();
 
     private static readonly Func<ChatContext, Task> TestPrivatePipeline = new ChatPipelineBuilder()
@@ -90,8 +93,11 @@ public partial class ChatTestViewModel : ViewModelBase
         .UseMessageImageResolver()
         .UseMessageAtResolver()
         .UseMessageReferenceResolver()
+        .UseMessageRecorder()
         .UsePrivateReplyDecision()
         .UseChatHandler()
+        .UseBotMessageRecorder()
+        .UseToolCallRecorder()
         .Build();
 
     private readonly List<GroupItem> _allGroupCandidates = [];
