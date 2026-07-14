@@ -216,6 +216,12 @@ public class MCPClientManager
                 var tools = await client.GetToolsAsync();
                 if (tools.Any(t => t.Function.Name == toolCall.Function.Name))
                 {
+                    // Re-apply permission check for execution
+                    if (context != null && context.ChatIdentity != "管理面板工具测试" && !CanUseClient(client, context, toolCall.Function.Name))
+                    {
+                        return $"[{client.Name}] 工具 '{toolCall.Function.Name}' 无权限";
+                    }
+
                     return await ExecuteOnClientAsync(client, toolCall, ct, context);
                 }
             }

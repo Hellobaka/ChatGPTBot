@@ -6,7 +6,7 @@
     Title="添加 MCP 客户端"
     Width="420"
     ResizeMode="NoResize"
-    SizeToContent="WidthAndHeight"
+    SizeToContent="Height"
     WindowStartupLocation="CenterOwner">
 
     <StackPanel Margin="20">
@@ -55,6 +55,48 @@
             Text="Arguments:"
             Visibility="{Binding IsStdio, Converter={StaticResource Boolean2VisibilityConverter}}" />
         <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsStdio, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+        <TextBlock
+            Margin="0,12,0,4"
+            Text="环境变量:"
+            Visibility="{Binding IsStdio, Converter={StaticResource Boolean2VisibilityConverter}}" />
+        <DataGrid
+            Height="140"
+            Margin="0,0,0,4"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            HeadersVisibility="Column"
+            ItemsSource="{Binding EnvironmentVariables}"
+            Visibility="{Binding IsStdio, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <DataGrid.Columns>
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding Key, UpdateSourceTrigger=PropertyChanged}"
+                    Header="变量名" />
+                <DataGridTextColumn
+                    Width="*"
+                    Binding="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                    Header="值" />
+                <DataGridTemplateColumn Width="36">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button
+                                Width="28"
+                                Height="22"
+                                Padding="0"
+                                Command="{Binding DataContext.RemoveEnvVarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                CommandParameter="{Binding .}"
+                                Content="✕"
+                                Style="{StaticResource ButtonDefault}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+        <Button
+            Command="{Binding AddEnvVarCommand}"
+            Content="添加变量"
+            Visibility="{Binding IsStdio, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
         <StackPanel
             Margin="0,20,0,0"

@@ -16,13 +16,17 @@ public class MCPStdioClient : MCPExternalClient
     [JsonPropertyName("Arguments")]
     public string[] Arguments { get; set; } = [];
 
+    [JsonPropertyName("EnvironmentVariables")]
+    public Dictionary<string, string> EnvironmentVariables { get; set; } = [];
+
     protected override Task<McpClient> CreateClientAsync()
     {
         var transport = new StdioClientTransport(new StdioClientTransportOptions
         {
             Name = Name,
             Command = Command,
-            Arguments = Arguments
+            Arguments = Arguments,
+            EnvironmentVariables = EnvironmentVariables
         });
 
         return McpClient.CreateAsync(transport, new McpClientOptions

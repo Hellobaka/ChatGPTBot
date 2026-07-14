@@ -277,7 +277,7 @@ public partial class MCPManagementViewModel : ViewModelBase
                 var serverNode = ServerNodes.FirstOrDefault(n => n.Client == client);
                 if (serverNode != null)
                 {
-                    await LoadExternalToolsAsync(serverNode);
+                    await LoadExternalToolsAsync(serverNode, silent: true);
                 }
             }
         }
@@ -290,7 +290,7 @@ public partial class MCPManagementViewModel : ViewModelBase
         builtIn.Status = $"{builtIn.Tools.Count} 个工具";
     }
 
-    private async Task LoadExternalToolsAsync(MCPServerNode node)
+    private async Task LoadExternalToolsAsync(MCPServerNode node, bool silent = false)
     {
         if (node.Client == null)
         {
@@ -318,10 +318,20 @@ public partial class MCPManagementViewModel : ViewModelBase
                     });
                 }
             });
+
+            if (!silent)
+            {
+                var conn = node.Client is MCPExternalClient ext && ext.IsConnected ? "已连接" : "未连接";
+                Growl.Success($"[{node.Name}] {conn} · 获取到 {tools.Length} 个工具");
+            }
         }
-        catch
+        catch (Exception ex)
         {
             node.Status = "加载失败";
+            if (!silent)
+            {
+                Growl.Error($"[{node.Name}] 加载失败: {ex.Message}");
+            }
         }
     }
 

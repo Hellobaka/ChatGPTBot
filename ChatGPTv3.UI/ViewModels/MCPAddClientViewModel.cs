@@ -2,8 +2,18 @@ using ChatGPTv3.Core.Model.MCP;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
+using System.Collections.ObjectModel;
 
 namespace ChatGPTv3.UI.ViewModels;
+
+public partial class EnvVarItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _key = string.Empty;
+
+    [ObservableProperty]
+    private string _value = string.Empty;
+}
 
 public partial class MCPAddClientViewModel : ObservableObject
 {
@@ -41,6 +51,23 @@ public partial class MCPAddClientViewModel : ObservableObject
 
     [ObservableProperty]
     private string _sseEndpoint = string.Empty;
+
+    public ObservableCollection<EnvVarItem> EnvironmentVariables { get; } = [];
+
+    [RelayCommand]
+    private void AddEnvVar()
+    {
+        EnvironmentVariables.Add(new EnvVarItem());
+    }
+
+    [RelayCommand]
+    private void RemoveEnvVar(EnvVarItem? item)
+    {
+        if (item != null)
+        {
+            EnvironmentVariables.Remove(item);
+        }
+    }
 
     partial void OnIsHttpChanged(bool value)
     {
@@ -137,7 +164,17 @@ public partial class MCPAddClientViewModel : ObservableObject
                 ? []
                 : Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            var client = new MCPStdioClient { Name = ClientName.Trim(), Command = Command.Trim(), Arguments = args };
+            var envVars = EnvironmentVariables
+                .Where(e => !string.IsNullOrWhiteSpace(e.Key))
+                .ToDictionary(e => e.Key.Trim(), e => e.Value?.Trim() ?? string.Empty);
+
+            var client = new MCPStdioClient
+            {
+                Name = ClientName.Trim(),
+                Command = Command.Trim(),
+                Arguments = args,
+                EnvironmentVariables = envVars
+            };
             MCPClientManager.AddClient(client);
         }
 
