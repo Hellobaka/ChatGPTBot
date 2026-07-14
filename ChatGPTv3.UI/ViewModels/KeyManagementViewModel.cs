@@ -387,11 +387,6 @@ public partial class KeyManagementViewModel : ViewModelBase
             Providers.Add(item);
         }
 
-        if (Providers.Count == 0)
-        {
-            AddProvider();
-        }
-
         LoadPurposeBindings();
         SelectedProvider ??= Providers.FirstOrDefault();
     }
