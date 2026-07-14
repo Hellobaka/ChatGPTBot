@@ -28,11 +28,6 @@ public partial class ConfigurationView : UserControl
             return;
         }
 
-        if (host.Content != null)
-        {
-            return;
-        }
-
         host.Content = BuildEditor(entry);
     }
 
@@ -185,12 +180,16 @@ public partial class ConfigurationView : UserControl
     {
         var btn = new Button
         {
-            Content = $"编辑列表 ({entry.GetListItems().Count}个)",
+            DataContext = entry,
             FontSize = 12,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
             Cursor = Cursors.Hand,
         };
+        btn.SetBinding(ContentControl.ContentProperty, new Binding("ListCountText")
+        {
+            Mode = BindingMode.OneWay
+        });
 
         Popup? popup = null;
 

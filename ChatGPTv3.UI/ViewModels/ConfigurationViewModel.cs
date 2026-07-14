@@ -1,7 +1,12 @@
 using ChatGPTv3.Core.Config;
+using ChatGPTv3.Core.DB;
+using ChatGPTv3.UI.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using System.Collections.ObjectModel;
+using System.Text.Json;
+using System.Windows;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -75,7 +80,13 @@ public partial class ConfigEntry : ObservableObject
     }
 
     // Keep ListText binding current when Value changes
-    partial void OnValueChanged(object? value) => OnPropertyChanged(nameof(ListText));
+    partial void OnValueChanged(object? value)
+    {
+        OnPropertyChanged(nameof(ListText));
+        OnPropertyChanged(nameof(ListCountText));
+    }
+
+    public string ListCountText => $"编辑列表 ({GetListItems().Count}个)";
 
     /// <summary>Whether list items are long integers (QQ numbers, group IDs).</summary>
     public bool IsLongList => DefaultValue is List<long>;
@@ -173,9 +184,35 @@ public class ConfigTab(string name, string icon, List<ConfigSection> sections)
     public List<ConfigSection> Sections { get; } = sections;
 }
 
+public partial class ConfigGroupItem : ObservableObject
+{
+    public long GroupId { get; init; }
+    public string DisplayText { get; init; } = string.Empty;
+    public GroupConfig? Config { get; set; }
+}
+
 public partial class ConfigurationViewModel : ViewModelBase
 {
     public ObservableCollection<ConfigTab> Tabs { get; } = [];
+
+    public ObservableCollection<ConfigGroupItem> Groups { get; } = [];
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsGroupSelected))]
+    [NotifyPropertyChangedFor(nameof(GroupSelectorText))]
+    private ConfigGroupItem? _selectedGroup;
+
+    public bool IsGroupSelected => SelectedGroup is { GroupId: > 0 };
+
+    [ObservableProperty]
+    private int _configVersion;
+
+    partial void OnSelectedGroupChanged(ConfigGroupItem? value)
+    {
+        LoadAll();
+    }
+
+    public string GroupSelectorText => SelectedGroup?.DisplayText ?? "全局默认配置";
 
     public ConfigurationViewModel()
     {
@@ -388,27 +425,65 @@ public partial class ConfigurationViewModel : ViewModelBase
             new ConfigSection("内容过滤", filter),
         ]));
 
-        LoadAll();
+        // Initialize per-group configurations
+        // Global sentinel
+        Groups.Add(new ConfigGroupItem { GroupId = 0, DisplayText = "全局默认配置" });
+
+        var configured = GroupConfig.GetAllConfigured();
+        foreach (var gc in configured)
+        {
+            Groups.Add(new ConfigGroupItem { GroupId = gc.GroupID, DisplayText = $"群 {gc.GroupID}", Config = gc });
+        }
+
+        SelectedGroup = Groups[0];
     }
 
     private void LoadAll()
     {
+        Dictionary<string, object>? overrides = null;
+        if (SelectedGroup?.Config?.ConfigJson != null)
+        {
+            try
+            {
+                overrides = JsonSerializer.Deserialize<Dictionary<string, object>>(SelectedGroup.Config.ConfigJson);
+            }
+            catch { }
+        }
+
         foreach (var tab in Tabs)
         {
             foreach (var section in tab.Sections)
             {
                 foreach (var entry in section.Items)
                 {
-                    switch (entry.DefaultValue)
+                    if (overrides != null && overrides.TryGetValue(entry.Key, out var v) && v is JsonElement je)
                     {
-                        case bool b: entry.Load(b); break;
-                        case int i: entry.Load(i); break;
-                        case double d: entry.Load(d); break;
-                        case float f: entry.Load(f); break;
-                        case ushort u: entry.Load(u); break;
-                        case List<string> sl: entry.Load(sl); break;
-                        case List<long> ll: entry.Load(ll); break;
-                        default: entry.Load(entry.DefaultValue as string ?? ""); break;
+                        entry.Value = entry.DefaultValue switch
+                        {
+                            bool => je.GetBoolean(),
+                            int => je.GetInt32(),
+                            double => je.GetDouble(),
+                            float => (float)je.GetDouble(),
+                            ushort => (ushort)je.GetInt32(),
+                            List<string> => je.Deserialize<List<string>>(),
+                            List<long> => je.Deserialize<List<long>>(),
+                            string => je.GetString(),
+                            _ => je.GetRawText()
+                        };
+                    }
+                    else
+                    {
+                        switch (entry.DefaultValue)
+                        {
+                            case bool b: entry.Load(b); break;
+                            case int i: entry.Load(i); break;
+                            case double d: entry.Load(d); break;
+                            case float f: entry.Load(f); break;
+                            case ushort u: entry.Load(u); break;
+                            case List<string> sl: entry.Load(sl); break;
+                            case List<long> ll: entry.Load(ll); break;
+                            default: entry.Load(entry.DefaultValue as string ?? ""); break;
+                        }
                     }
                 }
             }
@@ -418,6 +493,12 @@ public partial class ConfigurationViewModel : ViewModelBase
     [RelayCommand]
     private void SaveAll()
     {
+        if (SelectedGroup is { GroupId: > 0 })
+        {
+            SaveGroupConfig();
+            return;
+        }
+
         foreach (var tab in Tabs)
         {
             foreach (var section in tab.Sections)
@@ -433,6 +514,78 @@ public partial class ConfigurationViewModel : ViewModelBase
         ErrorMessage = null;
 
         HandyControl.Controls.Growl.Success("配置已保存");
+    }
+
+    private void SaveGroupConfig()
+    {
+        if (SelectedGroup is not { GroupId: > 0 })
+        {
+            return;
+        }
+
+        var snapshot = new Dictionary<string, object>();
+        foreach (var tab in Tabs)
+        {
+            foreach (var section in tab.Sections)
+            {
+                foreach (var entry in section.Items)
+                {
+                    if (entry.Value != null)
+                    {
+                        // Convert back to the original type so JSON values are numbers/booleans, not strings
+                        var v = CoerceToDefaultType(entry.Value, entry.DefaultValue);
+                        if (v != null)
+                        {
+                            snapshot[entry.Key] = v;
+                        }
+                    }
+                }
+            }
+        }
+
+        var config = SelectedGroup.Config ?? new GroupConfig { GroupID = SelectedGroup.GroupId };
+        config.ConfigJson = JsonSerializer.Serialize(snapshot);
+        GroupConfig.Save(config);
+
+        // Re-read fresh from DB to ensure Cache is current
+        GroupConfig.ClearCache(SelectedGroup.GroupId);
+        SelectedGroup.Config = GroupConfig.Get(SelectedGroup.GroupId) ?? config;
+        LoadAll();
+
+        HandyControl.Controls.Growl.Success($"已保存群 {SelectedGroup.GroupId} 的配置");
+    }
+
+    private static object? CoerceToDefaultType(object? value, object? defaultValue)
+    {
+        if (value == null || defaultValue == null)
+        {
+            return value;
+        }
+
+        if (value is string s)
+        {
+            if (defaultValue is bool)
+            {
+                return bool.TryParse(s, out var b) ? b : null;
+            }
+
+            if (defaultValue is int && int.TryParse(s, out var iv))
+            {
+                return iv;
+            }
+
+            if ((defaultValue is double || defaultValue is float) && double.TryParse(s, out var dv))
+            {
+                return dv;
+            }
+
+            if (defaultValue is ushort && ushort.TryParse(s, out var uv))
+            {
+                return uv;
+            }
+        }
+
+        return value;
     }
 
     private void ApplyPreset(string key)
@@ -462,6 +615,71 @@ public partial class ConfigurationViewModel : ViewModelBase
 
             entry.Value = val;
         }
+    }
+
+    [RelayCommand]
+    private void AddGroupConfig()
+    {
+        var dialog = new GroupConfigInputDialog { Owner = GetActiveWindow() };
+        dialog.ShowDialog();
+        if (dialog.GroupId == null)
+        {
+            return;
+        }
+
+        var groupId = dialog.GroupId.Value;
+        if (Groups.Any(g => g.GroupId == groupId)) { Growl.Warning("该群已有配置"); return; }
+
+        // Clone current global config as starting point
+        var snapshot = new Dictionary<string, object>();
+        foreach (var tab in Tabs)
+        {
+            foreach (var section in tab.Sections)
+            {
+                foreach (var entry in section.Items)
+                {
+                    if (entry.Value != null)
+                    {
+                        snapshot[entry.Key] = entry.Value;
+                    }
+                }
+            }
+        }
+
+        var config = new GroupConfig
+        {
+            GroupID = groupId,
+            ConfigJson = JsonSerializer.Serialize(snapshot)
+        };
+        GroupConfig.Save(config);
+        var item = new ConfigGroupItem { GroupId = groupId, DisplayText = $"群 {groupId}", Config = config };
+        Groups.Add(item);
+        SelectedGroup = item;
+        LoadAll();
+        Growl.Success($"已为群 {groupId} 创建配置");
+    }
+
+    [RelayCommand]
+    private void DeleteGroupConfig()
+    {
+        if (SelectedGroup == null)
+        {
+            return;
+        }
+        var result = HandyControl.Controls.MessageBox.Show(
+            $"确定要删除群 {SelectedGroup.GroupId} 的配置吗？该群将恢复使用全局默认配置。",
+            "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var groupId = SelectedGroup.GroupId;
+        GroupConfig.Delete(groupId);
+        Groups.Remove(SelectedGroup);
+        SelectedGroup = null;
+        LoadAll();
+        Growl.Success($"已删除群 {groupId} 的配置");
     }
 
     private static readonly Dictionary<string, Dictionary<string, object>> Presets = new()
@@ -567,5 +785,10 @@ public partial class ConfigurationViewModel : ViewModelBase
         }
 
         AppConfig.Init();
+    }
+
+    private static System.Windows.Window? GetActiveWindow()
+    {
+        return System.Windows.Application.Current.Windows.OfType<System.Windows.Window>().FirstOrDefault(w => w.IsActive);
     }
 }

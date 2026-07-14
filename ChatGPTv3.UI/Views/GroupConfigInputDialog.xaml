@@ -1,0 +1,36 @@
+<hc:Window
+    x:Class="ChatGPTv3.UI.Views.GroupConfigInputDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    Title="添加群配置"
+    Width="320"
+    ResizeMode="NoResize"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="20">
+        <TextBlock Margin="0,0,0,8" Text="输入要添加配置的群号:" />
+        <hc:TextBox
+            x:Name="GroupIdBox"
+            hc:InfoElement.Placeholder="例如: 123456789"
+            Style="{StaticResource TextBoxExtend}"
+            TextAlignment="Left" />
+
+        <StackPanel
+            Margin="0,20,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                Width="80"
+                Margin="0,0,12,0"
+                Click="Cancel_Click"
+                Content="取消" />
+            <Button
+                Width="80"
+                Click="Confirm_Click"
+                Content="确定"
+                Style="{StaticResource ButtonPrimary}" />
+        </StackPanel>
+    </StackPanel>
+</hc:Window>

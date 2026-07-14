@@ -4,7 +4,8 @@ namespace ChatGPTv3.Core.DB;
 
 /// <summary>
 /// Per-group configuration that overrides global AppConfig settings.
-/// Priority: GroupConfig > AppConfig. Cached on first lookup.
+/// ConfigJson stores a full JSON snapshot of all AppConfig entries for this group.
+/// Null = follow global configuration.
 /// </summary>
 [SugarTable("GroupConfig")]
 public class GroupConfig
@@ -15,25 +16,13 @@ public class GroupConfig
     /// <summary>Group ID (unique).</summary>
     public long GroupID { get; set; }
 
-    /// <summary>Custom personality prompt — overrides global GroupPrompt if set.</summary>
+    /// <summary>
+    /// Complete configuration snapshot for this group (JSON).
+    /// When set, all config reads for this group use this snapshot instead of global AppConfig.
+    /// Null = follow global configuration.
+    /// </summary>
     [SugarColumn(ColumnDataType = "text", IsNullable = true)]
-    public string? CustomPrompt { get; set; }
-
-    /// <summary>Override for EnableMemory (null = follow global).</summary>
-    public bool? EnableMemory { get; set; }
-
-    /// <summary>Override for EnableMCP (null = follow global).</summary>
-    public bool? EnableMCP { get; set; }
-
-    /// <summary>Override for EnableEmojiPassiveSend (null = follow global).</summary>
-    public bool? EnableEmoji { get; set; }
-
-    /// <summary>Override for ReplyWillingAmplifier (null = follow global).</summary>
-    public double? ReplyAmplifier { get; set; }
-
-    /// <summary>Group-specific bot nicknames (comma-separated). Null = follow global.</summary>
-    [SugarColumn(ColumnDataType = "text", IsNullable = true)]
-    public string? CustomNicknames { get; set; }
+    public string? ConfigJson { get; set; }
 
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
@@ -73,7 +62,7 @@ public class GroupConfig
         }
         else
         {
-            db.Insertable(config).ExecuteCommand();
+            config.Id = db.Insertable(config).ExecuteReturnIdentity();
         }
 
         lock (CacheLock) { Cache[config.GroupID] = config; }
@@ -81,6 +70,53 @@ public class GroupConfig
 
     public static void ClearCache(long groupId)
     {
+        lock (CacheLock) { Cache.Remove(groupId); }
+    }
+
+    /// <summary>
+    /// Returns all groups that have a configuration snapshot.
+    /// </summary>
+    public static List<GroupConfig> GetAllConfigured()
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<GroupConfig>()
+            .Where(c => c.ConfigJson != null)
+            .OrderBy(c => c.UpdatedAt)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Reads a single config value from the ConfigJson snapshot.
+    /// Returns the value if this group has a config snapshot and the key exists, null otherwise.
+    /// </summary>
+    public T? GetConfigValue<T>(string key)
+    {
+        if (string.IsNullOrEmpty(ConfigJson))
+        {
+            return default;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(ConfigJson);
+            if (doc.RootElement.TryGetProperty(key, out var elem))
+            {
+                var raw = elem.GetRawText();
+                return System.Text.Json.JsonSerializer.Deserialize<T>(raw);
+            }
+        }
+        catch { }
+
+        return default;
+    }
+
+    /// <summary>
+    /// Deletes a group configuration, reverting to global defaults.
+    /// </summary>
+    public static void Delete(long groupId)
+    {
+        using var db = SQLiteManager.GetInstance();
+        db.Deleteable<GroupConfig>().Where(c => c.GroupID == groupId).ExecuteCommand();
         lock (CacheLock) { Cache.Remove(groupId); }
     }
 }

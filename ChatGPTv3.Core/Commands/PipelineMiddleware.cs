@@ -649,8 +649,8 @@ public static class PipelineMiddlewareExtensions
 
         var botQQ = PromptBuilder.CurrentBotQQ;
         var groupCfg = GroupConfig.Get(ctx.GroupId);
-        var effectivePrompt = groupCfg?.CustomPrompt ?? AppConfig.GroupPrompt;
-        var effectiveNicknames = groupCfg?.CustomNicknames ?? string.Join(",", AppConfig.BotNicknames);
+        var effectivePrompt = groupCfg?.GetConfigValue<string>("GroupPrompt") ?? AppConfig.GroupPrompt;
+        var effectiveNicknames = string.Join(",", groupCfg?.GetConfigValue<List<string>>("BotNicknames") ?? AppConfig.BotNicknames);
 
         var systemPrompt = PromptBuilder.BuildSystemPrompt(
             AppConfig.BotName, effectiveNicknames, botQQ,
