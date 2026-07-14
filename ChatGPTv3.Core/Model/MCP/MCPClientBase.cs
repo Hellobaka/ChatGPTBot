@@ -14,7 +14,7 @@ public enum MCPClientType
 /// </summary>
 [JsonDerivedType(typeof(MCPCustomClient), typeDiscriminator: "Custom")]
 [JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "Http")]
-[JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "SSE")]
+[JsonDerivedType(typeof(MCPSSEClient), typeDiscriminator: "SSE")]
 [JsonDerivedType(typeof(MCPStdioClient), typeDiscriminator: "Stdio")]
 public abstract class MCPClientBase
 {
@@ -45,6 +45,28 @@ public abstract class MCPClientBase
     // ── Tool Name Mapping ──
     public Dictionary<string, string> ToolNameConverters { get; set; } = [];
 
+    // ── Per-tool permission overrides ──
+    public Dictionary<string, MCPToolPermission> PerToolPermissions { get; set; } = [];
+
+    public MCPToolPermission GetToolPermission(string toolName)
+    {
+        if (PerToolPermissions.TryGetValue(toolName, out var tp))
+        {
+            return tp;
+        }
+
+        return new MCPToolPermission
+        {
+            GroupEnabled = GroupEnabled,
+            PersonEnabled = PersonEnabled,
+            CanOnlyMasterCall = CanOnlyMasterCall,
+            IsGroupBlackList = IsGroupBlackList,
+            Groups = Groups,
+            IsPersonBlackList = IsPersonBlackList,
+            Persons = Persons
+        };
+    }
+
     /// <summary>
     /// Returns the tool definitions from this MCP client.
     /// </summary>
@@ -61,4 +83,21 @@ public abstract class MCPClientBase
     /// </summary>
     public virtual void Stop()
     { }
+}
+
+public class MCPToolPermission
+{
+    public bool GroupEnabled { get; set; }
+
+    public bool PersonEnabled { get; set; }
+
+    public bool CanOnlyMasterCall { get; set; }
+
+    public bool IsGroupBlackList { get; set; }
+
+    public long[] Groups { get; set; } = [];
+
+    public bool IsPersonBlackList { get; set; }
+
+    public long[] Persons { get; set; } = [];
 }

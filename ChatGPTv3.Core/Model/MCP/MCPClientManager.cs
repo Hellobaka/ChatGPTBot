@@ -80,7 +80,7 @@ public class MCPClientManager
             }
 
             var json = File.ReadAllText(path);
-            var wrapper = JsonSerializer.Deserialize<McpConfigWrapper>(json);
+            var wrapper = JsonSerializer.Deserialize<McpConfigWrapper>(json, JsonOptions);
             if (wrapper?.Clients != null)
             {
                 Clients = wrapper.Clients;
@@ -162,7 +162,7 @@ public class MCPClientManager
 
         foreach (var client in Clients)
         {
-            if (!CanUseClient(client, ctx))
+            if (!client.Enabled)
             {
                 continue;
             }
@@ -172,11 +172,17 @@ public class MCPClientManager
                 var clientTools = client.GetToolsAsync().Result;
                 foreach (var tool in clientTools)
                 {
+                    if (!CanUseClient(client, ctx, tool.Function.Name))
+                    {
+                        continue;
+                    }
+
                     // Apply name converters
                     if (client.ToolNameConverters.TryGetValue(tool.Function.Name, out var newName))
                     {
                         tool.Function.Name = newName;
                     }
+
                     tools.Add(tool);
                 }
             }
@@ -234,46 +240,81 @@ public class MCPClientManager
         return $"Unknown client type: {client.GetType().Name}";
     }
 
-    private static bool CanUseClient(MCPClientBase client, MCPToolContext ctx)
+    /// <summary>
+    /// Gets tools for a named client, without conversation context filtering.
+    /// For UI inspection only — does not check permissions or apply name converters.
+    /// </summary>
+    public static async Task<ToolDefinition[]> GetToolsForClientAsync(string name)
+    {
+        var client = Clients.FirstOrDefault(c => c.Name == name);
+        if (client == null)
+        {
+            return [];
+        }
+
+        try
+        {
+            return await client.GetToolsAsync();
+        }
+        catch (Exception ex)
+        {
+            CommonHelper.LogWarning?.Invoke("MCP", $"GetToolsForClient {name}: {ex.Message}");
+            return [];
+        }
+    }
+
+    private static bool CanUseClient(MCPClientBase client, MCPToolContext ctx, string toolName = "")
     {
         if (!client.Enabled)
         {
             return false;
         }
 
-        if (client.CanOnlyMasterCall && !AppConfig.MasterQQ.Contains(ctx.QQ))
+        var perm = client.PerToolPermissions.TryGetValue(toolName, out var tp)
+            ? tp
+            : null;
+
+        bool groupEnabled = perm?.GroupEnabled ?? client.GroupEnabled;
+        bool personEnabled = perm?.PersonEnabled ?? client.PersonEnabled;
+        bool canOnlyMasterCall = perm?.CanOnlyMasterCall ?? client.CanOnlyMasterCall;
+        bool isGroupBlackList = perm?.IsGroupBlackList ?? client.IsGroupBlackList;
+        long[] groups = perm?.Groups ?? client.Groups;
+        bool isPersonBlackList = perm?.IsPersonBlackList ?? client.IsPersonBlackList;
+        long[] persons = perm?.Persons ?? client.Persons;
+
+        if (canOnlyMasterCall && !AppConfig.MasterQQ.Contains(ctx.QQ))
         {
             return false;
         }
 
-        if (ctx.GroupId > 0 && client.GroupEnabled)
+        if (ctx.GroupId > 0 && groupEnabled)
         {
-            if (client.Groups.Length == 0)
+            if (groups.Length == 0)
             {
                 return true;
             }
 
-            if (client.IsGroupBlackList)
+            if (isGroupBlackList)
             {
-                return !client.Groups.Contains(ctx.GroupId);
+                return !groups.Contains(ctx.GroupId);
             }
 
-            return client.Groups.Contains(ctx.GroupId);
+            return groups.Contains(ctx.GroupId);
         }
 
-        if (ctx.GroupId == 0 && ctx.QQ > 0 && client.PersonEnabled)
+        if (ctx.GroupId == 0 && ctx.QQ > 0 && personEnabled)
         {
-            if (client.Persons.Length == 0)
+            if (persons.Length == 0)
             {
                 return true;
             }
 
-            if (client.IsPersonBlackList)
+            if (isPersonBlackList)
             {
-                return !client.Persons.Contains(ctx.QQ);
+                return !persons.Contains(ctx.QQ);
             }
 
-            return client.Persons.Contains(ctx.QQ);
+            return persons.Contains(ctx.QQ);
         }
 
         return false;

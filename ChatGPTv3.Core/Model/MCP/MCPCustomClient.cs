@@ -50,22 +50,6 @@ public class MCPToolContext
 
     public string ChatIdentity { get; set; } = string.Empty;
 
-    public string Prompt { get; set; } = string.Empty;
-
-    public Action<string, long, long, int>? SendReply { get; set; }
-
-    public int MessageId { get; set; }
-
-    public bool EnableMemoryFunction { get; set; } = true;
-
-    public bool EnableCQApiFunction { get; set; } = true;
-
-    public bool EnableRelationshipFunction { get; set; } = true;
-
-    public bool EnableRecordFunction { get; set; } = true;
-
-    public string[]? DisabledTool { get; set; }
-
     /// <summary>
     /// Shared list for AddPictureToContext — the pipeline reads this
     /// after tool execution to inject images into the next request.

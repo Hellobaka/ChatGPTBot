@@ -176,11 +176,9 @@ public abstract class MCPExternalClient : MCPClientBase
                             {
                                 Name = t.Name,
                                 Description = t.Description ?? "",
-                                Parameters = JsonSerializer.SerializeToElement(new
-                                {
-                                    type = "object",
-                                    properties = new { }
-                                })
+                                Parameters = t.InputSchema.ValueKind != JsonValueKind.Undefined
+                                    ? JsonSerializer.SerializeToElement(t.InputSchema)
+                                    : JsonSerializer.SerializeToElement(new { type = "object", properties = new { } })
                             }
                         });
                     }

@@ -87,7 +87,7 @@ public partial class MCPAddClientViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task AddAsync()
+    private async Task Add()
     {
         if (string.IsNullOrWhiteSpace(ClientName))
         {
@@ -105,14 +105,25 @@ public partial class MCPAddClientViewModel : ObservableObject
                 return;
             }
 
-            var client = new MCPHttpClient
+            if (IsSse)
             {
-                Name = ClientName.Trim(),
-                Endpoint = endpoint.Trim(),
-                TransportMode = IsHttp ? "StreamableHttp" : "SSE",
-                ToolType = IsHttp ? MCPClientType.Http : MCPClientType.SSE
-            };
-            MCPClientManager.AddClient(client);
+                var client = new MCPSSEClient
+                {
+                    Name = ClientName.Trim(),
+                    Endpoint = endpoint.Trim()
+                };
+                MCPClientManager.AddClient(client);
+            }
+            else
+            {
+                var client = new MCPHttpClient
+                {
+                    Name = ClientName.Trim(),
+                    Endpoint = endpoint.Trim(),
+                    TransportMode = "StreamableHttp"
+                };
+                MCPClientManager.AddClient(client);
+            }
         }
         else
         {

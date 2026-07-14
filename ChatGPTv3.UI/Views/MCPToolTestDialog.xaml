@@ -22,6 +22,12 @@
                 Text="{Binding ToolName, StringFormat='工具: {0}'}" />
 
             <TextBlock
+                Margin="0,6,0,0"
+                Opacity="0.72"
+                Text="{Binding ToolDescription}"
+                TextWrapping="Wrap" />
+
+            <TextBlock
                 Margin="0,10,0,0"
                 Text="参数 (JSON):" />
 
