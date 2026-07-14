@@ -46,7 +46,25 @@ public partial class MCPServerNode : ObservableObject
     [ObservableProperty]
     private string _status = string.Empty;
 
+    public bool HasConnectionBadge => !IsBuiltInGroup && Client is MCPExternalClient;
+
+    public bool IsConnected =>
+        Client is MCPExternalClient ext && ext.IsConnected;
+
+    public string ConnectionBadgeText =>
+        Client is MCPExternalClient ext && ext.IsConnected ? "已连接" : "未连接";
+
+    public string ConnectionBadgeColor =>
+        Client is MCPExternalClient ext && ext.IsConnected ? "#2A5A3A" : "#8B3A3A";
+
     public ObservableCollection<MCPToolLeaf> Tools { get; } = [];
+
+    public void NotifyConnectionChanged()
+    {
+        OnPropertyChanged(nameof(ConnectionBadgeText));
+        OnPropertyChanged(nameof(ConnectionBadgeColor));
+        OnPropertyChanged(nameof(IsConnected));
+    }
 
     partial void OnEnabledChanged(bool value)
     {
@@ -84,6 +102,8 @@ public partial class MCPManagementViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(SelectedClientType))]
     [NotifyPropertyChangedFor(nameof(HasExternalServerSelected))]
     [NotifyPropertyChangedFor(nameof(IsSelectedClientEnabled))]
+    [NotifyPropertyChangedFor(nameof(CanReconnect))]
+    [NotifyPropertyChangedFor(nameof(CanRefreshTools))]
     private MCPServerNode? _selectedServer;
 
     [ObservableProperty]
@@ -257,7 +277,7 @@ public partial class MCPManagementViewModel : ViewModelBase
                 var serverNode = ServerNodes.FirstOrDefault(n => n.Client == client);
                 if (serverNode != null)
                 {
-                    LoadExternalTools(serverNode);
+                    await LoadExternalToolsAsync(serverNode);
                 }
             }
         }
@@ -270,7 +290,7 @@ public partial class MCPManagementViewModel : ViewModelBase
         builtIn.Status = $"{builtIn.Tools.Count} 个工具";
     }
 
-    private async void LoadExternalTools(MCPServerNode node)
+    private async Task LoadExternalToolsAsync(MCPServerNode node)
     {
         if (node.Client == null)
         {
@@ -284,13 +304,7 @@ public partial class MCPManagementViewModel : ViewModelBase
             await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 node.Tools.Clear();
-                node.Status = tools.Length > 0
-                    ? $"{tools.Length} 个工具"
-                    : "无工具";
-                if (node.Client is MCPExternalClient ext && !ext.IsConnected)
-                {
-                    node.Status = "未连接";
-                }
+                node.Status = $"{tools.Length} 个工具";
 
                 foreach (var t in tools.OrderBy(x => x.Function.Name))
                 {
@@ -475,6 +489,85 @@ public partial class MCPManagementViewModel : ViewModelBase
         RefreshAll();
     }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NotRefreshing))]
+    private bool _isRefreshingExternalTools;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NotReconnecting))]
+    private bool _isReconnecting;
+
+    public bool NotRefreshing => !IsRefreshingExternalTools;
+    public bool NotReconnecting => !IsReconnecting;
+    public bool CanRefreshTools => !IsReconnecting && SelectedServer is { IsConnected: true };
+
+    public bool CanReconnect => SelectedServer is { IsBuiltInGroup: false, Client: MCPExternalClient };
+
+    public string ConnectionStatusText
+    {
+        get
+        {
+            if (SelectedServer?.Client is MCPExternalClient ext)
+            {
+                return ext.IsConnected ? "已连接" : "未连接";
+            }
+
+            return string.Empty;
+        }
+    }
+
+    partial void OnIsRefreshingExternalToolsChanged(bool value)
+    {
+        if (value)
+        {
+            _ = RefreshExternalTools();
+        }
+    }
+
+    partial void OnIsReconnectingChanged(bool value)
+    {
+        if (value)
+        {
+            _ = ReconnectAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task ReconnectAsync()
+    {
+        if (SelectedServer?.Client is not MCPExternalClient ext)
+        {
+            IsReconnecting = false;
+            return;
+        }
+
+        try
+        {
+            ext.Stop();
+            await Task.Delay(300);
+            ext.Start();
+
+            // Wait for connection with timeout
+            for (var i = 0; i < 30; i++)
+            {
+                if (ext.IsConnected)
+                {
+                    break;
+                }
+
+                await Task.Delay(200);
+            }
+
+            await LoadExternalToolsAsync(SelectedServer);
+            SelectedServer.NotifyConnectionChanged();
+            OnPropertyChanged(nameof(CanRefreshTools));
+        }
+        finally
+        {
+            IsReconnecting = false;
+        }
+    }
+
     [RelayCommand]
     private async Task RefreshExternalTools()
     {
@@ -483,7 +576,15 @@ public partial class MCPManagementViewModel : ViewModelBase
             return;
         }
 
-        LoadExternalTools(SelectedServer);
+        IsRefreshingExternalTools = true;
+        try
+        {
+            await LoadExternalToolsAsync(SelectedServer);
+        }
+        finally
+        {
+            IsRefreshingExternalTools = false;
+        }
     }
 
     [RelayCommand]

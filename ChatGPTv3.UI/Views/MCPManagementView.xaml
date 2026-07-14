@@ -61,6 +61,18 @@
                             Margin="6,0,0,0"
                             FontWeight="SemiBold"
                             Text="{Binding Name}" />
+                        <Border
+                            Margin="6,0,0,0"
+                            Padding="3,1"
+                            VerticalAlignment="Center"
+                            Background="{Binding ConnectionBadgeColor}"
+                            CornerRadius="3"
+                            Visibility="{Binding HasConnectionBadge, Converter={StaticResource BoolToVis}}">
+                            <TextBlock
+                                FontSize="10"
+                                Foreground="#CDE0F4"
+                                Text="{Binding ConnectionBadgeText}" />
+                        </Border>
                         <TextBlock
                             Margin="6,0,0,0"
                             FontSize="11"
@@ -101,14 +113,28 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBox
-                                            Padding="0"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            FontSize="16"
-                                            FontWeight="SemiBold"
-                                            IsReadOnly="True"
-                                            Text="{Binding SelectedClientName, Mode=OneWay}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBox
+                                                Padding="0"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                FontSize="16"
+                                                FontWeight="SemiBold"
+                                                IsReadOnly="True"
+                                                Text="{Binding SelectedClientName, Mode=OneWay}" />
+                                            <Border
+                                                Margin="6,0,0,0"
+                                                Padding="3,1"
+                                                VerticalAlignment="Center"
+                                                Background="{Binding SelectedServer.ConnectionBadgeColor}"
+                                                CornerRadius="3"
+                                                Visibility="{Binding HasExternalServerSelected, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    Foreground="#CDE0F4"
+                                                    Text="{Binding SelectedServer.ConnectionBadgeText}" />
+                                            </Border>
+                                        </StackPanel>
                                         <TextBox
                                             Margin="0,2,0,0"
                                             Padding="0"
@@ -133,10 +159,19 @@
                                                 </Style>
                                             </Button.Style>
                                         </Button>
-                                        <Button
+                                        <ToggleButton
+                                            Width="80"
                                             Margin="0,0,8,0"
-                                            Command="{Binding RefreshExternalToolsCommand}"
-                                            Content="刷新工具" />
+                                            Content="重连"
+                                            IsChecked="{Binding IsReconnecting, Mode=TwoWay}"
+                                            IsEnabled="{Binding NotRefreshing}"
+                                            Style="{StaticResource ToggleButtonLoadingPrimary}" />
+                                        <ToggleButton
+                                            Margin="0,0,8,0"
+                                            Content="刷新工具"
+                                            IsChecked="{Binding IsRefreshingExternalTools, Mode=TwoWay}"
+                                            IsEnabled="{Binding CanRefreshTools}"
+                                            Style="{StaticResource ToggleButtonLoadingPrimary}" />
                                         <Button Command="{Binding DeleteServerCommand}" Content="删除" />
                                     </StackPanel>
                                 </Grid>
@@ -360,7 +395,10 @@
                                     Text="{Binding SelectedTool.Description, Mode=OneWay}"
                                     TextWrapping="Wrap" />
 
-                                <TextBlock Margin="0,14,0,4" FontWeight="SemiBold" Text="测试上下文" />
+                                <TextBlock
+                                    Margin="0,14,0,4"
+                                    FontWeight="SemiBold"
+                                    Text="测试上下文" />
                                 <WrapPanel>
                                     <TextBlock VerticalAlignment="Center" Text="群号" />
                                     <TextBox
