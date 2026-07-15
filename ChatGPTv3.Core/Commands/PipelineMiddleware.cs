@@ -70,6 +70,30 @@ public static class PipelineMiddlewareExtensions
         return globalDefault;
     }
 
+    // ── Mock-mode history helpers ──────────────────────────
+
+    private static List<ChatRecord> GetHistory(ChatContext ctx, int count)
+    {
+        if (ctx.IsMockMode)
+        {
+            return ctx.MockMessages.TakeLast(count).ToList();
+        }
+
+        return ctx.IsGroup
+            ? ChatRecord.GetGroupHistory(ctx.GroupId, count)
+            : ChatRecord.GetPrivateHistory(ctx.QQ, count);
+    }
+
+    private static List<ChatRecord> GetRecordsByIds(ChatContext ctx, long[] messageIds)
+    {
+        if (ctx.IsMockMode)
+        {
+            return ctx.MockMessages.Where(r => messageIds.Contains(r.MessageID)).ToList();
+        }
+
+        return ChatRecord.GetByIds(messageIds, ctx.GroupId);
+    }
+
     // ── Access control (global only) ───────────────────────
 
     public static ChatPipelineBuilder UseAccessControl(this ChatPipelineBuilder builder)
@@ -217,7 +241,7 @@ public static class PipelineMiddlewareExtensions
             ctx.IsMentioned = CheckAtBot(GetMessage(ctx));
             ctx.ContainsNickname = CheckNickname(ctx, ctx.MessageText);
             ctx.IsImageOnly = HasImage(ctx) && string.IsNullOrWhiteSpace(ctx.MessageText);
-            ctx.IsReplyToBot = CheckReplyToBot(GetMessage(ctx), ctx.GroupId);
+            ctx.IsReplyToBot = CheckReplyToBot(GetMessage(ctx), ctx);
             ctx.HasQuestion = ctx.MessageText.Contains('?') || ctx.MessageText.Contains('？');
 
             var replyManager = ReplyManager.Get(ctx.GroupId);
@@ -229,7 +253,7 @@ public static class PipelineMiddlewareExtensions
             // LLM-based check
             if (Effective(ctx, "EnableLLMCheckShouldResponse", AppConfig.EnableLLMCheckShouldResponse) && !ctx.IsMentioned)
             {
-                var history = ChatRecord.GetGroupHistory(ctx.GroupId, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
+                var history = GetHistory(ctx, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
                 var recentTexts = history
                     .Select(r => $"[{r.NickName}]: {r.ParsedMessage}")
                     .ToList();
@@ -425,7 +449,7 @@ public static class PipelineMiddlewareExtensions
                     var botQQ = PromptBuilder.CurrentBotQQ;
                     foreach (var reply in replyItems)
                     {
-                        var records = ChatRecord.GetByIds([reply.Id], ctx.GroupId);
+                        var records = GetRecordsByIds(ctx, [reply.Id]);
                         var quoted = records.FirstOrDefault();
                         if (quoted != null && quoted.QQ == botQQ)
                         {
@@ -456,7 +480,7 @@ public static class PipelineMiddlewareExtensions
                 var rawText = msg?.Text ?? "";
                 var parsedText = ctx.MessageText ?? "";
 
-                ChatRecord.Insert(new ChatRecord
+                var record = new ChatRecord
                 {
                     GroupID = ctx.GroupId,
                     QQ = ctx.QQ,
@@ -469,7 +493,17 @@ public static class PipelineMiddlewareExtensions
                     IsMentioned = ctx.IsMentioned,
                     IsImage = ctx.IsImageOnly,
                     IsEmpty = !ctx.IsImageOnly && string.IsNullOrWhiteSpace(parsedText)
-                });
+                };
+
+                if (ctx.IsMockMode)
+                {
+                    record.MessageID = 1_000_000 + ctx.MockMessages.Count;
+                    ctx.MockMessages.Add(record);
+                }
+                else
+                {
+                    ChatRecord.Insert(record);
+                }
             }
             catch (Exception ex)
             {
@@ -525,7 +559,7 @@ public static class PipelineMiddlewareExtensions
             {
                 if (hasFallback)
                 {
-                    ChatRecord.Insert(new ChatRecord
+                    var record = new ChatRecord
                     {
                         GroupID = ctx.GroupId,
                         QQ = PromptBuilder.CurrentBotQQ,
@@ -534,13 +568,21 @@ public static class PipelineMiddlewareExtensions
                         ParsedMessage = ctx.FallbackReply,
                         SenderType = SenderType.Assistant,
                         Time = DateTime.Now
-                    });
+                    };
+                    if (ctx.IsMockMode)
+                    {
+                        ctx.MockMessages.Add(record);
+                    }
+                    else
+                    {
+                        ChatRecord.Insert(record);
+                    }
                 }
                 else
                 {
                     foreach (var (text, time) in ctx.BotReplies)
                     {
-                        ChatRecord.Insert(new ChatRecord
+                        var record = new ChatRecord
                         {
                             GroupID = ctx.GroupId,
                             QQ = PromptBuilder.CurrentBotQQ,
@@ -549,11 +591,22 @@ public static class PipelineMiddlewareExtensions
                             ParsedMessage = text,
                             SenderType = SenderType.Assistant,
                             Time = time
-                        });
+                        };
+                        if (ctx.IsMockMode)
+                        {
+                            ctx.MockMessages.Add(record);
+                        }
+                        else
+                        {
+                            ChatRecord.Insert(record);
+                        }
                     }
                 }
 
-                ChatRecord.Cleanup(ctx.GroupId);
+                if (!ctx.IsMockMode)
+                {
+                    ChatRecord.Cleanup(ctx.GroupId);
+                }
             }
             catch (Exception ex)
             {
@@ -575,37 +628,68 @@ public static class PipelineMiddlewareExtensions
 
             try
             {
-                ChatRecord.Insert(new ChatRecord
+                if (ctx.IsMockMode)
                 {
-                    GroupID = ctx.GroupId,
-                    QQ = PromptBuilder.CurrentBotQQ,
-                    NickName = Effective(ctx, "BotName", AppConfig.BotName),
-                    SenderType = SenderType.Assistant,
-                    ParsedMessage = string.Empty,
-                    HasToolCalls = true,
-                    Time = DateTime.Now
-                });
-
-                var placeholderIds = new List<int>();
-                foreach (var tc in ctx.PendingToolCalls)
-                {
-                    var id = ChatRecord.Insert(new ChatRecord
+                    ctx.MockMessages.Add(new ChatRecord
                     {
                         GroupID = ctx.GroupId,
-                        QQ = ctx.QQ,
-                        SenderType = SenderType.Tool,
-                        ParsedMessage = $"[{tc.name}]...",
-                        ToolCallId = tc.callId,
-                        ToolName = tc.name,
-                        IsToolSuccess = tc.success,
+                        QQ = PromptBuilder.CurrentBotQQ,
+                        NickName = Effective(ctx, "BotName", AppConfig.BotName),
+                        SenderType = SenderType.Assistant,
+                        ParsedMessage = string.Empty,
+                        HasToolCalls = true,
                         Time = DateTime.Now
                     });
-                    placeholderIds.Add(id);
-                }
 
-                ToolResultSummarizer.SummarizeAsync(
-                    ctx.GroupId, ctx.MessageText,
-                    ctx.PendingToolCalls, string.Join(" ", ctx.BotReplies.Select(r => r.text)), placeholderIds);
+                    foreach (var tc in ctx.PendingToolCalls)
+                    {
+                        ctx.MockMessages.Add(new ChatRecord
+                        {
+                            GroupID = ctx.GroupId,
+                            QQ = ctx.QQ,
+                            SenderType = SenderType.Tool,
+                            ParsedMessage = $"[{tc.name}]...",
+                            ToolCallId = tc.callId,
+                            ToolName = tc.name,
+                            IsToolSuccess = tc.success,
+                            Time = DateTime.Now
+                        });
+                    }
+                }
+                else
+                {
+                    ChatRecord.Insert(new ChatRecord
+                    {
+                        GroupID = ctx.GroupId,
+                        QQ = PromptBuilder.CurrentBotQQ,
+                        NickName = Effective(ctx, "BotName", AppConfig.BotName),
+                        SenderType = SenderType.Assistant,
+                        ParsedMessage = string.Empty,
+                        HasToolCalls = true,
+                        Time = DateTime.Now
+                    });
+
+                    var placeholderIds = new List<int>();
+                    foreach (var tc in ctx.PendingToolCalls)
+                    {
+                        var id = ChatRecord.Insert(new ChatRecord
+                        {
+                            GroupID = ctx.GroupId,
+                            QQ = ctx.QQ,
+                            SenderType = SenderType.Tool,
+                            ParsedMessage = $"[{tc.name}]...",
+                            ToolCallId = tc.callId,
+                            ToolName = tc.name,
+                            IsToolSuccess = tc.success,
+                            Time = DateTime.Now
+                        });
+                        placeholderIds.Add(id);
+                    }
+
+                    ToolResultSummarizer.SummarizeAsync(
+                        ctx.GroupId, ctx.MessageText,
+                        ctx.PendingToolCalls, string.Join(" ", ctx.BotReplies.Select(r => r.text)), placeholderIds);
+                }
             }
             catch (Exception ex)
             {
@@ -645,7 +729,7 @@ public static class PipelineMiddlewareExtensions
     private static bool HasImage(ChatContext ctx)
         => GetMessage(ctx)?.MessageChain?.OfType<Image>().Any() ?? false;
 
-    private static bool CheckReplyToBot(Message? msg, long groupId)
+    private static bool CheckReplyToBot(Message? msg, ChatContext ctx)
     {
         if (msg?.MessageChain == null)
         {
@@ -661,7 +745,7 @@ public static class PipelineMiddlewareExtensions
         var botQQ = PromptBuilder.CurrentBotQQ;
         foreach (var reply in replyItems)
         {
-            var records = ChatRecord.GetByIds([reply.Id], groupId);
+            var records = GetRecordsByIds(ctx, [reply.Id]);
             if (records.Any(r => r.QQ == botQQ))
             {
                 return true;
@@ -690,7 +774,7 @@ public static class PipelineMiddlewareExtensions
             string.Join(",", Effective(ctx, "MasterQQ", AppConfig.MasterQQ)),
             effectivePrompt);
 
-        var history = ChatRecord.GetGroupHistory(ctx.GroupId, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
+        var history = GetHistory(ctx, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
 
         var knowledge = MemoryManager.GetKnowledge(ctx.MessageText);
 
@@ -821,7 +905,7 @@ public static class PipelineMiddlewareExtensions
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, ctx.GroupId))
+        if (!string.IsNullOrWhiteSpace(response) && IsNearDuplicate(response, ctx))
         {
             ctx.Trace("ChatService", false, "回复与最近消息高度重复，被去重");
             return EventHandleResult.Pass;
@@ -880,9 +964,9 @@ public static class PipelineMiddlewareExtensions
         }
     }
 
-    private static bool IsNearDuplicate(string candidate, long groupId)
+    private static bool IsNearDuplicate(string candidate, ChatContext ctx)
     {
-        var recentBotMessages = ChatRecord.GetGroupHistory(groupId, 5)
+        var recentBotMessages = GetHistory(ctx, 5)
             .Where(r => r.SenderType == SenderType.Assistant)
             .Select(r => r.ParsedMessage)
             .ToList();

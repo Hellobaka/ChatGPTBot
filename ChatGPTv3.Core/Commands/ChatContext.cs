@@ -69,6 +69,20 @@ public class ChatContext
     /// </summary>
     public List<string> PendingImageHashes { get; set; } = [];
 
+    // ── Mock mode ──────────────────────────────────────────
+    /// <summary>
+    /// When true, the pipeline skips all database writes and reads conversation
+    /// history from <see cref="MockMessages"/> instead of SQLite.
+    /// Used exclusively by the chat test UI.
+    /// </summary>
+    public bool IsMockMode { get; set; }
+
+    /// <summary>
+    /// In-memory conversation history for mock mode.
+    /// Only written when <see cref="IsMockMode"/> is true.
+    /// </summary>
+    public List<ChatRecord> MockMessages { get; set; } = [];
+
     // ── Output recording ───────────────────────────────────
     /// <summary>Bot reply segments with send timestamps. Populated by SendReplyWithEmoji, consumed by UseBotMessageRecorder.</summary>
     public List<(string text, DateTime time)> BotReplies { get; } = [];

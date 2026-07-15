@@ -5,15 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.UI</RootNamespace>
-    <AssemblyName>ChatGPTv3.UI</AssemblyName>
-    <OutputType>WinExe</OutputType>
+      <AssemblyName>ChatGPTv3</AssemblyName>
+      <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
-	  <GenerateAmnManifest>false</GenerateAmnManifest>
-	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-	  <EnableDynamicLoading>true</EnableDynamicLoading>
-	  <KeepOriginalFile>true</KeepOriginalFile>
-	  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-	  <StartupObject>ChatGPTv3.UI.TesterEntry</StartupObject>
+      <GenerateAmnManifest>false</GenerateAmnManifest>
+      <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+      <EnableDynamicLoading>true</EnableDynamicLoading>
+      <KeepOriginalFile>true</KeepOriginalFile>
+      <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+      <StartupObject>ChatGPTv3.UI.TesterEntry</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

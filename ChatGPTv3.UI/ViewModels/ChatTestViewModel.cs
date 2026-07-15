@@ -5,6 +5,7 @@ using Another_Mirai_Native.Abstractions.Models.MessageItem;
 using ChatGPTv3.Core;
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Commands;
+using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.UI.Mock;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -108,6 +109,12 @@ public partial class ChatTestViewModel : ViewModelBase
     private readonly List<FriendItem> _allQQCandidates = [];
     private readonly List<string> _sendHistory = [];
     private readonly Dispatcher _uiDispatcher;
+
+    /// <summary>
+    /// Shared mock conversation history for the current test session.
+    /// All targets share one history; cleared on restart or by RefreshHistory.
+    /// </summary>
+    private List<ChatRecord> _mockHistory = [];
 
     private string? _historyDraft;
     private int _historyIndex = -1;
@@ -350,6 +357,7 @@ public partial class ChatTestViewModel : ViewModelBase
     private void RefreshHistory()
     {
         Messages.Clear();
+        _mockHistory = [];
     }
 
     [RelayCommand]
@@ -622,6 +630,7 @@ public partial class ChatTestViewModel : ViewModelBase
                     new QQ(api, qq),
                     message),
                 CancellationToken = CancellationToken.None,
+                IsMockMode = true,
             };
         }
         else
@@ -633,8 +642,12 @@ public partial class ChatTestViewModel : ViewModelBase
                     new QQ(api, qq),
                     message),
                 CancellationToken = CancellationToken.None,
+                IsMockMode = true,
             };
         }
+
+        // Use the shared in-memory mock history
+        ctx.MockMessages = _mockHistory;
 
         // Capture pipeline response via SendFunc
         ctx.SendFunc = async msg =>

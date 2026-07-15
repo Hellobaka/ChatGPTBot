@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>ChatGPTv3.Core</RootNamespace>
-    <AssemblyName>ChatGPTv3</AssemblyName>
 	  <GenerateAmnManifest>false</GenerateAmnManifest>
 	  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
