@@ -1,0 +1,254 @@
+<UserControl
+    x:Class="ChatGPTv3.UI.Views.KnowledgeManagementView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:ChatGPTv3.UI.Converters"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
+    <UserControl.Resources>
+        <converters:NotNullToVisibilityConverter x:Key="NotNullToVis" />
+        <converters:InvertBoolConverter x:Key="InvBool" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--  Left: Source TreeView  -->
+        <Border
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="0,0,12,0"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Grid.Row="0"
+                    Margin="8,8,8,4"
+                    FontWeight="SemiBold"
+                    Text="来源分类" />
+
+                <TreeView
+                    Grid.Row="1"
+                    Margin="4,0,4,8"
+                    ItemsSource="{Binding Sources}"
+                    SelectedItemChanged="TreeView_OnSelectedItemChanged"
+                    Style="{StaticResource TreeView.Small}">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    Foreground="{DynamicResource SecondaryTextBrush}"
+                                    Text="{Binding Count, StringFormat='({0})'}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                    <TreeView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource TreeViewItemBaseStyle}" TargetType="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="True" />
+                            <EventSetter Event="MouseRightButtonUp" Handler="TreeViewItem_RightClick" />
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                </TreeView>
+            </Grid>
+        </Border>
+
+        <!--  Right: Content area  -->
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!--  Top toolbar  -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <hc:TextBox
+                    Grid.Column="0"
+                    hc:InfoElement.Placeholder="搜索知识内容..."
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button
+                    Grid.Column="1"
+                    Width="70"
+                    Margin="8,0,0,0"
+                    Command="{Binding SearchCommand}"
+                    Content="搜索" />
+
+                <Button
+                    Grid.Column="2"
+                    Width="70"
+                    Margin="8,0,0,0"
+                    Command="{Binding ImportCommand}"
+                    Content="导入"
+                    Style="{StaticResource ButtonPrimary}" />
+            </Grid>
+
+            <!--  Page info  -->
+            <StackPanel
+                Grid.Row="1"
+                Margin="0,0,0,8"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="每页：" />
+                <ComboBox
+                    Width="60"
+                    Margin="4,0"
+                    SelectedItem="{Binding PageSize, Mode=TwoWay}">
+                    <ComboBox.ItemsSource>
+                        <x:Array xmlns:sys="clr-namespace:System;assembly=mscorlib" Type="sys:Int32">
+                            <sys:Int32>20</sys:Int32>
+                            <sys:Int32>50</sys:Int32>
+                            <sys:Int32>100</sys:Int32>
+                        </x:Array>
+                    </ComboBox.ItemsSource>
+                </ComboBox>
+                <TextBlock
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding TotalCount, StringFormat='共 {0} 条'}" />
+            </StackPanel>
+
+            <!--  DataGrid  -->
+            <DataGrid
+                Grid.Row="2"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                IsReadOnly="True"
+                ItemsSource="{Binding Items}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn
+                        Width="120"
+                        Binding="{Binding Source}"
+                        Header="来源" />
+                    <DataGridTextColumn
+                        Width="*"
+                        Binding="{Binding Content}"
+                        Header="内容">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                <Setter Property="ToolTip" Value="{Binding Content}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn
+                        Width="140"
+                        Binding="{Binding CreateTime, StringFormat='yyyy-MM-dd HH:mm:ss'}"
+                        Header="创建时间" />
+                    <DataGridTemplateColumn Width="60" Header="">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button
+                                    Width="28"
+                                    Height="28"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                    CommandParameter="{Binding}"
+                                    Cursor="Hand"
+                                    ToolTip="删除">
+                                    <iconPacks:PackIconMaterialDesign
+                                        Width="14"
+                                        Height="14"
+                                        Foreground="{DynamicResource DangerTextBrush}"
+                                        Kind="Delete" />
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!--  Pagination  -->
+            <StackPanel
+                Grid.Row="3"
+                Margin="0,8,0,0"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal">
+                <Button
+                    Width="60"
+                    Command="{Binding FirstPageCommand}"
+                    Content="首页"
+                    IsEnabled="{Binding CanGoFirst}" />
+                <Button
+                    Width="60"
+                    Margin="4,0"
+                    Command="{Binding PrevPageCommand}"
+                    Content="上一页"
+                    IsEnabled="{Binding CanGoPrev}" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding CurrentPage, StringFormat='第 {0} 页'}" />
+                <TextBlock
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding TotalPages, StringFormat='/ {0} 页'}" />
+                <Button
+                    Width="60"
+                    Margin="4,0"
+                    Command="{Binding NextPageCommand}"
+                    Content="下一页"
+                    IsEnabled="{Binding CanGoNext}" />
+                <Button
+                    Width="60"
+                    Command="{Binding LastPageCommand}"
+                    Content="末页"
+                    IsEnabled="{Binding CanGoLast}" />
+            </StackPanel>
+        </Grid>
+
+        <!--  Import progress overlay  -->
+        <Border
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="2"
+            Background="#80000000"
+            Visibility="{Binding IsImporting, Converter={StaticResource BoolToVis}}">
+            <Border
+                Width="300"
+                Height="120"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource PopupBackgroundBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel Margin="16">
+                    <TextBlock FontWeight="SemiBold" Text="导入中..." />
+                    <TextBlock
+                        Margin="0,8,0,0"
+                        Text="{Binding ImportStatus}"
+                        TextWrapping="Wrap" />
+                    <ProgressBar
+                        Margin="0,8,0,0"
+                        Maximum="{Binding ImportTotal}"
+                        Value="{Binding ImportCurrent}" />
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

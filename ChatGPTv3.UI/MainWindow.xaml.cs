@@ -246,8 +246,8 @@ public partial class MainWindow
             "keys" => GetOrCreate("keys", () => new KeyManagementView()),
             "token" => GetOrCreate("token", () => new TokenUsageView()),
             "mcp" => GetOrCreate("mcp", () => new MCPManagementView()),
-            "image" => GetOrCreate(
-                "image", () => new ImageManagementView()),
+            "image" => GetOrCreate("image", () => new ImageManagementView()),
+            "knowledge" => GetOrCreate("knowledge", () => new KnowledgeManagementView()),
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",

@@ -72,6 +72,33 @@ public class Splitter
         }
     }
 
+    public async Task<string[]> SplitAsync()
+    {
+        if (string.IsNullOrEmpty(_message))
+        {
+            return [_message];
+        }
+
+        if (_message.Length <= AppConfig.SplitterMinLength)
+        {
+            return [_message];
+        }
+
+        if (AppConfig.SplitterRegexFirst)
+        {
+            return RegexSplitFallback();
+        }
+
+        try
+        {
+            return await LlmSplitAsync();
+        }
+        catch
+        {
+            return RegexSplitFallback();
+        }
+    }
+
     private string[] LlmSplit()
     {
         var prompt = Prompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
@@ -91,6 +118,34 @@ public class Splitter
             AppConfig.SplitterApiKeyId, messages,
             ChatService.Purpose.分段, jsonMode: true,
             timeout: AppConfig.SplitterTimeout).Result;
+
+        if (result == ChatService.ErrorMessage)
+        {
+            throw new Exception("Splitter API error");
+        }
+
+        return ParseSplitResult(result);
+    }
+
+    private async Task<string[]> LlmSplitAsync()
+    {
+        var prompt = Prompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
+        if (AppConfig.EnableSplitterRemoveMarkdown)
+        {
+            prompt = RemoveMarkdownPrompt + prompt;
+        }
+
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.System(prompt),
+            ChatMessage.User(_message)
+        };
+
+        var chatService = new ChatService();
+        var result = await chatService.GetChatResultAsync(
+            AppConfig.SplitterApiKeyId, messages,
+            ChatService.Purpose.分段, jsonMode: true,
+            timeout: AppConfig.SplitterTimeout);
 
         if (result == ChatService.ErrorMessage)
         {
