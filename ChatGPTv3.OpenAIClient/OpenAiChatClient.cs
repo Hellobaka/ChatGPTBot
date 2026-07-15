@@ -112,15 +112,19 @@ public class OpenAiChatClient : IDisposable
     /// </summary>
     /// <param name="input">The text to embed.</param>
     /// <param name="model">The embedding model name (e.g., "text-embedding-ada-002").</param>
+    /// <param name="dimensions">Optional dimensions parameter for the embedding.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Float array of embedding values.</returns>
     public async Task<float[]> GetEmbeddingsAsync(
         string input,
         string model,
+        int? dimensions = null,
         CancellationToken ct = default)
     {
         var url = $"{_baseUrl}/embeddings";
-        var payload = new { input, model };
+        object payload = dimensions.HasValue
+            ? new { input, model, dimensions = dimensions.Value }
+            : new { input, model };
 
         var content = new StringContent(
             JsonSerializer.Serialize(payload, _jsonOptions),

@@ -7,6 +7,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InvertBoolConverter x:Key="InvBool" />
         <conv:InvertBoolToVisibilityConverter x:Key="InvBoolToVis" />
     </UserControl.Resources>
 
@@ -164,13 +165,13 @@
                                             Margin="0,0,8,0"
                                             Content="重连"
                                             IsChecked="{Binding IsReconnecting, Mode=TwoWay}"
-                                            IsEnabled="{Binding NotRefreshing}"
+                                            IsEnabled="{Binding IsReconnecting, Converter={StaticResource InvBool}, FallbackValue=True}"
                                             Style="{StaticResource ToggleButtonLoadingPrimary}" />
                                         <ToggleButton
                                             Margin="0,0,8,0"
                                             Content="刷新工具"
                                             IsChecked="{Binding IsRefreshingExternalTools, Mode=TwoWay}"
-                                            IsEnabled="{Binding CanRefreshTools}"
+                                            IsEnabled="{Binding IsRefreshingExternalTools, Converter={StaticResource InvBool}, FallbackValue=True}"
                                             Style="{StaticResource ToggleButtonLoadingPrimary}" />
                                         <Button Command="{Binding DeleteServerCommand}" Content="删除" />
                                     </StackPanel>
@@ -436,7 +437,7 @@
                                     Margin="0,10,0,0"
                                     Content="执行"
                                     IsChecked="{Binding IsTestBusy, Mode=TwoWay}"
-                                    IsEnabled="{Binding CanExecuteTest}"
+                                    IsEnabled="{Binding IsTestBusy, Converter={StaticResource InvBool}, FallbackValue=True}"
                                     Style="{StaticResource ToggleButtonLoadingPrimary}" />
 
                                 <TextBlock

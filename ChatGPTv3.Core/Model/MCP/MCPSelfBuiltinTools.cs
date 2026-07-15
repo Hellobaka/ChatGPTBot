@@ -150,20 +150,20 @@ public static class MCPSelfBuiltinTools
         };
     }
 
-    public static Task<object?> ExecuteToolAsync(string name, JsonDocument? args, MCPToolContext ctx)
+    public static async Task<object?> ExecuteToolAsync(string name, JsonDocument? args, MCPToolContext ctx)
     {
         if (ctx == null)
         {
-            return Task.FromResult<object?>("无上下文");
+            return "无上下文";
         }
 
         try
         {
-            return Task.FromResult<object?>(name switch
+            return name switch
             {
                 // Knowledge
                 "AddKnowledge" => Mem(AddKnowledge, args),
-                "GetKnowledges" => Mem(GetKnowledges, args),
+                "GetKnowledges" => await GetKnowledgesAsync(args),
 
                 // Relationship
                 "UpdateMood" => UpdateMood(args, ctx),
@@ -177,7 +177,7 @@ public static class MCPSelfBuiltinTools
 
                 // Picture
                 "AddPictureToContext" => AddPictureToContext(args, ctx),
-                "DescribeImage" => DescribeImage(args),
+                "DescribeImage" => await DescribeImageAsync(args),
 
                 // Misc
                 "GetRangeUsageDetail" => GetRangeUsageDetail(args),
@@ -204,11 +204,11 @@ public static class MCPSelfBuiltinTools
                 "SetGroupMemberForeverExclusiveTitle" => CQ_SetGroupMemberForeverExclusiveTitle(args),
                 "RemoveGroupMember" => CQ_RemoveGroupMember(args),
                 _ => "工具暂未实现"
-            });
+            };
         }
         catch (Exception ex)
         {
-            return Task.FromResult<object?>($"工具执行错误: {ex.Message}");
+            return $"工具执行错误: {ex.Message}";
         }
     }
 
@@ -229,10 +229,10 @@ public static class MCPSelfBuiltinTools
     /// <summary>
     /// 通过语义搜索查询知识库（Qdrant 向量检索）。
     /// </summary>
-    private static string GetKnowledges(JsonDocument args)
+    private static async Task<string> GetKnowledgesAsync(JsonDocument args)
     {
         var query = args.RootElement.GetProperty("query").GetString()!;
-        var results = MemoryManager.GetKnowledge(query);
+        var results = await MemoryManager.GetKnowledgeAsync(query);
         if (results.Length == 0)
         {
             return "未找到相关知识";
@@ -277,7 +277,7 @@ public static class MCPSelfBuiltinTools
     /// 获取图片的文本描述。如果缓存中已有描述则直接返回，
     /// 否则调用视觉模型生成描述。
     /// </summary>
-    private static string DescribeImage(JsonDocument args)
+    private static async Task<string> DescribeImageAsync(JsonDocument args)
     {
         var hash = args.RootElement.GetProperty("hash").GetString()!;
         var extraPrompt = args.RootElement.TryGetProperty("extraPrompt", out var ep)
@@ -305,7 +305,7 @@ public static class MCPSelfBuiltinTools
         }
 
         // Describe (uses cache if available, otherwise vision model)
-        var desc = ImageScraper.DescribeAsync(filePath, extraPrompt, picture.IsEmoji).Result;
+        var desc = await ImageScraper.DescribeAsync(filePath, extraPrompt, picture.IsEmoji);
         if (desc == null)
         {
             return $"图片描述失败: hash={hash}";

@@ -776,7 +776,7 @@ public static class PipelineMiddlewareExtensions
 
         var history = GetHistory(ctx, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
 
-        var knowledge = MemoryManager.GetKnowledge(ctx.MessageText);
+        var knowledge = await MemoryManager.GetKnowledgeAsync(ctx.MessageText);
 
         var moodText = MoodState.GetMood(ctx.GroupId);
         var scheduleText = Effective(ctx, "EnableSchedules", AppConfig.EnableSchedules)

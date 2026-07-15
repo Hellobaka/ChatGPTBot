@@ -24,11 +24,24 @@ public static class MemoryManager
         {
             CommonHelper.LogInfo?.Invoke("Memory", $"正在连接 Qdrant ({AppConfig.QdrantHost}:{AppConfig.QdrantPort})...");
             Qdrant = new QdrantService();
-            if (Qdrant.CheckHealth())
+            // Fire-and-forget health check and collection creation
+            _ = InitializeQdrantAsync();
+        }
+        else
+        {
+            CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 已禁用 (EnableQdrant=false)");
+        }
+    }
+
+    private static async Task InitializeQdrantAsync()
+    {
+        try
+        {
+            if (await Qdrant!.CheckHealthAsync())
             {
                 CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 连接成功，创建集合...");
-                Qdrant.CreateCollection(QdrantService.KnowledgeCollectionName);
-                Qdrant.CreateCollection(QdrantService.ImageCollectionName);
+                await Qdrant.CreateCollectionAsync(QdrantService.KnowledgeCollectionName);
+                await Qdrant.CreateCollectionAsync(QdrantService.ImageCollectionName);
                 CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 集合就绪");
             }
             else
@@ -37,9 +50,10 @@ public static class MemoryManager
                 Qdrant = null;
             }
         }
-        else
+        catch (Exception ex)
         {
-            CommonHelper.LogInfo?.Invoke("Memory", "Qdrant 已禁用 (EnableQdrant=false)");
+            CommonHelper.LogError?.Invoke("Memory", $"Qdrant 初始化失败: {ex.Message}");
+            Qdrant = null;
         }
     }
 
@@ -47,16 +61,24 @@ public static class MemoryManager
 
     public static void AddKnowledge(string text)
     {
-        Qdrant?.Insert(text, QdrantService.KnowledgeCollectionName);
+        // Fire-and-forget: don't block the caller
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Qdrant?.InsertAsync(text, QdrantService.KnowledgeCollectionName)!;
+            }
+            catch { }
+        });
     }
 
-    public static (string id, string text, DateTime time, float score)[] GetKnowledge(string query)
+    public static async Task<(string id, string text, DateTime time, float score)[]> GetKnowledgeAsync(string query)
     {
         if (Qdrant == null)
         {
             return [];
         }
 
-        return Qdrant.Search(query, QdrantService.KnowledgeCollectionName, AppConfig.MaxMemoryCount).ToArray();
+        return (await Qdrant.SearchAsync(query, QdrantService.KnowledgeCollectionName, AppConfig.MaxMemoryCount)).ToArray();
     }
 }

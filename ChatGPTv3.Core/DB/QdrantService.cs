@@ -29,25 +29,35 @@ public class QdrantService
 
     // ── Collections ──────────────────────────────────────
 
-    public bool CheckHealth()
-    {
-        try { var r = _http.GetAsync($"{_baseUrl}/collections").Result; return r.IsSuccessStatusCode; }
-        catch { return false; }
-    }
-
-    public List<string> GetCollections()
+    public async Task<bool> CheckHealthAsync()
     {
         try
         {
-            var r = _http.GetStringAsync($"{_baseUrl}/collections").Result;
+            var r = await _http.GetAsync($"{_baseUrl}/collections");
+            return r.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<List<string>> GetCollectionsAsync()
+    {
+        try
+        {
+            var r = await _http.GetStringAsync($"{_baseUrl}/collections");
             using var doc = JsonDocument.Parse(r);
             return doc.RootElement.GetProperty("result").GetProperty("collections")
                 .EnumerateArray().Select(c => c.GetProperty("name").GetString()!).ToList();
         }
-        catch { return []; }
+        catch
+        {
+            return [];
+        }
     }
 
-    public bool CreateCollection(string name)
+    public async Task<bool> CreateCollectionAsync(string name)
     {
         try
         {
@@ -56,29 +66,36 @@ public class QdrantService
                 vectors = new { size = AppConfig.MemoryDimensions, distance = "Cosine" }
             });
             var content = new StringContent(body, Encoding.UTF8, "application/json");
-            var r = _http.PutAsync($"{_baseUrl}/collections/{name}", content).Result;
+            var r = await _http.PutAsync($"{_baseUrl}/collections/{name}", content);
             return r.IsSuccessStatusCode || r.StatusCode == System.Net.HttpStatusCode.Conflict;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     // ── Points ───────────────────────────────────────────
 
-    public bool Insert(string text, string collectionName)
+    public async Task<bool> InsertAsync(string text, string collectionName)
     {
-        return InsertWithId(text, collectionName, Guid.NewGuid().ToString());
+        return await InsertWithIdAsync(text, collectionName, Guid.NewGuid().ToString());
     }
 
     /// <summary>
     /// Insert a point with a custom ID (e.g. MD5 hash for idempotent upserts).
     /// </summary>
-    public bool InsertWithId(string text, string collectionName, string pointId)
+    public async Task<bool> InsertWithIdAsync(string text, string collectionName, string pointId)
     {
         try
         {
             CommonHelper.LogInfo?.Invoke("Qdrant", $"插入向量: collection={collectionName} id={pointId} text={text[..Math.Min(text.Length, 50)]}...");
-            var embedding = GetEmbedding(text);
-            if (embedding == null) { CommonHelper.LogWarning?.Invoke("Qdrant", "Embedding 失败"); return false; }
+            var embedding = await GetEmbeddingAsync(text);
+            if (embedding == null)
+            {
+                CommonHelper.LogWarning?.Invoke("Qdrant", "Embedding 失败");
+                return false;
+            }
 
             var payload = new Dictionary<string, object>
             {
@@ -96,7 +113,7 @@ public class QdrantService
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             // Use PUT for upsert (same endpoint, id ensures idempotency)
-            var r = _http.PutAsync($"{_baseUrl}/collections/{collectionName}/points", content).Result;
+            var r = await _http.PutAsync($"{_baseUrl}/collections/{collectionName}/points", content);
             CommonHelper.DebugLog("Qdrant", $"插入结果: {(r.IsSuccessStatusCode ? "成功" : $"失败 HTTP{(int)r.StatusCode}")}");
             return r.IsSuccessStatusCode;
         }
@@ -107,12 +124,12 @@ public class QdrantService
         }
     }
 
-    public List<(string id, string text, DateTime time, float score)> Search(
+    public async Task<List<(string id, string text, DateTime time, float score)>> SearchAsync(
         string query, string collectionName, int limit = 5)
     {
         try
         {
-            var embedding = GetEmbedding(query);
+            var embedding = await GetEmbeddingAsync(query);
             if (embedding == null)
             {
                 return [];
@@ -128,8 +145,8 @@ public class QdrantService
 
             var content = new StringContent(body, Encoding.UTF8, "application/json");
             CommonHelper.LogInfo?.Invoke("Qdrant", $"搜索向量: collection={collectionName}, query={query[..Math.Min(query.Length, 50)]}...");
-            var r = _http.PostAsync($"{_baseUrl}/collections/{collectionName}/points/search", content).Result;
-            var json = r.Content.ReadAsStringAsync().Result;
+            var r = await _http.PostAsync($"{_baseUrl}/collections/{collectionName}/points/search", content);
+            var json = await r.Content.ReadAsStringAsync();
 
             using var doc = JsonDocument.Parse(json);
             var results = new List<(string, string, DateTime, float)>();
@@ -154,9 +171,9 @@ public class QdrantService
 
     // ── Embedding ────────────────────────────────────────
 
-    private float[]? GetEmbedding(string text)
+    private static async Task<float[]?> GetEmbeddingAsync(string text)
     {
         // Use EmbeddingService — may call OpenAI or configured embedding API
-        return Api.EmbeddingService.GetEmbeddingsAsync(text).Result;
+        return await Api.EmbeddingService.GetEmbeddingsAsync(text, AppConfig.MemoryDimensions);
     }
 }

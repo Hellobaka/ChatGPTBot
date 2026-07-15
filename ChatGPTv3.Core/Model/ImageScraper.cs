@@ -18,6 +18,73 @@ public static class ImageScraper
     public const string EmojiPrompt = "这是一个表情包，使用中文简洁的描述一下表情包的内容和表情包所表达的情感。";
 
     /// <summary>
+    /// Force re-description of an image via the vision model, bypassing the cache.
+    /// Updates the cached <see cref="Picture"/> in the database on success.
+    /// </summary>
+    /// <param name="filePath">Absolute path to the image file.</param>
+    /// <param name="extraPrompt">Optional extra instructions appended to the base prompt.</param>
+    /// <returns>The new description, or null if the vision model call failed.</returns>
+    public static async Task<string?> RedescribeAsync(string filePath, string? extraPrompt = null)
+    {
+        if (!File.Exists(filePath))
+        {
+            return null;
+        }
+
+        var hash = ComputeMD5(filePath);
+        if (string.IsNullOrEmpty(hash))
+        {
+            return null;
+        }
+
+        var prompt = !string.IsNullOrEmpty(extraPrompt)
+            ? $"{PicturePrompt}\n额外要求：{extraPrompt}"
+            : PicturePrompt;
+
+        var keys = AppConfig.ImageDescriberApiKeyId;
+        if (keys.Count == 0)
+        {
+            return null;
+        }
+
+        var description = await CallVisionModel(keys, prompt, filePath);
+
+        if (string.IsNullOrEmpty(description))
+        {
+            return null;
+        }
+
+        // Update the cached picture
+        var picture = Picture.FindByHash(hash);
+        if (picture != null)
+        {
+            picture.Description = description.Trim();
+            picture.LastUsedAt = DateTime.Now;
+            Picture.Upsert(picture);
+        }
+        else
+        {
+            Picture.Upsert(new Picture
+            {
+                Md5 = hash,
+                FilePath = filePath,
+                Description = description.Trim(),
+                LastUsedAt = DateTime.Now,
+                Time = DateTime.Now
+            });
+        }
+
+        // Re-index in Qdrant (fire-and-forget)
+        _ = Task.Run(async () =>
+        {
+            try { await MemoryManager.Qdrant?.InsertWithIdAsync(description.Trim(), QdrantService.ImageCollectionName, hash)!; }
+            catch { }
+        });
+
+        return description.Trim();
+    }
+
+    /// <summary>
     /// Describe an image file using a vision model.
     /// Returns null if the image can't be read or the vision model fails.
     /// </summary>
@@ -47,9 +114,9 @@ public static class ImageScraper
             Picture.Upsert(cached);
 
             // Ensure Qdrant has this (may have been lost on restart)
-            _ = Task.Run(() =>
+            _ = Task.Run(async () =>
             {
-                try { MemoryManager.Qdrant?.InsertWithId(cached.Description, QdrantService.ImageCollectionName, hash); }
+                try { await MemoryManager.Qdrant?.InsertWithIdAsync(cached.Description, QdrantService.ImageCollectionName, hash)!; }
                 catch { }
             });
 
@@ -86,9 +153,9 @@ public static class ImageScraper
         });
 
         // ── Index in Qdrant for semantic search (fire-and-forget) ──
-        _ = Task.Run(() =>
+        _ = Task.Run(async () =>
         {
-            try { MemoryManager.Qdrant?.InsertWithId(description, QdrantService.ImageCollectionName, hash); }
+            try { await MemoryManager.Qdrant?.InsertWithIdAsync(description, QdrantService.ImageCollectionName, hash)!; }
             catch { /* embedding failure shouldn't block */ }
         });
 

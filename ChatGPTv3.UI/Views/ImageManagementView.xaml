@@ -1,0 +1,323 @@
+<UserControl
+    x:Class="ChatGPTv3.UI.Views.ImageManagementView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:ChatGPTv3.UI.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels"
+    d:DesignHeight="600"
+    d:DesignWidth="900"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <conv:InvertBoolToVisibilityConverter x:Key="InvBoolToVis" />
+        <conv:NotNullToVisibilityConverter x:Key="NotNullToVis" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!--  ── Title + Toolbar ──  -->
+        <Border
+            Grid.Row="0"
+            Margin="0,0,0,8"
+            Padding="12,10"
+            Background="{DynamicResource RegionBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="图片管理" />
+
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="16,0"
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal">
+
+                    <!--  Search box  -->
+                    <TextBox
+                        Width="220"
+                        Margin="0,0,8,0"
+                        VerticalContentAlignment="Center"
+                        hc:InfoElement.Placeholder="搜索描述 / 情绪 / MD5"
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding ApplyFilterCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <!--  Emoji filter  -->
+                    <CheckBox
+                        Margin="0,0,16,0"
+                        VerticalAlignment="Center"
+                        Content="仅表情"
+                        IsChecked="{Binding ShowEmojiOnly, Mode=TwoWay}" />
+
+                    <!--  Apply filter button  -->
+                    <Button
+                        Padding="12,4"
+                        Command="{Binding ApplyFilterCommand}"
+                        Content="筛选"
+                        Style="{StaticResource ButtonDefault}" />
+                </StackPanel>
+
+                <!--  Right side buttons  -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button
+                        Margin="0,0,8,0"
+                        Padding="12,4"
+                        Command="{Binding OpenBatchImportCommand}"
+                        Content="批量导入"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        Margin="0,0,8,0"
+                        Padding="12,4"
+                        Command="{Binding OpenRebuildEmbeddingsCommand}"
+                        Content="重建向量索引"
+                        Style="{StaticResource ButtonDefault}" />
+                    <Button
+                        Padding="12,4"
+                        Command="{Binding ReloadCommand}"
+                        Content="刷新"
+                        Style="{StaticResource ButtonPrimary}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!--  ── Summary bar ──  -->
+        <Border
+            Grid.Row="1"
+            Margin="0,0,0,8"
+            Padding="12,8"
+            Background="{DynamicResource SecondaryRegionBrush}"
+            CornerRadius="6">
+            <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}">
+                <Run Text="共 " />
+                <Run Text="{Binding Pictures.Count, Mode=OneWay}" />
+                <Run Text=" 张图片" />
+                <Run Text="  |  " />
+                <Run Text="选中仅表情时筛选表情图片" />
+            </TextBlock>
+        </Border>
+
+        <!--  ── DataGrid ──  -->
+        <DataGrid
+            Grid.Row="2"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserDeleteRows="False"
+            CanUserReorderColumns="False"
+            CanUserResizeColumns="True"
+            CanUserSortColumns="True"
+            HeadersVisibility="Column"
+            IsReadOnly="True"
+            ItemsSource="{Binding Pictures}"
+            RowHeight="52"
+            SelectionMode="Single">
+
+            <DataGrid.ColumnHeaderStyle>
+                <Style BasedOn="{StaticResource DataGridColumnHeaderStyle.Small}" TargetType="DataGridColumnHeader">
+                    <Setter Property="Padding" Value="8,6" />
+                    <Setter Property="FontSize" Value="12" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
+
+            <DataGrid.CellStyle>
+                <Style BasedOn="{StaticResource DataGridCellStyle.Small}" TargetType="DataGridCell">
+                    <Setter Property="Padding" Value="4,0" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridCell">
+                                <Border Padding="{TemplateBinding Padding}" Background="Transparent">
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.CellStyle>
+
+            <DataGrid.Columns>
+                <!--  Thumbnail  -->
+                <DataGridTemplateColumn Width="64" Header="预览">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border
+                                Width="48"
+                                Height="48"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource RegionBrush}" />
+                                    </Style>
+                                </Border.Style>
+                                <Grid>
+                                    <!--  Image thumbnail  -->
+                                    <Image
+                                        Source="{Binding Thumbnail}"
+                                        Stretch="Uniform"
+                                        Visibility="{Binding Thumbnail, Converter={StaticResource NotNullToVis}}" />
+                                    <!--  Placeholder icon  -->
+                                    <iconPacks:PackIconMaterialDesign
+                                        Width="24"
+                                        Height="24"
+                                        Foreground="{DynamicResource SecondaryTextBrush}"
+                                        Kind="ImageNotSupported"
+                                        Visibility="{Binding FileExists, Converter={StaticResource InvBoolToVis}}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  MD5  -->
+                <DataGridTextColumn
+                    Width="90"
+                    Binding="{Binding Md5Short}"
+                    Header="MD5" />
+
+                <!--  Description  -->
+                <DataGridTemplateColumn Width="*" Header="描述">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock
+                                MaxWidth="360"
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                Text="{Binding Description}"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap"
+                                ToolTip="{Binding Description}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  Time  -->
+                <DataGridTextColumn
+                    Width="130"
+                    Binding="{Binding TimeDisplay}"
+                    Header="创建时间" />
+
+                <!--  UseCount  -->
+                <DataGridTextColumn
+                    Width="80"
+                    Binding="{Binding UseCount}"
+                    Header="使用次数" />
+
+                <!--  IsEmoji badge  -->
+                <DataGridTemplateColumn Width="60" Header="类型">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border
+                                Padding="4,2"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                CornerRadius="3">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsEmoji}" Value="True">
+                                                <Setter Property="Background" Value="#3A6A4A" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsEmoji}" Value="False">
+                                                <Setter Property="Background" Value="#3A4A6A" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="11" Foreground="#CDE0F4">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEmoji}" Value="True">
+                                                    <Setter Property="Text" Value="表情" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsEmoji}" Value="False">
+                                                    <Setter Property="Text" Value="图片" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  Edit button  -->
+                <DataGridTemplateColumn Width="50" Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Cursor="Hand"
+                                ToolTip="编辑描述">
+                                <iconPacks:PackIconMaterialDesign
+                                    Width="16"
+                                    Height="16"
+                                    Foreground="{DynamicResource PrimaryTextBrush}"
+                                    Kind="Edit" />
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!--  Delete button  -->
+                <DataGridTemplateColumn Width="50" Header="">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                CommandParameter="{Binding}"
+                                Cursor="Hand"
+                                ToolTip="删除图片">
+                                <iconPacks:PackIconMaterialDesign
+                                    Width="16"
+                                    Height="16"
+                                    Foreground="{DynamicResource DangerTextBrush}"
+                                    Kind="Delete" />
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

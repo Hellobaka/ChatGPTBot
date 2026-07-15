@@ -6,9 +6,10 @@ namespace ChatGPTv3.Core.Api;
 
 public static class EmbeddingService
 {
-    // TODO: 添加图片Embedding获取支持
     public static async Task<float[]?> GetEmbeddingsAsync(
-        string text, CancellationToken ct = default)
+        string text,
+        int? dimensions = null,
+        CancellationToken ct = default)
     {
         // Prefer dedicated embedding key, fall back to chat key
         var keys = AppConfig.EmbeddingApiKeyId;
@@ -49,7 +50,7 @@ public static class EmbeddingService
             };
 
             using var client = new OpenAiChatClient(options);
-            var result = await client.GetEmbeddingsAsync(text, model, ct);
+            var result = await client.GetEmbeddingsAsync(text, model, dimensions, ct);
 
             CommonHelper.LogInfo?.Invoke("Embedding", $"成功: dims={result?.Length}");
             return result;

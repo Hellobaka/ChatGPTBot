@@ -27,9 +27,6 @@ public class Picture
     [SugarColumn(ColumnDataType = "text")]
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>Emotion tags extracted from the image.</summary>
-    public string Emotions { get; set; } = string.Empty;
-
     /// <summary>Download URL for the image (from QQ).</summary>
     public string Url { get; set; } = string.Empty;
 
@@ -40,6 +37,7 @@ public class Picture
     public bool IsDeleted { get; set; }
 
     /// <summary>Last time this image was used (for cleanup policy).</summary>
+    [SugarColumn(IsNullable = true)]
     public DateTime? LastUsedAt { get; set; }
 
     /// <summary>Creation/insertion time.</summary>
@@ -68,7 +66,7 @@ public class Picture
 
         // ── Step 1: Broad recall from Qdrant ──
         int recallCount = AppConfig.EnableRerank ? topK * 5 : topK;
-        var results = MemoryManager.Qdrant.Search(emotion, QdrantService.ImageCollectionName, recallCount);
+        var results = await MemoryManager.Qdrant.SearchAsync(emotion, QdrantService.ImageCollectionName, recallCount);
         if (results.Count == 0)
         {
             return [];
@@ -119,6 +117,32 @@ public class Picture
         else
         {
             picture.Id = db.Insertable(picture).ExecuteReturnIdentity();
+        }
+    }
+
+    /// <summary>
+    /// Query all non-deleted pictures ordered by Id descending.
+    /// </summary>
+    public static List<Picture> GetActive()
+    {
+        using var db = SQLiteManager.GetInstance();
+        return db.Queryable<Picture>()
+            .Where(p => !p.IsDeleted)
+            .OrderByDescending(p => p.Id)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Soft-delete a picture by setting IsDeleted = true.
+    /// </summary>
+    public static void Delete(string md5)
+    {
+        using var db = SQLiteManager.GetInstance();
+        var picture = db.Queryable<Picture>().First(p => p.Md5 == md5.ToUpper());
+        if (picture != null)
+        {
+            picture.IsDeleted = true;
+            db.Updateable(picture).ExecuteCommand();
         }
     }
 }

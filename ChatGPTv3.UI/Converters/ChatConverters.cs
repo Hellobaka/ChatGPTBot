@@ -150,3 +150,33 @@ public class PageIndexConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => value is int i ? Math.Max(0, i - 1) : 0;
 }
+
+/// <summary>null → Collapsed, non-null → Visible.</summary>
+public class NotNullToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value != null ? Visibility.Visible : Visibility.Collapsed;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public class ImportStatusColorConverter : IValueConverter
+{
+    private static readonly SolidColorBrush PendingBrush = new(Color.FromRgb(150, 150, 150));
+    private static readonly SolidColorBrush SuccessBrush = new(Color.FromRgb(76, 175, 80));
+    private static readonly SolidColorBrush DuplicateBrush = new(Color.FromRgb(255, 152, 0));
+    private static readonly SolidColorBrush FailedBrush = new(Color.FromRgb(244, 67, 54));
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value as string switch
+        {
+            "已导入" => SuccessBrush,
+            "重复" => DuplicateBrush,
+            "失败" => FailedBrush,
+            _ => PendingBrush
+        };
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
