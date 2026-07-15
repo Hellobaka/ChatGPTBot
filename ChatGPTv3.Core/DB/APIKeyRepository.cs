@@ -28,18 +28,42 @@ public static class APIKeyRepository
         else
         {
             db.Updateable(key).ExecuteCommand();
-            db.Deleteable<LLMModelConfig>().Where(x => x.APIKeyId == key.Id).ExecuteCommand();
         }
 
+        // Upsert models by (APIKeyId, Name) — preserve existing PKs so PurposeBinding stays valid.
+        var existing = db.Queryable<LLMModelConfig>()
+            .Where(x => x.APIKeyId == key.Id)
+            .ToList();
+        var existingByName = existing.ToDictionary(x => x.Name, StringComparer.Ordinal);
+        var incomingNames = new HashSet<string>(models.Select(x => x.Name), StringComparer.Ordinal);
+
+        // Delete models no longer present
+        var toDelete = existing.Where(x => !incomingNames.Contains(x.Name)).ToList();
+        if (toDelete.Count > 0)
+        {
+            db.Deleteable(toDelete).ExecuteCommand();
+        }
+
+        // Insert new, update existing
+        var toInsert = new List<LLMModelConfig>();
         foreach (var model in models)
         {
-            model.Id = 0;
             model.APIKeyId = key.Id;
+            if (existingByName.TryGetValue(model.Name, out var existingModel))
+            {
+                model.Id = existingModel.Id;
+                db.Updateable(model).ExecuteCommand();
+            }
+            else
+            {
+                model.Id = 0;
+                toInsert.Add(model);
+            }
         }
 
-        if (models.Count > 0)
+        if (toInsert.Count > 0)
         {
-            db.Insertable(models).ExecuteCommand();
+            db.Insertable(toInsert).ExecuteCommand();
         }
 
         key.AvailableModels = models;
