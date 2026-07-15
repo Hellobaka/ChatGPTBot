@@ -44,29 +44,8 @@ public partial class ChatTestView : UserControl
         }
     }
 
-    private void OnAutoCompletePreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is AutoCompleteTextBox autoComplete && autoComplete.Items.Count > 0)
-        {
-            autoComplete.IsDropDownOpen = true;
-        }
-    }
-
     private void ScrollChatToEnd()
     {
         ChatScroll.ScrollToEnd();
-    }
-
-    private void OnClearQqClick(object sender, RoutedEventArgs e)
-    {
-        VM.ClearQQCommand.Execute(null);
-        QQAutoComplete.SelectedItem = null;
-        QQAutoComplete.Text = string.Empty;
-
-        // AutoCompleteTextBox keeps display text in internal PART_SearchTextBox
-        if (QQAutoComplete.Template?.FindName("PART_SearchTextBox", QQAutoComplete) is System.Windows.Controls.TextBox innerBox)
-        {
-            innerBox.Text = string.Empty;
-        }
     }
 }

@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Regex = System.Text.RegularExpressions.Regex;
@@ -72,6 +73,9 @@ public partial class ChatTestViewModel : ViewModelBase
         System.Text.RegularExpressions.RegexOptions.Compiled |
         System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+    private static string PersistPath => Path.Combine(
+        MockAppApi.Instance.GetAppDirectory(), "chat_test_state.json");
+
     // Full pipelines for testing (same as production)
     private static readonly Func<ChatContext, Task> TestGroupPipeline = new ChatPipelineBuilder()
         .UseAccessControl()
@@ -105,11 +109,16 @@ public partial class ChatTestViewModel : ViewModelBase
     private readonly List<string> _sendHistory = [];
     private readonly Dispatcher _uiDispatcher;
 
-    [ObservableProperty]
-    private string _groupSearchText = string.Empty;
-
     private string? _historyDraft;
     private int _historyIndex = -1;
+    private long _lastGroupId;
+    private long _lastQQ;
+
+    [ObservableProperty]
+    private string _groupIdText = string.Empty;
+
+    [ObservableProperty]
+    private string _qqText = string.Empty;
 
     [ObservableProperty]
     private bool _isPrivateMode;
@@ -121,63 +130,26 @@ public partial class ChatTestViewModel : ViewModelBase
     private string _messageText = "";
 
     [ObservableProperty]
-    private string _qqSearchText = string.Empty;
-
-    [ObservableProperty]
     private GroupItem? _selectedGroup;
 
     [ObservableProperty]
     private FriendItem? _selectedQQ;
 
-    private bool _suppressFilter;
+    public bool HasPendingImages => PendingImages.Count > 0;
+
+    public bool HasQQSelected => SelectedQQ != null;
+
+    public ObservableCollection<ChatBubbleItem> Messages { get; } = [];
+
+    public ObservableCollection<PendingImage> PendingImages { get; } = [];
 
     public ChatTestViewModel()
     {
         _uiDispatcher = System.Windows.Application.Current?.Dispatcher
                         ?? Dispatcher.CurrentDispatcher;
+        LoadPersistedState();
         LoadGroupCandidates();
         ReloadQQCandidates();
-    }
-
-    // ── AutoComplete candidates (dynamic) ──────────────────
-    public ObservableCollection<GroupItem> GroupCandidates { get; } = [];
-
-    public bool HasPendingImages => PendingImages.Count > 0;
-
-    public bool HasQQSelected => SelectedQQ != null || !string.IsNullOrEmpty(QqSearchText);
-
-    public ObservableCollection<ChatBubbleItem> Messages { get; } = [];
-
-    // ── Images ─────────────────────────────────────────────
-    public ObservableCollection<PendingImage> PendingImages { get; } = [];
-
-    public ObservableCollection<FriendItem> QQCandidates { get; } = [];
-
-    public void HistoryDown()
-    {
-        if (_historyIndex == -1)
-        {
-            return;
-        }
-
-        if (_historyIndex < _sendHistory.Count - 1) { _historyIndex++; MessageText = _sendHistory[_historyIndex]; }
-        else { _historyIndex = -1; MessageText = _historyDraft ?? ""; _historyDraft = null; }
-    }
-
-    public void HistoryUp()
-    {
-        if (_sendHistory.Count == 0)
-        {
-            return;
-        }
-
-        if (_historyIndex == -1) { _historyDraft = MessageText; _historyIndex = _sendHistory.Count - 1; }
-        else if (_historyIndex > 0)
-        {
-            _historyIndex--;
-        }
-
-        MessageText = _sendHistory[_historyIndex];
     }
 
     private static void AppendParsedTextAndMentions(Message message, string text)
@@ -225,22 +197,11 @@ public partial class ChatTestViewModel : ViewModelBase
             : $"（消息未被处理）\n{failedReport}";
     }
 
-    private static string ComputeMD5(string filePath)
+    private static byte[] ComputeMD5(string filePath)
     {
         using var md5 = MD5.Create();
         using var stream = File.OpenRead(filePath);
-        var hash = md5.ComputeHash(stream);
-        return BitConverter.ToString(hash).Replace("-", "").ToUpperInvariant();
-    }
-
-    private static IEnumerable<T> FilterItems<T>(IEnumerable<T> source, string? keyword, Func<T, bool> predicate)
-    {
-        if (string.IsNullOrWhiteSpace(keyword))
-        {
-            return source;
-        }
-
-        return source.Where(predicate);
+        return md5.ComputeHash(stream);
     }
 
     private static BitmapImage? LoadPreview(string path)
@@ -257,15 +218,6 @@ public partial class ChatTestViewModel : ViewModelBase
             return bmp;
         }
         catch { return null; }
-    }
-
-    private static void ReplaceCollection<T>(ObservableCollection<T> target, IEnumerable<T> values)
-    {
-        target.Clear();
-        foreach (var value in values)
-        {
-            target.Add(value);
-        }
     }
 
     [RelayCommand]
@@ -293,7 +245,8 @@ public partial class ChatTestViewModel : ViewModelBase
                 continue;
             }
 
-            var hash = ComputeMD5(path);
+            var hashBytes = ComputeMD5(path);
+            var hash = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
             var preview = LoadPreview(path);
             PendingImages.Add(new PendingImage
             {
@@ -312,61 +265,11 @@ public partial class ChatTestViewModel : ViewModelBase
         AddFiles(isEmoji: false);
     }
 
-    private void AutoSelectDefaultQQ()
-    {
-        if (SelectedQQ == null && _allQQCandidates.Count > 0)
-        {
-            _suppressFilter = true;
-            QqSearchText = string.Empty;
-            FilterQQCandidates(string.Empty);
-            if (QQCandidates.Count > 0)
-            {
-                SelectedQQ = QQCandidates[0];
-            }
-            QqSearchText = string.Empty;
-            _suppressFilter = false;
-        }
-    }
-
     [RelayCommand]
     private void ClearImages()
     {
         PendingImages.Clear();
         OnPropertyChanged(nameof(HasPendingImages));
-    }
-
-    [RelayCommand]
-    private void ClearQQ()
-    {
-        SelectedQQ = null;
-        QqSearchText = string.Empty;
-        FilterQQCandidates(string.Empty);
-    }
-
-    private void FilterGroupCandidates(string? keyword)
-    {
-        ReplaceCollection(GroupCandidates, FilterItems(_allGroupCandidates, keyword, item =>
-            item.Display.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            || item.Id.ToString().Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            || item.Name.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)));
-
-        if (SelectedGroup != null && !GroupCandidates.Any(x => x.Id == SelectedGroup.Id))
-        {
-            SelectedGroup = GroupCandidates.FirstOrDefault();
-        }
-    }
-
-    private void FilterQQCandidates(string? keyword)
-    {
-        ReplaceCollection(QQCandidates, FilterItems(_allQQCandidates, keyword, item =>
-            item.Display.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            || item.Id.ToString().Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)
-            || item.Name.Contains(keyword ?? string.Empty, StringComparison.OrdinalIgnoreCase)));
-
-        if (SelectedQQ != null && !QQCandidates.Any(x => x.Id == SelectedQQ.Id))
-        {
-            SelectedQQ = QQCandidates.FirstOrDefault();
-        }
     }
 
     [RelayCommand]
@@ -390,7 +293,6 @@ public partial class ChatTestViewModel : ViewModelBase
 
     private void LoadGroupCandidates()
     {
-        GroupCandidates.Clear();
         _allGroupCandidates.Clear();
         try
         {
@@ -400,11 +302,22 @@ public partial class ChatTestViewModel : ViewModelBase
                 _allGroupCandidates.Add(new GroupItem { Id = g.Group, Name = g.Name ?? "" });
             }
 
-            FilterGroupCandidates(GroupSearchText);
-
-            if (!IsPrivateMode && SelectedGroup == null && GroupCandidates.Count > 0)
+            if (!IsPrivateMode && _lastGroupId > 0)
             {
-                SelectedGroup = GroupCandidates[0];
+                var saved = _allGroupCandidates.FirstOrDefault(g => g.Id == _lastGroupId);
+                if (saved != null)
+                {
+                    SelectedGroup = saved;
+                }
+            }
+            else if (!IsPrivateMode && _allGroupCandidates.Count > 0 && SelectedGroup == null)
+            {
+                SelectedGroup = _allGroupCandidates[0];
+            }
+
+            if (_lastGroupId > 0)
+            {
+                GroupIdText = _lastGroupId.ToString();
             }
         }
         catch (Exception ex)
@@ -413,24 +326,10 @@ public partial class ChatTestViewModel : ViewModelBase
         }
     }
 
-    partial void OnGroupSearchTextChanged(string value)
-    {
-        FilterGroupCandidates(value);
-    }
-
     partial void OnIsPrivateModeChanged(bool value)
     {
         SelectedQQ = null;
         ReloadQQCandidates();
-        AutoSelectDefaultQQ();
-    }
-
-    partial void OnQqSearchTextChanged(string value)
-    {
-        if (!_suppressFilter)
-        {
-            FilterQQCandidates(value);
-        }
     }
 
     partial void OnSelectedGroupChanged(GroupItem? value)
@@ -439,7 +338,6 @@ public partial class ChatTestViewModel : ViewModelBase
         if (!IsPrivateMode)
         {
             ReloadQQCandidates();
-            AutoSelectDefaultQQ();
         }
     }
 
@@ -448,10 +346,170 @@ public partial class ChatTestViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasQQSelected));
     }
 
-    /// <summary>
-    /// Copy pending images into the framework image directory and build Image message items.
-    /// The middleware (UseMessageImageResolver → ImageScraper) handles description + Picture caching.
-    /// </summary>
+    [RelayCommand]
+    private void RefreshHistory()
+    {
+        Messages.Clear();
+    }
+
+    [RelayCommand]
+    private void RefreshQQCandidates()
+    {
+        ReloadQQCandidates();
+        RefreshHistory();
+    }
+
+    private void ReloadQQCandidates()
+    {
+        _allQQCandidates.Clear();
+        try
+        {
+            if (IsPrivateMode)
+            {
+                var friends = Entry.ApiFriend?.GetFriendInfos() ?? MockFriendApi.Instance.GetFriendInfos();
+                foreach (var f in friends)
+                {
+                    _allQQCandidates.Add(new FriendItem { Id = f.QQ, Name = f.Nick ?? "" });
+                }
+            }
+            else if (SelectedGroup != null)
+            {
+                var members = Entry.ApiGroup?.GetGroupMembers(SelectedGroup.Id) ?? MockGroupApi.Instance.GetGroupMembers(SelectedGroup.Id);
+                foreach (var m in members)
+                {
+                    var name = !string.IsNullOrWhiteSpace(m.Card) ? m.Card : (m.Nick ?? "");
+                    _allQQCandidates.Add(new FriendItem { Id = m.QQ, Name = name });
+                }
+            }
+
+            // Auto-select saved QQ
+            if (_lastQQ > 0)
+            {
+                var saved = _allQQCandidates.FirstOrDefault(f => f.Id == _lastQQ);
+                if (saved != null)
+                {
+                    SelectedQQ = saved;
+                }
+            }
+            else if (_allQQCandidates.Count > 0 && SelectedQQ == null)
+            {
+                SelectedQQ = _allQQCandidates[0];
+            }
+
+            if (_lastQQ > 0)
+            {
+                QqText = _lastQQ.ToString();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"加载QQ列表失败: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void RemoveImage(PendingImage? image)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        PendingImages.Remove(image);
+        OnPropertyChanged(nameof(HasPendingImages));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Input history (up/down arrow navigation)
+    // ═══════════════════════════════════════════════════════════
+
+    public void HistoryDown()
+    {
+        if (_historyIndex == -1) { return; }
+
+        if (_historyIndex < _sendHistory.Count - 1)
+        {
+            _historyIndex++;
+            MessageText = _sendHistory[_historyIndex];
+        }
+        else
+        {
+            _historyIndex = -1;
+            MessageText = _historyDraft ?? "";
+            _historyDraft = null;
+        }
+    }
+
+    public void HistoryUp()
+    {
+        if (_sendHistory.Count == 0) { return; }
+
+        if (_historyIndex == -1)
+        {
+            _historyDraft = MessageText;
+            _historyIndex = _sendHistory.Count - 1;
+        }
+        else if (_historyIndex > 0)
+        {
+            _historyIndex--;
+        }
+
+        MessageText = _sendHistory[_historyIndex];
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Persistence
+    // ═══════════════════════════════════════════════════════════
+
+    private void LoadPersistedState()
+    {
+        try
+        {
+            if (File.Exists(PersistPath))
+            {
+                var json = File.ReadAllText(PersistPath);
+                var state = JsonSerializer.Deserialize<ChatTestState>(json);
+                if (state != null)
+                {
+                    _lastGroupId = state.LastGroupId;
+                    _lastQQ = state.LastQQ;
+                    if (state.SendHistory != null)
+                    {
+                        _sendHistory.AddRange(state.SendHistory);
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+
+    private void SavePersistedState()
+    {
+        try
+        {
+            var state = new ChatTestState
+            {
+                LastGroupId = _lastGroupId,
+                LastQQ = _lastQQ,
+                SendHistory = _sendHistory
+            };
+            var json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(PersistPath, json);
+        }
+        catch { }
+    }
+
+    private record ChatTestState
+    {
+        public long LastGroupId { get; init; }
+        public long LastQQ { get; init; }
+        public List<string>? SendHistory { get; init; }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  Image handling
+    // ═══════════════════════════════════════════════════════════
+
     private List<Image> PrepareImagesForSend()
     {
         var images = new List<Image>();
@@ -482,74 +540,6 @@ public partial class ChatTestViewModel : ViewModelBase
         return images;
     }
 
-    [RelayCommand]
-    private void RefreshHistory()
-    {
-        Messages.Clear();
-    }
-
-    [RelayCommand]
-    private void RefreshQQCandidates()
-    {
-        ReloadQQCandidates();
-        RefreshHistory();
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  Candidate loading
-    // ═══════════════════════════════════════════════════════════
-    /// <summary>
-    /// Reload QQ candidates based on current mode:
-    /// private → friend list, group → members of selected group.
-    /// </summary>
-    private void ReloadQQCandidates()
-    {
-        QQCandidates.Clear();
-        _allQQCandidates.Clear();
-        try
-        {
-            if (IsPrivateMode)
-            {
-                var friends = Entry.ApiFriend?.GetFriendInfos() ?? MockFriendApi.Instance.GetFriendInfos();
-                foreach (var f in friends)
-                {
-                    _allQQCandidates.Add(new FriendItem { Id = f.QQ, Name = f.Nick ?? "" });
-                }
-            }
-            else if (SelectedGroup != null)
-            {
-                var members = Entry.ApiGroup?.GetGroupMembers(SelectedGroup.Id) ?? MockGroupApi.Instance.GetGroupMembers(SelectedGroup.Id);
-                foreach (var m in members)
-                {
-                    var name = !string.IsNullOrWhiteSpace(m.Card) ? m.Card : (m.Nick ?? "");
-                    _allQQCandidates.Add(new FriendItem { Id = m.QQ, Name = name });
-                }
-            }
-
-            FilterQQCandidates(QqSearchText);
-            AutoSelectDefaultQQ();
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"加载QQ列表失败: {ex.Message}";
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  Image handling (does NOT insert Picture table — middleware does)
-    // ═══════════════════════════════════════════════════════════
-    [RelayCommand]
-    private void RemoveImage(PendingImage? image)
-    {
-        if (image == null)
-        {
-            return;
-        }
-
-        PendingImages.Remove(image);
-        OnPropertyChanged(nameof(HasPendingImages));
-    }
-
     // ═══════════════════════════════════════════════════════════
     //  Send
     // ═══════════════════════════════════════════════════════════
@@ -564,20 +554,37 @@ public partial class ChatTestViewModel : ViewModelBase
             return;
         }
 
-        var qq = SelectedQQ?.Id ?? 0;
-        if (qq <= 0)
+        // Parse QQ from text input
+        if (!long.TryParse(QqText.Trim(), out var qq) || qq <= 0)
         {
-            ErrorMessage = "请选择来源QQ";
+            ErrorMessage = "请输入有效的 QQ 号";
             return;
         }
-        var isGroup = !IsPrivateMode && SelectedGroup != null;
-        var groupId = isGroup ? SelectedGroup!.Id : 0;
+
+        // Parse Group ID from text input (for group mode)
+        var isGroup = !IsPrivateMode;
+        long groupId = 0;
+        if (isGroup)
+        {
+            if (!long.TryParse(GroupIdText.Trim(), out groupId) || groupId <= 0)
+            {
+                ErrorMessage = "请输入有效的群号";
+                return;
+            }
+        }
+
+        // Save to history
         if (!string.IsNullOrWhiteSpace(text))
         {
             _sendHistory.Add(text);
             _historyIndex = -1;
             _historyDraft = null;
         }
+
+        // Update last selected
+        _lastGroupId = groupId;
+        _lastQQ = qq;
+        SavePersistedState();
 
         var previewText = string.IsNullOrWhiteSpace(text) ? "[图片]" : text;
         var userBubble = new ChatBubbleItem { Content = previewText, IsSelf = true, Sender = $"QQ: {qq}" };

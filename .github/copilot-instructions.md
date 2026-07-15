@@ -50,3 +50,4 @@ dotnet run --project ChatGPTv3.UI\ChatGPTv3.UI.csproj
 - If you edit prompt generation, keep the fixed `system` prompt cache-friendly and put volatile context into the final user message instead of moving everything into `system`.
 - The WPF panel must run on its own STA thread with its own dispatcher. Reuse the `MenuEntry` pattern instead of opening WPF windows directly on the AMN2 framework UI thread.
 - AMN2 plugin projects require exact package versions and the AMN2 loading properties already used here (`CopyLocalLockFileAssemblies`, `EnableDynamicLoading`). Do not switch to floating package versions when changing project files.
+- **Never commit or push without the user's explicit go-ahead at the moment of committing.** Do not commit proactively or assume permission from prior context.
