@@ -59,9 +59,9 @@ public static class PipelineMiddlewareExtensions
     /// </summary>
     private static T Effective<T>(ChatContext ctx, string key, T globalDefault)
     {
-        if (ctx.GroupConfig != null)
+        if (ctx.OverrideConfig != null)
         {
-            var overrideValue = ctx.GroupConfig.GetConfigValue<T>(key);
+            var overrideValue = ctx.OverrideConfig.GetConfigValue<T>(key);
             if (overrideValue != null)
             {
                 return overrideValue;
@@ -103,10 +103,14 @@ public static class PipelineMiddlewareExtensions
     {
         return builder.Use(async (ctx, next) =>
         {
-            // Load per-group config override early so all downstream middleware can use Effective()
+            // Load per-target config override early so all downstream middleware can use Effective()
             if (ctx.IsGroup)
             {
-                ctx.GroupConfig = GroupConfig.Get(ctx.GroupId);
+                ctx.OverrideConfig = OverrideConfig.Get(ctx.GroupId, true);
+            }
+            else if (ctx.QQ != 0)
+            {
+                ctx.OverrideConfig = OverrideConfig.Get(ctx.QQ, false);
             }
 
             if (string.IsNullOrWhiteSpace(ctx.MessageText) && !HasImage(ctx))
@@ -676,9 +680,8 @@ public static class PipelineMiddlewareExtensions
         }
 
         var botQQ = PromptBuilder.CurrentBotQQ;
-        var groupCfg = ctx.GroupConfig;
-        var effectivePrompt = groupCfg?.GetConfigValue<string>("GroupPrompt") ?? AppConfig.GroupPrompt;
-        var effectiveNicknames = string.Join(",", groupCfg?.GetConfigValue<List<string>>("BotNicknames") ?? AppConfig.BotNicknames);
+        var effectivePrompt = Effective(ctx, "GroupPrompt", AppConfig.GroupPrompt);
+        var effectiveNicknames = string.Join(",", Effective(ctx, "BotNicknames", AppConfig.BotNicknames));
 
         var systemPrompt = PromptBuilder.BuildSystemPrompt(
             Effective(ctx, "BotName", AppConfig.BotName),

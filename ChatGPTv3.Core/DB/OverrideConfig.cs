@@ -3,22 +3,28 @@ using SqlSugar;
 namespace ChatGPTv3.Core.DB;
 
 /// <summary>
-/// Per-group configuration that overrides global AppConfig settings.
-/// ConfigJson stores a full JSON snapshot of all AppConfig entries for this group.
+/// Per-target configuration override (group or private chat) that overrides global AppConfig settings.
+/// ConfigJson stores a full JSON snapshot of all AppConfig entries for this target.
 /// Null = follow global configuration.
 /// </summary>
-[SugarTable("GroupConfig")]
-public class GroupConfig
+[SugarTable("OverrideConfig")]
+public class OverrideConfig
 {
     [SugarColumn(IsPrimaryKey = true, IsIdentity = true)]
     public int Id { get; set; }
 
-    /// <summary>Group ID (unique).</summary>
-    public long GroupID { get; set; }
+    /// <summary>
+    /// Target ID — GroupId when IsGroup=true, QQ number when IsGroup=false.
+    /// </summary>
+    public long TargetId { get; set; }
 
     /// <summary>
-    /// Complete configuration snapshot for this group (JSON).
-    /// When set, all config reads for this group use this snapshot instead of global AppConfig.
+    /// True = group config, False = private chat config.
+    /// </summary>
+    public bool IsGroup { get; set; }
+
+    /// <summary>
+    /// Complete configuration snapshot for this target (JSON).
     /// Null = follow global configuration.
     /// </summary>
     [SugarColumn(ColumnDataType = "text", IsNullable = true)]
@@ -28,31 +34,34 @@ public class GroupConfig
 
     // ── Cache ────────────────────────────────────────────
 
-    private static readonly Dictionary<long, GroupConfig?> Cache = [];
+    private static readonly Dictionary<(long Id, bool IsGroup), OverrideConfig?> Cache = [];
     private static readonly object CacheLock = new();
 
+    private static (long, bool) Key(long targetId, bool isGroup) => (targetId, isGroup);
+
     /// <summary>
-    /// Gets group config (with caching). Returns null if no override exists.
+    /// Gets override config (with caching). Returns null if no override exists.
     /// </summary>
-    public static GroupConfig? Get(long groupId)
+    public static OverrideConfig? Get(long targetId, bool isGroup)
     {
+        var k = Key(targetId, isGroup);
         lock (CacheLock)
         {
-            if (Cache.TryGetValue(groupId, out var cached))
+            if (Cache.TryGetValue(k, out var cached))
             {
                 return cached;
             }
         }
 
         using var db = SQLiteManager.GetInstance();
-        var config = db.Queryable<GroupConfig>()
-            .First(c => c.GroupID == groupId);
+        var config = db.Queryable<OverrideConfig>()
+            .First(c => c.TargetId == targetId && c.IsGroup == isGroup);
 
-        lock (CacheLock) { Cache[groupId] = config; }
+        lock (CacheLock) { Cache[k] = config; }
         return config;
     }
 
-    public static void Save(GroupConfig config)
+    public static void Save(OverrideConfig config)
     {
         config.UpdatedAt = DateTime.Now;
         using var db = SQLiteManager.GetInstance();
@@ -65,30 +74,28 @@ public class GroupConfig
             config.Id = db.Insertable(config).ExecuteReturnIdentity();
         }
 
-        lock (CacheLock) { Cache[config.GroupID] = config; }
+        lock (CacheLock) { Cache[Key(config.TargetId, config.IsGroup)] = config; }
     }
 
-    public static void ClearCache(long groupId)
+    public static void ClearCache(long targetId, bool isGroup)
     {
-        lock (CacheLock) { Cache.Remove(groupId); }
+        lock (CacheLock) { Cache.Remove(Key(targetId, isGroup)); }
     }
 
     /// <summary>
-    /// Returns all groups that have a configuration snapshot.
+    /// Returns all targets that have a configuration snapshot.
     /// </summary>
-    public static List<GroupConfig> GetAllConfigured()
+    public static List<OverrideConfig> GetAllConfigured()
     {
         using var db = SQLiteManager.GetInstance();
-        return db.Queryable<GroupConfig>()
+        return db.Queryable<OverrideConfig>()
             .Where(c => c.ConfigJson != null)
-            .OrderBy(c => c.UpdatedAt)
             .ToList();
     }
 
     /// <summary>
     /// Reads a single config value from the ConfigJson snapshot.
-    /// Returns null if this group has no config snapshot or the key is absent.
-    /// For value types the return is T? (Nullable&lt;T&gt;) so callers can use ?? fallback.
+    /// Returns null if this target has no config snapshot or the key is absent.
     /// </summary>
     public T? GetConfigValue<T>(string key)
     {
@@ -112,12 +119,12 @@ public class GroupConfig
     }
 
     /// <summary>
-    /// Deletes a group configuration, reverting to global defaults.
+    /// Deletes an override configuration, reverting to global defaults.
     /// </summary>
-    public static void Delete(long groupId)
+    public static void Delete(long targetId, bool isGroup)
     {
         using var db = SQLiteManager.GetInstance();
-        db.Deleteable<GroupConfig>().Where(c => c.GroupID == groupId).ExecuteCommand();
-        lock (CacheLock) { Cache.Remove(groupId); }
+        db.Deleteable<OverrideConfig>().Where(c => c.TargetId == targetId && c.IsGroup == isGroup).ExecuteCommand();
+        lock (CacheLock) { Cache.Remove(Key(targetId, isGroup)); }
     }
 }

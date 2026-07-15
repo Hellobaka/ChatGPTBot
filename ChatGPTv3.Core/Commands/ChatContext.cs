@@ -35,7 +35,7 @@ public class ChatContext
     public string MessageText { get; set; } = string.Empty;
 
     /// <summary>Per-group config override (null = follow global AppConfig). Set by UseMessageFilter.</summary>
-    public GroupConfig? GroupConfig { get; set; }
+    public OverrideConfig? OverrideConfig { get; set; }
 
     /// <summary>For sending replies — group or private.</summary>
     public Func<string, Task>? SendFunc { get; set; }

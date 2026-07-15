@@ -21,28 +21,28 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  ── Group Selector Bar ──  -->
+        <!--  ── Target Selector Bar ──  -->
         <Border Grid.Row="0" Margin="0,0,0,8" Padding="10,8"
             Background="{DynamicResource RegionBrush}" BorderBrush="{DynamicResource BorderBrush}"
             BorderThickness="1" CornerRadius="6">
             <StackPanel Orientation="Horizontal">
-                <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" Text="配置目标:" />
+                <TextBlock VerticalAlignment="Center" Margin="0,0,10,0" Text="配置:" />
                 <ComboBox
-                    Width="200"
-                    ItemsSource="{Binding Groups}"
-                    SelectedItem="{Binding SelectedGroup, Mode=TwoWay}"
+                    Width="260"
+                    ItemsSource="{Binding Targets}"
+                    SelectedItem="{Binding SelectedTarget, Mode=TwoWay}"
                     DisplayMemberPath="DisplayText" />
                 <Button
                     Margin="10,0,6,0"
                     Width="30"
                     Content="+"
-                    Command="{Binding AddGroupConfigCommand}"
+                    Command="{Binding AddTargetConfigCommand}"
                     Style="{StaticResource ButtonDefault}" />
                 <Button
                     Width="30"
                     Content="✕"
-                    Command="{Binding DeleteGroupConfigCommand}"
-                    Visibility="{Binding IsGroupSelected, Converter={StaticResource BoolToVis}}"
+                    Command="{Binding DeleteTargetConfigCommand}"
+                    Visibility="{Binding IsTargetSelected, Converter={StaticResource BoolToVis}}"
                     Style="{StaticResource ButtonDefault}" />
             </StackPanel>
         </Border>

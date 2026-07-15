@@ -8,6 +8,7 @@ using HandyControl.Controls;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.Windows;
+using Another_Mirai_Native.Abstractions.Models;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -198,9 +199,10 @@ public class ConfigTab(string name, string icon, List<ConfigSection> sections)
     public List<ConfigSection> Sections { get; } = sections;
 }
 
-public partial class ConfigGroupItem : ObservableObject
+public partial class ConfigTargetItem : ObservableObject
 {
-    public long GroupId { get; init; }
+    public long TargetId { get; init; }
+    public bool IsGroup { get; init; }
 
     private string _displayText = string.Empty;
     public string DisplayText
@@ -209,31 +211,29 @@ public partial class ConfigGroupItem : ObservableObject
         set => SetProperty(ref _displayText, value);
     }
 
-    public GroupConfig? Config { get; set; }
+    public OverrideConfig? Config { get; set; }
 }
 
 public partial class ConfigurationViewModel : ViewModelBase
 {
     public ObservableCollection<ConfigTab> Tabs { get; } = [];
 
-    public ObservableCollection<ConfigGroupItem> Groups { get; } = [];
+    public ObservableCollection<ConfigTargetItem> Targets { get; } = [];
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsGroupSelected))]
-    [NotifyPropertyChangedFor(nameof(GroupSelectorText))]
-    private ConfigGroupItem? _selectedGroup;
-
-    public bool IsGroupSelected => SelectedGroup is { GroupId: > 0 };
+    private ConfigTargetItem? _selectedTarget;
 
     [ObservableProperty]
     private int _configVersion;
 
-    partial void OnSelectedGroupChanged(ConfigGroupItem? value)
+    public bool IsTargetSelected => SelectedTarget is { TargetId: > 0 };
+
+    public string TargetSelectorText => SelectedTarget?.DisplayText ?? "无配置";
+
+    partial void OnSelectedTargetChanged(ConfigTargetItem? value)
     {
         LoadAll();
     }
-
-    public string GroupSelectorText => SelectedGroup?.DisplayText ?? "全局默认配置";
 
     public ConfigurationViewModel()
     {
@@ -446,31 +446,55 @@ public partial class ConfigurationViewModel : ViewModelBase
             new ConfigSection("内容过滤", filter),
         ]));
 
-        // Initialize per-group configurations
-        // Global sentinel
-        Groups.Add(new ConfigGroupItem { GroupId = 0, DisplayText = "全局默认配置" });
+        BuildTargets();
+        SelectedTarget = Targets[0];
+    }
 
-        var configured = GroupConfig.GetAllConfigured();
-        foreach (var gc in configured)
+    private void BuildTargets()
+    {
+        Targets.Clear();
+        Targets.Add(new ConfigTargetItem { TargetId = 0, IsGroup = true, DisplayText = "全局默认配置" });
+
+        var configured = OverrideConfig.GetAllConfigured().ToList();
+
+        // Groups first, then private
+        foreach (var oc in configured.Where(c => c.IsGroup))
         {
-            var item = new ConfigGroupItem { GroupId = gc.GroupID, DisplayText = $"群 {gc.GroupID}", Config = gc };
-            Groups.Add(item);
-            // Async name resolution — display-only, no persistence
-            _ = ResolveGroupNameAsync(item);
+            var item = new ConfigTargetItem
+            {
+                TargetId = oc.TargetId,
+                IsGroup = true,
+                DisplayText = $"群 {oc.TargetId}",
+                Config = oc
+            };
+            Targets.Add(item);
+            _ = ResolveTargetNameAsync(item);
         }
 
-        SelectedGroup = Groups[0];
+        foreach (var oc in configured.Where(c => !c.IsGroup))
+        {
+            var item = new ConfigTargetItem
+            {
+                TargetId = oc.TargetId,
+                IsGroup = false,
+                DisplayText = $"QQ {oc.TargetId}",
+                Config = oc
+            };
+            Targets.Add(item);
+            _ = ResolveTargetNameAsync(item);
+        }
     }
 
     private void LoadAll()
     {
-        var isGroupMode = SelectedGroup is { GroupId: > 0 };
+        var isTargetMode = SelectedTarget is { TargetId: > 0 };
         Dictionary<string, object>? overrides = null;
-        if (SelectedGroup?.Config?.ConfigJson != null)
+
+        if (isTargetMode && SelectedTarget?.Config?.ConfigJson != null)
         {
             try
             {
-                overrides = JsonSerializer.Deserialize<Dictionary<string, object>>(SelectedGroup.Config.ConfigJson);
+                overrides = JsonSerializer.Deserialize<Dictionary<string, object>>(SelectedTarget.Config.ConfigJson);
             }
             catch { }
         }
@@ -481,8 +505,7 @@ public partial class ConfigurationViewModel : ViewModelBase
             {
                 foreach (var entry in section.Items)
                 {
-                    // Mark read-only entries as disabled in group mode
-                    entry.IsDisabled = isGroupMode && entry.IsGroupReadOnly;
+                    entry.IsDisabled = isTargetMode && entry.IsGroupReadOnly;
 
                     if (overrides != null && overrides.TryGetValue(entry.Key, out var v) && v is JsonElement je)
                     {
@@ -521,9 +544,9 @@ public partial class ConfigurationViewModel : ViewModelBase
     [RelayCommand]
     private void SaveAll()
     {
-        if (SelectedGroup is { GroupId: > 0 })
+        if (SelectedTarget is { TargetId: > 0 })
         {
-            SaveGroupConfig();
+            SaveTargetConfig();
             return;
         }
 
@@ -544,9 +567,9 @@ public partial class ConfigurationViewModel : ViewModelBase
         HandyControl.Controls.Growl.Success("配置已保存");
     }
 
-    private void SaveGroupConfig()
+    private void SaveTargetConfig()
     {
-        if (SelectedGroup is not { GroupId: > 0 })
+        if (SelectedTarget is not { TargetId: > 0 })
         {
             return;
         }
@@ -560,7 +583,6 @@ public partial class ConfigurationViewModel : ViewModelBase
                 {
                     if (entry.Value != null)
                     {
-                        // Convert back to the original type so JSON values are numbers/booleans, not strings
                         var v = CoerceToDefaultType(entry.Value, entry.DefaultValue);
                         if (v != null)
                         {
@@ -571,16 +593,19 @@ public partial class ConfigurationViewModel : ViewModelBase
             }
         }
 
-        var config = SelectedGroup.Config ?? new GroupConfig { GroupID = SelectedGroup.GroupId };
+        var config = SelectedTarget.Config ?? new OverrideConfig
+        {
+            TargetId = SelectedTarget.TargetId,
+            IsGroup = SelectedTarget.IsGroup
+        };
         config.ConfigJson = JsonSerializer.Serialize(snapshot);
-        GroupConfig.Save(config);
-
-        // Re-read fresh from DB to ensure Cache is current
-        GroupConfig.ClearCache(SelectedGroup.GroupId);
-        SelectedGroup.Config = GroupConfig.Get(SelectedGroup.GroupId) ?? config;
+        OverrideConfig.Save(config);
+        OverrideConfig.ClearCache(SelectedTarget.TargetId, SelectedTarget.IsGroup);
+        SelectedTarget.Config = OverrideConfig.Get(SelectedTarget.TargetId, SelectedTarget.IsGroup) ?? config;
         LoadAll();
 
-        HandyControl.Controls.Growl.Success($"已保存群 {SelectedGroup.GroupId} 的配置");
+        var label = SelectedTarget.IsGroup ? "群" : "私聊";
+        HandyControl.Controls.Growl.Success($"已保存{label} {SelectedTarget.TargetId} 的配置");
     }
 
     private static object? CoerceToDefaultType(object? value, object? defaultValue)
@@ -646,17 +671,21 @@ public partial class ConfigurationViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void AddGroupConfig()
+    private void AddTargetConfig()
     {
-        var dialog = new GroupConfigInputDialog { Owner = GetActiveWindow() };
+        var dialog = new OverrideConfigInputDialog { Owner = GetActiveWindow() };
         dialog.ShowDialog();
-        if (dialog.GroupId == null)
+        if (dialog.TargetId == null)
         {
             return;
         }
 
-        var groupId = dialog.GroupId.Value;
-        if (Groups.Any(g => g.GroupId == groupId)) { Growl.Warning("该群已有配置"); return; }
+        var targetId = dialog.TargetId.Value;
+        if (Targets.Any(t => t.TargetId == targetId && t.IsGroup == dialog.IsGroup))
+        {
+            Growl.Warning("该目标已有配置");
+            return;
+        }
 
         // Clone current global config as starting point
         var snapshot = new Dictionary<string, object>();
@@ -674,51 +703,72 @@ public partial class ConfigurationViewModel : ViewModelBase
             }
         }
 
-        var config = new GroupConfig
+        var config = new OverrideConfig
         {
-            GroupID = groupId,
+            TargetId = targetId,
+            IsGroup = dialog.IsGroup,
             ConfigJson = JsonSerializer.Serialize(snapshot)
         };
-        GroupConfig.Save(config);
-        var item = new ConfigGroupItem { GroupId = groupId, DisplayText = $"群 {groupId}", Config = config };
-        Groups.Add(item);
-        SelectedGroup = item;
+        OverrideConfig.Save(config);
+        var item = new ConfigTargetItem
+        {
+            TargetId = targetId,
+            IsGroup = dialog.IsGroup,
+            DisplayText = dialog.IsGroup ? $"群 {targetId}" : $"QQ {targetId}",
+            Config = config
+        };
+        Targets.Add(item);
+        SelectedTarget = item;
         LoadAll();
-        _ = ResolveGroupNameAsync(item);
-        Growl.Success($"已为群 {groupId} 创建配置");
+        _ = ResolveTargetNameAsync(item);
+        var label = dialog.IsGroup ? "群" : "私聊";
+        Growl.Success($"已为{label} {targetId} 创建配置");
     }
 
     [RelayCommand]
-    private void DeleteGroupConfig()
+    private void DeleteTargetConfig()
     {
-        if (SelectedGroup == null)
+        if (SelectedTarget == null)
         {
             return;
         }
+        var label = SelectedTarget.IsGroup ? "群" : "私聊";
         var result = HandyControl.Controls.MessageBox.Show(
-            $"确定要删除群 {SelectedGroup.GroupId} 的配置吗？该群将恢复使用全局默认配置。",
+            $"确定要删除{label} {SelectedTarget.TargetId} 的配置吗？该目标将恢复使用全局默认配置。",
             "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (result != MessageBoxResult.Yes)
         {
             return;
         }
 
-        var groupId = SelectedGroup.GroupId;
-        GroupConfig.Delete(groupId);
-        Groups.Remove(SelectedGroup);
-        SelectedGroup = null;
+        var targetId = SelectedTarget.TargetId;
+        OverrideConfig.Delete(targetId, SelectedTarget.IsGroup);
+        Targets.Remove(SelectedTarget);
+        SelectedTarget = null;
         LoadAll();
-        Growl.Success($"已删除群 {groupId} 的配置");
+        Growl.Success($"已删除{label} {targetId} 的配置");
     }
 
-    private static async Task ResolveGroupNameAsync(ConfigGroupItem item)
+    private static async Task ResolveTargetNameAsync(ConfigTargetItem item)
     {
         try
         {
-            var info = await Task.Run(() => Core.Entry.ApiGroup?.GetGroupInfo(item.GroupId));
-            if (info != null && !string.IsNullOrEmpty(info.Name))
+            if (item.IsGroup)
             {
-                item.DisplayText = $"{info.Name} ({item.GroupId})";
+                var info = await Task.Run(() => Core.Entry.ApiGroup?.GetGroupInfo(item.TargetId));
+                if (info != null && !string.IsNullOrEmpty(info.Name))
+                {
+                    item.DisplayText = $"{info.Name} ({item.TargetId})";
+                }
+            }
+            else
+            {
+                var friends = await Task.Run(() => Core.Entry.ApiFriend?.GetFriendInfos());
+                var info = friends?.FirstOrDefault(f => f.QQ == item.TargetId);
+                if (info != null && !string.IsNullOrEmpty(info.Nick))
+                {
+                    item.DisplayText = $"{info.Nick} ({item.TargetId})";
+                }
             }
         }
         catch
