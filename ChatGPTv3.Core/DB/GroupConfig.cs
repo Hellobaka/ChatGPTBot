@@ -87,7 +87,8 @@ public class GroupConfig
 
     /// <summary>
     /// Reads a single config value from the ConfigJson snapshot.
-    /// Returns the value if this group has a config snapshot and the key exists, null otherwise.
+    /// Returns null if this group has no config snapshot or the key is absent.
+    /// For value types the return is T? (Nullable&lt;T&gt;) so callers can use ?? fallback.
     /// </summary>
     public T? GetConfigValue<T>(string key)
     {

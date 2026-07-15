@@ -1,3 +1,4 @@
+using ChatGPTv3.Core;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.UI.Views;
@@ -26,6 +27,19 @@ public partial class ConfigEntry : ObservableObject
     public bool IsList { get; init; }
 
     public bool IsPresetSelector { get; init; }
+
+    /// <summary>
+    /// When true, this entry is read-only in group config mode because the pipeline
+    /// reads it from global AppConfig only (access control runs before group config is loaded).
+    /// </summary>
+    public bool IsGroupReadOnly { get; init; }
+
+    /// <summary>
+    /// Computed: true when a group config is selected AND this entry is group-read-only.
+    /// Set by ConfigurationViewModel.LoadAll() each time the group selection changes.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isDisabled;
 
     [ObservableProperty]
     private string? _presetValue = null;
@@ -187,7 +201,14 @@ public class ConfigTab(string name, string icon, List<ConfigSection> sections)
 public partial class ConfigGroupItem : ObservableObject
 {
     public long GroupId { get; init; }
-    public string DisplayText { get; init; } = string.Empty;
+
+    private string _displayText = string.Empty;
+    public string DisplayText
+    {
+        get => _displayText;
+        set => SetProperty(ref _displayText, value);
+    }
+
     public GroupConfig? Config { get; set; }
 }
 
@@ -221,8 +242,8 @@ public partial class ConfigurationViewModel : ViewModelBase
         {
             new() { Key = "BotName", Label = "机器人名称", DefaultValue = "ChatGPT" },
             new() { Key = "BotNicknames", Label = "机器人昵称", DefaultValue = new List<string>{"ChatGPT"}, IsList = true },
-            new() { Key = "MasterQQ", Label = "主人QQ", DefaultValue = new List<long>(), IsList = true },
-            new() { Key = "EnableGroupReply", Label = "启用群聊回复", DefaultValue = false },
+            new() { Key = "MasterQQ", Label = "主人QQ", DefaultValue = new List<long>(), IsList = true, IsGroupReadOnly = true },
+            new() { Key = "EnableGroupReply", Label = "启用群聊回复", DefaultValue = false, IsGroupReadOnly = true },
         };
         var general = new ObservableCollection<ConfigEntry>
         {
@@ -230,7 +251,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var debug = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "DebugMode", Label = "调试模式", DefaultValue = false },
+            new() { Key = "DebugMode", Label = "调试模式", DefaultValue = false, IsGroupReadOnly = true },
         };
         Tabs.Add(new ConfigTab("基本设置", "Cog",
         [
@@ -247,7 +268,7 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "ChatTimeout", Label = "对话超时 (ms)", DefaultValue = 30000 },
             new() { Key = "StreamMode", Label = "流式输出", DefaultValue = true },
             new() { Key = "GroupPrompt", Label = "群聊系统提示词", DefaultValue = "", IsMultiline = true },
-            new() { Key = "PrivatePrompt", Label = "私聊系统提示词", DefaultValue = "", IsMultiline = true },
+            new() { Key = "PrivatePrompt", Label = "私聊系统提示词", DefaultValue = "", IsMultiline = true, IsGroupReadOnly = true },
         };
         var timeouts = new ObservableCollection<ConfigEntry>
         {
@@ -265,10 +286,10 @@ public partial class ConfigurationViewModel : ViewModelBase
         // ── Tab 3: 权限控制 ──
         var perm = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "IsGroupBlackList", Label = "群列表为黑名单模式", DefaultValue = false },
-            new() { Key = "IsPersonBlackList", Label = "个人列表为黑名单模式", DefaultValue = false },
-            new() { Key = "GroupList", Label = "群号列表", DefaultValue = new List<long>(), IsList = true },
-            new() { Key = "PersonList", Label = "个人QQ列表", DefaultValue = new List<long>(), IsList = true },
+            new() { Key = "IsGroupBlackList", Label = "群列表为黑名单模式", DefaultValue = false, IsGroupReadOnly = true },
+            new() { Key = "IsPersonBlackList", Label = "个人列表为黑名单模式", DefaultValue = false, IsGroupReadOnly = true },
+            new() { Key = "GroupList", Label = "群号列表", DefaultValue = new List<long>(), IsList = true, IsGroupReadOnly = true },
+            new() { Key = "PersonList", Label = "个人QQ列表", DefaultValue = new List<long>(), IsList = true, IsGroupReadOnly = true },
             new() { Key = "Filters", Label = "消息过滤关键字", DefaultValue = new List<string>{"[CQ:", "&#"}, IsList = true },
         };
         Tabs.Add(new ConfigTab("权限控制", "Lock",
@@ -341,9 +362,9 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var qdrant = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "QdrantHost", Label = "Qdrant 主机地址", DefaultValue = "localhost" },
-            new() { Key = "QdrantPort", Label = "Qdrant 端口", DefaultValue = (ushort)6333 },
-            new() { Key = "QdrantAPIKey", Label = "Qdrant API Key", DefaultValue = "" },
+            new() { Key = "QdrantHost", Label = "Qdrant 主机地址", DefaultValue = "localhost", IsGroupReadOnly = true },
+            new() { Key = "QdrantPort", Label = "Qdrant 端口", DefaultValue = (ushort)6333, IsGroupReadOnly = true },
+            new() { Key = "QdrantAPIKey", Label = "Qdrant API Key", DefaultValue = "", IsGroupReadOnly = true },
         };
         var rerank = new ObservableCollection<ConfigEntry>
         {
@@ -352,8 +373,8 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var tencent = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "TencentSecretId", Label = "腾讯云 SecretId", DefaultValue = "" },
-            new() { Key = "TencentSecretKey", Label = "腾讯云 SecretKey", DefaultValue = "" },
+            new() { Key = "TencentSecretId", Label = "腾讯云 SecretId", DefaultValue = "", IsGroupReadOnly = true },
+            new() { Key = "TencentSecretKey", Label = "腾讯云 SecretKey", DefaultValue = "", IsGroupReadOnly = true },
         };
         Tabs.Add(new ConfigTab("视觉与接口", "Eye",
         [
@@ -396,7 +417,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var relation = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "RelationshipUpdateTime", Label = "关系值更新间隔 (天)", DefaultValue = 7 },
+            new() { Key = "RelationshipUpdateTime", Label = "关系值更新间隔 (天)", DefaultValue = 7, IsGroupReadOnly = true },
         };
         Tabs.Add(new ConfigTab("记忆与计划", "Calendar",
         [
@@ -432,7 +453,10 @@ public partial class ConfigurationViewModel : ViewModelBase
         var configured = GroupConfig.GetAllConfigured();
         foreach (var gc in configured)
         {
-            Groups.Add(new ConfigGroupItem { GroupId = gc.GroupID, DisplayText = $"群 {gc.GroupID}", Config = gc });
+            var item = new ConfigGroupItem { GroupId = gc.GroupID, DisplayText = $"群 {gc.GroupID}", Config = gc };
+            Groups.Add(item);
+            // Async name resolution — display-only, no persistence
+            _ = ResolveGroupNameAsync(item);
         }
 
         SelectedGroup = Groups[0];
@@ -440,6 +464,7 @@ public partial class ConfigurationViewModel : ViewModelBase
 
     private void LoadAll()
     {
+        var isGroupMode = SelectedGroup is { GroupId: > 0 };
         Dictionary<string, object>? overrides = null;
         if (SelectedGroup?.Config?.ConfigJson != null)
         {
@@ -456,6 +481,9 @@ public partial class ConfigurationViewModel : ViewModelBase
             {
                 foreach (var entry in section.Items)
                 {
+                    // Mark read-only entries as disabled in group mode
+                    entry.IsDisabled = isGroupMode && entry.IsGroupReadOnly;
+
                     if (overrides != null && overrides.TryGetValue(entry.Key, out var v) && v is JsonElement je)
                     {
                         entry.Value = entry.DefaultValue switch
@@ -656,6 +684,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         Groups.Add(item);
         SelectedGroup = item;
         LoadAll();
+        _ = ResolveGroupNameAsync(item);
         Growl.Success($"已为群 {groupId} 创建配置");
     }
 
@@ -680,6 +709,22 @@ public partial class ConfigurationViewModel : ViewModelBase
         SelectedGroup = null;
         LoadAll();
         Growl.Success($"已删除群 {groupId} 的配置");
+    }
+
+    private static async Task ResolveGroupNameAsync(ConfigGroupItem item)
+    {
+        try
+        {
+            var info = await Task.Run(() => Core.Entry.ApiGroup?.GetGroupInfo(item.GroupId));
+            if (info != null && !string.IsNullOrEmpty(info.Name))
+            {
+                item.DisplayText = $"{info.Name} ({item.GroupId})";
+            }
+        }
+        catch
+        {
+            // Keep numeric fallback
+        }
     }
 
     private static readonly Dictionary<string, Dictionary<string, object>> Presets = new()

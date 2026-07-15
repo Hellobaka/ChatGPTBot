@@ -63,6 +63,19 @@ public partial class ConfigurationView : UserControl
             _ => BuildTextBox(entry),
         };
 
+        // Bind IsEnabled to IsDisabled so group-read-only entries are visually disabled
+        editor.SetBinding(UIElement.IsEnabledProperty, new Binding("IsDisabled")
+        {
+            Converter = new InvertBoolConverter(),
+            Mode = BindingMode.OneWay
+        });
+
+        if (entry.IsGroupReadOnly)
+        {
+            ToolTipService.SetToolTip(editor,
+                new ToolTip { Content = "此配置属于全局设置，群独立配置无法覆盖" });
+        }
+
         Grid.SetColumn(editor, 1);
         grid.Children.Add(editor);
         return grid;

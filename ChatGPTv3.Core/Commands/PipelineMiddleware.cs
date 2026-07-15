@@ -53,6 +53,25 @@ public static class PipelineMiddlewareExtensions
         });
     }
 
+    /// <summary>
+    /// Reads a config value, preferring the group override if available.
+    /// Falls back to the global default when no group config exists or the key is absent.
+    /// </summary>
+    private static T Effective<T>(ChatContext ctx, string key, T globalDefault)
+    {
+        if (ctx.GroupConfig != null)
+        {
+            var overrideValue = ctx.GroupConfig.GetConfigValue<T>(key);
+            if (overrideValue != null)
+            {
+                return overrideValue;
+            }
+        }
+        return globalDefault;
+    }
+
+    // ── Access control (global only) ───────────────────────
+
     public static ChatPipelineBuilder UseAccessControl(this ChatPipelineBuilder builder)
     {
         return builder.Use(async (ctx, next) =>
@@ -84,6 +103,12 @@ public static class PipelineMiddlewareExtensions
     {
         return builder.Use(async (ctx, next) =>
         {
+            // Load per-group config override early so all downstream middleware can use Effective()
+            if (ctx.IsGroup)
+            {
+                ctx.GroupConfig = GroupConfig.Get(ctx.GroupId);
+            }
+
             if (string.IsNullOrWhiteSpace(ctx.MessageText) && !HasImage(ctx))
             {
                 ctx.Trace("MessageFilter", false, "消息为空且不含图片");
@@ -126,7 +151,7 @@ public static class PipelineMiddlewareExtensions
             try
             {
                 // ── Debounce: wait, but if a newer version arrives, cancel ──
-                var debounceMs = AppConfig.MessageDebounceMs;
+                var debounceMs = Effective(ctx, "MessageDebounceMs", AppConfig.MessageDebounceMs);
                 if (debounceMs > 0)
                 {
                     try
@@ -186,7 +211,7 @@ public static class PipelineMiddlewareExtensions
         return builder.Use(async (ctx, next) =>
         {
             ctx.IsMentioned = CheckAtBot(GetMessage(ctx));
-            ctx.ContainsNickname = CheckNickname(ctx.MessageText);
+            ctx.ContainsNickname = CheckNickname(ctx, ctx.MessageText);
             ctx.IsImageOnly = HasImage(ctx) && string.IsNullOrWhiteSpace(ctx.MessageText);
             ctx.IsReplyToBot = CheckReplyToBot(GetMessage(ctx), ctx.GroupId);
             ctx.HasQuestion = ctx.MessageText.Contains('?') || ctx.MessageText.Contains('？');
@@ -198,15 +223,17 @@ public static class PipelineMiddlewareExtensions
                 ctx.HasQuestion, fromSamePerson, ctx.IsImageOnly, ctx.QQ);
 
             // LLM-based check
-            if (AppConfig.EnableLLMCheckShouldResponse && !ctx.IsMentioned)
+            if (Effective(ctx, "EnableLLMCheckShouldResponse", AppConfig.EnableLLMCheckShouldResponse) && !ctx.IsMentioned)
             {
-                var history = ChatRecord.GetGroupHistory(ctx.GroupId, AppConfig.ContextMaxLength);
+                var history = ChatRecord.GetGroupHistory(ctx.GroupId, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
                 var recentTexts = history
                     .Select(r => $"[{r.NickName}]: {r.ParsedMessage}")
                     .ToList();
 
                 (bool shouldResponse, double confidence, string reasoning) = await ReplyManager.CheckByLLM(
-                    AppConfig.BotName, AppConfig.BotNicknames, PromptBuilder.CurrentBotQQ, recentTexts);
+                    Effective(ctx, "BotName", AppConfig.BotName),
+                    Effective(ctx, "BotNicknames", AppConfig.BotNicknames),
+                    PromptBuilder.CurrentBotQQ, recentTexts);
                 if (!shouldResponse)
                 {
                     ctx.Trace("ReplyDecision", false, $"LLM认为不应该回复，置信度: {confidence}");
@@ -273,8 +300,8 @@ public static class PipelineMiddlewareExtensions
             }
 
             // ── Decision: should we describe images? ──
-            var shouldDescribe = AppConfig.EnableVision
-                && (!AppConfig.EnableVisionWhenMentioned || ctx.IsMentioned);
+            var shouldDescribe = Effective(ctx, "EnableVision", AppConfig.EnableVision)
+                && (!Effective(ctx, "EnableVisionWhenMentioned", AppConfig.EnableVisionWhenMentioned) || ctx.IsMentioned);
 
             var parts = new List<string>();
             if (!string.IsNullOrWhiteSpace(ctx.MessageText))
@@ -284,7 +311,7 @@ public static class PipelineMiddlewareExtensions
 
             foreach (var image in images)
             {
-                if (!shouldDescribe || (AppConfig.IgnoreNotEmoji && !image.IsEmoji))
+                if (!shouldDescribe || (Effective(ctx, "IgnoreNotEmoji", AppConfig.IgnoreNotEmoji) && !image.IsEmoji))
                 {
                     parts.Add("[图片]");
                     continue;
@@ -498,7 +525,7 @@ public static class PipelineMiddlewareExtensions
                     {
                         GroupID = ctx.GroupId,
                         QQ = PromptBuilder.CurrentBotQQ,
-                        NickName = AppConfig.BotName,
+                        NickName = Effective(ctx, "BotName", AppConfig.BotName),
                         Message = ctx.FallbackReply,
                         ParsedMessage = ctx.FallbackReply,
                         SenderType = SenderType.Assistant,
@@ -513,7 +540,7 @@ public static class PipelineMiddlewareExtensions
                         {
                             GroupID = ctx.GroupId,
                             QQ = PromptBuilder.CurrentBotQQ,
-                            NickName = AppConfig.BotName,
+                            NickName = Effective(ctx, "BotName", AppConfig.BotName),
                             Message = text,
                             ParsedMessage = text,
                             SenderType = SenderType.Assistant,
@@ -548,7 +575,7 @@ public static class PipelineMiddlewareExtensions
                 {
                     GroupID = ctx.GroupId,
                     QQ = PromptBuilder.CurrentBotQQ,
-                    NickName = AppConfig.BotName,
+                    NickName = Effective(ctx, "BotName", AppConfig.BotName),
                     SenderType = SenderType.Assistant,
                     ParsedMessage = string.Empty,
                     HasToolCalls = true,
@@ -599,14 +626,15 @@ public static class PipelineMiddlewareExtensions
         return msg.MessageChain.OfType<At>().Any(a => a.Target == botQQ || a.AllTarget);
     }
 
-    private static bool CheckNickname(string text)
+    private static bool CheckNickname(ChatContext ctx, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return false;
         }
 
-        return AppConfig.BotNicknames.Any(n =>
+        var nicknames = Effective(ctx, "BotNicknames", AppConfig.BotNicknames);
+        return nicknames.Any(n =>
             !string.IsNullOrEmpty(n) && text.Contains(n, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -648,20 +676,23 @@ public static class PipelineMiddlewareExtensions
         }
 
         var botQQ = PromptBuilder.CurrentBotQQ;
-        var groupCfg = GroupConfig.Get(ctx.GroupId);
+        var groupCfg = ctx.GroupConfig;
         var effectivePrompt = groupCfg?.GetConfigValue<string>("GroupPrompt") ?? AppConfig.GroupPrompt;
         var effectiveNicknames = string.Join(",", groupCfg?.GetConfigValue<List<string>>("BotNicknames") ?? AppConfig.BotNicknames);
 
         var systemPrompt = PromptBuilder.BuildSystemPrompt(
-            AppConfig.BotName, effectiveNicknames, botQQ,
-            AppConfig.ChatEmptyResponse, string.Join(",", AppConfig.MasterQQ), effectivePrompt);
+            Effective(ctx, "BotName", AppConfig.BotName),
+            effectiveNicknames, botQQ,
+            Effective(ctx, "ChatEmptyResponse", AppConfig.ChatEmptyResponse),
+            string.Join(",", Effective(ctx, "MasterQQ", AppConfig.MasterQQ)),
+            effectivePrompt);
 
-        var history = ChatRecord.GetGroupHistory(ctx.GroupId, AppConfig.ContextMaxLength);
+        var history = ChatRecord.GetGroupHistory(ctx.GroupId, Effective(ctx, "ContextMaxLength", AppConfig.ContextMaxLength));
 
         var knowledge = MemoryManager.GetKnowledge(ctx.MessageText);
 
         var moodText = MoodState.GetMood(ctx.GroupId);
-        var scheduleText = AppConfig.EnableSchedules
+        var scheduleText = Effective(ctx, "EnableSchedules", AppConfig.EnableSchedules)
             ? SchedulerManager.Instance?.GetCurrentSchedule(DateTime.Now)
             : null;
         var diaryText = DiaryMemoryManager.GetDiaryContext(ctx.GroupId);
@@ -723,7 +754,7 @@ public static class PipelineMiddlewareExtensions
 
         // ── MCP tool setup ──
         ToolExecutor? toolExecutor = null;
-        if (AppConfig.EnableMCP)
+        if (Effective(ctx, "EnableMCP", AppConfig.EnableMCP))
         {
             var mcpCtx = new MCPToolContext
             {
@@ -745,7 +776,7 @@ public static class PipelineMiddlewareExtensions
         var chatService = new ChatService();
         var response = await chatService.GetChatResultAsync(
             keys, messages, ChatService.Purpose.聊天,
-            timeout: AppConfig.ChatTimeout, toolExecutor: toolExecutor,
+            timeout: Effective(ctx, "ChatTimeout", AppConfig.ChatTimeout), toolExecutor: toolExecutor,
             cancellationToken: ctx.CancellationToken,
             onIntermediateText: async text =>
             {
@@ -777,9 +808,9 @@ public static class PipelineMiddlewareExtensions
             return EventHandleResult.Block;
         }
 
-        if (response.Contains(AppConfig.ChatEmptyResponse))
+        if (response.Contains(Effective(ctx, "ChatEmptyResponse", AppConfig.ChatEmptyResponse)))
         {
-            response = response.Replace(AppConfig.ChatEmptyResponse, "").Trim();
+            response = response.Replace(Effective(ctx, "ChatEmptyResponse", AppConfig.ChatEmptyResponse), "").Trim();
             if (string.IsNullOrWhiteSpace(response))
             {
                 ctx.Trace("ChatService", false, "模型选择保持沉默");
@@ -813,7 +844,7 @@ public static class PipelineMiddlewareExtensions
         ChatService chatService, string response)
     {
         var abnormalReason = chatService.LastAbnormalFinishReason;
-        if (AppConfig.UseLLMContentFilterFallback)
+        if (Effective(ctx, "UseLLMContentFilterFallback", AppConfig.UseLLMContentFilterFallback))
         {
             var hint = abnormalReason switch
             {
@@ -830,17 +861,17 @@ public static class PipelineMiddlewareExtensions
             var deflectionService = new ChatService();
             var deflection = await deflectionService.GetChatResultAsync(
                 keys, deflectionMessages, ChatService.Purpose.聊天,
-                timeout: AppConfig.ChatTimeout);
+                timeout: Effective(ctx, "ChatTimeout", AppConfig.ChatTimeout));
             if (deflection != ChatService.ErrorMessage && !string.IsNullOrWhiteSpace(deflection))
             {
                 await ctx.SendFunc!(deflection);
                 ctx.FallbackReply = deflection;
             }
         }
-        else if (AppConfig.ContentFilterFallbacks.Count > 0)
+        else if (Effective(ctx, "ContentFilterFallbacks", AppConfig.ContentFilterFallbacks).Count > 0)
         {
-            var fallback = AppConfig.ContentFilterFallbacks[
-                CommonHelper.Next(0, AppConfig.ContentFilterFallbacks.Count)];
+            var fallbacks = Effective(ctx, "ContentFilterFallbacks", AppConfig.ContentFilterFallbacks);
+            var fallback = fallbacks[CommonHelper.Next(0, fallbacks.Count)];
             await ctx.SendFunc!(fallback);
             ctx.FallbackReply = fallback;
         }
@@ -927,11 +958,11 @@ public static class PipelineMiddlewareExtensions
     /// </summary>
     private static async Task<string> SendReplyWithEmoji(ChatContext ctx, string response)
     {
-        var activeSend = AppConfig.EnableEmojiActiveSend && response.Contains("<@Emoji");
+        var activeSend = Effective(ctx, "EnableEmojiActiveSend", AppConfig.EnableEmojiActiveSend) && response.Contains("<@Emoji");
         var displayText = new System.Text.StringBuilder();
 
         // ── Level 1: Splitter for pacing ──
-        var segments = AppConfig.EnableSplitter
+        var segments = Effective(ctx, "EnableSplitter", AppConfig.EnableSplitter)
             ? new Splitter(response).Split()
             : [response];
 

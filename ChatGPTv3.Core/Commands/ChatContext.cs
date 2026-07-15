@@ -1,5 +1,6 @@
 using Another_Mirai_Native.Abstractions.Context;
 using Another_Mirai_Native.Abstractions.Enums;
+using ChatGPTv3.Core.DB;
 
 namespace ChatGPTv3.Core.Commands;
 
@@ -32,6 +33,9 @@ public class ChatContext
     public long QQ => IsGroup ? GroupCtx!.FromQQ.Id : PrivateCtx!.FromQQ.Id;
 
     public string MessageText { get; set; } = string.Empty;
+
+    /// <summary>Per-group config override (null = follow global AppConfig). Set by UseMessageFilter.</summary>
+    public GroupConfig? GroupConfig { get; set; }
 
     /// <summary>For sending replies — group or private.</summary>
     public Func<string, Task>? SendFunc { get; set; }
