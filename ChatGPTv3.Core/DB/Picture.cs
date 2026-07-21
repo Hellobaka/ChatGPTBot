@@ -1,6 +1,7 @@
 using ChatGPTv3.Core.Api;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Model;
+using ChatGPTv3.Core.Utilities;
 using SqlSugar;
 
 namespace ChatGPTv3.Core.DB;
@@ -87,6 +88,15 @@ public class Picture
             return [];
         }
 
+        // ── Apply MinEmojiRecommendScore filter ──
+        var minScore = (float)AppConfig.MinEmojiRecommendScore;
+        candidates = candidates.Where(c => c.score >= minScore).ToList();
+
+        if (candidates.Count == 0)
+        {
+            return [];
+        }
+
         // ── Step 2: Rerank (if enabled) ──
         if (AppConfig.EnableRerank && candidates.Count > topK)
         {
@@ -143,6 +153,27 @@ public class Picture
         {
             picture.IsDeleted = true;
             db.Updateable(picture).ExecuteCommand();
+        }
+    }
+
+    /// <summary>
+    /// Delete non-emoji pictures older than the specified period.
+    /// </summary>
+    public static void DeleteNonEmoji(TimeSpan expire)
+    {
+        using var db = SQLiteManager.GetInstance();
+        var cutoff = DateTime.Now - expire;
+        var pics = db.Queryable<Picture>()
+            .Where(p => !p.IsEmoji && !p.IsDeleted && p.Time < cutoff)
+            .ToList();
+        foreach (var pic in pics)
+        {
+            pic.IsDeleted = true;
+            db.Updateable(pic).ExecuteCommand();
+        }
+        if (pics.Count > 0)
+        {
+            CommonHelper.LogInfo?.Invoke("Picture", $"清理非表情包 {pics.Count} 条（>{expire.Days}天）");
         }
     }
 }

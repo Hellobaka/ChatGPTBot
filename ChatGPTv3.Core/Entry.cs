@@ -22,6 +22,7 @@ public class Entry : PluginBase
 {
     private SchedulerManager? _schedulerManager;
     private ScheduledTaskRunner? _taskRunner;
+    private Timer? _cleanupTimer;
 
     internal static IMessageApi? MessageApi { get; set; }
 
@@ -160,6 +161,34 @@ public class Entry : PluginBase
                 }
 
                 API.Logger.Info("ChatGPTv3", "所有子系统初始化完成");
+
+                // ── Non-emoji cleanup timer (daily at 02:00) ──
+                var now = DateTime.Now;
+                var nextRun = now.Date.AddDays(now.Hour >= 2 ? 1 : 0).AddHours(2);
+                var timeToGo = nextRun - now;
+                if (timeToGo <= TimeSpan.Zero) { timeToGo = TimeSpan.Zero; }
+
+                _cleanupTimer = new Timer(_ =>
+                {
+                    try
+                    {
+                        var days = AppConfig.NonEmojiPictureSaveDays;
+                        if (days > 0)
+                        {
+                            Picture.DeleteNonEmoji(TimeSpan.FromDays(days));
+                        }
+
+                        // Reschedule for next day at 02:00
+                        var n = DateTime.Now;
+                        var nr = n.Date.AddDays(n.Hour >= 2 ? 1 : 0).AddHours(2);
+                        _cleanupTimer!.Change(nr - n, Timeout.InfiniteTimeSpan);
+                    }
+                    catch (Exception ex)
+                    {
+                        API.Logger.Error("ChatGPTv3", $"清理非表情包失败: {ex.Message}");
+                    }
+                }, null, timeToGo, Timeout.InfiniteTimeSpan);
+                API.Logger.Info("ChatGPTv3", $"非表情包清理定时任务已启动（{AppConfig.NonEmojiPictureSaveDays}天）");
             }
             catch (Exception ex)
             {

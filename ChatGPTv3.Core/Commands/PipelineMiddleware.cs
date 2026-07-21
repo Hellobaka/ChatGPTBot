@@ -143,6 +143,17 @@ public static class PipelineMiddlewareExtensions
                 ctx.Result = EventHandleResult.Pass;
                 return;
             }
+
+            // ── Filter: skip messages containing filter keywords ──
+            var filters = Effective(ctx, "Filters", AppConfig.Filters);
+            if (filters.Count > 0 && !string.IsNullOrWhiteSpace(ctx.MessageText)
+                && filters.Any(f => ctx.MessageText.Contains(f)))
+            {
+                ctx.Trace("MessageFilter", false, $"命中过滤关键字");
+                ctx.Result = EventHandleResult.Pass;
+                return;
+            }
+
             ctx.Trace("MessageFilter", true, "消息内容有效");
             await next();
         });
@@ -1093,14 +1104,83 @@ public static class PipelineMiddlewareExtensions
             }
         }
 
+        // ── Passive emoji send (v2 behavior): after reply, randomly send emoji ──
+        await PassiveSendEmoji(ctx, displayText.ToString());
+
         return displayText.ToString().Trim();
     }
 
-    private static async Task SendEmojiImage(ChatContext ctx, string emotion, System.Text.StringBuilder displayText)
+    private static async Task PassiveSendEmoji(ChatContext ctx, string reply)
     {
-        var matches = await Picture.GetRecommendEmojiAsync(emotion, 3);
+        if (!Effective(ctx, "EnableEmojiPassiveSend", AppConfig.EnableEmojiPassiveSend))
+        {
+            return;
+        }
+
+        if (CommonHelper.Next(0, 100) >= Effective(ctx, "EmojiSendProbability", AppConfig.EmojiSendProbability))
+        {
+            return;
+        }
+
+        var emotion = await GetReplyEmotionAsync(reply);
+        if (string.IsNullOrWhiteSpace(emotion))
+        {
+            return;
+        }
+
+        CommonHelper.LogInfo?.Invoke("被动表情发送", $"情绪：{emotion}");
+        await SendEmojiImage(ctx, emotion, new System.Text.StringBuilder(), isPassive: true);
+    }
+
+    /// <summary>
+    /// Extract emotion from reply text using LLM for emoji matching.
+    /// </summary>
+    private static async Task<string?> GetReplyEmotionAsync(string reply)
+    {
+        if (string.IsNullOrWhiteSpace(reply))
+        {
+            return null;
+        }
+
+        var keys = AppConfig.ImageDescriberApiKeyId;
+        if (keys.Count == 0)
+        {
+            return null;
+        }
+
+        var systemPrompt = $"这是你将要发送的消息内容:{reply}\r\n若要为其配上表情包，请你输出这个表情包应该表达怎样的情感，应该给人什么样的感觉，不要太简洁也不要太长\r\n，注意不要输出任何对消息内容的分析内容，只输出\"一种什么样的感觉\"中间的形容词部分。";
+
+        var messages = new List<ChatMessage>
+        {
+            ChatMessage.System(systemPrompt),
+            ChatMessage.User("请回复")
+        };
+
+        var chatService = new ChatService();
+        var emotion = await chatService.GetChatResultAsync(
+            keys, messages, ChatService.Purpose.表情包推荐,
+            timeout: AppConfig.ImageDescriberTimeout);
+
+        if (string.IsNullOrWhiteSpace(emotion) || emotion == ChatService.ErrorMessage)
+        {
+            return null;
+        }
+
+        return emotion.Trim();
+    }
+
+    private static async Task SendEmojiImage(ChatContext ctx, string emotion, System.Text.StringBuilder displayText, bool isPassive = false)
+    {
+        var topK = Effective(ctx, "RecommendEmojiCount", AppConfig.RecommendEmojiCount);
+        var matches = await Picture.GetRecommendEmojiAsync(emotion, topK);
         if (matches.Count > 0)
         {
+            // ── RandomSendEmoji: shuffle if enabled ──
+            if (Effective(ctx, "RandomSendEmoji", AppConfig.RandomSendEmoji))
+            {
+                matches = matches.OrderBy(_ => Guid.NewGuid()).ToList();
+            }
+
             var match = matches[0];
             var relativePath = CommonHelper.GetRelativePath(
                 match.picture.FilePath, CommonHelper.GetAppImageDirectory());
@@ -1113,11 +1193,23 @@ public static class PipelineMiddlewareExtensions
                 .Image(relativePath)
                 .Build();
             await ctx.SendFunc!(msg.ToString());
-            displayText.Append($"\n[表情包: {match.picture.Description}]");
+
+            if (isPassive)
+            {
+                match.picture.UseCount++;
+                Picture.Upsert(match.picture);
+            }
+            else
+            {
+                displayText.Append($"\n[表情包: {match.picture.Description}]");
+            }
         }
         else
         {
-            displayText.Append($"\n[表情包未找到: {emotion}]");
+            if (!isPassive)
+            {
+                displayText.Append($"\n[表情包未找到: {emotion}]");
+            }
         }
     }
 }

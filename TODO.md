@@ -42,15 +42,4 @@
 - [x] 支持私聊的独立配置
 - [x] 解决Mock下不得不写入数据库的问题
 - [x] 解决新建服务商后，不刷新无法编辑绑定的问题
-
-# 死配置
-
-| Key                     │ Label          │ 状态     │
-| -- | -- | -- |
-│ EnableEmojiPassiveSend  │ 被动表情包     │ 从未使用 │
-│ EmojiSendProbability    │ 发送概率 (%)   │ 从未使用 │
-│ RandomSendEmoji         │ 随机发送       │ 从未使用 │
-│ NonEmojiPictureSaveDays │ 非表情保存天数 │ 从未使用 │
-│ RecommendEmojiCount     │ 推荐数量       │ 从未使用 │
-│ MinEmojiRecommendScore  │ 最低分数       │ 从未使用 │
-│ Filters                 │ 消息过滤关键字 │ 从未使用 |
+- [ ] 配置页面的数字微调控件，支持不同配置使用不同的微调步数
