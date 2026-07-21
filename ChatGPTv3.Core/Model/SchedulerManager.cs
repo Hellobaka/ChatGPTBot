@@ -182,4 +182,21 @@ public class SchedulerManager
 
         return AppConfig.DefaultSchedule;
     }
+
+    /// <summary>
+    /// Returns a read-only copy of today's schedules.
+    /// </summary>
+    public List<(DateTime time, string action)> GetAllSchedules()
+    {
+        return [.. _schedules];
+    }
+
+    /// <summary>
+    /// Regenerates today's schedule via LLM.
+    /// </summary>
+    public async Task RegenerateAsync()
+    {
+        _schedules = [];
+        await UpdateScheduleAsync();
+    }
 }

@@ -32,10 +32,8 @@ public partial class MainWindow
         new() { Name = "接口密钥", IconKind = PackIconMaterialDesignKind.VpnKey, PageKey = "keys" },
         new() { Name = "Token统计", IconKind = PackIconMaterialDesignKind.BarChart, PageKey = "token" },
         new() { Name = "图片管理", IconKind = PackIconMaterialDesignKind.Image, PageKey = "image" },
-        new() { Name = "关系管理", IconKind = PackIconMaterialDesignKind.Group, PageKey = "relationship" },
-        new() { Name = "日记管理", IconKind = PackIconMaterialDesignKind.Book, PageKey = "diary" },
+        new() { Name = "杂项", IconKind = PackIconMaterialDesignKind.Apps, PageKey = "misc" },
         new() { Name = "知识库", IconKind = PackIconMaterialDesignKind.LibraryBooks, PageKey = "knowledge" },
-        new() { Name = "日程管理", IconKind = PackIconMaterialDesignKind.CalendarMonth, PageKey = "schedule" },
         new() { Name = "MCP管理", IconKind = PackIconMaterialDesignKind.Api, PageKey = "mcp" },
         new() { Name = "系统设置", IconKind = PackIconMaterialDesignKind.Settings, PageKey = "config" },
     ];
@@ -248,6 +246,7 @@ public partial class MainWindow
             "mcp" => GetOrCreate("mcp", () => new MCPManagementView()),
             "image" => GetOrCreate("image", () => new ImageManagementView()),
             "knowledge" => GetOrCreate("knowledge", () => new KnowledgeManagementView()),
+            "misc" => GetOrCreate("misc", () => new MiscManagementView()),
             _ => new TextBlock
             {
                 Text = $"{item.Name} — 待实现",

@@ -9,4 +9,7 @@ public partial class ViewModelBase : ObservableObject
 
     [ObservableProperty]
     private bool _isLoading;
+
+    [ObservableProperty]
+    private string _loadingStatus = string.Empty;
 }

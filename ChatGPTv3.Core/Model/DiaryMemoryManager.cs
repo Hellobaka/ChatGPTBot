@@ -284,6 +284,40 @@ public static class DiaryMemoryManager
         return $"你之前的日记记忆({latest.time:MM-dd HH:mm})：{latest.text}（已经过去了）";
     }
 
+    /// <summary>
+    /// Returns all diary entries across all groups, grouped by groupId.
+    /// </summary>
+    public static Dictionary<long, List<(DateTime time, string text)>> GetAllDiaries()
+    {
+        if (string.IsNullOrEmpty(_appDir))
+        {
+            return [];
+        }
+
+        var result = new Dictionary<long, List<(DateTime time, string text)>>();
+        try
+        {
+            var files = Directory.GetFiles(_appDir, "diary_*.json");
+            foreach (var file in files)
+            {
+                var fileName = Path.GetFileName(file);
+                // diary_123456.json -> 123456
+                if (!long.TryParse(fileName["diary_".Length..^".json".Length], out var groupId))
+                {
+                    continue;
+                }
+
+                result[groupId] = LoadDiaries(groupId);
+            }
+        }
+        catch (Exception ex)
+        {
+            CommonHelper.LogError?.Invoke("Diary", $"读取所有日记失败: {ex.Message}");
+        }
+
+        return result;
+    }
+
     // ── Diary persistence ─────────────────────────────────────
 
     private static void SaveDiary(long groupId, string text)
@@ -298,6 +332,26 @@ public static class DiaryMemoryManager
             diaries = diaries.Skip(diaries.Count - maxKeep).ToList();
         }
 
+        SaveDiariesToFile(groupId, diaries);
+    }
+
+    /// <summary>
+    /// Saves a specific diary entry (for editing). Replaces the entry at the given index.
+    /// </summary>
+    public static void SaveDiaryEntry(long groupId, int index, string text)
+    {
+        var diaries = LoadDiaries(groupId);
+        if (index < 0 || index >= diaries.Count)
+        {
+            return;
+        }
+
+        diaries[index] = (diaries[index].time, text);
+        SaveDiariesToFile(groupId, diaries);
+    }
+
+    private static void SaveDiariesToFile(long groupId, List<(DateTime time, string text)> diaries)
+    {
         var path = Path.Combine(_appDir, $"diary_{groupId}.json");
         try
         {

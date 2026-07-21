@@ -1,0 +1,428 @@
+<UserControl
+    x:Class="ChatGPTv3.UI.Views.MiscManagementView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:vm="clr-namespace:ChatGPTv3.UI.ViewModels">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Loading overlay -->
+        <Border
+            Background="#80000000"
+            Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}">
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Orientation="Horizontal">
+                <hc:LoadingLine Width="200" />
+                <TextBlock
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Text="{Binding LoadingStatus}" />
+            </StackPanel>
+        </Border>
+
+        <TabControl>
+            <!-- ═══ Tab 1: 日记管理 ═══ -->
+            <TabItem Header="日记管理">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="280" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left: Group list -->
+                    <Border
+                        Grid.Column="0"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock
+                                Grid.Row="0"
+                                Margin="8,8,8,4"
+                                FontWeight="SemiBold"
+                                Text="群列表" />
+
+                            <ListBox
+                                Grid.Row="1"
+                                DisplayMemberPath="GroupName"
+                                ItemsSource="{Binding DiaryGroups}"
+                                SelectedItem="{Binding SelectedDiaryGroup}">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                        <Setter Property="Padding" Value="8,4" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right: Diary entries -->
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Date filter -->
+                    <StackPanel
+                        Grid.Row="0"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,8,0"
+                            VerticalAlignment="Center"
+                            Text="日期筛选:" />
+                        <DatePicker
+                            Width="160"
+                            SelectedDate="{Binding DiarySearchDate}" />
+                    </StackPanel>
+
+                    <!-- Diary list -->
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="0,8,0,8"
+                        DisplayMemberPath="DisplayText"
+                        ItemsSource="{Binding SelectedDiaryGroup.Entries}"
+                        SelectedItem="{Binding SelectedDiaryEntry}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Padding" Value="8,6" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+
+                    <!-- Edit panel -->
+                    <Border
+                        Grid.Row="2"
+                        Padding="8"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0"
+                        Visibility="{Binding SelectedDiaryEntry, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- View mode -->
+                            <TextBox
+                                Grid.Column="0"
+                                Height="80"
+                                Margin="0,0,8,0"
+                                IsReadOnly="True"
+                                Text="{Binding SelectedDiaryEntry.Text, Mode=OneWay}"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{Binding IsEditingDiary, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+
+                            <!-- Edit mode -->
+                            <TextBox
+                                Grid.Column="0"
+                                Height="80"
+                                Margin="0,0,8,0"
+                                Text="{Binding EditDiaryText, UpdateSourceTrigger=PropertyChanged}"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto"
+                                Visibility="{Binding IsEditingDiary, Converter={StaticResource BoolToVis}}" />
+
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Top">
+                                <Button
+                                    Margin="0,0,4,0"
+                                    Command="{Binding StartEditDiaryCommand}"
+                                    Content="编辑"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Visibility="{Binding IsEditingDiary, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+                                <Button
+                                    Margin="0,0,4,0"
+                                    Command="{Binding SaveDiaryCommand}"
+                                    Content="保存"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Visibility="{Binding IsEditingDiary, Converter={StaticResource BoolToVis}}" />
+                                <Button
+                                    Command="{Binding CancelEditDiaryCommand}"
+                                    Content="取消"
+                                    Visibility="{Binding IsEditingDiary, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </TabItem>
+
+        <!-- ═══ Tab 2: 日程管理 ═══ -->
+        <TabItem Header="日程管理">
+            <Grid Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Toolbar -->
+                <StackPanel
+                    Grid.Row="0"
+                    Orientation="Horizontal">
+                    <Button
+                        Margin="0,0,8,0"
+                        Command="{Binding RegenerateSchedulesCommand}"
+                        Content="重新生成"
+                        Style="{StaticResource ButtonPrimary}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource SecondaryTextBrush}"
+                        Text="点击日程项可编辑" />
+                </StackPanel>
+
+                <!-- Schedule list -->
+                <ListBox
+                    Grid.Row="1"
+                    Margin="0,8,0,8"
+                    ItemsSource="{Binding Schedules}"
+                    SelectedItem="{Binding SelectedSchedule}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock
+                                    Width="60"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding TimeString}" />
+                                <TextBlock Text="{Binding Action}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <!-- Edit panel -->
+                <Border
+                    Grid.Row="2"
+                    Padding="8"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    Visibility="{Binding SelectedSchedule, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- View mode -->
+                        <TextBlock
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="{Binding SelectedSchedule.TimeString}"
+                            Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+                        <TextBlock
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Text="{Binding SelectedSchedule.Action}"
+                            Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+
+                        <!-- Edit mode -->
+                        <TextBox
+                            Grid.Column="0"
+                            Width="60"
+                            Text="{Binding EditScheduleTime, UpdateSourceTrigger=PropertyChanged}"
+                            Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}}" />
+                        <TextBox
+                            Grid.Column="2"
+                            Text="{Binding EditScheduleAction, UpdateSourceTrigger=PropertyChanged}"
+                            Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}}" />
+
+                        <StackPanel
+                            Grid.Column="3"
+                            Orientation="Horizontal">
+                            <Button
+                                Margin="0,0,4,0"
+                                Command="{Binding StartEditScheduleCommand}"
+                                Content="编辑"
+                                Style="{StaticResource ButtonPrimary}"
+                                Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+                            <Button
+                                Margin="0,0,4,0"
+                                Command="{Binding SaveScheduleCommand}"
+                                Content="保存"
+                                Style="{StaticResource ButtonPrimary}"
+                                Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}}" />
+                            <Button
+                                Command="{Binding CancelEditScheduleCommand}"
+                                Content="取消"
+                                Visibility="{Binding IsEditingSchedule, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </TabItem>
+
+        <!-- ═══ Tab 3: 关系管理 ═══ -->
+        <TabItem Header="关系管理">
+            <Grid Margin="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Group list -->
+                <Border
+                    Grid.Column="0"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="0"
+                            Margin="8,8,8,4"
+                            FontWeight="SemiBold"
+                            Text="群 / 私聊" />
+
+                        <ListBox
+                            Grid.Row="1"
+                            DisplayMemberPath="GroupName"
+                            ItemsSource="{Binding RelationshipGroups}"
+                            SelectedItem="{Binding SelectedRelationship, Converter={StaticResource {x:Null}}}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="Padding" Value="8,4" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <!-- Right: Member list + edit -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Toolbar -->
+                    <StackPanel
+                        Grid.Row="0"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,12,0"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="成员列表" />
+                    </StackPanel>
+
+                    <!-- Member list -->
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="0,8,0,8"
+                        ItemsSource="{Binding SelectedRelationshipGroup.Items}"
+                        SelectedItem="{Binding SelectedRelationship}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding UserQq}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Text="{Binding NickName}" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        Margin="8,0"
+                                        Text="好感度:" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding Favorability, StringFormat={}{0}/100}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Edit panel -->
+                    <Border
+                        Grid.Row="2"
+                        Padding="8"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0"
+                        Visibility="{Binding SelectedRelationship, Converter={StaticResource BoolToVis}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Text="好感度:" />
+                            <Slider
+                                Grid.Column="1"
+                                Width="200"
+                                VerticalAlignment="Center"
+                                Maximum="100"
+                                Minimum="0"
+                                Value="{Binding EditFavorability}" />
+                            <TextBlock
+                                Grid.Column="2"
+                                VerticalAlignment="Center"
+                                Text="{Binding EditFavorability, StringFormat={}{0}}" />
+
+                            <StackPanel
+                                Grid.Column="3"
+                                Orientation="Horizontal">
+                                <Button
+                                    Margin="0,0,4,0"
+                                    Command="{Binding StartEditRelationshipCommand}"
+                                    Content="编辑"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Visibility="{Binding IsEditingRelationship, Converter={StaticResource BoolToVis}, ConverterParameter=Invert}" />
+                                <Button
+                                    Margin="0,0,4,0"
+                                    Command="{Binding SaveRelationshipCommand}"
+                                    Content="保存"
+                                    Style="{StaticResource ButtonPrimary}"
+                                    Visibility="{Binding IsEditingRelationship, Converter={StaticResource BoolToVis}}" />
+                                <Button
+                                    Command="{Binding CancelEditRelationshipCommand}"
+                                    Content="取消"
+                                    Visibility="{Binding IsEditingRelationship, Converter={StaticResource BoolToVis}}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Grid>
+</UserControl>
