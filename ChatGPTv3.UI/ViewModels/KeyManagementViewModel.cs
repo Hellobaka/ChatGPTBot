@@ -160,6 +160,8 @@ public partial class KeyManagementViewModel : ViewModelBase
         Providers.Add(item);
         SelectedProvider = item;
         PersistProvider(item);
+        LoadData();
+        SelectedProvider = Providers.FirstOrDefault(x => x.Id == item.Id) ?? Providers.FirstOrDefault();
     }
 
     [RelayCommand]
