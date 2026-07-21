@@ -1,12 +1,14 @@
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.Utilities;
+using ChatGPTv3.OpenAIClient;
 using System.Text;
 using System.Text.Json;
 
 namespace ChatGPTv3.Core.Api;
 
 /// <summary>
-/// Tencent Cloud Rerank API client. Re-ranks search results for memory/knowledge relevance.
+/// Rerank API client. Supports Alibaba Cloud (Bailian) format.
+/// Re-ranks search results for memory/knowledge relevance.
 /// </summary>
 public static class RerankService
 {
@@ -51,7 +53,7 @@ public static class RerankService
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             };
 
-            // Add TC3 signature headers
+            // Add TC3 signature headers (Tencent Cloud only)
             if (useTencentSign)
             {
                 var headers = TencentSign.BuildHeaders("lkeap", "lkeap.tencentcloudapi.com",
@@ -74,14 +76,76 @@ public static class RerankService
 
             var body = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(body);
-            var results = doc.RootElement.GetProperty("Response").GetProperty("Results");
 
+            // Parse results — try Alibaba format first, then Tencent
             var scored = new List<(int index, float score)>();
-            foreach (var item in results.EnumerateArray())
+            JsonElement? responseEl = null;
+
+            if (doc.RootElement.TryGetProperty("output", out var outputEl)
+                && outputEl.TryGetProperty("results", out var alibabaResults))
             {
-                scored.Add((item.GetProperty("Index").GetInt32(),
-                            item.GetProperty("RelevanceScore").GetSingle()));
+                // Alibaba Bailian format: [{index, relevance_score, document}]
+                foreach (var item in alibabaResults.EnumerateArray())
+                {
+                    var index = item.TryGetProperty("index", out var idxEl) ? idxEl.GetInt32() : scored.Count;
+                    var score = item.TryGetProperty("relevance_score", out var scoreEl)
+                        ? scoreEl.GetSingle()
+                        : 0f;
+                    scored.Add((index, score));
+                }
             }
+            else if (doc.RootElement.TryGetProperty("Response", out var respEl))
+            {
+                responseEl = respEl;
+                // Tencent Cloud format: {ScoreList: [score, ...]}
+                // Scores are in the same order as input documents (index = position)
+                if (respEl.TryGetProperty("ScoreList", out var scoreList))
+                {
+                    int idx = 0;
+                    foreach (var scoreEl in scoreList.EnumerateArray())
+                    {
+                        scored.Add((idx++, scoreEl.GetSingle()));
+                    }
+                }
+            }
+            else
+            {
+                CommonHelper.LogError?.Invoke("Rerank", "无法解析 Rerank 响应格式");
+                return [];
+            }
+
+            // Track token usage
+            TokenUsageInfo? usage = null;
+
+            // Alibaba format: usage.total_tokens (top-level)
+            if (doc.RootElement.TryGetProperty("usage", out var usageEl)
+                && usageEl.TryGetProperty("total_tokens", out var ttEl))
+            {
+                usage = new TokenUsageInfo
+                {
+                    PromptTokens = ttEl.GetInt32(),
+                    CompletionTokens = 0,
+                    TotalTokens = ttEl.GetInt32()
+                };
+            }
+            // Tencent format: Response.Usage.TotalTokens
+            else if (responseEl.HasValue
+                     && responseEl.Value.TryGetProperty("Usage", out var usageEl2)
+                     && usageEl2.TryGetProperty("TotalTokens", out var ttEl2))
+            {
+                usage = new TokenUsageInfo
+                {
+                    PromptTokens = ttEl2.GetInt32(),
+                    CompletionTokens = 0,
+                    TotalTokens = ttEl2.GetInt32()
+                };
+            }
+
+            if (usage != null)
+            {
+                UsageTracker.TrackUsage(endpoint, model, "Rerank", usage, keyPurpose.Key.Key);
+            }
+
             return scored.OrderByDescending(x => x.score).ToList();
         }
         catch (Exception ex)

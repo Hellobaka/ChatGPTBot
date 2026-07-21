@@ -50,10 +50,17 @@ public static class EmbeddingService
             };
 
             using var client = new OpenAiChatClient(options);
-            var result = await client.GetEmbeddingsAsync(text, model, dimensions, ct);
+            var (embedding, usage) = await client.GetEmbeddingsAsync(text, model, dimensions, ct);
 
-            CommonHelper.LogInfo?.Invoke("Embedding", $"成功: dims={result?.Length}");
-            return result;
+            CommonHelper.LogInfo?.Invoke("Embedding", $"成功: dims={embedding?.Length}");
+
+            // Track token usage
+            if (usage != null)
+            {
+                UsageTracker.TrackUsage(key.Key.EndPoint, model, "Embedding", usage, key.Key.Key);
+            }
+
+            return embedding;
         }
         catch (Exception ex)
         {

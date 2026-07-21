@@ -114,8 +114,8 @@ public class OpenAiChatClient : IDisposable
     /// <param name="model">The embedding model name (e.g., "text-embedding-ada-002").</param>
     /// <param name="dimensions">Optional dimensions parameter for the embedding.</param>
     /// <param name="ct">Cancellation token.</param>
-    /// <returns>Float array of embedding values.</returns>
-    public async Task<float[]> GetEmbeddingsAsync(
+    /// <returns>Float array of embedding values, plus token usage if available.</returns>
+    public async Task<(float[] embedding, TokenUsageInfo? usage)> GetEmbeddingsAsync(
         string input,
         string model,
         int? dimensions = null,
@@ -150,7 +150,18 @@ public class OpenAiChatClient : IDisposable
             result.Add(item.GetSingle());
         }
 
-        return result.ToArray();
+        TokenUsageInfo? usage = null;
+        if (doc.RootElement.TryGetProperty("usage", out var usageEl))
+        {
+            usage = new TokenUsageInfo
+            {
+                PromptTokens = usageEl.TryGetProperty("prompt_tokens", out var pt) ? pt.GetInt32() : 0,
+                CompletionTokens = 0,
+                TotalTokens = usageEl.TryGetProperty("total_tokens", out var tt) ? tt.GetInt32() : 0
+            };
+        }
+
+        return (result.ToArray(), usage);
     }
 
     // ─── Private Helpers ─────────────────────────────────────────
