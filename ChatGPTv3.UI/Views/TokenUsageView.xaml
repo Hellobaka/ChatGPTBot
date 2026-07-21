@@ -273,7 +273,7 @@
                                 Content="重置筛选" />
                             <Button
                                 MinWidth="88"
-                                Command="{Binding ExportAsyncCommand}"
+                                Command="{Binding ExportCommand}"
                                 Content="导出" />
                         </WrapPanel>
                     </StackPanel>

@@ -61,7 +61,7 @@
                                 ItemsSource="{Binding DiaryGroups}"
                                 SelectedItem="{Binding SelectedDiaryGroup}">
                                 <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Style TargetType="ListBoxItem">
                                         <Setter Property="Padding" Value="8,4" />
                                     </Style>
                                 </ListBox.ItemContainerStyle>
@@ -98,7 +98,7 @@
                         ItemsSource="{Binding SelectedDiaryGroup.Entries}"
                         SelectedItem="{Binding SelectedDiaryEntry}">
                         <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Style TargetType="ListBoxItem">
                                 <Setter Property="Padding" Value="8,6" />
                             </Style>
                         </ListBox.ItemContainerStyle>
@@ -303,9 +303,9 @@
                             Grid.Row="1"
                             DisplayMemberPath="GroupName"
                             ItemsSource="{Binding RelationshipGroups}"
-                            SelectedItem="{Binding SelectedRelationship, Converter={StaticResource {x:Null}}}">
+                            SelectedItem="{Binding SelectedRelationshipGroup}">
                             <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Style TargetType="ListBoxItem">
                                     <Setter Property="Padding" Value="8,4" />
                                 </Style>
                             </ListBox.ItemContainerStyle>

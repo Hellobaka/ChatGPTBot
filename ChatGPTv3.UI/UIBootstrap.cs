@@ -32,6 +32,9 @@ public static class UIBootstrap
         // otherwise return empty lists.
         MockPluginApi.Initialize(appDir);
 
+        // ── Bot QQ (for At-bot and context identity) ──
+        ChatGPTv3.Core.Api.PromptBuilder.CurrentBotQQ = MockAppApi.Instance.MockBotQQ;
+
         // ── Config ──
         ConfigManager.Initialize(appDir);
         ConfigManager.Load();
@@ -41,9 +44,6 @@ public static class UIBootstrap
         SQLiteManager.CreateDB();
 
         AppConfig.Init();
-
-        // ── Bot QQ (for At-bot and context identity) ──
-        ChatGPTv3.Core.Api.PromptBuilder.CurrentBotQQ = MockAppApi.Instance.MockBotQQ;
 
         // ── MCP ──
         MCPClientManager.Load(appDir);

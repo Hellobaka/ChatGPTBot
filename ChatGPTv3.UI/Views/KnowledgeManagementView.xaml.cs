@@ -10,6 +10,8 @@ namespace ChatGPTv3.UI.Views;
 
 public partial class KnowledgeManagementView : UserControl
 {
+    private bool IsVMLoaded { get; set; } = false;
+
     public KnowledgeManagementView()
     {
         InitializeComponent();
@@ -19,9 +21,10 @@ public partial class KnowledgeManagementView : UserControl
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        if (DataContext is KnowledgeManagementViewModel vm)
+        if (!IsVMLoaded && DataContext is KnowledgeManagementViewModel vm)
         {
             await vm.LoadCommand.ExecuteAsync(null);
+            IsVMLoaded = true;
         }
     }
 

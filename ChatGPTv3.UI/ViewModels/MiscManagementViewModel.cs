@@ -107,6 +107,7 @@ public partial class MiscManagementViewModel : ViewModelBase
     // ─── Relationship state ────────────────────────────
 
     [ObservableProperty] private ObservableCollection<RelationshipGroupItem> _relationshipGroups = [];
+    [ObservableProperty] private RelationshipGroupItem? _selectedRelationshipGroup;
     [ObservableProperty] private RelationshipItem? _selectedRelationship;
     [ObservableProperty] private int _editFavorability;
     [ObservableProperty] private bool _isEditingRelationship;

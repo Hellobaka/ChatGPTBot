@@ -89,6 +89,8 @@ public partial class MCPToolLeaf : ObservableObject
     [NotifyPropertyChangedFor(nameof(DisplayName))]
     private string _alias = string.Empty;
 
+    [ObservableProperty] private bool _isExpanded;
+
     public string DisplayName => string.IsNullOrEmpty(Alias) ? Name : Alias;
 }
 
