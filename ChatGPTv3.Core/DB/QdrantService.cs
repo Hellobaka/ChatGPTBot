@@ -164,6 +164,22 @@ public class QdrantService
     public async Task<List<(string id, string text, DateTime time, float score)>> SearchAsync(
         string query, string collectionName, int limit = 5)
     {
+        var results = await SearchInternalAsync(query, collectionName, limit);
+        return results.Select(r => (r.id, r.text, r.time, r.score)).ToList();
+    }
+
+    /// <summary>
+    /// Search with source metadata included in results.
+    /// </summary>
+    public async Task<List<(string id, string text, DateTime time, float score, string source)>> SearchWithSourceAsync(
+        string query, string collectionName, int limit = 5)
+    {
+        return await SearchInternalAsync(query, collectionName, limit);
+    }
+
+    private async Task<List<(string id, string text, DateTime time, float score, string source)>> SearchInternalAsync(
+        string query, string collectionName, int limit)
+    {
         try
         {
             var embedding = await GetEmbeddingAsync(query);
@@ -186,16 +202,17 @@ public class QdrantService
             var json = await r.Content.ReadAsStringAsync();
 
             using var doc = JsonDocument.Parse(json);
-            var results = new List<(string, string, DateTime, float)>();
+            var results = new List<(string, string, DateTime, float, string)>();
             foreach (var point in doc.RootElement.GetProperty("result").EnumerateArray())
             {
                 var id = point.GetProperty("id").GetString()!;
                 var score = point.GetProperty("score").GetSingle();
                 var payload = point.GetProperty("payload");
-                var record = payload.GetProperty("text").GetString() ?? "";
+                var text = payload.GetProperty("text").GetString() ?? "";
                 var time = DateTime.TryParse(payload.GetProperty("timestamp").GetString(), out var t)
                     ? t : DateTime.MinValue;
-                results.Add((id, record, time, score));
+                var source = payload.TryGetProperty("source", out var s) ? s.GetString() ?? "" : "";
+                results.Add((id, text, time, score, source));
             }
             return results;
         }

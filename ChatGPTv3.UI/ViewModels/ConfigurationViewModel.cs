@@ -414,6 +414,8 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "MinMemorySimilarity", Label = "最小知识相似度", DefaultValue = 0.8 },
             new() { Key = "MaxMemoryCount", Label = "最大知识条数", DefaultValue = 5 },
             new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024 },
+            new() { Key = "KnowledgeChunkSize", Label = "知识库导入每段大小（字符）", DefaultValue = 300 },
+            new() { Key = "KnowledgeChunkOverlap", Label = "知识库导入重叠量（字符）", DefaultValue = 50 },
         };
         var relation = new ObservableCollection<ConfigEntry>
         {

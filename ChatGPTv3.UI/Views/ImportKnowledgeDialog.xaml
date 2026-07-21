@@ -19,20 +19,22 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Title -->
+        <!--  Title  -->
         <TextBlock
             Grid.Row="0"
             FontSize="16"
             FontWeight="SemiBold"
             Text="导入知识到知识库" />
 
-        <!-- Source title input -->
+        <!--  Source title input  -->
         <Grid Grid.Row="1" Margin="0,12,0,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -45,26 +47,130 @@
                 Text="来源标题：" />
             <hc:TextBox
                 Grid.Column="1"
-                Text="{Binding SourceTitle, UpdateSourceTrigger=PropertyChanged}"
                 hc:InfoElement.Placeholder="必填，如：用户手册V1.0"
                 hc:InfoElement.TitleWidth="60"
-                IsEnabled="{Binding CanEdit}" />
+                IsEnabled="{Binding CanEdit}"
+                Text="{Binding SourceTitle, UpdateSourceTrigger=PropertyChanged}" />
         </Grid>
 
-        <!-- Text content -->
-        <hc:TextBox
-            Grid.Row="2"
-            Text="{Binding ImportText, UpdateSourceTrigger=PropertyChanged}"
-            Margin="0,8,0,12"
-            AcceptsReturn="True"
-            hc:InfoElement.Placeholder="在此粘贴文本内容，或点击「选择文件」按钮导入文件"
-            TextWrapping="Wrap"
-            VerticalScrollBarVisibility="Auto"
-            IsEnabled="{Binding CanEdit}" />
+        <!--  Chunking params  -->
+        <Grid Grid.Row="2" Margin="0,8,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <!-- Progress -->
-        <StackPanel
+            <!--  Chunk Size  -->
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="0"
+                FontSize="12"
+                FontWeight="SemiBold"
+                Text="每段大小（字符）" />
+            <Grid Grid.Row="1" Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="50" />
+                </Grid.ColumnDefinitions>
+                <Slider
+                    Grid.Column="0"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource RegionBrush}"
+                    IsEnabled="{Binding CanEdit}"
+                    IsSnapToTickEnabled="True"
+                    Maximum="2000"
+                    Minimum="100"
+                    TickFrequency="50"
+                    Value="{Binding ChunkSize, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Grid.Column="1"
+                    Width="50"
+                    IsEnabled="{Binding CanEdit}"
+                    Text="{Binding ChunkSize, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <!--  Overlap  -->
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="2"
+                FontSize="12"
+                FontWeight="SemiBold"
+                Text="重叠量（字符）" />
+            <Grid Grid.Row="1" Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="50" />
+                </Grid.ColumnDefinitions>
+                <Slider
+                    Grid.Column="0"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Background="{StaticResource RegionBrush}"
+                    IsEnabled="{Binding CanEdit}"
+                    IsSnapToTickEnabled="True"
+                    Maximum="500"
+                    Minimum="0"
+                    TickFrequency="10"
+                    Value="{Binding ChunkOverlap, UpdateSourceTrigger=PropertyChanged}" />
+                <hc:TextBox
+                    Grid.Column="1"
+                    Width="50"
+                    IsEnabled="{Binding CanEdit}"
+                    Text="{Binding ChunkOverlap, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <!--  Preview button  -->
+            <Button
+                Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="4"
+                Margin="0,8,0,0"
+                Command="{Binding PreviewCommand}"
+                Content="预览分段"
+                IsEnabled="{Binding CanEdit}"
+                Style="{StaticResource ButtonPrimary}" />
+        </Grid>
+
+        <!--  Preview result  -->
+        <Border
             Grid.Row="3"
+            Margin="0,4,0,8"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Visibility="{Binding HasPreviewResult, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer
+                MaxHeight="100"
+                Padding="8"
+                VerticalScrollBarVisibility="Auto">
+                <TextBlock
+                    FontSize="11"
+                    Text="{Binding PreviewResult}"
+                    TextWrapping="Wrap" />
+            </ScrollViewer>
+        </Border>
+
+        <!--  Text content  -->
+        <hc:TextBox
+            Grid.Row="4"
+            Margin="0,8,0,12"
+            hc:InfoElement.Placeholder="在此粘贴文本内容，或点击「选择文件」按钮导入文件"
+            AcceptsReturn="True"
+            IsEnabled="{Binding CanEdit}"
+            Text="{Binding ImportText, UpdateSourceTrigger=PropertyChanged}"
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Auto" />
+
+        <!--  Progress  -->
+        <StackPanel
+            Grid.Row="5"
             Margin="0,0,0,8"
             Visibility="{Binding IsImporting, Converter={StaticResource BoolToVis}}">
             <ProgressBar
@@ -78,9 +184,9 @@
                 TextWrapping="Wrap" />
         </StackPanel>
 
-        <!-- Buttons -->
+        <!--  Buttons  -->
         <StackPanel
-            Grid.Row="4"
+            Grid.Row="6"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
             <Button

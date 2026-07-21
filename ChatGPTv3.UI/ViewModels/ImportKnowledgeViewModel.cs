@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using System.IO;
+using System.Text;
 
 namespace ChatGPTv3.UI.ViewModels;
 
@@ -21,6 +22,14 @@ public partial class ImportKnowledgeViewModel : ObservableObject
     [ObservableProperty] private int _importFailed;
     [ObservableProperty] private string _importStatus = string.Empty;
     [ObservableProperty] private bool _canEdit = true;
+    [ObservableProperty] private bool _closing = false;
+
+    [ObservableProperty] private int _chunkSize = 300;
+    [ObservableProperty] private int _chunkOverlap = 50;
+    [ObservableProperty] private string _previewResult = string.Empty;
+    [ObservableProperty] private int _previewCount;
+
+    public bool HasPreviewResult => !string.IsNullOrWhiteSpace(PreviewResult);
 
     public bool DialogResult { get; private set; }
 
@@ -81,8 +90,7 @@ public partial class ImportKnowledgeViewModel : ObservableObject
 
         try
         {
-            var splitter = new Splitter(ImportText);
-            var chunks = await splitter.SplitAsync();
+            var chunks = RecursiveChunker.Chunk(ImportText, ChunkSize, ChunkOverlap);
 
             ImportTotal = chunks.Length;
             ImportStatus = $"共 {chunks.Length} 段，开始导入...";
@@ -131,6 +139,30 @@ public partial class ImportKnowledgeViewModel : ObservableObject
             return;
         }
 
+        Closing = true;
         DialogResult = false;
+    }
+
+    [RelayCommand]
+    private void Preview()
+    {
+        if (string.IsNullOrWhiteSpace(ImportText))
+        {
+            PreviewResult = "请先输入或选择要导入的文本内容。";
+            PreviewCount = 0;
+            return;
+        }
+
+        var chunks = RecursiveChunker.Chunk(ImportText, ChunkSize, ChunkOverlap);
+        PreviewCount = chunks.Length;
+        var sb = new StringBuilder();
+        sb.AppendLine($"共切分为 {chunks.Length} 段：");
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            var preview = chunks[i].Length > 80 ? chunks[i][..80] + "…" : chunks[i];
+            sb.AppendLine($"[{i + 1}] ({chunks[i].Length} 字) {preview}");
+        }
+        PreviewResult = sb.ToString();
+        OnPropertyChanged(nameof(HasPreviewResult));
     }
 }

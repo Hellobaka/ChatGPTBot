@@ -14,6 +14,17 @@ public partial class ImportKnowledgeDialog
     {
         InitializeComponent();
         DataContext = _vm;
+
+        // Close the window when DialogResult is set (by Save or Cancel)
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ImportKnowledgeViewModel.Closing)
+             && _vm.Closing)
+            {
+                DialogResult = _vm.DialogResult;
+                Close();
+            }
+        };
     }
 
     public new bool? ShowDialog()

@@ -79,6 +79,27 @@ public static class MemoryManager
             return [];
         }
 
-        return (await Qdrant.SearchAsync(query, QdrantService.KnowledgeCollectionName, AppConfig.MaxMemoryCount)).ToArray();
+        int recallCount = AppConfig.EnableRerank ? AppConfig.MaxMemoryCount * 5 : AppConfig.MaxMemoryCount;
+        var results = await Qdrant.SearchAsync(query, QdrantService.KnowledgeCollectionName, recallCount);
+
+        if (results.Count == 0)
+        {
+            return [];
+        }
+
+        if (AppConfig.EnableRerank && results.Count > AppConfig.MaxMemoryCount)
+        {
+            var texts = results.Select(r => r.text).ToList();
+            var reranked = await Api.RerankService.RerankAsync(query, texts);
+            if (reranked.Count > 0)
+            {
+                return reranked
+                    .Take(AppConfig.MaxMemoryCount)
+                    .Select(r => results[r.index])
+                    .ToArray();
+            }
+        }
+
+        return results.Take(AppConfig.MaxMemoryCount).ToArray();
     }
 }

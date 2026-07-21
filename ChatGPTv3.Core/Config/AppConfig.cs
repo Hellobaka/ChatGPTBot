@@ -104,6 +104,11 @@ public static class AppConfig
 
     public static int SplitterMinLength { get; set; } = 20;
 
+    // ── Knowledge Import Chunking ───────────────────────────
+    public static int KnowledgeChunkSize { get; set; } = 300;
+
+    public static int KnowledgeChunkOverlap { get; set; } = 50;
+
     // ── Emoji ─────────────────────────────────────────────
     public static bool EnableEmojiPassiveSend { get; set; }
 
@@ -354,6 +359,10 @@ public static class AppConfig
         SplitterRandomDelayMin = ConfigManager.GetConfig("SplitterRandomDelayMin", 1000);
         SplitterRandomDelayMax = ConfigManager.GetConfig("SplitterRandomDelayMax", 4500);
         SplitterMinLength = ConfigManager.GetConfig("SplitterMinLength", 20);
+
+        // Knowledge Import Chunking
+        KnowledgeChunkSize = ConfigManager.GetConfig("KnowledgeChunkSize", 300);
+        KnowledgeChunkOverlap = ConfigManager.GetConfig("KnowledgeChunkOverlap", 50);
 
         // Emoji
         EnableEmojiPassiveSend = ConfigManager.GetConfig("EnableEmojiPassiveSend", false);

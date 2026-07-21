@@ -27,9 +27,16 @@ public partial class KnowledgeManagementView : UserControl
 
     private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
     {
-        if (DataContext is KnowledgeManagementViewModel vm && e.NewValue is SourceGroup group)
+        if (DataContext is KnowledgeManagementViewModel vm)
         {
-            vm.SelectedSource = group;
+            if (e.NewValue is SourceGroup group)
+            {
+                vm.SelectedSource = group;
+            }
+            else if (e.NewValue is KnowledgeItem item)
+            {
+                vm.SelectedItem = item;
+            }
         }
     }
 
@@ -40,21 +47,12 @@ public partial class KnowledgeManagementView : UserControl
         {
             item.IsSelected = true;
 
-            if (group.Name == "全部")
+            if (group.Name == "全部" || DataContext is not KnowledgeManagementViewModel vm)
             {
                 return;
             }
 
-            var result = MessageBox.Show(
-                $"确定要删除来源「{group.Name}」的全部 {group.Count} 条知识吗？\n此操作不可撤销。",
-                "确认删除来源",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes && DataContext is KnowledgeManagementViewModel vm)
-            {
-                vm.DeleteSourceCommand.Execute(group);
-            }
+            vm.DeleteSourceCommand.Execute(group);
         }
     }
 }
