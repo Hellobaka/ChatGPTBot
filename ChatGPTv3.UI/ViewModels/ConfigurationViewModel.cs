@@ -29,6 +29,9 @@ public partial class ConfigEntry : ObservableObject
 
     public bool IsPresetSelector { get; init; }
 
+    /// <summary>Step size for the numeric up-down control (defaults to 1).</summary>
+    public double NumericStep { get; init; } = 1;
+
     /// <summary>
     /// When true, this entry is read-only in group config mode because the pipeline
     /// reads it from global AppConfig only (access control runs before group config is loaded).
@@ -247,7 +250,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         };
         var general = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "MessageDebounceMs", Label = "消息防抖间隔 (ms)", DefaultValue = 3000 },
+            new() { Key = "MessageDebounceMs", Label = "消息防抖间隔 (ms)", DefaultValue = 3000, NumericStep = 100 },
         };
         var debug = new ObservableCollection<ConfigEntry>
         {
@@ -263,19 +266,19 @@ public partial class ConfigurationViewModel : ViewModelBase
         // ── Tab 2: LLM 设置 ──
         var llm = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "ChatMaxTokens", Label = "最大 Token 数", DefaultValue = 3000 },
-            new() { Key = "ChatTemperature", Label = "温度 (0-2)", DefaultValue = 1.0 },
-            new() { Key = "ChatTimeout", Label = "对话超时 (ms)", DefaultValue = 30000 },
+            new() { Key = "ChatMaxTokens", Label = "最大 Token 数", DefaultValue = 3000, NumericStep = 100 },
+            new() { Key = "ChatTemperature", Label = "温度 (0-2)", DefaultValue = 1.0, NumericStep = 0.1 },
+            new() { Key = "ChatTimeout", Label = "对话超时 (ms)", DefaultValue = 30000, NumericStep = 1000 },
             new() { Key = "StreamMode", Label = "流式输出", DefaultValue = true },
             new() { Key = "GroupPrompt", Label = "群聊系统提示词", DefaultValue = "", IsMultiline = true },
             new() { Key = "PrivatePrompt", Label = "私聊系统提示词", DefaultValue = "", IsMultiline = true, IsGroupReadOnly = true },
         };
         var timeouts = new ObservableCollection<ConfigEntry>
         {
-            new() { Key = "ReplyTimeout", Label = "回复决策超时 (ms)", DefaultValue = 5000 },
-            new() { Key = "SplitterTimeout", Label = "消息分段超时 (ms)", DefaultValue = 30000 },
-            new() { Key = "ImageDescriberTimeout", Label = "图片描述超时 (ms)", DefaultValue = 30000 },
-            new() { Key = "EmbeddingTimeout", Label = "向量嵌入超时 (ms)", DefaultValue = 3000 },
+            new() { Key = "ReplyTimeout", Label = "回复决策超时 (ms)", DefaultValue = 5000, NumericStep = 500 },
+            new() { Key = "SplitterTimeout", Label = "消息分段超时 (ms)", DefaultValue = 30000, NumericStep = 1000 },
+            new() { Key = "ImageDescriberTimeout", Label = "图片描述超时 (ms)", DefaultValue = 30000, NumericStep = 1000 },
+            new() { Key = "EmbeddingTimeout", Label = "向量嵌入超时 (ms)", DefaultValue = 3000, NumericStep = 500 },
         };
         Tabs.Add(new ConfigTab("LLM 设置", "Brain",
         [
@@ -305,12 +308,12 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "SplitterMaxLines", Label = "最大行数", DefaultValue = 3 },
             new() { Key = "SplitterRegexFirst", Label = "优先正则分段", DefaultValue = false },
             new() { Key = "SplitterRegexRemovePunctuation", Label = "正则移除标点", DefaultValue = false },
-            new() { Key = "SplitterSimulateTypeSpeed", Label = "打字速度 (字/分钟)", DefaultValue = 100 },
+            new() { Key = "SplitterSimulateTypeSpeed", Label = "打字速度 (字/分钟)", DefaultValue = 100, NumericStep = 10 },
             new() { Key = "EnableSplitterRandomDelay", Label = "随机延迟", DefaultValue = true },
-            new() { Key = "SplitterRandomDelayMin", Label = "延迟最小 (ms)", DefaultValue = 1000 },
-            new() { Key = "SplitterRandomDelayMax", Label = "延迟最大 (ms)", DefaultValue = 4500 },
-            new() { Key = "SplitterMinLength", Label = "最小长度", DefaultValue = 20 },
-            new() { Key = "ContextMaxLength", Label = "上下文最大消息数", DefaultValue = 20 },
+            new() { Key = "SplitterRandomDelayMin", Label = "延迟最小 (ms)", DefaultValue = 1000, NumericStep = 100 },
+            new() { Key = "SplitterRandomDelayMax", Label = "延迟最大 (ms)", DefaultValue = 4500, NumericStep = 100 },
+            new() { Key = "SplitterMinLength", Label = "最小长度", DefaultValue = 20, NumericStep = 5 },
+            new() { Key = "ContextMaxLength", Label = "上下文最大消息数", DefaultValue = 20, NumericStep = 5 },
             new() { Key = "RemoveThinkBlock", Label = "移除思考块", DefaultValue = true },
             new() { Key = "LogThinkBlock", Label = "将思考内容输出到日志", DefaultValue = false },
         };
@@ -318,33 +321,33 @@ public partial class ConfigurationViewModel : ViewModelBase
         {
             new() { Key = "EnableEmojiPassiveSend", Label = "被动表情包", DefaultValue = false },
             new() { Key = "EnableEmojiActiveSend", Label = "主动表情包", DefaultValue = false },
-            new() { Key = "EmojiSendProbability", Label = "发送概率 (%)", DefaultValue = 10 },
+            new() { Key = "EmojiSendProbability", Label = "发送概率 (%)", DefaultValue = 10, NumericStep = 5 },
             new() { Key = "IgnoreNotEmoji", Label = "忽略非表情图片", DefaultValue = true },
             new() { Key = "RandomSendEmoji", Label = "随机发送", DefaultValue = true },
             new() { Key = "RecommendEmojiCount", Label = "推荐数量", DefaultValue = 5 },
-            new() { Key = "MinEmojiRecommendScore", Label = "最低分数", DefaultValue = 0.5 },
+            new() { Key = "MinEmojiRecommendScore", Label = "最低分数", DefaultValue = 0.5, NumericStep = 0.05 },
             new() { Key = "NonEmojiPictureSaveDays", Label = "非表情保存天数", DefaultValue = 7 },
         };
         var reply = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "__ReplyPreset", Label = "回复意愿预设", DefaultValue = "默认", IsPresetSelector = true, OnPresetApplied = ApplyPreset },
-            new() { Key = "BaseAttention", Label = "基础关注度", DefaultValue = 0.1 },
-            new() { Key = "AttnMention", Label = "@提及权重", DefaultValue = 1.0 },
-            new() { Key = "AttnReplyToBot", Label = "回复机器人权重", DefaultValue = 0.9 },
-            new() { Key = "AttnNickname", Label = "昵称提及权重", DefaultValue = 0.8 },
-            new() { Key = "AttnQuestion", Label = "问句权重", DefaultValue = 0.5 },
-            new() { Key = "AttnContinuity", Label = "连续对话权重", DefaultValue = 0.4 },
-            new() { Key = "AttnImageFactor", Label = "图片因子", DefaultValue = 0.1 },
-            new() { Key = "TimingJustSent", Label = "刚发送后意愿", DefaultValue = 0.1 },
-            new() { Key = "TimingBriefPause", Label = "短暂停顿意愿", DefaultValue = 0.3 },
-            new() { Key = "TimingOptimal", Label = "最佳时机意愿", DefaultValue = 1.0 },
-            new() { Key = "TimingStale", Label = "陈旧会话意愿", DefaultValue = 0.6 },
-            new() { Key = "TimingVeryStale", Label = "非常陈旧意愿", DefaultValue = 0.3 },
-            new() { Key = "ActivityFirst", Label = "首次发言系数", DefaultValue = 1.0 },
-            new() { Key = "ActivitySecond", Label = "第二次发言系数", DefaultValue = 0.5 },
-            new() { Key = "ActivityThird", Label = "第三次发言系数", DefaultValue = 0.2 },
-            new() { Key = "ActivityThrottleSeconds", Label = "活跃节流 (秒)", DefaultValue = 60 },
-            new() { Key = "ReplyWillingAmplifier", Label = "回复意愿放大器", DefaultValue = 1.0 },
+            new() { Key = "BaseAttention", Label = "基础关注度", DefaultValue = 0.1, NumericStep = 0.05 },
+            new() { Key = "AttnMention", Label = "@提及权重", DefaultValue = 1.0, NumericStep = 0.05 },
+            new() { Key = "AttnReplyToBot", Label = "回复机器人权重", DefaultValue = 0.9, NumericStep = 0.05 },
+            new() { Key = "AttnNickname", Label = "昵称提及权重", DefaultValue = 0.8, NumericStep = 0.05 },
+            new() { Key = "AttnQuestion", Label = "问句权重", DefaultValue = 0.5, NumericStep = 0.05 },
+            new() { Key = "AttnContinuity", Label = "连续对话权重", DefaultValue = 0.4, NumericStep = 0.05 },
+            new() { Key = "AttnImageFactor", Label = "图片因子", DefaultValue = 0.1, NumericStep = 0.05 },
+            new() { Key = "TimingJustSent", Label = "刚发送后意愿", DefaultValue = 0.1, NumericStep = 0.05 },
+            new() { Key = "TimingBriefPause", Label = "短暂停顿意愿", DefaultValue = 0.3, NumericStep = 0.05 },
+            new() { Key = "TimingOptimal", Label = "最佳时机意愿", DefaultValue = 1.0, NumericStep = 0.05 },
+            new() { Key = "TimingStale", Label = "陈旧会话意愿", DefaultValue = 0.6, NumericStep = 0.05 },
+            new() { Key = "TimingVeryStale", Label = "非常陈旧意愿", DefaultValue = 0.3, NumericStep = 0.05 },
+            new() { Key = "ActivityFirst", Label = "首次发言系数", DefaultValue = 1.0, NumericStep = 0.05 },
+            new() { Key = "ActivitySecond", Label = "第二次发言系数", DefaultValue = 0.5, NumericStep = 0.05 },
+            new() { Key = "ActivityThird", Label = "第三次发言系数", DefaultValue = 0.2, NumericStep = 0.05 },
+            new() { Key = "ActivityThrottleSeconds", Label = "活跃节流 (秒)", DefaultValue = 60, NumericStep = 10 },
+            new() { Key = "ReplyWillingAmplifier", Label = "回复意愿放大器", DefaultValue = 1.0, NumericStep = 0.1 },
             new() { Key = "EnableLLMCheckShouldResponse", Label = "LLM 辅助回复决策", DefaultValue = false },
         };
         Tabs.Add(new ConfigTab("对话行为", "MessageText",
@@ -369,7 +372,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         var rerank = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableRerank", Label = "启用重排序", DefaultValue = true },
-            new() { Key = "RerankTimeout", Label = "超时 (ms)", DefaultValue = 3000 },
+            new() { Key = "RerankTimeout", Label = "超时 (ms)", DefaultValue = 3000, NumericStep = 500 },
         };
         var tencent = new ObservableCollection<ConfigEntry>
         {
@@ -388,11 +391,11 @@ public partial class ConfigurationViewModel : ViewModelBase
         var diary = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableDiary", Label = "启用日记", DefaultValue = true },
-            new() { Key = "DiaryMessageThreshold", Label = "消息阈值", DefaultValue = 50 },
-            new() { Key = "DiaryIntervalMinutes", Label = "间隔 (分钟)", DefaultValue = 120 },
-            new() { Key = "DiaryReviewHours", Label = "回顾时长 (小时)", DefaultValue = 24 },
-            new() { Key = "DiaryMaxKeep", Label = "保留天数", DefaultValue = 7 },
-            new() { Key = "DiaryTimeout", Label = "生成超时 (ms)", DefaultValue = 60000 },
+            new() { Key = "DiaryMessageThreshold", Label = "消息阈值", DefaultValue = 50, NumericStep = 5 },
+            new() { Key = "DiaryIntervalMinutes", Label = "间隔 (分钟)", DefaultValue = 120, NumericStep = 10 },
+            new() { Key = "DiaryReviewHours", Label = "回顾时长 (小时)", DefaultValue = 24, NumericStep = 1 },
+            new() { Key = "DiaryMaxKeep", Label = "保留天数", DefaultValue = 7, NumericStep = 1 },
+            new() { Key = "DiaryTimeout", Label = "生成超时 (ms)", DefaultValue = 60000, NumericStep = 1000 },
         };
         var schedule = new ObservableCollection<ConfigEntry>
         {
@@ -405,17 +408,17 @@ public partial class ConfigurationViewModel : ViewModelBase
         {
             new() { Key = "EnableCompressByTime", Label = "按时间触发压缩", DefaultValue = true },
             new() { Key = "EnableCompressByCount", Label = "按条数触发压缩", DefaultValue = true },
-            new() { Key = "CompressIntervalMinutes", Label = "时间间隔 (分钟)", DefaultValue = 60 },
-            new() { Key = "CompressMessageThreshold", Label = "消息条数阈值", DefaultValue = 20 },
+            new() { Key = "CompressIntervalMinutes", Label = "时间间隔 (分钟)", DefaultValue = 60, NumericStep = 10 },
+            new() { Key = "CompressMessageThreshold", Label = "消息条数阈值", DefaultValue = 20, NumericStep = 5 },
         };
         var ctx = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableQdrant", Label = "启用 Qdrant 知识检索", DefaultValue = true },
-            new() { Key = "MinMemorySimilarity", Label = "最小知识相似度", DefaultValue = 0.8 },
-            new() { Key = "MaxMemoryCount", Label = "最大知识条数", DefaultValue = 5 },
-            new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024 },
-            new() { Key = "KnowledgeChunkSize", Label = "知识库导入每段大小（字符）", DefaultValue = 300 },
-            new() { Key = "KnowledgeChunkOverlap", Label = "知识库导入重叠量（字符）", DefaultValue = 50 },
+            new() { Key = "MinMemorySimilarity", Label = "最小知识相似度", DefaultValue = 0.8, NumericStep = 0.05 },
+            new() { Key = "MaxMemoryCount", Label = "最大知识条数", DefaultValue = 5, NumericStep = 1 },
+            new() { Key = "MemoryDimensions", Label = "向量维度", DefaultValue = 1024, NumericStep = 128 },
+            new() { Key = "KnowledgeChunkSize", Label = "知识库导入每段大小（字符）", DefaultValue = 300, NumericStep = 50 },
+            new() { Key = "KnowledgeChunkOverlap", Label = "知识库导入重叠量（字符）", DefaultValue = 50, NumericStep = 10 },
         };
         var relation = new ObservableCollection<ConfigEntry>
         {
@@ -434,8 +437,8 @@ public partial class ConfigurationViewModel : ViewModelBase
         var mcp = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "EnableMCP", Label = "启用 MCP", DefaultValue = true },
-            new() { Key = "MaxToolCallCountEachTurn", Label = "每轮最大工具调用", DefaultValue = 5 },
-            new() { Key = "AbortToolCallCountEachTurn", Label = "中止阈值", DefaultValue = 7 },
+            new() { Key = "MaxToolCallCountEachTurn", Label = "每轮最大工具调用", DefaultValue = 5, NumericStep = 1 },
+            new() { Key = "AbortToolCallCountEachTurn", Label = "中止阈值", DefaultValue = 7, NumericStep = 1 },
         };
         var filter = new ObservableCollection<ConfigEntry>
         {

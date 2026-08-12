@@ -1,5 +1,6 @@
 using ChatGPTv3.UI.Converters;
 using ChatGPTv3.UI.ViewModels;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -177,7 +178,14 @@ public partial class ConfigurationView : UserControl
             HorizontalAlignment = HorizontalAlignment.Left,
             Minimum = 0,
             Maximum = 999999,
+            Increment = entry.NumericStep,
         };
+        var stepText = entry.NumericStep.ToString(CultureInfo.InvariantCulture);
+        var dotIndex = stepText.IndexOf('.');
+        if (dotIndex >= 0)
+        {
+            nud.DecimalPlaces = stepText.Length - dotIndex - 1;
+        }
         nud.SetBinding(HC.NumericUpDown.ValueProperty, new Binding("Value")
         {
             Mode = BindingMode.TwoWay,
