@@ -544,6 +544,16 @@ public partial class ChatTestViewModel : ViewModelBase
         MessageText = _sendHistory[_historyIndex];
     }
 
+    /// <summary>
+    /// Adds an item to send history. Duplicate content is removed first so the
+    /// same text only exists once and the latest send moves it to the end.
+    /// </summary>
+    private void AddToSendHistory(string text)
+    {
+        _sendHistory.RemoveAll(x => x == text);
+        _sendHistory.Add(text);
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  Persistence
     // ═══════════════════════════════════════════════════════════
@@ -562,7 +572,10 @@ public partial class ChatTestViewModel : ViewModelBase
                     _lastQQ = state.LastQQ;
                     if (state.SendHistory != null)
                     {
-                        _sendHistory.AddRange(state.SendHistory);
+                        foreach (var item in state.SendHistory)
+                        {
+                            AddToSendHistory(item);
+                        }
                     }
                 }
             }
@@ -663,7 +676,7 @@ public partial class ChatTestViewModel : ViewModelBase
         // Save to history
         if (!string.IsNullOrWhiteSpace(text))
         {
-            _sendHistory.Add(text);
+            AddToSendHistory(text);
             _historyIndex = -1;
             _historyDraft = null;
         }
