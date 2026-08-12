@@ -875,6 +875,7 @@ public static class PipelineMiddlewareExtensions
         var response = await chatService.GetChatResultAsync(
             keys, messages, ChatService.Purpose.聊天,
             timeout: Effective(ctx, "ChatTimeout", AppConfig.ChatTimeout), toolExecutor: toolExecutor,
+            identity: ctx.IsGroup ? $"group_{ctx.GroupId}" : $"private_{ctx.QQ}",
             cancellationToken: ctx.CancellationToken,
             onIntermediateText: async text =>
             {
@@ -1061,11 +1062,17 @@ public static class PipelineMiddlewareExtensions
 
         // ── Level 1: Splitter for pacing ──
         var segments = Effective(ctx, "EnableSplitter", AppConfig.EnableSplitter)
-            ? new Splitter(response).Split()
+            ? await new Splitter(response).SplitAsync(ctx.CancellationToken)
             : [response];
 
         foreach (var segment in segments)
         {
+            if (ctx.CancellationToken.IsCancellationRequested)
+            {
+                displayText.Append(" 操作已取消");
+                return displayText.ToString().Trim();
+            }
+
             if (string.IsNullOrWhiteSpace(segment))
             {
                 continue;
@@ -1073,15 +1080,21 @@ public static class PipelineMiddlewareExtensions
 
             // ── Level 2: SplitEmoji within each segment ──
             var parts = Splitter.SplitEmoji(segment);
-            for (int i = 0; i < parts.Length; i++)
+            foreach (var part in parts)
             {
-                var part = parts[i];
+                if (ctx.CancellationToken.IsCancellationRequested)
+                {
+                    displayText.Append(" 操作已取消");
+                    return displayText.ToString().Trim();
+                }
 
                 if (part.isEmoji)
                 {
                     if (activeSend)
                     {
                         await SendEmojiImage(ctx, part.content, displayText);
+                        // 图片发送后固定停顿，再继续下一条
+                        await Task.Delay(1000, ctx.CancellationToken);
                     }
                     // else: silently drop
                 }
@@ -1093,13 +1106,10 @@ public static class PipelineMiddlewareExtensions
                         await ctx.SendFunc!(text);
                         ctx.BotReplies.Add((text, DateTime.Now));
                         displayText.Append(text + ' ');
-                    }
-                }
 
-                if (i < parts.Length - 1)
-                {
-                    var delayText = part.isEmoji ? "" : part.content;
-                    await Splitter.ApplyTypingDelay(delayText, ctx.CancellationToken);
+                        // 纯文本发送后直接按打字速度 + 随机延迟等待
+                        await Splitter.ApplyTypingDelay(text, ctx.CancellationToken);
+                    }
                 }
             }
         }
