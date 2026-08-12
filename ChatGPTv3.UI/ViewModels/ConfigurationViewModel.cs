@@ -375,17 +375,11 @@ public partial class ConfigurationViewModel : ViewModelBase
             new() { Key = "EnableRerank", Label = "启用重排序", DefaultValue = true },
             new() { Key = "RerankTimeout", Label = "超时 (ms)", DefaultValue = 3000, NumericStep = 500 },
         };
-        var tencent = new ObservableCollection<ConfigEntry>
-        {
-            new() { Key = "TencentSecretId", Label = "腾讯云 SecretId", DefaultValue = "", IsGroupReadOnly = true },
-            new() { Key = "TencentSecretKey", Label = "腾讯云 SecretKey", DefaultValue = "", IsGroupReadOnly = true },
-        };
         Tabs.Add(new ConfigTab("视觉与接口", "Eye",
         [
             new ConfigSection("视觉识别", vision),
             new ConfigSection("向量检索 (Qdrant)", qdrant),
             new ConfigSection("Rerank 重排序", rerank),
-            new ConfigSection("腾讯云签名", tencent),
         ]));
 
         // ── Tab 6: 记忆与计划 ──

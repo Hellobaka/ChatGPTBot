@@ -38,7 +38,9 @@ public static class RerankService
 
             var endpoint = keyPurpose.Key.EndPoint;
             var model = keyPurpose.Model.Name;
-            var useTencentSign = keyPurpose.Key.UseTencentSign;
+            // Tencent signing configuration was removed; keep the call path below
+            // so the signing logic can be re-enabled later without re-adding UI.
+            var useTencentSign = false;
 
             var payload = new
             {

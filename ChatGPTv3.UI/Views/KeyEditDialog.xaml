@@ -57,7 +57,6 @@
                             Content="启用 Web Search（Anthropic / Responses）"
                             IsChecked="{Binding EnableWebSearch}"
                             IsEnabled="{Binding IsWebSearchEditable}" />
-                        <CheckBox Content="腾讯云签名" IsChecked="{Binding UseTencentSign}" />
                     </WrapPanel>
 
                     <!--  Model grid  -->

@@ -224,11 +224,6 @@ public static class AppConfig
     // ── Rerank ────────────────────────────────────────────
     public static bool EnableRerank { get; set; } = true;
 
-    // ── Tencent Cloud ─────────────────────────────────────
-    public static string TencentSecretId { get; set; } = "";
-
-    public static string TencentSecretKey { get; set; } = "";
-
     // ── Qdrant ────────────────────────────────────────────
     public static string QdrantHost { get; set; } = "localhost";
 
@@ -436,10 +431,6 @@ public static class AppConfig
 
         // Rerank
         EnableRerank = ConfigManager.GetConfig("EnableRerank", true);
-
-        // Tencent Cloud
-        TencentSecretId = ConfigManager.GetConfig("TencentSecretId", "");
-        TencentSecretKey = ConfigManager.GetConfig("TencentSecretKey", "");
 
         // Qdrant
         QdrantHost = ConfigManager.GetConfig("QdrantHost", "localhost");

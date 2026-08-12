@@ -53,10 +53,6 @@
                                 Width="*"
                                 Binding="{Binding EndPoint}"
                                 Header="端点" />
-                            <DataGridCheckBoxColumn
-                                Width="80"
-                                Binding="{Binding UseTencentSign}"
-                                Header="腾讯云签名" />
                             <DataGridTextColumn
                                 Width="130"
                                 Binding="{Binding ApiFormat}"

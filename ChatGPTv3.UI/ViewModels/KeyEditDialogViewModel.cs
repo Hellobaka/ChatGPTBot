@@ -19,7 +19,6 @@ public partial class KeyEditDialogViewModel : ObservableObject
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _endPoint = string.Empty;
     [ObservableProperty] private string _apiKey = string.Empty;
-    [ObservableProperty] private bool _useTencentSign;
     [NotifyPropertyChangedFor(nameof(IsWebSearchEditable))]
     [ObservableProperty] private ApiFormatOption? _selectedApiFormat;
     [ObservableProperty] private bool _enableWebSearch = true;
@@ -56,7 +55,6 @@ public partial class KeyEditDialogViewModel : ObservableObject
         Name = source.Name;
         EndPoint = source.EndPoint;
         ApiKey = source.Key;
-        UseTencentSign = source.UseTencentSign;
         EnableWebSearch = source.EnableWebSearch;
         SelectedApiFormat = ApiFormatOptions.FirstOrDefault(o => o.Value == source.ApiFormat)
             ?? ApiFormatOptions[0];
@@ -76,7 +74,6 @@ public partial class KeyEditDialogViewModel : ObservableObject
             Name = Name.Trim(),
             EndPoint = EndPoint.Trim(),
             Key = ApiKey.Trim(),
-            UseTencentSign = UseTencentSign,
             ApiFormat = SelectedApiFormat?.Value ?? ApiFormat.OpenAI,
             EnableWebSearch = SelectedApiFormat?.Value == ApiFormat.OpenAI ? false : EnableWebSearch,
             TotalTokens = TotalTokens,

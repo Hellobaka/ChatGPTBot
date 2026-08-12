@@ -56,9 +56,6 @@ public class APIKey
     /// <summary>Cumulative cost in RMB (calculated from token usage × pricing).</summary>
     public decimal TotalConsume { get; set; }
 
-    /// <summary>Whether to use Tencent Cloud TC3-HMAC-SHA256 signing for this endpoint.</summary>
-    public bool UseTencentSign { get; set; }
-
     /// <summary>
     /// Whether to attach the built-in web_search tool for Anthropic / Responses endpoints.
     /// </summary>
