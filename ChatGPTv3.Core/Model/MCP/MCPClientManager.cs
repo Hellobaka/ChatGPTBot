@@ -147,7 +147,7 @@ public class MCPClientManager
         {
             if (!Clients.Any(c => c.Name == name))
             {
-                Clients.Add(new MCPCustomClient { Name = name, Enabled = false });
+                Clients.Add(new MCPCustomClient { Name = name, Enabled = true });
             }
         }
     }
