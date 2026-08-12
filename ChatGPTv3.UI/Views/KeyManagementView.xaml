@@ -57,6 +57,14 @@
                                 Width="80"
                                 Binding="{Binding UseTencentSign}"
                                 Header="腾讯云签名" />
+                            <DataGridCheckBoxColumn
+                                Width="90"
+                                Binding="{Binding EnableWebSearch}"
+                                Header="Web Search" />
+                            <DataGridTextColumn
+                                Width="130"
+                                Binding="{Binding ApiFormat}"
+                                Header="接口格式" />
                             <DataGridTextColumn
                                 Width="100"
                                 Binding="{Binding TotalTokens, StringFormat=N0}"

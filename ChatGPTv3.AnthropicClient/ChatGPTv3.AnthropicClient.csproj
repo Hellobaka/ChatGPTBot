@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ChatGPTv3.AnthropicClient</RootNamespace>
+    <AssemblyName>ChatGPTv3.AnthropicClient</AssemblyName>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChatGPTv3.OpenAIClient\ChatGPTv3.OpenAIClient.csproj" />
+  </ItemGroup>
+
+</Project>

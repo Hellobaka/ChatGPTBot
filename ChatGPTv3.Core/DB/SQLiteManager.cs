@@ -43,5 +43,30 @@ public static class SQLiteManager
             typeof(ContextSummary),
             typeof(PurposeBinding)
         );
+
+        // v3 schema migration: CodeFirst only creates missing tables, so add the
+        // ApiFormat column explicitly for databases created before this feature.
+        var apiKeyColumns = db.DbMaintenance.GetColumnInfosByTableName("APIKeys", false);
+        if (apiKeyColumns.All(c => !string.Equals(c.DbColumnName, "ApiFormat", StringComparison.OrdinalIgnoreCase)))
+        {
+            db.DbMaintenance.AddColumn("APIKeys", new DbColumnInfo
+            {
+                DbColumnName = "ApiFormat",
+                DataType = "INTEGER",
+                IsNullable = true,
+                DefaultValue = "0"
+            });
+        }
+
+        if (apiKeyColumns.All(c => !string.Equals(c.DbColumnName, "EnableWebSearch", StringComparison.OrdinalIgnoreCase)))
+        {
+            db.DbMaintenance.AddColumn("APIKeys", new DbColumnInfo
+            {
+                DbColumnName = "EnableWebSearch",
+                DataType = "INTEGER",
+                IsNullable = true,
+                DefaultValue = "1"
+            });
+        }
     }
 }

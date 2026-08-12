@@ -44,6 +44,8 @@ public partial class ProviderItem : ObservableObject
     [ObservableProperty] private string _endPoint = string.Empty;
     [ObservableProperty] private string _key = string.Empty;
     [ObservableProperty] private bool _useTencentSign;
+    [ObservableProperty] private ApiFormat _apiFormat = ApiFormat.OpenAI;
+    [ObservableProperty] private bool _enableWebSearch = true;
     [ObservableProperty] private long _totalTokens;
     [ObservableProperty] private decimal _totalConsume;
 
@@ -62,6 +64,8 @@ public partial class ProviderItem : ObservableObject
             EndPoint = EndPoint,
             Key = Key,
             UseTencentSign = UseTencentSign,
+            ApiFormat = ApiFormat,
+            EnableWebSearch = EnableWebSearch,
             TotalTokens = TotalTokens,
             TotalConsume = TotalConsume
         };
@@ -184,6 +188,8 @@ public partial class KeyManagementViewModel : ViewModelBase
         provider.EndPoint = edited.EndPoint;
         provider.Key = edited.Key;
         provider.UseTencentSign = edited.UseTencentSign;
+        provider.ApiFormat = edited.ApiFormat;
+        provider.EnableWebSearch = edited.EnableWebSearch;
         provider.TotalTokens = edited.TotalTokens;
         provider.TotalConsume = edited.TotalConsume;
         provider.Models.Clear();
@@ -205,6 +211,8 @@ public partial class KeyManagementViewModel : ViewModelBase
             TotalTokens = provider.TotalTokens,
             TotalConsume = provider.TotalConsume,
             UseTencentSign = provider.UseTencentSign,
+            ApiFormat = provider.ApiFormat,
+            EnableWebSearch = provider.EnableWebSearch,
             AvailableModels = provider.Models.Select(model => new LLMModelConfig
             {
                 Id = model.Id,
@@ -303,6 +311,8 @@ public partial class KeyManagementViewModel : ViewModelBase
                     TotalTokens = provider.TotalTokens,
                     TotalConsume = provider.TotalConsume,
                     UseTencentSign = provider.UseTencentSign,
+                    ApiFormat = provider.ApiFormat,
+                    EnableWebSearch = provider.EnableWebSearch,
                     AvailableModels = provider.Models.Select(model => new LLMModelConfig
                     {
                         Id = model.Id,
@@ -369,6 +379,8 @@ public partial class KeyManagementViewModel : ViewModelBase
                 EndPoint = provider.EndPoint,
                 Key = provider.Key,
                 UseTencentSign = provider.UseTencentSign,
+                ApiFormat = provider.ApiFormat,
+                EnableWebSearch = provider.EnableWebSearch,
                 TotalTokens = provider.TotalTokens,
                 TotalConsume = provider.TotalConsume
             };

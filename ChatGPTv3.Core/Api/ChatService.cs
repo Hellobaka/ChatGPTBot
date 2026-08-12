@@ -1,14 +1,17 @@
+using ChatGPTv3.AnthropicClient;
 using ChatGPTv3.Core.Config;
 using ChatGPTv3.Core.DB;
 using ChatGPTv3.Core.Utilities;
 using ChatGPTv3.OpenAIClient;
+using ChatGPTv3.ResponsesClient;
 using System.Text;
 
 namespace ChatGPTv3.Core.Api;
 
 /// <summary>
-/// Core LLM interaction service. Uses the HttpSse OpenAiChatClient instead of
-/// Microsoft.Extensions.AI + OpenAI SDK. Implements prompt caching strategy.
+/// Core LLM interaction service. Routes to the local zero-dependency HTTP/SSE
+/// clients (OpenAI Chat Completions / Anthropic Messages / OpenAI Responses)
+/// based on the API key's ApiFormat. Implements the shared tool-call loop.
 /// </summary>
 public class ChatService
 {
@@ -19,7 +22,7 @@ public class ChatService
 
     public const string ErrorMessage = "连接发生问题，查看日志排查问题";
 
-    /// <summary>Non-null when the LLM response ended with a non-"stop" finish_reason.</summary>
+    /// <summary>Non-null when the LLM response ended with a non-normal finish reason.</summary>
     public string? LastAbnormalFinishReason { get; private set; }
 
     private readonly ToolCallService _toolCallService = new();
@@ -39,7 +42,7 @@ public class ChatService
     public string? LastReasoning => ResponseProcessor.LastReasoning;
 
     /// <summary>
-    /// Main chat completion entry point.
+    /// Main chat completion entry point. Picks a random bound key and routes by its ApiFormat.
     /// </summary>
     public async Task<string> GetChatResultAsync(
         List<APIKeyPurpose>? keyList,
@@ -70,11 +73,14 @@ public class ChatService
             timeout,
             toolExecutor,
             identity,
-            onIntermediateText: onIntermediateText);
+            onIntermediateText: onIntermediateText,
+            format: key.Key.ApiFormat,
+            enableWebSearch: key.Key.EnableWebSearch);
     }
 
     /// <summary>
-    /// Core chat completion with full tool call loop.
+    /// Core chat completion with full tool call loop. The ApiFormat parameter
+    /// selects OpenAI Chat Completions, Anthropic Messages, or OpenAI Responses.
     /// </summary>
     public async Task<string> GetChatResultAsync(
         string baseUrl,
@@ -86,151 +92,41 @@ public class ChatService
         int timeout = 30000,
         ToolExecutor? toolExecutor = null,
         string? identity = null,
-        Func<string, Task>? onIntermediateText = null)
+        Func<string, Task>? onIntermediateText = null,
+        ApiFormat format = ApiFormat.OpenAI,
+        bool enableWebSearch = false)
     {
         // Normalize URL
         baseUrl = baseUrl.Replace("/chat/completions", "").TrimEnd('/');
 
-        string msg = "";
-
         try
         {
-            var options = new OpenAiChatClientOptions
+            return format switch
             {
-                BaseUrl = baseUrl,
-                ApiKey = apiKey,
-                TimeoutMs = timeout
+                ApiFormat.Anthropic => await GetAnthropicChatResultAsync(
+                    baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
+                    toolExecutor, identity, onIntermediateText, enableWebSearch),
+                ApiFormat.Responses => await GetResponsesChatResultAsync(
+                    baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
+                    toolExecutor, identity, onIntermediateText, enableWebSearch),
+                _ => await GetOpenAiChatResultAsync(
+                    baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
+                    toolExecutor, identity, onIntermediateText)
             };
-
-            using var client = new OpenAiChatClient(options);
-
-            // Build the request
-            var request = new ChatCompletionRequest
-            {
-                Model = model,
-                Messages = chatMessages,
-                MaxTokens = AppConfig.ChatMaxTokens,
-                Temperature = AppConfig.ChatTemperature,
-                Stream = AppConfig.StreamMode
-            };
-
-            if (jsonMode)
-            {
-                request.EnableJsonMode();
-            }
-
-            // Add tools if available
-            if (toolExecutor != null && AppConfig.EnableMCP)
-            {
-                request.Tools = toolExecutor.GetToolDefinitions();
-                request.EnableAutoToolChoice();
-            }
-
-            // Reset tool call state for this conversation
-            _toolCallService.ResetToolCallState(identity ?? string.Empty);
-
-            // ── Tool call loop ──
-            int toolCallRound = 0;
-            const int maxToolCallRounds = 10;
-
-            while (toolCallRound < maxToolCallRounds)
-            {
-                toolCallRound++;
-
-                if (AppConfig.StreamMode)
-                {
-                    var (streamMsg, usage) = await ProcessStreamingAsync(client, request, identity);
-                    msg = streamMsg;
-                    TrackUsage(baseUrl, model, purpose, usage, apiKey);
-                }
-                else
-                {
-                    var (nonStreamMsg, usage) = await ProcessNonStreamingAsync(client, request);
-                    msg = nonStreamMsg;
-                    TrackUsage(baseUrl, model, purpose, usage, apiKey);
-                }
-
-                // Check if there are tool calls to execute
-                var pendingToolCalls = _pendingToolCalls;
-                _pendingToolCalls = null;
-
-                if (pendingToolCalls == null || pendingToolCalls.Count == 0 || toolExecutor == null)
-                {
-                    break; // No tool calls, done
-                }
-
-                // Send intermediate text if LLM spoke during tool call round
-                if (onIntermediateText != null && !string.IsNullOrWhiteSpace(msg))
-                {
-                    await onIntermediateText(msg);
-                }
-
-                // Execute tool calls
-                var toolResults = new List<ToolCallResult>();
-                foreach (var tc in pendingToolCalls)
-                {
-                    var (result, trackResult) = await _toolCallService.LogToolCallAsync(
-                        tc,
-                        async (toolCall, ct) =>
-                        {
-                            return await toolExecutor.ExecuteAsync(toolCall, ct);
-                        },
-                        identity ?? string.Empty,
-                        CancellationToken.None);
-
-                    // Log for post-turn summarization
-                    ToolCallLog.Add((
-                        tc.Id ?? "",
-                        tc.Function.Name,
-                        tc.Function.Arguments ?? "",
-                        trackResult?.Result ?? result?.ToString() ?? "",
-                        trackResult?.IsSuccess ?? false
-                    ));
-
-                    if (trackResult != null)
-                    {
-                        toolResults.Add(trackResult);
-                    }
-                }
-
-                // Append assistant tool call message + tool results to conversation
-                var assistantMsg = new ChatMessage
-                {
-                    Role = "assistant",
-                    Content = null,
-                    ToolCalls = pendingToolCalls
-                };
-                chatMessages.Add(assistantMsg);
-
-                // Only add successful tool results
-                foreach (var tr in toolResults.Where(r => r.IsSuccess))
-                {
-                    chatMessages.Add(ChatMessage.Tool(tr.ToolCallId, tr.Result));
-                }
-
-                // Check abort
-                if (_toolCallService.ShouldAbortConversation(identity ?? string.Empty))
-                {
-                    CommonHelper.LogWarning?.Invoke("ChatService", "工具调用次数超限，会话终止");
-                    break;
-                }
-
-                // Remove tools for subsequent calls (model should respond with final text)
-                request.Tools = null;
-                request.ToolChoice = null;
-            }
-
-            // Add assistant response to context
-            chatMessages.Add(ChatMessage.Assistant(msg));
-
-            // Post-process
-            msg = ResponseProcessor.ProcessResponse(msg);
-
-            return msg;
         }
         catch (OpenAiApiException ex)
         {
             CommonHelper.LogError?.Invoke("ChatService", $"API error {ex.StatusCode}: {ex.Message}");
+            return ErrorMessage;
+        }
+        catch (AnthropicApiException ex)
+        {
+            CommonHelper.LogError?.Invoke("ChatService", $"Anthropic API error {ex.StatusCode}: {ex.Message}");
+            return ErrorMessage;
+        }
+        catch (ResponsesApiException ex)
+        {
+            CommonHelper.LogError?.Invoke("ChatService", $"Responses API error {ex.StatusCode}: {ex.Message}");
             return ErrorMessage;
         }
         catch (Exception ex)
@@ -244,18 +140,273 @@ public class ChatService
         }
     }
 
-    // ── Streaming ────────────────────────────────────────
+    // ── OpenAI Chat Completions ────────────────────────────────
 
-    private List<ToolCallRequest>? _pendingToolCalls;
-
-    private async Task<(string msg, TokenUsageInfo? usage)> ProcessStreamingAsync(
-        OpenAiChatClient client,
-        ChatCompletionRequest request,
+    private async Task<string> GetOpenAiChatResultAsync(
+        string baseUrl,
+        string apiKey,
+        string model,
+        List<ChatMessage> chatMessages,
+        Purpose purpose,
+        bool jsonMode,
+        int timeout,
+        ToolExecutor? toolExecutor,
         string? identity,
-        CancellationToken ct = default)
+        Func<string, Task>? onIntermediateText)
+    {
+        var options = new OpenAiChatClientOptions
+        {
+            BaseUrl = baseUrl,
+            ApiKey = apiKey,
+            TimeoutMs = timeout
+        };
+
+        using var client = new OpenAiChatClient(options);
+
+        var request = new ChatCompletionRequest
+        {
+            Model = model,
+            Messages = chatMessages,
+            MaxTokens = AppConfig.ChatMaxTokens,
+            Temperature = AppConfig.ChatTemperature,
+            Stream = AppConfig.StreamMode
+        };
+
+        if (jsonMode)
+        {
+            request.EnableJsonMode();
+        }
+
+        bool includeTools = toolExecutor != null && AppConfig.EnableMCP;
+        if (includeTools)
+        {
+            request.Tools = toolExecutor!.GetToolDefinitions();
+            request.EnableAutoToolChoice();
+        }
+
+        var msg = await RunToolLoopAsync(
+            chatMessages, purpose, baseUrl, model, apiKey, toolExecutor, identity, onIntermediateText,
+            streaming => streaming
+                ? ProcessOpenAiStreamingAsync(client, request, identity)
+                : ProcessOpenAiNonStreamingAsync(client, request),
+            () =>
+            {
+                request.Tools = null;
+                request.ToolChoice = null;
+            });
+
+        return ResponseProcessor.ProcessResponse(msg);
+    }
+
+    // ── Anthropic Messages ─────────────────────────────────────
+
+    private async Task<string> GetAnthropicChatResultAsync(
+        string baseUrl,
+        string apiKey,
+        string model,
+        List<ChatMessage> chatMessages,
+        Purpose purpose,
+        bool jsonMode,
+        int timeout,
+        ToolExecutor? toolExecutor,
+        string? identity,
+        Func<string, Task>? onIntermediateText,
+        bool enableWebSearch)
+    {
+        var options = new AnthropicChatClientOptions
+        {
+            BaseUrl = baseUrl,
+            ApiKey = apiKey,
+            TimeoutMs = timeout
+        };
+
+        using var client = new AnthropicChatClient(options);
+
+        bool includeTools = toolExecutor != null && AppConfig.EnableMCP;
+        List<AnthropicTool>? tools = null;
+        if (includeTools)
+        {
+            tools = AnthropicMessageConverter.ToTools(toolExecutor!.GetToolDefinitions());
+        }
+
+        var msg = await RunToolLoopAsync(
+            chatMessages, purpose, baseUrl, model, apiKey, toolExecutor, identity, onIntermediateText,
+            streaming =>
+            {
+                var request = AnthropicMessageConverter.CreateRequest(
+                    chatMessages, model, AppConfig.ChatMaxTokens, AppConfig.ChatTemperature,
+                    streaming, includeTools ? tools : null, jsonMode, enableWebSearch);
+
+                return streaming
+                    ? ProcessAnthropicStreamingAsync(client, request, identity)
+                    : ProcessAnthropicNonStreamingAsync(client, request);
+            },
+            () => includeTools = false);
+
+        return ResponseProcessor.ProcessResponse(msg);
+    }
+
+    // ── OpenAI Responses ───────────────────────────────────────
+
+    private async Task<string> GetResponsesChatResultAsync(
+        string baseUrl,
+        string apiKey,
+        string model,
+        List<ChatMessage> chatMessages,
+        Purpose purpose,
+        bool jsonMode,
+        int timeout,
+        ToolExecutor? toolExecutor,
+        string? identity,
+        Func<string, Task>? onIntermediateText,
+        bool enableWebSearch)
+    {
+        var options = new ResponsesChatClientOptions
+        {
+            BaseUrl = baseUrl,
+            ApiKey = apiKey,
+            TimeoutMs = timeout
+        };
+
+        using var client = new ResponsesChatClient(options);
+
+        bool includeTools = toolExecutor != null && AppConfig.EnableMCP;
+        List<ResponsesTool>? tools = null;
+        if (includeTools)
+        {
+            tools = ResponsesMessageConverter.ToTools(toolExecutor!.GetToolDefinitions());
+        }
+
+        var msg = await RunToolLoopAsync(
+            chatMessages, purpose, baseUrl, model, apiKey, toolExecutor, identity, onIntermediateText,
+            streaming =>
+            {
+                var request = ResponsesMessageConverter.CreateRequest(
+                    chatMessages, model, AppConfig.ChatMaxTokens, AppConfig.ChatTemperature,
+                    streaming, includeTools ? tools : null, jsonMode, enableWebSearch);
+
+                return streaming
+                    ? ProcessResponsesStreamingAsync(client, request, identity)
+                    : ProcessResponsesNonStreamingAsync(client, request);
+            },
+            () => includeTools = false);
+
+        return ResponseProcessor.ProcessResponse(msg);
+    }
+
+    // ── Shared tool loop ───────────────────────────────────────
+
+    private async Task<string> RunToolLoopAsync(
+        List<ChatMessage> chatMessages,
+        Purpose purpose,
+        string baseUrl,
+        string model,
+        string apiKey,
+        ToolExecutor? toolExecutor,
+        string? identity,
+        Func<string, Task>? onIntermediateText,
+        Func<bool, Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>> sendRound,
+        Action afterToolRound)
+    {
+        string msg = "";
+
+        // Reset tool call state for this conversation
+        _toolCallService.ResetToolCallState(identity ?? string.Empty);
+
+        // ── Tool call loop ──
+        int toolCallRound = 0;
+        const int maxToolCallRounds = 10;
+
+        while (toolCallRound < maxToolCallRounds)
+        {
+            toolCallRound++;
+
+            var (roundMsg, usage, pendingToolCalls) = await sendRound(AppConfig.StreamMode);
+            msg = roundMsg;
+            TrackUsage(baseUrl, model, purpose, usage, apiKey);
+
+            if (pendingToolCalls == null || pendingToolCalls.Count == 0 || toolExecutor == null)
+            {
+                break; // No tool calls, done
+            }
+
+            // Send intermediate text if LLM spoke during tool call round
+            if (onIntermediateText != null && !string.IsNullOrWhiteSpace(msg))
+            {
+                await onIntermediateText(msg);
+            }
+
+            // Execute tool calls
+            var toolResults = new List<ToolCallResult>();
+            foreach (var tc in pendingToolCalls)
+            {
+                var (result, trackResult) = await _toolCallService.LogToolCallAsync(
+                    tc,
+                    async (toolCall, ct) =>
+                    {
+                        return await toolExecutor.ExecuteAsync(toolCall, ct);
+                    },
+                    identity ?? string.Empty,
+                    CancellationToken.None);
+
+                // Log for post-turn summarization
+                ToolCallLog.Add((
+                    tc.Id ?? "",
+                    tc.Function.Name,
+                    tc.Function.Arguments ?? "",
+                    trackResult?.Result ?? result?.ToString() ?? "",
+                    trackResult?.IsSuccess ?? false
+                ));
+
+                if (trackResult != null)
+                {
+                    toolResults.Add(trackResult);
+                }
+            }
+
+            // Append assistant tool call message + tool results to conversation
+            chatMessages.Add(new ChatMessage
+            {
+                Role = "assistant",
+                Content = null,
+                ToolCalls = pendingToolCalls
+            });
+
+            // Only add successful tool results
+            foreach (var tr in toolResults.Where(r => r.IsSuccess))
+            {
+                chatMessages.Add(ChatMessage.Tool(tr.ToolCallId, tr.Result));
+            }
+
+            // Check abort
+            if (_toolCallService.ShouldAbortConversation(identity ?? string.Empty))
+            {
+                CommonHelper.LogWarning?.Invoke("ChatService", "工具调用次数超限，会话终止");
+                break;
+            }
+
+            // Remove tools for subsequent calls (model should respond with final text)
+            afterToolRound();
+        }
+
+        // Add assistant response to context
+        chatMessages.Add(ChatMessage.Assistant(msg));
+
+        return msg;
+    }
+
+    // ── OpenAI streaming ───────────────────────────────────────
+
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessOpenAiStreamingAsync(
+            OpenAiChatClient client,
+            ChatCompletionRequest request,
+            string? identity,
+            CancellationToken ct = default)
     {
         var msg = new StringBuilder();
         TokenUsageInfo? usage = null;
+        List<ToolCallRequest>? toolCalls = null;
 
         ResponseProcessor.Reset();
 
@@ -293,7 +444,6 @@ public class ChatService
             // ── Handle inline image generation (DALL-E / GPT-4o image output) ──
             if (update.Choices?.FirstOrDefault()?.Delta?.Content != null)
             {
-                // Content might be a data URL for generated images
                 var content = update.GetDeltaContent();
                 if (!string.IsNullOrEmpty(content) && content.StartsWith("data:image/"))
                 {
@@ -313,10 +463,10 @@ public class ChatService
             // ── Check for completed tool calls ──
             if (update.IsToolCallFinish())
             {
-                var toolCalls = update.GetToolCalls();
-                if (toolCalls != null && toolCalls.Count > 0)
+                var calls = update.GetToolCalls();
+                if (calls != null && calls.Count > 0)
                 {
-                    _pendingToolCalls = toolCalls;
+                    toolCalls = calls;
                 }
 
                 if (msg.Length > 0)
@@ -326,14 +476,15 @@ public class ChatService
             }
         }
 
-        return (msg.ToString(), usage);
+        return (msg.ToString(), usage, toolCalls);
     }
 
-    // ── Non-streaming ────────────────────────────────────
+    // ── OpenAI non-streaming ───────────────────────────────────
 
-    private async Task<(string msg, TokenUsageInfo? usage)> ProcessNonStreamingAsync(
-        OpenAiChatClient client,
-        ChatCompletionRequest request)
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessOpenAiNonStreamingAsync(
+            OpenAiChatClient client,
+            ChatCompletionRequest request)
     {
         var response = await client.CompleteAsync(request);
 
@@ -348,15 +499,198 @@ public class ChatService
         var msg = response.GetFirstChoiceText() ?? string.Empty;
         var toolCalls = response.GetFirstChoiceToolCalls();
 
-        if (toolCalls != null && toolCalls.Count > 0)
-        {
-            _pendingToolCalls = toolCalls;
-        }
-
-        return (msg, response.Usage);
+        return (msg, response.Usage, toolCalls);
     }
 
-    // ── Helpers ──────────────────────────────────────────
+    // ── Anthropic streaming ────────────────────────────────────
+
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessAnthropicStreamingAsync(
+            AnthropicChatClient client,
+            AnthropicChatRequest request,
+            string? identity,
+            CancellationToken ct = default)
+    {
+        var msg = new StringBuilder();
+        TokenUsageInfo? usage = null;
+        var toolCalls = new List<ToolCallRequest>();
+
+        ResponseProcessor.Reset();
+
+        await foreach (var update in client.StreamAsync(request))
+        {
+            if (!string.IsNullOrEmpty(update.TextDelta))
+            {
+                msg.Append(update.TextDelta);
+            }
+
+            ResponseProcessor.AppendReasoning(update.ThinkingDelta);
+
+            if (update.IsToolUseFinish && update.ToolUseId != null)
+            {
+                toolCalls.Add(new ToolCallRequest
+                {
+                    Id = update.ToolUseId,
+                    Type = "function",
+                    Function = new FunctionCall
+                    {
+                        Name = update.ToolUseName ?? string.Empty,
+                        Arguments = update.ToolUseInputJson ?? "{}"
+                    }
+                });
+            }
+
+            if (update.StopReason != null)
+            {
+                var reason = update.StopReason;
+                if (reason is not ("end_turn" or "tool_use" or "stop_sequence"))
+                {
+                    LastAbnormalFinishReason = reason;
+                    CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {reason}");
+                }
+            }
+
+            if (update.Usage != null)
+            {
+                usage = update.Usage.ToTokenUsageInfo();
+            }
+        }
+
+        return (msg.ToString(), usage, toolCalls.Count > 0 ? toolCalls : null);
+    }
+
+    // ── Anthropic non-streaming ────────────────────────────────
+
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessAnthropicNonStreamingAsync(
+            AnthropicChatClient client,
+            AnthropicChatRequest request)
+    {
+        var response = await client.CompleteAsync(request);
+
+        if (response.StopReason != null)
+        {
+            var reason = response.StopReason;
+            if (reason is not ("end_turn" or "tool_use" or "stop_sequence"))
+            {
+                LastAbnormalFinishReason = reason;
+                CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {reason}");
+            }
+        }
+
+        var msg = response.GetText() ?? string.Empty;
+        var toolCalls = response.GetToolUse();
+
+        return (msg, response.Usage?.ToTokenUsageInfo(), toolCalls);
+    }
+
+    // ── Responses streaming ────────────────────────────────────
+
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessResponsesStreamingAsync(
+            ResponsesChatClient client,
+            ResponsesCreateRequest request,
+            string? identity,
+            CancellationToken ct = default)
+    {
+        var msg = new StringBuilder();
+        TokenUsageInfo? usage = null;
+        var toolCalls = new List<ToolCallRequest>();
+
+        ResponseProcessor.Reset();
+
+        await foreach (var update in client.StreamAsync(request))
+        {
+            if (!string.IsNullOrEmpty(update.TextDelta))
+            {
+                msg.Append(update.TextDelta);
+            }
+
+            ResponseProcessor.AppendReasoning(update.ReasoningDelta);
+
+            if (update.ToolCalls != null)
+            {
+                foreach (var call in update.ToolCalls)
+                {
+                    if (!toolCalls.Any(x => x.Id == call.Id))
+                    {
+                        toolCalls.Add(call);
+                    }
+                }
+            }
+
+            if (update.Response != null)
+            {
+                if (update.Response.Usage != null)
+                {
+                    usage = update.Response.GetTokenUsage();
+                }
+
+                var responseCalls = update.Response.GetToolCalls();
+                if (responseCalls != null)
+                {
+                    foreach (var call in responseCalls)
+                    {
+                        if (!toolCalls.Any(x => x.Id == call.Id))
+                        {
+                            toolCalls.Add(call);
+                        }
+                    }
+                }
+
+                var finishReason = update.Response.GetFinishReason();
+                if (finishReason is not (null or "stop" or "tool_calls" or "function_call"
+                    or "length" or "content_filter" or "incomplete"))
+                {
+                    LastAbnormalFinishReason = finishReason;
+                    CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {finishReason}");
+                }
+
+                if (update.Response.Error != null)
+                {
+                    throw new ResponsesApiException(
+                        0,
+                        update.Response.Error.Message ?? "Responses API stream error",
+                        errorCode: update.Response.Error.Code);
+                }
+            }
+        }
+
+        return (msg.ToString(), usage, toolCalls.Count > 0 ? toolCalls : null);
+    }
+
+    // ── Responses non-streaming ────────────────────────────────
+
+    private async Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>
+        ProcessResponsesNonStreamingAsync(
+            ResponsesChatClient client,
+            ResponsesCreateRequest request)
+    {
+        var response = await client.CompleteAsync(request);
+
+        if (response.Error != null)
+        {
+            throw new ResponsesApiException(
+                0,
+                response.Error.Message ?? "Responses API error",
+                errorCode: response.Error.Code);
+        }
+
+        var finishReason = response.GetFinishReason();
+        if (finishReason is not (null or "stop" or "tool_calls" or "function_call"
+            or "length" or "content_filter" or "incomplete"))
+        {
+            LastAbnormalFinishReason = finishReason;
+            CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {finishReason}");
+        }
+
+        var msg = response.GetText() ?? string.Empty;
+        var toolCalls = response.GetToolCalls();
+
+        return (msg, response.GetTokenUsage(), toolCalls);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────
 
     private static void TrackUsage(string baseUrl, string model, Purpose purpose,
         TokenUsageInfo? usage, string apiKey)
@@ -373,8 +707,8 @@ public class ChatService
 /// </summary>
 public class ToolExecutor
 {
-    private readonly Func<ToolCallRequest, CancellationToken, Task<object?>> _executor;
     private readonly Func<List<ToolDefinition>> _getDefinitions;
+    private readonly Func<ToolCallRequest, CancellationToken, Task<object?>> _executor;
 
     public ToolExecutor(
         Func<List<ToolDefinition>> getDefinitions,

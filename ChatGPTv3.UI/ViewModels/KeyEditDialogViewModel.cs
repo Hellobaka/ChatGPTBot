@@ -9,6 +9,9 @@ using System.Windows;
 
 namespace ChatGPTv3.UI.ViewModels;
 
+/// <summary>Display option for the API format combo box.</summary>
+public sealed record ApiFormatOption(ApiFormat Value, string DisplayName);
+
 public partial class KeyEditDialogViewModel : ObservableObject
 {
     public string WindowTitle { get; }
@@ -17,8 +20,17 @@ public partial class KeyEditDialogViewModel : ObservableObject
     [ObservableProperty] private string _endPoint = string.Empty;
     [ObservableProperty] private string _apiKey = string.Empty;
     [ObservableProperty] private bool _useTencentSign;
+    [ObservableProperty] private ApiFormatOption? _selectedApiFormat;
+    [ObservableProperty] private bool _enableWebSearch = true;
     [ObservableProperty] private long _totalTokens;
     [ObservableProperty] private decimal _totalConsume;
+
+    public IReadOnlyList<ApiFormatOption> ApiFormatOptions { get; } =
+    [
+        new(ApiFormat.OpenAI, "OpenAI - Chat Completions"),
+        new(ApiFormat.Anthropic, "Anthropic - Messages API"),
+        new(ApiFormat.Responses, "OpenAI - Responses API")
+    ];
 
     public ObservableCollection<ProviderModelItem> Models { get; } = [];
 
@@ -30,6 +42,7 @@ public partial class KeyEditDialogViewModel : ObservableObject
     public KeyEditDialogViewModel()
     {
         WindowTitle = "新增服务商";
+        SelectedApiFormat = ApiFormatOptions[0];
     }
 
     /// <summary>Creates a dialog for editing an existing provider.</summary>
@@ -40,6 +53,9 @@ public partial class KeyEditDialogViewModel : ObservableObject
         EndPoint = source.EndPoint;
         ApiKey = source.Key;
         UseTencentSign = source.UseTencentSign;
+        SelectedApiFormat = ApiFormatOptions.FirstOrDefault(o => o.Value == source.ApiFormat)
+            ?? ApiFormatOptions[0];
+        EnableWebSearch = source.EnableWebSearch;
         TotalTokens = source.TotalTokens;
         TotalConsume = source.TotalConsume;
         foreach (var m in source.Models)
@@ -57,6 +73,8 @@ public partial class KeyEditDialogViewModel : ObservableObject
             EndPoint = EndPoint.Trim(),
             Key = ApiKey.Trim(),
             UseTencentSign = UseTencentSign,
+            ApiFormat = SelectedApiFormat?.Value ?? ApiFormat.OpenAI,
+            EnableWebSearch = EnableWebSearch,
             TotalTokens = TotalTokens,
             TotalConsume = TotalConsume
         };
@@ -158,22 +176,84 @@ public partial class KeyEditDialogViewModel : ObservableObject
 
         try
         {
-            var options = new OpenAiChatClientOptions
+            var format = SelectedApiFormat?.Value ?? ApiFormat.OpenAI;
+            switch (format)
             {
-                BaseUrl = EndPoint.Trim(),
-                ApiKey = ApiKey.Trim(),
-                TimeoutMs = 15000
-            };
+                case ApiFormat.Anthropic:
+                    {
+                        var anthropicOptions = new ChatGPTv3.AnthropicClient.AnthropicChatClientOptions
+                        {
+                            BaseUrl = EndPoint.Trim(),
+                            ApiKey = ApiKey.Trim(),
+                            TimeoutMs = 15000
+                        };
+                        using var anthropicClient = new ChatGPTv3.AnthropicClient.AnthropicChatClient(anthropicOptions);
+                        var anthropicRequest = new ChatGPTv3.AnthropicClient.AnthropicChatRequest
+                        {
+                            Model = model.Name.Trim(),
+                            Messages =
+                            [
+                                new ChatGPTv3.AnthropicClient.AnthropicMessage
+                            {
+                                Role = "user",
+                                Content =
+                                [
+                                    new ChatGPTv3.AnthropicClient.AnthropicContentBlock
+                                    {
+                                        Type = "text",
+                                        Text = "hello"
+                                    }
+                                ]
+                            }
+                            ],
+                            MaxTokens = 64
+                        };
+                        var anthropicResponse = await anthropicClient.CompleteAsync(anthropicRequest);
+                        _ = anthropicResponse.GetText() ?? "(no content)";
+                        break;
+                    }
 
-            using var client = new OpenAiChatClient(options);
-            var request = new ChatCompletionRequest
-            {
-                Model = model.Name.Trim(),
-                Messages = [ChatMessage.User("hello")]
-            };
+                case ApiFormat.Responses:
+                    {
+                        var responsesOptions = new ChatGPTv3.ResponsesClient.ResponsesChatClientOptions
+                        {
+                            BaseUrl = EndPoint.Trim(),
+                            ApiKey = ApiKey.Trim(),
+                            TimeoutMs = 15000
+                        };
+                        using var responsesClient = new ChatGPTv3.ResponsesClient.ResponsesChatClient(responsesOptions);
+                        var responsesRequest = new ChatGPTv3.ResponsesClient.ResponsesCreateRequest
+                        {
+                            Model = model.Name.Trim(),
+                            Input = "hello",
+                            MaxOutputTokens = 64
+                        };
+                        var responsesResponse = await responsesClient.CompleteAsync(responsesRequest);
+                        _ = responsesResponse.GetText() ?? "(no content)";
+                        break;
+                    }
 
-            var response = await client.CompleteAsync(request);
-            var reply = response.GetFirstChoiceText() ?? "(no content)";
+                default:
+                    {
+                        var options = new OpenAiChatClientOptions
+                        {
+                            BaseUrl = EndPoint.Trim(),
+                            ApiKey = ApiKey.Trim(),
+                            TimeoutMs = 15000
+                        };
+
+                        using var client = new OpenAiChatClient(options);
+                        var request = new ChatCompletionRequest
+                        {
+                            Model = model.Name.Trim(),
+                            Messages = [ChatMessage.User("hello")]
+                        };
+
+                        var response = await client.CompleteAsync(request);
+                        _ = response.GetFirstChoiceText() ?? "(no content)";
+                        break;
+                    }
+            }
 
             Growl.Success($"模型 {model.Name} 测试成功");
         }

@@ -3,6 +3,21 @@ using SqlSugar;
 namespace ChatGPTv3.Core.DB;
 
 /// <summary>
+/// API protocol format for an endpoint. Determines which local client is used.
+/// </summary>
+public enum ApiFormat
+{
+    /// <summary>OpenAI-compatible Chat Completions endpoint (default).</summary>
+    OpenAI = 0,
+
+    /// <summary>Anthropic Messages API endpoint.</summary>
+    Anthropic = 1,
+
+    /// <summary>OpenAI Responses API endpoint.</summary>
+    Responses = 2
+}
+
+/// <summary>
 /// Model capability flags — determines which purposes a model can serve.
 /// </summary>
 [Flags]
@@ -43,6 +58,14 @@ public class APIKey
 
     /// <summary>Whether to use Tencent Cloud TC3-HMAC-SHA256 signing for this endpoint.</summary>
     public bool UseTencentSign { get; set; }
+
+    /// <summary>
+    /// Whether to attach the built-in web_search tool for Anthropic / Responses endpoints.
+    /// </summary>
+    public bool EnableWebSearch { get; set; } = true;
+
+    /// <summary>API protocol format for this endpoint (OpenAI / Anthropic / Responses).</summary>
+    public ApiFormat ApiFormat { get; set; } = ApiFormat.OpenAI;
 
     /// <summary>Available models for this endpoint.</summary>
     [Navigate(NavigateType.OneToMany, nameof(LLMModelConfig.APIKeyId))]

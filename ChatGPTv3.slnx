@@ -1,8 +1,12 @@
 <Solution>
+  <Folder Name="/API/">
+    <Project Path="ChatGPTv3.AnthropicClient/ChatGPTv3.AnthropicClient.csproj" />
+    <Project Path="ChatGPTv3.OpenAIClient/ChatGPTv3.OpenAIClient.csproj" />
+    <Project Path="ChatGPTv3.ResponsesClient/ChatGPTv3.ResponsesClient.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
   <Project Path="ChatGPTv3.Core/ChatGPTv3.Core.csproj" />
-  <Project Path="ChatGPTv3.OpenAIClient/ChatGPTv3.OpenAIClient.csproj" />
   <Project Path="ChatGPTv3.UI/ChatGPTv3.UI.csproj" />
 </Solution>

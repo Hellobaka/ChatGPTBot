@@ -16,7 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ChatGPTv3.AnthropicClient\ChatGPTv3.AnthropicClient.csproj" />
     <ProjectReference Include="..\ChatGPTv3.OpenAIClient\ChatGPTv3.OpenAIClient.csproj" />
+    <ProjectReference Include="..\ChatGPTv3.ResponsesClient\ChatGPTv3.ResponsesClient.csproj" />
   </ItemGroup>
 
 </Project>

@@ -41,12 +41,25 @@
                             <TextBlock FontWeight="SemiBold" Text="API Key" />
                             <TextBox Margin="0,6,0,0" Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
+                        <StackPanel Width="300" Margin="0,0,12,10">
+                            <TextBlock FontWeight="SemiBold" Text="接口格式" />
+                            <ComboBox
+                                Margin="0,6,0,0"
+                                DisplayMemberPath="DisplayName"
+                                ItemsSource="{Binding ApiFormatOptions}"
+                                SelectedItem="{Binding SelectedApiFormat}" />
+                        </StackPanel>
                     </WrapPanel>
 
-                    <CheckBox
-                        Margin="0,0,0,12"
-                        Content="腾讯云签名"
-                        IsChecked="{Binding UseTencentSign}" />
+                    <WrapPanel Margin="0,0,0,12">
+                        <CheckBox
+                            Margin="0,0,20,0"
+                            Content="启用 Web Search（Anthropic / Responses）"
+                            IsChecked="{Binding EnableWebSearch}" />
+                        <CheckBox
+                            Content="腾讯云签名"
+                            IsChecked="{Binding UseTencentSign}" />
+                    </WrapPanel>
 
                     <!--  Model grid  -->
                     <TextBlock
