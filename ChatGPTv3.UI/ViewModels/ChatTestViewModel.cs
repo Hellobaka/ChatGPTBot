@@ -13,6 +13,7 @@ using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.Cryptography;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -76,6 +77,12 @@ public partial class ChatTestViewModel : ViewModelBase
 
     private static string PersistPath => Path.Combine(
         MockAppApi.Instance.GetAppDirectory(), "chat_test_state.json");
+
+    private static JsonSerializerOptions UnsafeSerializerOption { get; set; } = new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
 
     // Full pipelines for testing (same as production)
     private static readonly Func<ChatContext, Task> TestGroupPipeline = new ChatPipelineBuilder()
@@ -565,7 +572,7 @@ public partial class ChatTestViewModel : ViewModelBase
             if (File.Exists(PersistPath))
             {
                 var json = File.ReadAllText(PersistPath);
-                var state = JsonSerializer.Deserialize<ChatTestState>(json);
+                var state = JsonSerializer.Deserialize<ChatTestState>(json, UnsafeSerializerOption);
                 if (state != null)
                 {
                     _lastGroupId = state.LastGroupId;
@@ -593,7 +600,7 @@ public partial class ChatTestViewModel : ViewModelBase
                 LastQQ = _lastQQ,
                 SendHistory = _sendHistory
             };
-            var json = JsonSerializer.Serialize(state, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(state, UnsafeSerializerOption);
             File.WriteAllText(PersistPath, json);
         }
         catch { }
