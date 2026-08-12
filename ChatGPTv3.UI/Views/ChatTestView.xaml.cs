@@ -1,3 +1,4 @@
+using ChatGPTv3.Core.Api;
 using ChatGPTv3.UI.ViewModels;
 using HandyControl.Controls;
 using System.Windows;
@@ -15,11 +16,29 @@ public partial class ChatTestView : UserControl
     {
         InitializeComponent();
         DataContext = new ChatTestViewModel();
+        ChatService.OnToolCallStarted += OnToolCallStarted;
+        ChatService.OnRoundReasoning += OnRoundReasoning;
+        ChatService.OnIntermediateText += OnIntermediateText;
+        Unloaded += (_, _) => ChatService.OnToolCallStarted -= OnToolCallStarted;
+        Unloaded += (_, _) => ChatService.OnRoundReasoning -= OnRoundReasoning;
+        Unloaded += (_, _) => ChatService.OnIntermediateText -= OnIntermediateText;
         Loaded += (_, _) => ScrollChatToEnd();
-        VM.Messages.CollectionChanged += (_, _) =>
-        {
-            Dispatcher.BeginInvoke(ScrollChatToEnd, DispatcherPriority.Background);
-        };
+        VM.Messages.CollectionChanged += (_, _) => ScrollAndLayout();
+    }
+
+    private void OnToolCallStarted(string identity, string toolName, string arguments)
+    {
+        Dispatcher.BeginInvoke(() => VM.AddToolCallBubble(identity, toolName, arguments), DispatcherPriority.Send);
+    }
+
+    private void OnRoundReasoning(string identity, string reasoning)
+    {
+        Dispatcher.BeginInvoke(() => VM.SetPendingReasoning(identity, reasoning), DispatcherPriority.Send);
+    }
+
+    private void OnIntermediateText(string identity, string text)
+    {
+        Dispatcher.BeginInvoke(() => VM.AddIntermediateTextBubble(identity, text), DispatcherPriority.Send);
     }
 
     private void OnInputKeyDown(object sender, KeyEventArgs e)
@@ -47,5 +66,16 @@ public partial class ChatTestView : UserControl
     private void ScrollChatToEnd()
     {
         ChatScroll.ScrollToEnd();
+    }
+
+    /// <summary>
+    /// Forces immediate layout and scroll after every bubble so each segment is
+    /// visible before the next typing delay starts (no end-of-send batching).
+    /// Runs on the UI thread because bubbles are added via the dispatcher.
+    /// </summary>
+    private void ScrollAndLayout()
+    {
+        ChatScroll.ScrollToEnd();
+        ChatScroll.UpdateLayout();
     }
 }

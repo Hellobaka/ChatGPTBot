@@ -32,6 +32,25 @@ public class ChatService
     /// <summary>Fires when an inline image is received (generated image output).</summary>
     public static event Action<string, string>? OnImageChunk;
 
+    /// <summary>
+    /// Fires when a tool call starts executing. Args: conversation identity,
+    /// tool name, arguments JSON.
+    /// </summary>
+    public static event Action<string, string, string>? OnToolCallStarted;
+
+    /// <summary>
+    /// Fires after each LLM round with that round's reasoning content.
+    /// Args: conversation identity, reasoning. Lets consumers pair every round's
+    /// dialogue (or tool call) with its own thinking chain.
+    /// </summary>
+    public static event Action<string, string>? OnRoundReasoning;
+
+    /// <summary>
+    /// Fires when the model speaks intermediate text during a tool-call round,
+    /// before the tools execute. Args: conversation identity, text.
+    /// </summary>
+    public static event Action<string, string>? OnIntermediateText;
+
     /// <summary>Collects tool call data for post-turn summarization.</summary>
     public List<(string callId, string name, string args, string result, bool success)> ToolCallLog { get; } = [];
 
@@ -40,6 +59,14 @@ public class ChatService
 
     /// <summary>Last accumulated reasoning, exposed for external consumers (e.g. pipeline trace, ChatTest).</summary>
     public string? LastReasoning => ResponseProcessor.LastReasoning;
+
+    private readonly List<string> _roundReasonings = [];
+
+    /// <summary>
+    /// Reasoning content for every LLM round in this turn, in order.
+    /// Each entry corresponds to one round of the tool-call loop.
+    /// </summary>
+    public IReadOnlyList<string> RoundReasonings => _roundReasonings;
 
     /// <summary>
     /// Main chat completion entry point. Picks a random bound key and routes by its ApiFormat.
@@ -188,12 +215,7 @@ public class ChatService
             chatMessages, purpose, baseUrl, model, apiKey, toolExecutor, identity, onIntermediateText,
             streaming => streaming
                 ? ProcessOpenAiStreamingAsync(client, request, identity)
-                : ProcessOpenAiNonStreamingAsync(client, request),
-            () =>
-            {
-                request.Tools = null;
-                request.ToolChoice = null;
-            });
+                : ProcessOpenAiNonStreamingAsync(client, request));
 
         return ResponseProcessor.ProcessResponse(msg);
     }
@@ -240,8 +262,7 @@ public class ChatService
                 return streaming
                     ? ProcessAnthropicStreamingAsync(client, request, identity)
                     : ProcessAnthropicNonStreamingAsync(client, request);
-            },
-            () => includeTools = false);
+            });
 
         return ResponseProcessor.ProcessResponse(msg);
     }
@@ -288,8 +309,7 @@ public class ChatService
                 return streaming
                     ? ProcessResponsesStreamingAsync(client, request, identity)
                     : ProcessResponsesNonStreamingAsync(client, request);
-            },
-            () => includeTools = false);
+            });
 
         return ResponseProcessor.ProcessResponse(msg);
     }
@@ -305,8 +325,7 @@ public class ChatService
         ToolExecutor? toolExecutor,
         string? identity,
         Func<string, Task>? onIntermediateText,
-        Func<bool, Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>> sendRound,
-        Action afterToolRound)
+        Func<bool, Task<(string msg, TokenUsageInfo? usage, List<ToolCallRequest>? toolCalls)>> sendRound)
     {
         string msg = "";
 
@@ -325,6 +344,21 @@ public class ChatService
             msg = roundMsg;
             TrackUsage(baseUrl, model, purpose, usage, apiKey);
 
+            // Capture this round's reasoning before the next round resets it.
+            var roundReasoning = ResponseProcessor.CapturePendingReasoning();
+            if (!string.IsNullOrWhiteSpace(roundReasoning))
+            {
+                _roundReasonings.Add(roundReasoning);
+                OnRoundReasoning?.Invoke(identity ?? string.Empty, roundReasoning);
+
+                if (AppConfig.LogThinkBlock)
+                {
+                    CommonHelper.LogInfo?.Invoke(
+                        "思考内容",
+                        $"[第 {toolCallRound} 轮] {roundReasoning}");
+                }
+            }
+
             if (pendingToolCalls == null || pendingToolCalls.Count == 0 || toolExecutor == null)
             {
                 break; // No tool calls, done
@@ -333,6 +367,7 @@ public class ChatService
             // Send intermediate text if LLM spoke during tool call round
             if (onIntermediateText != null && !string.IsNullOrWhiteSpace(msg))
             {
+                OnIntermediateText?.Invoke(identity ?? string.Empty, msg);
                 await onIntermediateText(msg);
             }
 
@@ -340,6 +375,11 @@ public class ChatService
             var toolResults = new List<ToolCallResult>();
             foreach (var tc in pendingToolCalls)
             {
+                OnToolCallStarted?.Invoke(
+                    identity ?? string.Empty,
+                    tc.Function.Name,
+                    tc.Function.Arguments ?? string.Empty);
+
                 var (result, trackResult) = await _toolCallService.LogToolCallAsync(
                     tc,
                     async (toolCall, ct) =>
@@ -362,6 +402,16 @@ public class ChatService
                 {
                     toolResults.Add(trackResult);
                 }
+                else
+                {
+                    toolResults.Add(new ToolCallResult
+                    {
+                        ToolCallId = tc.Id ?? "",
+                        FunctionName = tc.Function.Name,
+                        Result = result?.ToString() ?? "(工具执行失败)",
+                        IsSuccess = false
+                    });
+                }
             }
 
             // Append assistant tool call message + tool results to conversation
@@ -372,10 +422,11 @@ public class ChatService
                 ToolCalls = pendingToolCalls
             });
 
-            // Only add successful tool results
-            foreach (var tr in toolResults.Where(r => r.IsSuccess))
+            // The API requires a tool response for EVERY tool_call_id, including
+            // failures; otherwise the next request is rejected.
+            foreach (var tr in toolResults)
             {
-                chatMessages.Add(ChatMessage.Tool(tr.ToolCallId, tr.Result));
+                chatMessages.Add(tr.ToChatMessage());
             }
 
             // Check abort
@@ -385,8 +436,6 @@ public class ChatService
                 break;
             }
 
-            // Remove tools for subsequent calls (model should respond with final text)
-            afterToolRound();
         }
 
         // Add assistant response to context
@@ -460,15 +509,21 @@ public class ChatService
                 CommonHelper.LogWarning?.Invoke("ChatService", $"异常结束原因: {reason}");
             }
 
-            // ── Check for completed tool calls ──
+            // ── Collect merged tool calls as they stream ──
+            // The parser attaches the fully merged tool-call list to every chunk
+            // after tool calls begin, so capture it continuously. Relying only on
+            // the finish chunk is fragile: some providers send delta:null on the
+            // finish chunk, emit finish_reason:"stop" even when calling tools, or
+            // end the stream without a finish chunk at all.
+            var streamedToolCalls = update.GetToolCalls();
+            if (streamedToolCalls is { Count: > 0 })
+            {
+                toolCalls = streamedToolCalls;
+            }
+
+            // ── Log intermediate content when the tool-call round ends ──
             if (update.IsToolCallFinish())
             {
-                var calls = update.GetToolCalls();
-                if (calls != null && calls.Count > 0)
-                {
-                    toolCalls = calls;
-                }
-
                 if (msg.Length > 0)
                 {
                     CommonHelper.DebugLog("ToolCall", $"中间内容: {msg}");

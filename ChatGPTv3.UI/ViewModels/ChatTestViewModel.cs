@@ -116,6 +116,15 @@ public partial class ChatTestViewModel : ViewModelBase
     /// </summary>
     private List<ChatRecord> _mockHistory = [];
 
+    /// <summary>Latest reasoning per conversation, waiting to be attached to the next bubble.</summary>
+    private readonly Dictionary<string, string> _pendingReasonings = new();
+
+    /// <summary>Identity of the conversation currently being tested; filters static events from other sources.</summary>
+    private string? _activeIdentity;
+
+    /// <summary>Intermediate text already rendered as its own bubble, to avoid a duplicate Bot bubble via SendFunc.</summary>
+    private (string Identity, string Text)? _pendingIntermediate;
+
     private string? _historyDraft;
     private int _historyIndex = -1;
     private long _lastGroupId;
@@ -149,6 +158,73 @@ public partial class ChatTestViewModel : ViewModelBase
     public ObservableCollection<ChatBubbleItem> Messages { get; } = [];
 
     public ObservableCollection<PendingImage> PendingImages { get; } = [];
+
+    /// <summary>
+    /// Adds a "tool call" bubble to the conversation when ChatService reports
+    /// that a tool is starting to execute.
+    /// </summary>
+    public void AddToolCallBubble(string identity, string toolName, string arguments)
+    {
+        if (identity != _activeIdentity)
+        {
+            return;
+        }
+
+        var roundReasoning = TakePendingReasoning(identity);
+        var reasoningText = arguments;
+        if (!string.IsNullOrWhiteSpace(roundReasoning))
+        {
+            reasoningText = $"[工具参数]\n{arguments}\n[本轮思考]\n{roundReasoning}";
+        }
+
+        Messages.Add(new ChatBubbleItem
+        {
+            Content = $"🔧 调用工具：{toolName}",
+            IsSelf = false,
+            Sender = "Tool",
+            Time = DateTime.Now,
+            Reasoning = reasoningText
+        });
+    }
+
+    /// <summary>Stores the latest round reasoning for a conversation.</summary>
+    public void SetPendingReasoning(string identity, string reasoning)
+    {
+        if (identity == _activeIdentity)
+        {
+            _pendingReasonings[identity] = reasoning;
+        }
+    }
+
+    /// <summary>
+    /// Renders intermediate text spoken during a tool-call round as its own bubble.
+    /// The same text is also routed through SendFunc, which suppresses the duplicate.
+    /// </summary>
+    public void AddIntermediateTextBubble(string identity, string text)
+    {
+        if (identity != _activeIdentity)
+        {
+            return;
+        }
+
+        _pendingIntermediate = (identity, text);
+        Messages.Add(new ChatBubbleItem
+        {
+            Content = text,
+            IsSelf = false,
+            Sender = "中间文本",
+            Reasoning = TakePendingReasoning(identity),
+            Time = DateTime.Now
+        });
+    }
+
+    private string? TakePendingReasoning(string identity)
+    {
+        return _pendingReasonings.Remove(identity, out var reasoning) ? reasoning : null;
+    }
+
+    private static string GetConversationIdentity(ChatContext ctx) =>
+        ctx.IsGroup ? $"group_{ctx.GroupId}" : $"private_{ctx.QQ}";
 
     public ChatTestViewModel()
     {
@@ -358,6 +434,9 @@ public partial class ChatTestViewModel : ViewModelBase
     {
         Messages.Clear();
         _mockHistory = [];
+        _pendingReasonings.Clear();
+        _activeIdentity = null;
+        _pendingIntermediate = null;
     }
 
     [RelayCommand]
@@ -648,20 +727,29 @@ public partial class ChatTestViewModel : ViewModelBase
 
         // Use the shared in-memory mock history
         ctx.MockMessages = _mockHistory;
+        _activeIdentity = GetConversationIdentity(ctx);
 
         // Capture pipeline response via SendFunc
         ctx.SendFunc = async msg =>
         {
             await _uiDispatcher.InvokeAsync(() =>
             {
+                if (_pendingIntermediate is { } pending
+                    && pending.Identity == GetConversationIdentity(ctx)
+                    && pending.Text == msg)
+                {
+                    _pendingIntermediate = null;
+                    return; // already shown as an intermediate-text bubble
+                }
+
                 Messages.Add(new ChatBubbleItem
                 {
                     Content = msg,
                     IsSelf = false,
                     Sender = "Bot",
-                    Reasoning = ctx.Reasoning
+                    Reasoning = TakePendingReasoning(GetConversationIdentity(ctx)) ?? ctx.Reasoning
                 });
-            });
+            }, DispatcherPriority.Send);
             await Task.CompletedTask;
         };
 

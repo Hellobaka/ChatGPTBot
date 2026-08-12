@@ -39,6 +39,12 @@ public class ResponseProcessor
     }
 
     /// <summary>
+    /// Returns the current round's accumulated reasoning without consuming it.
+    /// Called after each LLM round so multi-round tool loops can keep the full chain.
+    /// </summary>
+    public string? CapturePendingReasoning() => _pendingReasoning;
+
+    /// <summary>
     /// Processes the final accumulated message.
     /// Removes think blocks and handles empty responses.
     /// </summary>
@@ -49,12 +55,6 @@ public class ResponseProcessor
 
         if (AppConfig.RemoveThinkBlock)
         {
-            // Extract and log reasoning
-            if (AppConfig.LogThinkBlock && !string.IsNullOrEmpty(LastReasoning))
-            {
-                CommonHelper.LogInfo?.Invoke("思考内容", LastReasoning);
-            }
-
             // Remove think block from message if present
             var thinkMatch = ThinkBlockRegex.Match(msg);
             if (thinkMatch.Success)
