@@ -15,9 +15,31 @@ public partial class EnvVarItem : ObservableObject
     private string _value = string.Empty;
 }
 
+public partial class HeaderItem : ObservableObject
+{
+    [ObservableProperty]
+    private string _key = string.Empty;
+
+    [ObservableProperty]
+    private string _value = string.Empty;
+}
+
 public partial class MCPAddClientViewModel : ObservableObject
 {
     public Action? RequestClose { get; set; }
+
+    public bool IsEditMode { get; }
+
+    public bool CanChangeType => !IsEditMode;
+
+    public string WindowTitle => IsEditMode ? "编辑 MCP 客户端" : "添加 MCP 客户端";
+
+    public string ConfirmButtonText => IsEditMode ? "保存" : "添加";
+
+    /// <summary>Explicit HTTP transport options; SSE is just another HTTP mode.</summary>
+    public IReadOnlyList<string> TransportModes { get; } = ["StreamableHttp", "SSE"];
+
+    private readonly MCPClientBase? _editingClient;
 
     [ObservableProperty]
     private string _clientType = "Http";
@@ -36,23 +58,55 @@ public partial class MCPAddClientViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsStdio))]
-    [NotifyPropertyChangedFor(nameof(IsSse))]
     private bool _isHttp = true;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHttp))]
-    [NotifyPropertyChangedFor(nameof(IsStdio))]
-    private bool _isSse;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsHttp))]
-    [NotifyPropertyChangedFor(nameof(IsSse))]
     private bool _isStdio;
 
     [ObservableProperty]
-    private string _sseEndpoint = string.Empty;
+    private string _transportMode = "StreamableHttp";
 
     public ObservableCollection<EnvVarItem> EnvironmentVariables { get; } = [];
+
+    public ObservableCollection<HeaderItem> Headers { get; } = [];
+
+    public MCPAddClientViewModel()
+    {
+    }
+
+    /// <summary>Creates the dialog in edit mode for an existing client.</summary>
+    public MCPAddClientViewModel(MCPClientBase client)
+    {
+        IsEditMode = true;
+        _editingClient = client;
+        ClientName = client.Name;
+
+        switch (client)
+        {
+            case MCPStdioClient stdio:
+                IsStdio = true;
+                Command = stdio.Command;
+                Arguments = string.Join(' ', stdio.Arguments);
+                foreach (var (key, value) in stdio.EnvironmentVariables)
+                {
+                    EnvironmentVariables.Add(new EnvVarItem { Key = key, Value = value });
+                }
+                break;
+
+            case MCPHttpClient http:
+                IsHttp = true;
+                Endpoint = http.Endpoint;
+                TransportMode = http.TransportMode == "AutoDetect"
+                    ? "StreamableHttp"
+                    : http.TransportMode;
+                foreach (var (key, value) in http.Headers)
+                {
+                    Headers.Add(new HeaderItem { Key = key, Value = value });
+                }
+                break;
+        }
+    }
 
     [RelayCommand]
     private void AddEnvVar()
@@ -69,22 +123,26 @@ public partial class MCPAddClientViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void AddHeader()
+    {
+        Headers.Add(new HeaderItem());
+    }
+
+    [RelayCommand]
+    private void RemoveHeader(HeaderItem? item)
+    {
+        if (item != null)
+        {
+            Headers.Remove(item);
+        }
+    }
+
     partial void OnIsHttpChanged(bool value)
     {
         if (value)
         {
             ClientType = "Http";
-            IsSse = false;
-            IsStdio = false;
-        }
-    }
-
-    partial void OnIsSseChanged(bool value)
-    {
-        if (value)
-        {
-            ClientType = "SSE";
-            IsHttp = false;
             IsStdio = false;
         }
     }
@@ -95,7 +153,6 @@ public partial class MCPAddClientViewModel : ObservableObject
         {
             ClientType = "Stdio";
             IsHttp = false;
-            IsSse = false;
         }
     }
 
@@ -116,41 +173,35 @@ public partial class MCPAddClientViewModel : ObservableObject
     [RelayCommand]
     private async Task Add()
     {
+        if (IsEditMode && _editingClient != null)
+        {
+            SaveExisting();
+            RequestClose?.Invoke();
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(ClientName))
         {
             Growl.Warning("请输入客户端名称");
             return;
         }
 
-        if (IsHttp || IsSse)
+        if (IsHttp)
         {
-            var endpoint = IsHttp ? Endpoint : SseEndpoint;
-            var label = IsHttp ? "Endpoint URL" : "SSE Endpoint URL";
-            if (string.IsNullOrWhiteSpace(endpoint))
+            if (string.IsNullOrWhiteSpace(Endpoint))
             {
-                Growl.Warning($"请输入 {label}");
+                Growl.Warning("请输入 Endpoint URL");
                 return;
             }
 
-            if (IsSse)
+            var client = new MCPHttpClient
             {
-                var client = new MCPSSEClient
-                {
-                    Name = ClientName.Trim(),
-                    Endpoint = endpoint.Trim()
-                };
-                MCPClientManager.AddClient(client);
-            }
-            else
-            {
-                var client = new MCPHttpClient
-                {
-                    Name = ClientName.Trim(),
-                    Endpoint = endpoint.Trim(),
-                    TransportMode = "StreamableHttp"
-                };
-                MCPClientManager.AddClient(client);
-            }
+                Name = ClientName.Trim(),
+                Endpoint = Endpoint.Trim(),
+                TransportMode = TransportMode,
+                Headers = CollectHeaders()
+            };
+            MCPClientManager.AddClient(client);
         }
         else
         {
@@ -180,6 +231,42 @@ public partial class MCPAddClientViewModel : ObservableObject
 
         RequestClose?.Invoke();
     }
+
+    private void SaveExisting()
+    {
+        if (_editingClient == null)
+        {
+            return;
+        }
+
+        var originalName = _editingClient.Name;
+        MCPClientManager.UpdateClient(originalName, c =>
+        {
+            c.Name = ClientName.Trim();
+
+            if (c is MCPStdioClient stdio)
+            {
+                stdio.Command = Command.Trim();
+                stdio.Arguments = string.IsNullOrWhiteSpace(Arguments)
+                    ? []
+                    : Arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                stdio.EnvironmentVariables = EnvironmentVariables
+                    .Where(e => !string.IsNullOrWhiteSpace(e.Key))
+                    .ToDictionary(e => e.Key.Trim(), e => e.Value?.Trim() ?? string.Empty);
+            }
+            else if (c is MCPHttpClient http)
+            {
+                http.Endpoint = Endpoint.Trim();
+                http.TransportMode = TransportMode;
+                http.Headers = CollectHeaders();
+            }
+        });
+    }
+
+    private Dictionary<string, string> CollectHeaders() =>
+        Headers
+            .Where(h => !string.IsNullOrWhiteSpace(h.Key))
+            .ToDictionary(h => h.Key.Trim(), h => h.Value?.Trim() ?? string.Empty);
 
     [RelayCommand]
     private void Cancel()

@@ -25,8 +25,7 @@ public partial class MCPServerNode : ObservableObject
 
             return Client?.ToolType switch
             {
-                MCPClientType.Http => "Http",
-                MCPClientType.SSE => "SSE",
+                MCPClientType.Http or MCPClientType.SSE => "Http",
                 MCPClientType.Stdio => "Stdio",
                 _ => "?"
             };
@@ -106,6 +105,7 @@ public partial class MCPManagementViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsSelectedClientEnabled))]
     [NotifyPropertyChangedFor(nameof(CanReconnect))]
     [NotifyPropertyChangedFor(nameof(CanRefreshTools))]
+    [NotifyPropertyChangedFor(nameof(CanEditClient))]
     private MCPServerNode? _selectedServer;
 
     [ObservableProperty]
@@ -136,8 +136,7 @@ public partial class MCPManagementViewModel : ViewModelBase
         SelectedTool != null
             ? MCPClientManager.Clients.FirstOrDefault(c => c.Name == SelectedTool.ClientName)?.ToolType switch
             {
-                MCPClientType.Http => "Http",
-                MCPClientType.SSE => "SSE",
+                MCPClientType.Http or MCPClientType.SSE => "Http",
                 MCPClientType.Stdio => "Stdio",
                 _ => "内置"
             }
@@ -250,7 +249,7 @@ public partial class MCPManagementViewModel : ViewModelBase
                 Name = client.Name,
                 IsBuiltInGroup = false,
                 Client = client,
-                Enabled = client.Enabled
+                Enabled = true
             };
             ServerNodes.Add(node);
         }
@@ -501,6 +500,19 @@ public partial class MCPManagementViewModel : ViewModelBase
         RefreshAll();
     }
 
+    [RelayCommand]
+    private void OpenEditClientDialog()
+    {
+        if (GetSelectedClient() is not MCPExternalClient client)
+        {
+            return;
+        }
+
+        var dialog = new MCPAddClientDialog(client) { Owner = GetActiveWindow() };
+        dialog.ShowDialog();
+        RefreshAll();
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NotRefreshing))]
     private bool _isRefreshingExternalTools;
@@ -514,6 +526,8 @@ public partial class MCPManagementViewModel : ViewModelBase
     public bool CanRefreshTools => !IsReconnecting && SelectedServer is { IsConnected: true };
 
     public bool CanReconnect => SelectedServer is { IsBuiltInGroup: false, Client: MCPExternalClient };
+
+    public bool CanEditClient => SelectedServer is { IsBuiltInGroup: false, Client: MCPExternalClient };
 
     public string ConnectionStatusText
     {
