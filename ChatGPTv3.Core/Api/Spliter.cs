@@ -22,9 +22,10 @@ public class Splitter
 规则：
 1. 输出的 JSON 数组中的各段按顺序拼接后，必须与输入文本**完全一致**（逐字符相同）。
 2. 你只能决定在哪里分段，绝对不能添加、删除、修改任何一个字符（包括标点符号）。
-3. 每个分段应尽量保持语义完整，但不得为了完整而修改原文。
-4. 分段数量不能超过 $MaxLines$ 段。如果原文很短，分段数可以小于 $MaxLines$，甚至为 1 段。
-5. 如果原文已经无法再拆分，直接返回包含整个原文的数组。
+3. 在保证规则2的情况下，每个分段结尾如果以非结束标点结尾，例如逗号，需要使这个分段删除这个标点使末尾没有标点符号。
+4. 每个分段应尽量保持语义完整，但不得为了完整而修改原文。
+5. 分段数量不能超过 $MaxLines$ 段。分段数可以小于 $MaxLines$，甚至为 1 段，保证每段的可读性。
+6. 如果原文已经无法再拆分，直接返回包含整个原文的数组。
 
 示例输入："今天天气真好。我们去公园吧！听说那里樱花开了，要不要一起？"
 示例输出：["今天天气真好。","我们去公园吧！","听说那里樱花开了，要不要一起？"]
@@ -45,7 +46,7 @@ public class Splitter
         _message = message;
     }
 
-    public string[] Split()
+    public string[] Split(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_message))
         {
@@ -64,7 +65,7 @@ public class Splitter
 
         try
         {
-            return LlmSplit();
+            return LlmSplit(ct);
         }
         catch
         {
@@ -72,7 +73,7 @@ public class Splitter
         }
     }
 
-    public async Task<string[]> SplitAsync()
+    public async Task<string[]> SplitAsync(CancellationToken ct = default)
     {
         if (string.IsNullOrEmpty(_message))
         {
@@ -91,7 +92,7 @@ public class Splitter
 
         try
         {
-            return await LlmSplitAsync();
+            return await LlmSplitAsync(ct);
         }
         catch
         {
@@ -99,7 +100,7 @@ public class Splitter
         }
     }
 
-    private string[] LlmSplit()
+    private string[] LlmSplit(CancellationToken ct)
     {
         var prompt = Prompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
         if (AppConfig.EnableSplitterRemoveMarkdown)
@@ -117,7 +118,8 @@ public class Splitter
         var result = chatService.GetChatResultAsync(
             AppConfig.SplitterApiKeyId, messages,
             ChatService.Purpose.分段, jsonMode: true,
-            timeout: AppConfig.SplitterTimeout).Result;
+            timeout: AppConfig.SplitterTimeout,
+            cancellationToken: ct).Result;
 
         if (result == ChatService.ErrorMessage)
         {
@@ -127,7 +129,7 @@ public class Splitter
         return ParseSplitResult(result);
     }
 
-    private async Task<string[]> LlmSplitAsync()
+    private async Task<string[]> LlmSplitAsync(CancellationToken ct)
     {
         var prompt = Prompt.Replace("$MaxLines$", AppConfig.SplitterMaxLines.ToString());
         if (AppConfig.EnableSplitterRemoveMarkdown)
@@ -145,7 +147,8 @@ public class Splitter
         var result = await chatService.GetChatResultAsync(
             AppConfig.SplitterApiKeyId, messages,
             ChatService.Purpose.分段, jsonMode: true,
-            timeout: AppConfig.SplitterTimeout);
+            timeout: AppConfig.SplitterTimeout,
+            cancellationToken: ct);
 
         if (result == ChatService.ErrorMessage)
         {
