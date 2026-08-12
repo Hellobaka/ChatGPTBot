@@ -217,6 +217,16 @@ public class OpenAiChatClient : IDisposable
             body["tool_choice"] = request.ToolChoice;
         }
 
+        if (request.Thinking != null)
+        {
+            body["thinking"] = request.Thinking;
+        }
+
+        if (!string.IsNullOrEmpty(request.ReasoningEffort))
+        {
+            body["reasoning_effort"] = request.ReasoningEffort;
+        }
+
         if (request.ResponseFormat != null)
         {
             body["response_format"] = request.ResponseFormat;

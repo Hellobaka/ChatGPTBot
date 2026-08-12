@@ -17,22 +17,35 @@ public partial class ProviderModelItem : ObservableObject
     public int APIKeyId { get; set; }
 
     [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty] private string _alias = string.Empty;
     [ObservableProperty] private bool _enabled = true;
     [ObservableProperty] private decimal _inputPricePer1M;
     [ObservableProperty] private decimal _outputPricePer1M;
     [ObservableProperty] private decimal _cachePricePer1M;
     [ObservableProperty] private ModelCapability _capabilities = ModelCapability.Chat;
+    [ObservableProperty] private bool _thinkingEnabled = true;
+    [ObservableProperty] private string _reasoningEffort = "high";
+
+    /// <summary>Display name — prefers the alias when set, otherwise the model name.</summary>
+    public string DisplayName => string.IsNullOrWhiteSpace(Alias) ? Name : Alias;
+
+    partial void OnNameChanged(string value) => OnPropertyChanged(nameof(DisplayName));
+
+    partial void OnAliasChanged(string value) => OnPropertyChanged(nameof(DisplayName));
 
     public ProviderModelItem Clone() => new()
     {
         Id = Id,
         APIKeyId = APIKeyId,
         Name = Name,
+        Alias = Alias,
         Enabled = Enabled,
         InputPricePer1M = InputPricePer1M,
         OutputPricePer1M = OutputPricePer1M,
         CachePricePer1M = CachePricePer1M,
-        Capabilities = Capabilities
+        Capabilities = Capabilities,
+        ThinkingEnabled = ThinkingEnabled,
+        ReasoningEffort = ReasoningEffort
     };
 }
 
@@ -89,19 +102,30 @@ public partial class PurposeBindingItem : ObservableObject
 
     partial void OnSelectedProviderChanged(ProviderItem? value)
     {
+        RefreshAvailableModels();
+    }
+
+    /// <summary>Rebuilds the model dropdown from the selected provider.</summary>
+    public void RefreshAvailableModels()
+    {
+        var previous = SelectedModel;
         AvailableModels.Clear();
-        if (value != null)
+        if (SelectedProvider != null)
         {
             var required = ParentGroup?.RequiredCapability ?? ModelCapability.Chat;
-            foreach (var model in value.Models.Where(x => x.Enabled && (x.Capabilities & required) != 0))
+            foreach (var model in SelectedProvider.Models.Where(x => x.Enabled && (x.Capabilities & required) != 0))
             {
                 AvailableModels.Add(model);
             }
         }
 
-        if (SelectedModel != null && !AvailableModels.Any(x => x.Name == SelectedModel.Name))
+        if (previous != null)
         {
-            SelectedModel = AvailableModels.FirstOrDefault();
+            // The provider's model rows are replaced with fresh instances after an
+            // edit, so re-bind by Id (stable identity) and only fall back to Name.
+            SelectedModel = AvailableModels.FirstOrDefault(x => x.Id == previous.Id)
+                ?? AvailableModels.FirstOrDefault(x => x.Name == previous.Name)
+                ?? AvailableModels.FirstOrDefault();
         }
     }
 }
@@ -198,10 +222,53 @@ public partial class KeyManagementViewModel : ViewModelBase
             provider.Models.Add(m);
         }
         PersistProvider(provider);
+        RefreshPurposeModelsForProvider(provider);
+    }
+
+    /// <summary>
+    /// After a provider's models change (e.g. a model was added in the edit dialog),
+    /// rebuild the "可用模型" dropdowns of all purpose bindings using that provider.
+    /// </summary>
+    private void RefreshPurposeModelsForProvider(ProviderItem provider)
+    {
+        foreach (var group in PurposeGroups)
+        {
+            foreach (var item in group.Items.Where(x => x.SelectedProvider == provider))
+            {
+                item.RefreshAvailableModels();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Built-in web search only applies to Anthropic / Responses endpoints.
+    /// OpenAI-compatible endpoints never send it, so the flag is forced off on save.
+    /// </summary>
+    private static bool EffectiveWebSearch(ProviderItem provider) =>
+        provider.ApiFormat == ApiFormat.OpenAI ? false : provider.EnableWebSearch;
+
+    /// <summary>
+    /// Copies persisted model Ids (and APIKeyId) back to the UI rows so the next
+    /// save updates in place instead of deleting and re-inserting. This also lets
+    /// multiple models share the same name while keeping each row's identity.
+    /// </summary>
+    private static void SyncModelIds(ProviderItem provider, APIKey saved)
+    {
+        if (saved.AvailableModels == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < provider.Models.Count && i < saved.AvailableModels.Count; i++)
+        {
+            provider.Models[i].Id = saved.AvailableModels[i].Id;
+            provider.Models[i].APIKeyId = saved.Id;
+        }
     }
 
     private void PersistProvider(ProviderItem provider)
     {
+        var webSearch = EffectiveWebSearch(provider);
         var entity = new APIKey
         {
             Id = provider.Id,
@@ -212,26 +279,27 @@ public partial class KeyManagementViewModel : ViewModelBase
             TotalConsume = provider.TotalConsume,
             UseTencentSign = provider.UseTencentSign,
             ApiFormat = provider.ApiFormat,
-            EnableWebSearch = provider.EnableWebSearch,
+            EnableWebSearch = webSearch,
             AvailableModels = provider.Models.Select(model => new LLMModelConfig
             {
                 Id = model.Id,
                 APIKeyId = provider.Id,
                 Name = model.Name.Trim(),
+                Alias = model.Alias.Trim(),
                 Enabled = model.Enabled,
                 InputPricePer1M = model.InputPricePer1M,
                 OutputPricePer1M = model.OutputPricePer1M,
                 CachePricePer1M = model.CachePricePer1M,
-                Capabilities = model.Capabilities
+                Capabilities = model.Capabilities,
+                ThinkingEnabled = model.ThinkingEnabled,
+                ReasoningEffort = model.ReasoningEffort
             }).ToList()
         };
 
         var saved = APIKeyRepository.Save(entity);
         provider.Id = saved.Id;
-        for (int i = 0; i < provider.Models.Count; i++)
-        {
-            provider.Models[i].APIKeyId = saved.Id;
-        }
+        provider.EnableWebSearch = webSearch;
+        SyncModelIds(provider, saved);
     }
 
     [RelayCommand]
@@ -302,6 +370,7 @@ public partial class KeyManagementViewModel : ViewModelBase
         {
             foreach (var provider in Providers)
             {
+                var webSearch = EffectiveWebSearch(provider);
                 var entity = new APIKey
                 {
                     Id = provider.Id,
@@ -312,26 +381,27 @@ public partial class KeyManagementViewModel : ViewModelBase
                     TotalConsume = provider.TotalConsume,
                     UseTencentSign = provider.UseTencentSign,
                     ApiFormat = provider.ApiFormat,
-                    EnableWebSearch = provider.EnableWebSearch,
+                    EnableWebSearch = webSearch,
                     AvailableModels = provider.Models.Select(model => new LLMModelConfig
                     {
                         Id = model.Id,
                         APIKeyId = provider.Id,
                         Name = model.Name.Trim(),
+                        Alias = model.Alias.Trim(),
                         Enabled = model.Enabled,
                         InputPricePer1M = model.InputPricePer1M,
                         OutputPricePer1M = model.OutputPricePer1M,
                         CachePricePer1M = model.CachePricePer1M,
-                        Capabilities = model.Capabilities
+                        Capabilities = model.Capabilities,
+                        ThinkingEnabled = model.ThinkingEnabled,
+                        ReasoningEffort = model.ReasoningEffort
                     }).ToList()
                 };
 
                 var saved = APIKeyRepository.Save(entity);
                 provider.Id = saved.Id;
-                for (int i = 0; i < provider.Models.Count; i++)
-                {
-                    provider.Models[i].APIKeyId = saved.Id;
-                }
+                provider.EnableWebSearch = webSearch;
+                SyncModelIds(provider, saved);
             }
 
             var bindings = PurposeGroups.ToDictionary(
@@ -343,14 +413,19 @@ public partial class KeyManagementViewModel : ViewModelBase
                         if ((item.SelectedModel!.Capabilities & group.RequiredCapability) == 0)
                         {
                             throw new InvalidOperationException(
-                                $"模型「{item.SelectedModel.Name}」不支持「{group.Title}」所需的能力。" +
+                                $"模型「{item.SelectedModel.DisplayName}」不支持「{group.Title}」所需的能力。" +
                                 $"模型能力: {item.SelectedModel.Capabilities}, 需要: {group.RequiredCapability}");
                         }
                         return new APIKeyPurpose
                         {
                             Id = item.SelectedProvider!.Id,
                             Key = new APIKey { Id = item.SelectedProvider.Id, Name = item.SelectedProvider.Name },
-                            Model = new LLMModelConfig { Id = item.SelectedModel.Id, Name = item.SelectedModel.Name }
+                            Model = new LLMModelConfig
+                            {
+                                Id = item.SelectedModel.Id,
+                                Name = item.SelectedModel.Name,
+                                Alias = item.SelectedModel.Alias.Trim()
+                            }
                         };
                     })
                     .ToList());
@@ -391,11 +466,14 @@ public partial class KeyManagementViewModel : ViewModelBase
                     Id = model.Id,
                     APIKeyId = model.APIKeyId,
                     Name = model.Name,
+                    Alias = model.Alias,
                     Enabled = model.Enabled,
                     InputPricePer1M = model.InputPricePer1M,
                     OutputPricePer1M = model.OutputPricePer1M,
                     CachePricePer1M = model.CachePricePer1M,
-                    Capabilities = model.Capabilities == 0 ? ModelCapability.Chat : model.Capabilities
+                    Capabilities = model.Capabilities == 0 ? ModelCapability.Chat : model.Capabilities,
+                    ThinkingEnabled = model.ThinkingEnabled,
+                    ReasoningEffort = model.ReasoningEffort
                 });
             }
             Providers.Add(item);

@@ -55,10 +55,9 @@
                         <CheckBox
                             Margin="0,0,20,0"
                             Content="启用 Web Search（Anthropic / Responses）"
-                            IsChecked="{Binding EnableWebSearch}" />
-                        <CheckBox
-                            Content="腾讯云签名"
-                            IsChecked="{Binding UseTencentSign}" />
+                            IsChecked="{Binding EnableWebSearch}"
+                            IsEnabled="{Binding IsWebSearchEditable}" />
+                        <CheckBox Content="腾讯云签名" IsChecked="{Binding UseTencentSign}" />
                     </WrapPanel>
 
                     <!--  Model grid  -->
@@ -90,7 +89,15 @@
                                 Width="55"
                                 Binding="{Binding Enabled}"
                                 Header="启用" />
-                            <DataGridTextColumn Binding="{Binding Name}" Header="模型名" />
+                            <DataGridCheckBoxColumn
+                                Width="55"
+                                Binding="{Binding ThinkingEnabled}"
+                                Header="思考" />
+                            <DataGridTextColumn
+                                Width="70"
+                                Binding="{Binding ReasoningEffort}"
+                                Header="推理强度" />
+                            <DataGridTextColumn Binding="{Binding DisplayName}" Header="别名/模型名" />
                             <DataGridTextColumn
                                 Width="70"
                                 Binding="{Binding InputPricePer1M, StringFormat=F4}"
@@ -106,13 +113,11 @@
                             <DataGridTemplateColumn Width="110" Header="能力">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Text="{Binding Capabilities, Converter={x:Static conv:ChatConverters.CapabilityToText}}" />
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding Capabilities, Converter={x:Static conv:ChatConverters.CapabilityToText}}" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Width="60" Header="操作">
+                            <DataGridTemplateColumn Width="70" Header="操作">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button
@@ -124,7 +129,7 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTemplateColumn Width="60" Header="测试">
+                            <DataGridTemplateColumn Width="70" Header="测试">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button

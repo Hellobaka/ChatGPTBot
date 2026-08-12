@@ -62,6 +62,14 @@ public class ResponsesCreateRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponsesTextConfig? Text { get; set; }
 
+    /// <summary>
+    /// Thinking / reasoning configuration for the Responses API.
+    /// effort: none = thinking off; minimal/low = low; medium/high/xhigh = high; max = max.
+    /// </summary>
+    [JsonPropertyName("reasoning")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ResponsesReasoning? Reasoning { get; set; }
+
     /// <summary>Model decides whether to call tools.</summary>
     public void EnableAutoToolChoice() => ToolChoice = "auto";
 
@@ -118,6 +126,13 @@ public class ResponsesTool
     {
         Type = "web_search"
     };
+}
+
+/// <summary>Reasoning configuration for the Responses API.</summary>
+public class ResponsesReasoning
+{
+    [JsonPropertyName("effort")]
+    public string Effort { get; set; } = "high";
 }
 
 /// <summary>Streaming options for the Responses API.</summary>

@@ -20,6 +20,7 @@ public partial class KeyEditDialogViewModel : ObservableObject
     [ObservableProperty] private string _endPoint = string.Empty;
     [ObservableProperty] private string _apiKey = string.Empty;
     [ObservableProperty] private bool _useTencentSign;
+    [NotifyPropertyChangedFor(nameof(IsWebSearchEditable))]
     [ObservableProperty] private ApiFormatOption? _selectedApiFormat;
     [ObservableProperty] private bool _enableWebSearch = true;
     [ObservableProperty] private long _totalTokens;
@@ -38,6 +39,9 @@ public partial class KeyEditDialogViewModel : ObservableObject
 
     public bool IsSaved { get; set; }
 
+    /// <summary>Web search only applies to Anthropic / Responses endpoints.</summary>
+    public bool IsWebSearchEditable => SelectedApiFormat?.Value != ApiFormat.OpenAI;
+
     /// <summary>Creates a dialog for a new provider.</summary>
     public KeyEditDialogViewModel()
     {
@@ -53,9 +57,9 @@ public partial class KeyEditDialogViewModel : ObservableObject
         EndPoint = source.EndPoint;
         ApiKey = source.Key;
         UseTencentSign = source.UseTencentSign;
+        EnableWebSearch = source.EnableWebSearch;
         SelectedApiFormat = ApiFormatOptions.FirstOrDefault(o => o.Value == source.ApiFormat)
             ?? ApiFormatOptions[0];
-        EnableWebSearch = source.EnableWebSearch;
         TotalTokens = source.TotalTokens;
         TotalConsume = source.TotalConsume;
         foreach (var m in source.Models)
@@ -74,7 +78,7 @@ public partial class KeyEditDialogViewModel : ObservableObject
             Key = ApiKey.Trim(),
             UseTencentSign = UseTencentSign,
             ApiFormat = SelectedApiFormat?.Value ?? ApiFormat.OpenAI,
-            EnableWebSearch = EnableWebSearch,
+            EnableWebSearch = SelectedApiFormat?.Value == ApiFormat.OpenAI ? false : EnableWebSearch,
             TotalTokens = TotalTokens,
             TotalConsume = TotalConsume
         };
@@ -83,6 +87,14 @@ public partial class KeyEditDialogViewModel : ObservableObject
             item.Models.Add(m.Clone());
         }
         return item;
+    }
+
+    partial void OnSelectedApiFormatChanged(ApiFormatOption? value)
+    {
+        if (value?.Value == ApiFormat.OpenAI)
+        {
+            EnableWebSearch = false;
+        }
     }
 
     [RelayCommand]
@@ -98,11 +110,16 @@ public partial class KeyEditDialogViewModel : ObservableObject
         var model = new ProviderModelItem
         {
             Name = dialogVm.Name.Trim(),
+            Alias = dialogVm.Alias.Trim(),
             Enabled = dialogVm.Enabled,
             InputPricePer1M = dialogVm.InputPricePer1M,
             OutputPricePer1M = dialogVm.OutputPricePer1M,
             CachePricePer1M = dialogVm.CachePricePer1M,
-            Capabilities = dialogVm.GetCapabilities()
+            Capabilities = dialogVm.GetCapabilities(),
+            ThinkingEnabled = dialogVm.ThinkingEnabled,
+            ReasoningEffort = dialogVm.ReasoningEffort == "不提供"
+                ? ""
+                : dialogVm.ReasoningEffort.Trim()
         };
         Models.Add(model);
         SelectedModel = model;
@@ -124,11 +141,16 @@ public partial class KeyEditDialogViewModel : ObservableObject
         }
 
         model.Name = dialogVm.Name.Trim();
+        model.Alias = dialogVm.Alias.Trim();
         model.Enabled = dialogVm.Enabled;
         model.InputPricePer1M = dialogVm.InputPricePer1M;
         model.OutputPricePer1M = dialogVm.OutputPricePer1M;
         model.CachePricePer1M = dialogVm.CachePricePer1M;
         model.Capabilities = dialogVm.GetCapabilities();
+        model.ThinkingEnabled = dialogVm.ThinkingEnabled;
+        model.ReasoningEffort = dialogVm.ReasoningEffort == "不提供"
+            ? ""
+            : dialogVm.ReasoningEffort.Trim();
     }
 
     [RelayCommand]
@@ -191,6 +213,10 @@ public partial class KeyEditDialogViewModel : ObservableObject
                         var anthropicRequest = new ChatGPTv3.AnthropicClient.AnthropicChatRequest
                         {
                             Model = model.Name.Trim(),
+                            Thinking = new ChatGPTv3.AnthropicClient.AnthropicThinkingConfig
+                            {
+                                Type = model.ThinkingEnabled ? "enabled" : "disabled"
+                            },
                             Messages =
                             [
                                 new ChatGPTv3.AnthropicClient.AnthropicMessage
@@ -228,6 +254,20 @@ public partial class KeyEditDialogViewModel : ObservableObject
                             Input = "hello",
                             MaxOutputTokens = 64
                         };
+                        if (!model.ThinkingEnabled)
+                        {
+                            responsesRequest.Reasoning = new ChatGPTv3.ResponsesClient.ResponsesReasoning
+                            {
+                                Effort = "none"
+                            };
+                        }
+                        else if (!string.IsNullOrWhiteSpace(model.ReasoningEffort))
+                        {
+                            responsesRequest.Reasoning = new ChatGPTv3.ResponsesClient.ResponsesReasoning
+                            {
+                                Effort = model.ReasoningEffort.Trim()
+                            };
+                        }
                         var responsesResponse = await responsesClient.CompleteAsync(responsesRequest);
                         _ = responsesResponse.GetText() ?? "(no content)";
                         break;
@@ -248,6 +288,14 @@ public partial class KeyEditDialogViewModel : ObservableObject
                             Model = model.Name.Trim(),
                             Messages = [ChatMessage.User("hello")]
                         };
+                        if (!model.ThinkingEnabled)
+                        {
+                            request.SetThinking(false);
+                        }
+                        else if (!string.IsNullOrWhiteSpace(model.ReasoningEffort))
+                        {
+                            request.ReasoningEffort = model.ReasoningEffort.Trim();
+                        }
 
                         var response = await client.CompleteAsync(request);
                         _ = response.GetFirstChoiceText() ?? "(no content)";

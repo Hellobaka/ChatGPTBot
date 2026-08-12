@@ -57,10 +57,6 @@
                                 Width="80"
                                 Binding="{Binding UseTencentSign}"
                                 Header="腾讯云签名" />
-                            <DataGridCheckBoxColumn
-                                Width="90"
-                                Binding="{Binding EnableWebSearch}"
-                                Header="Web Search" />
                             <DataGridTextColumn
                                 Width="130"
                                 Binding="{Binding ApiFormat}"
@@ -163,11 +159,11 @@
                                                                 DisplayMemberPath="DisplayName"
                                                                 ItemsSource="{Binding DataContext.Providers, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                 SelectedItem="{Binding SelectedProvider, UpdateSourceTrigger=PropertyChanged}" />
-                                                            <ComboBox
-                                                                Grid.Column="2"
-                                                                DisplayMemberPath="Name"
-                                                                ItemsSource="{Binding AvailableModels}"
-                                                                SelectedItem="{Binding SelectedModel, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox
+                                    Grid.Column="2"
+                                    DisplayMemberPath="DisplayName"
+                                    ItemsSource="{Binding AvailableModels}"
+                                    SelectedItem="{Binding SelectedModel, UpdateSourceTrigger=PropertyChanged}" />
                                                             <Button
                                                                 Grid.Column="3"
                                                                 HorizontalAlignment="Right"

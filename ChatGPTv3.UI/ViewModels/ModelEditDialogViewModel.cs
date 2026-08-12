@@ -9,6 +9,7 @@ public partial class ModelEditDialogViewModel : ObservableObject
     public string WindowTitle { get; }
 
     [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty] private string _alias = string.Empty;
     [ObservableProperty] private bool _enabled = true;
     [ObservableProperty] private decimal _inputPricePer1M;
     [ObservableProperty] private decimal _outputPricePer1M;
@@ -19,6 +20,11 @@ public partial class ModelEditDialogViewModel : ObservableObject
     [ObservableProperty] private bool _isImage;
     [ObservableProperty] private bool _isEmbedding;
     [ObservableProperty] private bool _isRerank;
+    [ObservableProperty] private bool _thinkingEnabled = true;
+    [ObservableProperty] private string _reasoningEffort = "high";
+
+    /// <summary>Selectable reasoning_effort values; "不提供" means omit the field.</summary>
+    public IReadOnlyList<string> ReasoningEffortOptions { get; } = ["不提供", "low", "high", "max"];
 
     public bool IsSaved { get; set; }
 
@@ -31,6 +37,7 @@ public partial class ModelEditDialogViewModel : ObservableObject
     {
         WindowTitle = $"编辑模型 - {source.Name}";
         Name = source.Name;
+        Alias = source.Alias;
         Enabled = source.Enabled;
         InputPricePer1M = source.InputPricePer1M;
         OutputPricePer1M = source.OutputPricePer1M;
@@ -39,6 +46,10 @@ public partial class ModelEditDialogViewModel : ObservableObject
         IsImage = (source.Capabilities & ModelCapability.Image) != 0;
         IsEmbedding = (source.Capabilities & ModelCapability.Embedding) != 0;
         IsRerank = (source.Capabilities & ModelCapability.Rerank) != 0;
+        ThinkingEnabled = source.ThinkingEnabled;
+        ReasoningEffort = string.IsNullOrWhiteSpace(source.ReasoningEffort)
+            ? "不提供"
+            : source.ReasoningEffort;
     }
 
     public ModelCapability GetCapabilities()

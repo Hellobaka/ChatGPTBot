@@ -102,7 +102,9 @@ public class ChatService
             identity,
             onIntermediateText: onIntermediateText,
             format: key.Key.ApiFormat,
-            enableWebSearch: key.Key.EnableWebSearch);
+            enableWebSearch: key.Key.EnableWebSearch,
+            thinkingEnabled: key.Model.ThinkingEnabled,
+            reasoningEffort: key.Model.ReasoningEffort);
     }
 
     /// <summary>
@@ -121,7 +123,9 @@ public class ChatService
         string? identity = null,
         Func<string, Task>? onIntermediateText = null,
         ApiFormat format = ApiFormat.OpenAI,
-        bool enableWebSearch = false)
+        bool enableWebSearch = false,
+        bool thinkingEnabled = true,
+        string reasoningEffort = "high")
     {
         // Normalize URL
         baseUrl = baseUrl.Replace("/chat/completions", "").TrimEnd('/');
@@ -132,13 +136,16 @@ public class ChatService
             {
                 ApiFormat.Anthropic => await GetAnthropicChatResultAsync(
                     baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
-                    toolExecutor, identity, onIntermediateText, enableWebSearch),
+                    toolExecutor, identity, onIntermediateText, enableWebSearch,
+                    thinkingEnabled, reasoningEffort),
                 ApiFormat.Responses => await GetResponsesChatResultAsync(
                     baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
-                    toolExecutor, identity, onIntermediateText, enableWebSearch),
+                    toolExecutor, identity, onIntermediateText, enableWebSearch,
+                    thinkingEnabled, reasoningEffort),
                 _ => await GetOpenAiChatResultAsync(
                     baseUrl, apiKey, model, chatMessages, purpose, jsonMode, timeout,
-                    toolExecutor, identity, onIntermediateText)
+                    toolExecutor, identity, onIntermediateText,
+                    thinkingEnabled, reasoningEffort)
             };
         }
         catch (OpenAiApiException ex)
@@ -179,7 +186,9 @@ public class ChatService
         int timeout,
         ToolExecutor? toolExecutor,
         string? identity,
-        Func<string, Task>? onIntermediateText)
+        Func<string, Task>? onIntermediateText,
+        bool thinkingEnabled,
+        string reasoningEffort)
     {
         var options = new OpenAiChatClientOptions
         {
@@ -202,6 +211,15 @@ public class ChatService
         if (jsonMode)
         {
             request.EnableJsonMode();
+        }
+
+        if (!thinkingEnabled)
+        {
+            request.SetThinking(false);
+        }
+        else if (!string.IsNullOrWhiteSpace(reasoningEffort))
+        {
+            request.ReasoningEffort = reasoningEffort.Trim();
         }
 
         bool includeTools = toolExecutor != null && AppConfig.EnableMCP;
@@ -233,7 +251,9 @@ public class ChatService
         ToolExecutor? toolExecutor,
         string? identity,
         Func<string, Task>? onIntermediateText,
-        bool enableWebSearch)
+        bool enableWebSearch,
+        bool thinkingEnabled,
+        string reasoningEffort)
     {
         var options = new AnthropicChatClientOptions
         {
@@ -259,6 +279,13 @@ public class ChatService
                     chatMessages, model, AppConfig.ChatMaxTokens, AppConfig.ChatTemperature,
                     streaming, includeTools ? tools : null, jsonMode, enableWebSearch);
 
+                // Anthropic only has an on/off switch — thinking depth is ignored,
+                // so budget_tokens is never sent.
+                request.Thinking = new AnthropicThinkingConfig
+                {
+                    Type = thinkingEnabled ? "enabled" : "disabled"
+                };
+
                 return streaming
                     ? ProcessAnthropicStreamingAsync(client, request, identity)
                     : ProcessAnthropicNonStreamingAsync(client, request);
@@ -280,7 +307,9 @@ public class ChatService
         ToolExecutor? toolExecutor,
         string? identity,
         Func<string, Task>? onIntermediateText,
-        bool enableWebSearch)
+        bool enableWebSearch,
+        bool thinkingEnabled,
+        string reasoningEffort)
     {
         var options = new ResponsesChatClientOptions
         {
@@ -305,6 +334,21 @@ public class ChatService
                 var request = ResponsesMessageConverter.CreateRequest(
                     chatMessages, model, AppConfig.ChatMaxTokens, AppConfig.ChatTemperature,
                     streaming, includeTools ? tools : null, jsonMode, enableWebSearch);
+
+                if (!thinkingEnabled)
+                {
+                    request.Reasoning = new ResponsesReasoning
+                    {
+                        Effort = "none"
+                    };
+                }
+                else if (!string.IsNullOrWhiteSpace(reasoningEffort))
+                {
+                    request.Reasoning = new ResponsesReasoning
+                    {
+                        Effort = reasoningEffort.Trim()
+                    };
+                }
 
                 return streaming
                     ? ProcessResponsesStreamingAsync(client, request, identity)

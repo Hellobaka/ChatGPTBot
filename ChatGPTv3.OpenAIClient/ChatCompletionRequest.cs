@@ -45,6 +45,18 @@ public class ChatCompletionRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? ToolChoice { get; set; }
 
+    /// <summary>
+    /// Thinking mode control for OpenAI-compatible endpoints: {"type": "enabled"|"disabled"}.
+    /// </summary>
+    [JsonPropertyName("thinking")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ThinkingConfig? Thinking { get; set; }
+
+    /// <summary>reasoning_effort for OpenAI-compatible endpoints (low / high / max, or a custom value).</summary>
+    [JsonPropertyName("reasoning_effort")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ReasoningEffort { get; set; }
+
     [JsonPropertyName("response_format")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ResponseFormat? ResponseFormat { get; set; }
@@ -99,6 +111,12 @@ public class ChatCompletionRequest
     public void EnableAutoToolChoice()
     {
         ToolChoice = "auto";
+    }
+
+    /// <summary>Sets thinking mode: enabled or disabled.</summary>
+    public void SetThinking(bool enabled)
+    {
+        Thinking = new ThinkingConfig { Type = enabled ? "enabled" : "disabled" };
     }
 
     /// <summary>
@@ -186,6 +204,13 @@ public class ChatCompletionRequest
 
         return dict;
     }
+}
+
+/// <summary>Thinking mode configuration: {"type": "enabled"|"disabled"}.</summary>
+public class ThinkingConfig
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "enabled";
 }
 
 /// <summary>

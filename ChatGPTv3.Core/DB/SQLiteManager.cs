@@ -68,5 +68,39 @@ public static class SQLiteManager
                 DefaultValue = "1"
             });
         }
+
+        // Per-model thinking / reasoning_effort settings for OpenAI-compatible requests.
+        var modelColumns = db.DbMaintenance.GetColumnInfosByTableName("LLMModel", false);
+        if (modelColumns.All(c => !string.Equals(c.DbColumnName, "ThinkingEnabled", StringComparison.OrdinalIgnoreCase)))
+        {
+            db.DbMaintenance.AddColumn("LLMModel", new DbColumnInfo
+            {
+                DbColumnName = "ThinkingEnabled",
+                DataType = "INTEGER",
+                IsNullable = true,
+                DefaultValue = "1"
+            });
+        }
+
+        if (modelColumns.All(c => !string.Equals(c.DbColumnName, "ReasoningEffort", StringComparison.OrdinalIgnoreCase)))
+        {
+            db.DbMaintenance.AddColumn("LLMModel", new DbColumnInfo
+            {
+                DbColumnName = "ReasoningEffort",
+                DataType = "TEXT",
+                IsNullable = true,
+                DefaultValue = "high"
+            });
+        }
+
+        if (modelColumns.All(c => !string.Equals(c.DbColumnName, "Alias", StringComparison.OrdinalIgnoreCase)))
+        {
+            db.DbMaintenance.AddColumn("LLMModel", new DbColumnInfo
+            {
+                DbColumnName = "Alias",
+                DataType = "TEXT",
+                IsNullable = true
+            });
+        }
     }
 }

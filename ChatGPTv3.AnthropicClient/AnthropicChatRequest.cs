@@ -49,6 +49,11 @@ public class AnthropicChatRequest
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public object? ToolChoice { get; set; }
 
+    /// <summary>Extended thinking switch: {"type":"enabled"} / {"type":"disabled"}.</summary>
+    [JsonPropertyName("thinking")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AnthropicThinkingConfig? Thinking { get; set; }
+
     /// <summary>Model decides whether to call tools.</summary>
     public void EnableAutoToolChoice() => ToolChoice = new { type = "auto" };
 
@@ -57,6 +62,13 @@ public class AnthropicChatRequest
 
     /// <summary>Forces a specific tool to be called.</summary>
     public void ForceToolChoice(string name) => ToolChoice = new { type = "tool", name };
+}
+
+/// <summary>Extended thinking configuration for the Anthropic Messages API.</summary>
+public class AnthropicThinkingConfig
+{
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = "enabled";
 }
 
 /// <summary>

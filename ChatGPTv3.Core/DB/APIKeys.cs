@@ -87,6 +87,12 @@ public class LLMModelConfig
     /// <summary>Model name (e.g., "gpt-4o", "deepseek-chat").</summary>
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Optional display alias. Empty means no alias; when set, the UI shows the
+    /// alias instead of the model name, but requests always use <see cref="Name"/>.
+    /// </summary>
+    public string Alias { get; set; } = string.Empty;
+
     /// <summary>Whether this model is enabled.</summary>
     public bool Enabled { get; set; } = true;
 
@@ -101,6 +107,16 @@ public class LLMModelConfig
 
     /// <summary>What this model can do (chat, image, embedding, rerank).</summary>
     public ModelCapability Capabilities { get; set; } = ModelCapability.Chat;
+
+    /// <summary>
+    /// Whether to send "thinking": {type: enabled/disabled} on OpenAI-compatible requests.
+    /// </summary>
+    public bool ThinkingEnabled { get; set; } = true;
+
+    /// <summary>
+    /// reasoning_effort for OpenAI-compatible requests: low / high / max. Defaults to high.
+    /// </summary>
+    public string ReasoningEffort { get; set; } = "high";
 }
 
 /// <summary>

@@ -3,11 +3,11 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:hc="https://handyorg.github.io/handycontrol"
+    Title="{Binding WindowTitle}"
     Width="480"
-    Height="420"
+    Height="570"
     BorderBrush="{DynamicResource BorderBrush}"
     Style="{StaticResource WindowWin10}"
-    Title="{Binding WindowTitle}"
     WindowStartupLocation="CenterOwner">
 
     <Border
@@ -22,7 +22,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Title -->
+            <!--  Title  -->
             <Border
                 Grid.Row="0"
                 Margin="0,0,0,12"
@@ -35,17 +35,34 @@
                     Text="{Binding WindowTitle}" />
             </Border>
 
-            <!-- Content -->
+            <!--  Content  -->
             <StackPanel Grid.Row="1">
                 <CheckBox
                     Margin="0,0,0,12"
                     Content="启用"
                     IsChecked="{Binding Enabled}" />
 
-                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="模型名" />
+                <TextBlock
+                    Margin="0,0,0,6"
+                    FontWeight="SemiBold"
+                    Text="模型名" />
                 <TextBox Margin="0,0,0,12" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
-                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="定价 (每百万 Token)" />
+                <TextBlock
+                    Margin="0,0,0,6"
+                    FontWeight="SemiBold"
+                    Text="别名 (可选)" />
+                <TextBox Margin="0,0,0,12" Text="{Binding Alias, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Margin="0,-8,0,12"
+                    FontSize="11"
+                    Opacity="0.6"
+                    Text="填写后界面优先展示别名，实际请求仍使用模型名" />
+
+                <TextBlock
+                    Margin="0,0,0,6"
+                    FontWeight="SemiBold"
+                    Text="定价 (每百万 Token)" />
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -56,35 +73,67 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock FontSize="12" Text="输入价格" />
-                        <TextBox
-                            Margin="0,4,0,0"
-                            Text="{Binding InputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                        <TextBox Margin="0,4,0,0" Text="{Binding InputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock FontSize="12" Text="缓存价格" />
-                        <TextBox
-                            Margin="0,4,0,0"
-                            Text="{Binding CachePricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                        <TextBox Margin="0,4,0,0" Text="{Binding CachePricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
                     </StackPanel>
                     <StackPanel Grid.Column="4">
                         <TextBlock FontSize="12" Text="输出价格" />
-                        <TextBox
-                            Margin="0,4,0,0"
-                            Text="{Binding OutputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
+                        <TextBox Margin="0,4,0,0" Text="{Binding OutputPricePer1M, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="模型能力" />
+                <TextBlock
+                    Margin="0,0,0,6"
+                    FontWeight="SemiBold"
+                    Text="模型能力" />
                 <WrapPanel>
-                    <CheckBox Margin="0,0,16,4" Content="Chat" IsChecked="{Binding IsChat}" />
-                    <CheckBox Margin="0,0,16,4" Content="Image" IsChecked="{Binding IsImage}" />
-                    <CheckBox Margin="0,0,16,4" Content="Embedding" IsChecked="{Binding IsEmbedding}" />
+                    <CheckBox
+                        Margin="0,0,16,4"
+                        Content="Chat"
+                        IsChecked="{Binding IsChat}" />
+                    <CheckBox
+                        Margin="0,0,16,4"
+                        Content="Image"
+                        IsChecked="{Binding IsImage}" />
+                    <CheckBox
+                        Margin="0,0,16,4"
+                        Content="Embedding"
+                        IsChecked="{Binding IsEmbedding}" />
                     <CheckBox Content="Rerank" IsChecked="{Binding IsRerank}" />
                 </WrapPanel>
+
+                <TextBlock
+                    Margin="0,12,0,6"
+                    FontWeight="SemiBold"
+                    Text="思考与推理" />
+                <CheckBox
+                    Margin="0,0,0,12"
+                    Content="思考模式 (thinking)"
+                    IsChecked="{Binding ThinkingEnabled}" />
+
+                <TextBlock
+                    Margin="0,0,0,6"
+                    FontWeight="SemiBold"
+                    Text="推理强度 (reasoning_effort)" />
+                <ComboBox
+                    IsEditable="True"
+                    ItemsSource="{Binding ReasoningEffortOptions}"
+                    Text="{Binding ReasoningEffort, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock
+                    Margin="0,4,0,0"
+                    FontSize="11"
+                    Opacity="0.6"
+                    Text="“不提供”表示不发送该字段；也可直接输入自定义值（如 medium / xhigh）" />
             </StackPanel>
 
-            <!-- Bottom buttons -->
-            <WrapPanel Grid.Row="2" Margin="0,16,0,0" HorizontalAlignment="Right">
+            <!--  Bottom buttons  -->
+            <WrapPanel
+                Grid.Row="2"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right">
                 <Button
                     MinWidth="100"
                     Margin="0,0,12,0"
