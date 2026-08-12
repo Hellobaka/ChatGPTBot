@@ -1,4 +1,5 @@
 using ChatGPTv3.OpenAIClient;
+using System.Text.Json.Serialization;
 
 namespace ChatGPTv3.Core.Model.MCP;
 
@@ -13,6 +14,7 @@ public class MCPCustomClient : MCPClientBase
     /// <summary>
     /// Context data passed to tool invocations.
     /// </summary>
+    [JsonIgnore]
     public MCPToolContext? Context { get; set; }
 
     public override Task<ToolDefinition[]> GetToolsAsync()

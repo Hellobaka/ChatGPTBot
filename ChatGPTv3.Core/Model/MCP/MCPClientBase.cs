@@ -14,7 +14,6 @@ public enum MCPClientType
 /// </summary>
 [JsonDerivedType(typeof(MCPCustomClient), typeDiscriminator: "Custom")]
 [JsonDerivedType(typeof(MCPHttpClient), typeDiscriminator: "Http")]
-[JsonDerivedType(typeof(MCPSSEClient), typeDiscriminator: "SSE")]
 [JsonDerivedType(typeof(MCPStdioClient), typeDiscriminator: "Stdio")]
 public abstract class MCPClientBase
 {
