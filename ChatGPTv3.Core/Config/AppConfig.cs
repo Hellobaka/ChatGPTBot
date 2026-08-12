@@ -297,6 +297,12 @@ public static class AppConfig
     // ── Debug ─────────────────────────────────────────────
     public static bool DebugMode { get; set; }
 
+    /// <summary>
+    /// When true, all outgoing messages are logged instead of delivered and
+    /// every send reports success. Used for dry-run / testing without QQ sends.
+    /// </summary>
+    public static bool MockSendMessage { get; set; }
+
     // ═══════════════════════════════════════════════════════
     //  Initialization
     // ═══════════════════════════════════════════════════════
@@ -471,6 +477,7 @@ public static class AppConfig
 
         // Debug
         DebugMode = ConfigManager.GetConfig("DebugMode", false);
+        MockSendMessage = ConfigManager.GetConfig("MockSendMessage", false);
 
         ReloadAPIKeys();
         ConfigManager.EnableHotReload();

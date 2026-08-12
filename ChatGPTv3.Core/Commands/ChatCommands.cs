@@ -2,6 +2,7 @@ using Another_Mirai_Native.Abstractions;
 using Another_Mirai_Native.Abstractions.Attributes;
 using Another_Mirai_Native.Abstractions.Context;
 using Another_Mirai_Native.Abstractions.Enums;
+using ChatGPTv3.Core.Utilities;
 
 namespace ChatGPTv3.Core.Commands;
 
@@ -34,7 +35,8 @@ public class ChatCommands : CommandHandlerBase
             GroupCtx = e,
             MessageText = e.Message.Text ?? string.Empty,
             CancellationToken = ct,
-            SendFunc = async msg => await e.SendMessageAsync(msg)
+            SendFunc = msg => MessageSendHelper.SendGroupAsync(
+                e.FromGroup.Id, msg, m => e.SendMessageAsync(m))
         };
 
         // ── Bridge pending images from previous turn ──
@@ -47,7 +49,7 @@ public class ChatCommands : CommandHandlerBase
             }
         }
 
-        await Task.Run(() => GroupPipeline(ctx));
+        await Task.Run(() => GroupPipeline(ctx), ct);
 
         // ── Save newly queued images for next turn ──
         if (ctx.PendingImageHashes.Count > 0)
@@ -71,9 +73,10 @@ public class ChatCommands : CommandHandlerBase
             PrivateCtx = e,
             MessageText = e.Message.Text ?? string.Empty,
             CancellationToken = ct,
-            SendFunc = async msg => await e.SendMessageAsync(msg)
+            SendFunc = msg => MessageSendHelper.SendPrivateAsync(
+                e.FromQQ.Id, msg, m => e.SendMessageAsync(m))
         };
-        await Task.Run(() => PrivatePipeline(ctx));
+        await Task.Run(() => PrivatePipeline(ctx), ct);
         return ctx.Result;
     }
 }

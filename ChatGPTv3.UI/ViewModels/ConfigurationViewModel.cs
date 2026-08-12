@@ -255,6 +255,7 @@ public partial class ConfigurationViewModel : ViewModelBase
         var debug = new ObservableCollection<ConfigEntry>
         {
             new() { Key = "DebugMode", Label = "调试模式", DefaultValue = false, IsGroupReadOnly = true },
+            new() { Key = "MockSendMessage", Label = "模拟发送消息（不实际发送，仅记录）", DefaultValue = false, IsGroupReadOnly = true },
         };
         Tabs.Add(new ConfigTab("基本设置", "Cog",
         [

@@ -30,6 +30,8 @@ public class Entry : PluginBase
 
     internal static IFriendApi? FriendApi { get; set; }
 
+    internal static ILogger? LoggerApi { get; set; }
+
     /// <summary>Public read-only accessors for UI/external consumers (e.g. mock test environment).</summary>
     public static IMessageApi? ApiMessage => MessageApi;
 
@@ -37,11 +39,14 @@ public class Entry : PluginBase
 
     public static IFriendApi? ApiFriend => FriendApi;
 
+    public static ILogger? ApiLogger => LoggerApi;
+
     public override async Task OnEnableAsync(CancellationToken ct)
     {
         MessageApi = API.MessageApi;
         GroupApi = API.GroupApi;
         FriendApi = API.FriendApi;
+        LoggerApi = API.Logger;
 
         // ── Wire up logging ──
         CommonHelper.LogInfo = (tag, msg) => API.Logger.Info(tag, msg);
@@ -100,11 +105,13 @@ public class Entry : PluginBase
                 {
                     if (groupId > 0 && MessageApi != null)
                     {
-                        await MessageApi.SendGroupMessageAsync(groupId, msg);
+                        await MessageSendHelper.SendGroupAsync(
+                            groupId, msg, async m => await MessageApi.SendGroupMessageAsync(groupId, m));
                     }
                     else if (qq > 0 && MessageApi != null)
                     {
-                        await MessageApi.SendPrivateMessageAsync(qq, msg);
+                        await MessageSendHelper.SendPrivateAsync(
+                            qq, msg, async m => await MessageApi.SendPrivateMessageAsync(qq, m));
                     }
                 };
                 _taskRunner.Start();
