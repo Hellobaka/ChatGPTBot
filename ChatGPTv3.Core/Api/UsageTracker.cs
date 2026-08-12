@@ -35,8 +35,13 @@ public static class UsageTracker
             TokenUsage.NotifyInserted(record);
 
             // Update API key total tokens + cumulative cost
-            var keyHint = MaskKey(apiKey);
-            var cost = ComputeCost(db, model, usage);
+            var keyRow = db.Queryable<APIKey>().First(it => it.Key == apiKey);
+            if (keyRow == null)
+            {
+                return;
+            }
+
+            var cost = ComputeCost(db, keyRow.Id, model, usage);
 
             db.Updateable<APIKey>()
                 .SetColumns(it => new APIKey
@@ -44,7 +49,7 @@ public static class UsageTracker
                     TotalTokens = it.TotalTokens + usage.TotalTokens,
                     TotalConsume = it.TotalConsume + cost
                 })
-                .Where(it => it.Key != null && it.Key.Contains(keyHint))
+                .Where(it => it.Id == keyRow.Id)
                 .ExecuteCommand();
         }
         catch (Exception ex)
@@ -58,12 +63,16 @@ public static class UsageTracker
     /// Computes the RMB cost of a single API call based on the model's pricing.
     /// cost = (prompt - cached) × inputPrice + cached × cachePrice + completion × outputPrice, all per 1M tokens.
     /// </summary>
-    private static decimal ComputeCost(SqlSugar.SqlSugarClient db, string model, TokenUsageInfo usage)
+    private static decimal ComputeCost(
+        SqlSugar.SqlSugarClient db,
+        int apiKeyId,
+        string model,
+        TokenUsageInfo usage)
     {
         try
         {
             var pricing = db.Queryable<LLMModelConfig>()
-                .First(m => m.Name == model);
+                .First(m => m.APIKeyId == apiKeyId && m.Name == model);
             if (pricing == null)
             {
                 return 0m;

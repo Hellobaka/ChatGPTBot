@@ -30,15 +30,17 @@ public static class APIKeyRepository
             db.Updateable(key).ExecuteCommand();
         }
 
-        // Upsert models by (APIKeyId, Name) — preserve existing PKs so PurposeBinding stays valid.
+        // Upsert models by identity (Id) so a provider can have multiple models
+        // with the same name but different settings. New rows (Id=0) are inserted,
+        // existing rows are updated in place to keep PurposeBinding references valid.
         var existing = db.Queryable<LLMModelConfig>()
             .Where(x => x.APIKeyId == key.Id)
             .ToList();
-        var existingByName = existing.ToDictionary(x => x.Name, StringComparer.Ordinal);
-        var incomingNames = new HashSet<string>(models.Select(x => x.Name), StringComparer.Ordinal);
+        var existingById = existing.ToDictionary(x => x.Id);
+        var incomingIds = new HashSet<int>(models.Select(x => x.Id).Where(id => id > 0));
 
-        // Delete models no longer present
-        var toDelete = existing.Where(x => !incomingNames.Contains(x.Name)).ToList();
+        // Delete models no longer present (by Id, not name)
+        var toDelete = existing.Where(x => !incomingIds.Contains(x.Id)).ToList();
         if (toDelete.Count > 0)
         {
             db.Deleteable(toDelete).ExecuteCommand();
@@ -49,9 +51,8 @@ public static class APIKeyRepository
         foreach (var model in models)
         {
             model.APIKeyId = key.Id;
-            if (existingByName.TryGetValue(model.Name, out var existingModel))
+            if (model.Id > 0 && existingById.ContainsKey(model.Id))
             {
-                model.Id = existingModel.Id;
                 db.Updateable(model).ExecuteCommand();
             }
             else
@@ -61,9 +62,11 @@ public static class APIKeyRepository
             }
         }
 
-        if (toInsert.Count > 0)
+        // Insert one-by-one so each row gets its identity back; the caller
+        // (KeyManagementViewModel) then copies Ids back to its UI rows.
+        foreach (var model in toInsert)
         {
-            db.Insertable(toInsert).ExecuteCommand();
+            model.Id = db.Insertable(model).ExecuteReturnIdentity();
         }
 
         key.AvailableModels = models;

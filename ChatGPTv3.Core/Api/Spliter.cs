@@ -30,7 +30,7 @@ public class Splitter
 示例输入："今天天气真好。我们去公园吧！听说那里樱花开了，要不要一起？"
 示例输出：["今天天气真好。","我们去公园吧！","听说那里樱花开了，要不要一起？"]
 
-请直接输出 JSON 数组，不要包含任何其他文字。
+请直接输出 JSON **数组**，不要包含任何其他文字。
 """;
 
     private static string RemoveMarkdownPrompt { get; set; } = """
